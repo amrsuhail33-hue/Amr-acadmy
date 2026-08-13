@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amr Suhail Academy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;700;900&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: #f8fafc; margin: 0; padding: 0; color: #0f172a; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* شاشة الترحيب */
-        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeOut 0.8s ease-in-out 3s forwards; }
-        .splash-brand { font-size: 2.8rem; font-weight: 900; color: #ffffff; letter-spacing: 2px; margin-bottom: 5px; opacity: 0; animation: reveal 1s forwards 0.3s; text-align: center; }
-        .splash-slogan { font-size: 1.1rem; color: #94a3b8; font-weight: 400; font-style: italic; opacity: 0; animation: reveal 1s forwards 0.8s; margin-bottom: 20px; }
-        .splash-line { width: 80px; height: 3px; background: #2563eb; opacity: 0; animation: reveal 1s forwards 1.2s; }
-        @keyframes reveal { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* شاشة الترحيب الفاخرة */
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeOut 0.8s ease-in-out 3s forwards; }
+        .splash-brand { font-size: 2rem; font-weight: 300; color: #ffffff; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 10px; opacity: 0; animation: fadeIn 1.5s forwards 0.5s; text-align: center; }
+        .splash-slogan { font-size: 0.9rem; color: #64748b; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; opacity: 0; animation: fadeIn 1.5s forwards 1s; }
+        .splash-line { width: 40px; height: 1px; background: #334155; margin-top: 30px; opacity: 0; animation: fadeIn 1.5s forwards 1.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
         .navbar { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
@@ -32,16 +32,13 @@
         .card { background: #ffffff; padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: all 0.3s ease; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1); border-color: #e2e8f0; }
         .card-primary { background-color: #2563eb; color: #ffffff; border: none; }
-        .card-secondary { background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; }
         
         .section-header { text-align: center; font-size: 1.8rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
-        .item-btn { display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.95rem; font-weight: 700; text-align: center; transition: all 0.2s ease; }
+        .item-btn { display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: all 0.2s ease; }
         .btn-video { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .btn-pdf { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 16px; font-size: 1.1rem; }
 
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
-        .footer-brand { font-size: 1.4rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; }
-        .footer-contact a { color: #38bdf8; text-decoration: none; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -98,8 +95,8 @@
         {% if view == 'select_type' %}
         <h2 class="section-header">{{ subject.name }}</h2>
         <div class="grid-container">
-            <a href="/?subject={{ subject.id }}&type=videos" class="card card-secondary">مقاطع الفيديو والشروحات</a>
-            <a href="/?subject={{ subject.id }}&type=files" class="card card-secondary">الملفات والمستندات</a>
+            <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو</a>
+            <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات</a>
         </div>
         {% endif %}
 
@@ -138,9 +135,7 @@
     </div>
 
     <footer class="footer">
-        <div class="footer-brand">Amr Suhail Academy</div>
-        <div>جميع الحقوق محفوظة &copy; 2026</div>
-        <div class="footer-contact">للدعم: <a href="https://wa.me/967774485611" target="_blank" dir="ltr">+967 774 485 611</a></div>
+        <div>Amr Suhail Academy &copy; 2026</div>
     </footer>
 
     <script>

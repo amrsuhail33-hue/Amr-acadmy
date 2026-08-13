@@ -11,7 +11,6 @@ def get_data_from_sheet():
     data = {}
     try:
         response = requests.get(CSV_URL)
-        # إجبار السيرفر على قراءة اللغة العربية لتجنب فشل الخادم (500 Error)
         csv_text = response.content.decode('utf-8')
         csv_reader = csv.DictReader(io.StringIO(csv_text))
         
@@ -51,21 +50,20 @@ def get_data_from_sheet():
 
             subj_data = data[year]["terms"][term]["subjects"][subject]
 
-            # فرز فيديوهات اليوتيوب والتيليجرام معاً
+            # تم تغيير الكلمة المحجوزة items إلى lessons لتفادي الخطأ
             if "فيديو" in content_type:
                 if chapter not in subj_data["types"]["videos"]["chapters"]:
-                    subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "items": []}
-                subj_data["types"]["videos"]["chapters"][chapter]["items"].append({
+                    subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
                     "title": title, 
                     "video": video_url,
                     "download": download_url
                 })
             
-            # فرز ملفات الـ PDF
             elif "ملف" in content_type:
                 if chapter not in subj_data["types"]["files"]["chapters"]:
-                    subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "items": []}
-                subj_data["types"]["files"]["chapters"][chapter]["items"].append({
+                    subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
                     "title": title, 
                     "file": file_url
                 })
@@ -128,7 +126,6 @@ def home():
         return render_template('index.html', view='years', data=DATA)
     
     except Exception as e:
-        # نظام حماية يمنع شاشة 500 ويظهر لك مكان الخطأ
         return f"<div style='text-align:center; padding:50px; font-family:sans-serif;'><h2 style='color:red;'>حدث خطأ برمجي:</h2><p>{str(e)}</p><a href='/'>العودة للرئيسية</a></div>"
 
 if __name__ == '__main__':

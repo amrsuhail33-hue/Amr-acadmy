@@ -11,14 +11,13 @@ def get_data_from_sheet():
     data = {}
     try:
         response = requests.get(CSV_URL)
-        response.encoding = 'utf-8'
-        # استخدام القارئ الذكي الذي يبحث بالأسماء بدلاً من الأرقام
-        csv_reader = csv.DictReader(io.StringIO(response.text))
+        # إجبار السيرفر على قراءة اللغة العربية لتجنب فشل الخادم (500 Error)
+        csv_text = response.content.decode('utf-8')
+        csv_reader = csv.DictReader(io.StringIO(csv_text))
         
         for row in csv_reader:
             year = term = subject = chapter = title = video_url = download_url = content_type = file_url = ""
             
-            # البحث عن البيانات عبر الكلمات المفتاحية في عناوين الشيت
             for key, val in row.items():
                 if not key or val is None: continue
                 k = str(key).strip()
@@ -34,14 +33,11 @@ def get_data_from_sheet():
                 elif "نوع" in k: content_type = v
                 elif "رابط الملف" in k: file_url = v
 
-            # تجاهل الأسطر غير المكتملة
             if not year or not term or not subject or not title:
                 continue
             
-            if not chapter:
-                chapter = "عام" # إذا نسيت كتابة شبتر، سيضعه في قسم عام
+            if not chapter: chapter = "عام"
 
-            # بناء هيكلة (سنة > ترم > مادة)
             if year not in data:
                 data[year] = {"name": year, "terms": {}}
             if term not in data[year]["terms"]:
@@ -50,29 +46,30 @@ def get_data_from_sheet():
                 data[year]["terms"][term]["subjects"][subject] = {
                     "id": f"{year}_{term}_{subject}".replace(" ", "_"),
                     "name": subject,
-                    "types": {
-                        "videos": {"chapters": {}},
-                        "files": {"chapters": {}}
-                    }
+                    "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}}
                 }
 
             subj_data = data[year]["terms"][term]["subjects"][subject]
 
-            # فرز المحتوى (فيديو أو ملف) ووضعه داخل الشبتر الصحيح
+            # فرز فيديوهات اليوتيوب والتيليجرام معاً
             if "فيديو" in content_type:
-                final_url = video_url if video_url else download_url
-                if final_url:
-                    if chapter not in subj_data["types"]["videos"]["chapters"]:
-                        subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "items": []}
-                    subj_data["types"]["videos"]["chapters"][chapter]["items"].append({"title": title, "url": final_url})
+                if chapter not in subj_data["types"]["videos"]["chapters"]:
+                    subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "items": []}
+                subj_data["types"]["videos"]["chapters"][chapter]["items"].append({
+                    "title": title, 
+                    "video": video_url,
+                    "download": download_url
+                })
             
+            # فرز ملفات الـ PDF
             elif "ملف" in content_type:
-                if file_url:
-                    if chapter not in subj_data["types"]["files"]["chapters"]:
-                        subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "items": []}
-                    subj_data["types"]["files"]["chapters"][chapter]["items"].append({"title": title, "url": file_url})
+                if chapter not in subj_data["types"]["files"]["chapters"]:
+                    subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "items": []}
+                subj_data["types"]["files"]["chapters"][chapter]["items"].append({
+                    "title": title, 
+                    "file": file_url
+                })
 
-        # تحويل القواميس إلى قوائم لتسهيل عرضها
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -87,53 +84,52 @@ def get_data_from_sheet():
 
 @app.route('/')
 def home():
-    DATA = get_data_from_sheet()
+    try:
+        DATA = get_data_from_sheet()
+        
+        year = request.args.get('year')
+        term = request.args.get('term')
+        subject_id = request.args.get('subject')
+        content_type = request.args.get('type')
+        chapter_name = request.args.get('chapter')
+
+        if subject_id and content_type and chapter_name:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            for c in s["types"][content_type]["chapters"]:
+                                if c["name"] == chapter_name:
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
+
+        if subject_id and content_type:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            chapters = s["types"][content_type]["chapters"]
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=chapters)
+
+        if subject_id:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            return render_template('index.html', view='select_type', subject=s)
+
+        if year and term:
+            if year in DATA and term in DATA[year]["terms"]:
+                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year)
+
+        if year:
+            if year in DATA:
+                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year)
+
+        return render_template('index.html', view='years', data=DATA)
     
-    year = request.args.get('year')
-    term = request.args.get('term')
-    subject_id = request.args.get('subject')
-    content_type = request.args.get('type')
-    chapter_name = request.args.get('chapter')
-
-    # 6. عرض الروابط والمحتوى النهائي داخل الشبتر
-    if subject_id and content_type and chapter_name:
-        for y in DATA.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id:
-                        for c in s["types"][content_type]["chapters"]:
-                            if c["name"] == chapter_name:
-                                return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
-
-    # 5. عرض الشباتر بناءً على النوع (فيديوهات أو ملفات)
-    if subject_id and content_type:
-        for y in DATA.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id:
-                        chapters = s["types"][content_type]["chapters"]
-                        return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=chapters)
-
-    # 4. اختيار نوع المحتوى (فيديو أو ملف) بعد اختيار المادة
-    if subject_id:
-        for y in DATA.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id:
-                        return render_template('index.html', view='select_type', subject=s)
-
-    # 3. اختيار المادة
-    if year and term:
-        if year in DATA and term in DATA[year]["terms"]:
-            return render_template('index.html', view='subjects', year_name=DATA[year]["name"], term_name=DATA[year]["terms"][term]["name"], subjects=DATA[year]["terms"][term]["subjects"], y_id=year)
-
-    # 2. اختيار الترم
-    if year:
-        if year in DATA:
-            return render_template('index.html', view='terms', year_name=DATA[year]["name"], terms=DATA[year]["terms"], y_id=year)
-
-    # 1. اختيار السنة
-    return render_template('index.html', view='years', data=DATA)
+    except Exception as e:
+        # نظام حماية يمنع شاشة 500 ويظهر لك مكان الخطأ
+        return f"<div style='text-align:center; padding:50px; font-family:sans-serif;'><h2 style='color:red;'>حدث خطأ برمجي:</h2><p>{str(e)}</p><a href='/'>العودة للرئيسية</a></div>"
 
 if __name__ == '__main__':
     app.run()

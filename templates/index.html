@@ -5,38 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أكاديمية عمرو سهيل</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: auto; }
-        h1 { color: #0f172a; margin-bottom: 20px; font-size: 1.8rem; }
-        .year-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .year-title { background: #2563eb; color: white; padding: 10px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
-        .subject-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 12px 0; text-align: right; }
-        .subject-title { font-weight: bold; color: #1e293b; margin-bottom: 10px; }
-        .btn-group { display: flex; gap: 10px; }
-        .btn { flex: 1; text-decoration: none; padding: 10px; border-radius: 6px; text-align: center; font-size: 0.85rem; font-weight: bold; color: white; }
-        .btn-video { background-color: #dc2626; }
-        .btn-pdf { background-color: #059669; }
-        .btn:hover { opacity: 0.9; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #334155; }
+        .container { max-width: 800px; margin: auto; }
+        
+        /* الترويسة والتنقل */
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #0f172a; font-size: 2rem; margin-bottom: 5px; }
+        .breadcrumb { display: flex; gap: 8px; justify-content: center; background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; font-weight: bold; }
+        .breadcrumb a { text-decoration: none; color: #2563eb; }
+        
+        /* البطاقات والشبكات */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; text-decoration: none; color: #0f172a; font-size: 1.2rem; font-weight: bold; border: 2px solid transparent; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: 0.3s; }
+        .card:hover { border-color: #2563eb; transform: translateY(-3px); }
+        .card-term { background: #eff6ff; border: 2px solid #bfdbfe; }
+        .card-subject { background: #f0fdf4; border: 2px solid #bbf7d0; font-size: 1.1rem; }
+        
+        /* أقسام المحتوى (المادة) */
+        .section-title { font-size: 1.4rem; color: #1e293b; margin: 30px 0 15px 0; border-bottom: 3px solid #2563eb; display: inline-block; padding-bottom: 5px; }
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .item-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-size: 0.95rem; font-weight: bold; color: white; text-align: center; transition: 0.2s; }
+        .btn-video { background-color: #ef4444; }
+        .btn-video:hover { background-color: #dc2626; }
+        .btn-pdf { background-color: #10b981; }
+        .btn-pdf:hover { background-color: #059669; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎓 أكاديمية عمرو سهيل</h1>
+        <header>
+            <h1>🎓 أكاديمية عمرو سهيل</h1>
+            <p>منصة تعليمية متكاملة لتبسيط المناهج الهندسية</p>
+        </header>
 
-        {% for year_id, year in data.items() %}
-        <div class="year-section">
-            <div class="year-title">{{ year.name }}</div>
-            {% for subject in year.subjects %}
-            <div class="subject-card">
-                <div class="subject-title">📌 {{ subject.title }}</div>
-                <div class="btn-group">
-                    <a href="{{ subject.video }}" target="_blank" class="btn btn-video">🎥 مشاهدة الشرح</a>
-                    <a href="{{ subject.pdf }}" target="_blank" class="btn btn-pdf">📄 تحميل الملخص (PDF)</a>
-                </div>
-            </div>
+        <!-- مسار التنقل (Breadcrumb) -->
+        {% if view != 'years' %}
+        <div class="breadcrumb">
+            <a href="/">الرئيسية</a>
+            {% if view in ['subjects', 'subject'] %}
+                <span>/</span> <a href="/?year={{ y_id }}">{{ year_name }}</a>
+            {% endif %}
+            {% if view == 'subject' %}
+                <span>/</span> <a href="javascript:history.back()">رجوع للمواد</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- 1. شاشة اختيار السنة -->
+        {% if view == 'years' %}
+        <div class="grid-container">
+            {% for id, year in data.items() %}
+                <a href="/?year={{ id }}" class="card">{{ year.name }}</a>
             {% endfor %}
         </div>
-        {% endfor %}
+        {% endif %}
+
+        <!-- 2. شاشة اختيار الترم -->
+        {% if view == 'terms' %}
+        <h2 style="text-align:center;">اختر الترم الدراسي</h2>
+        <div class="grid-container">
+            <a href="/?year={{ y_id }}&term=1" class="card card-term">الترم الأول</a>
+            <a href="/?year={{ y_id }}&term=2" class="card card-term">الترم الثاني</a>
+        </div>
+        {% endif %}
+
+        <!-- 3. شاشة اختيار المادة (7 مواد) -->
+        {% if view == 'subjects' %}
+        <h2 style="text-align:center;">{{ term_name }} - المواد الدراسية</h2>
+        <div class="grid-container">
+            {% for subject in subjects %}
+                <a href="/?subject={{ subject.id }}" class="card card-subject">📚 {{ subject.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 4. شاشة محتوى المادة (فيديوهات + 20 شرح) -->
+        {% if view == 'subject' %}
+        <h2 style="text-align:center; font-size: 1.8rem; color: #0f172a;">{{ subject.name }}</h2>
+        
+        <!-- قسم الفيديوهات -->
+        <div class="section-title">🎥 شروحات الفيديو</div>
+        <div class="content-grid">
+            {% for video in subject.videos %}
+                <a href="{{ video.url }}" target="_blank" class="item-btn btn-video">{{ video.title }}</a>
+            {% endfor %}
+        </div>
+
+        <!-- قسم الملخصات والشروحات (20 ملف) -->
+        <div class="section-title">📄 الملفات والشروحات (PDF)</div>
+        <div class="content-grid">
+            {% for pdf in subject.explanations %}
+                <a href="{{ pdf.url }}" target="_blank" class="item-btn btn-pdf">{{ pdf.title }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
     </div>
 </body>
 </html>

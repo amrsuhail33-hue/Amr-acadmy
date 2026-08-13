@@ -103,7 +103,7 @@
         <!-- قسم الفيديوهات مع زري المشاهدة والتحميل -->
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-            {% for item in chapter.items %}
+            {% for item in chapter.lessons %}
                 <div class="card" style="padding: 25px 20px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 25px;">{{ item.title }}</div>
                     <div style="display: flex; gap: 10px; width: 100%;">
@@ -122,7 +122,7 @@
         <!-- قسم الملفات -->
         {% if content_type == 'files' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-            {% for item in chapter.items %}
+            {% for item in chapter.lessons %}
                 {% if item.file %}
                 <a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf">{{ item.title }}</a>
                 {% endif %}

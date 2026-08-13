@@ -13,27 +13,13 @@
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; 
             z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
-            padding: 20px;
+            transition: opacity 0.6s ease, visibility 0.6s ease; padding: 20px;
         }
-        
         .splash-brand { font-family: 'Playfair Display', serif; font-size: 2.4rem; color: #ffffff; letter-spacing: 4px; margin-bottom: 5px; text-align: center; }
         .splash-slogan { font-size: 0.85rem; color: #64748b; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center; }
-        
-        .welcome-text { 
-            width: 100%; max-width: 480px; color: #94a3b8; font-size: 1rem; line-height: 1.8; 
-            margin-bottom: 35px; text-align: center; font-weight: 300;
-        }
-        
-        .enter-btn { 
-            background: #2563eb; color: white; padding: 14px 35px; border-radius: 50px; 
-            text-decoration: none; font-weight: 700; font-size: 1rem;
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
-            animation: pulse 2s infinite;
-        }
-
+        .welcome-text { width: 100%; max-width: 480px; color: #94a3b8; font-size: 1rem; line-height: 1.8; margin-bottom: 35px; text-align: center; font-weight: 300; }
+        .enter-btn { background: #2563eb; color: white; padding: 14px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
-        
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none; }
 
         /* تصميم الموقع الأساسي */
@@ -59,11 +45,30 @@
         .btn-pdf { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 16px; font-size: 1.1rem; }
 
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
+
+        /* --- تصميم مساعد الذكاء الاصطناعي (العائم) --- */
+        .ai-fab { position: fixed; bottom: 25px; left: 25px; background: #2563eb; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(37,99,235,0.4); z-index: 1000; transition: transform 0.2s; }
+        .ai-fab:hover { transform: scale(1.1); }
+        
+        .ai-chat-box { position: fixed; bottom: 95px; left: 25px; width: 320px; max-width: calc(100vw - 50px); height: 400px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 1000; border: 1px solid #e2e8f0; overflow: hidden; transform: scale(0); transform-origin: bottom left; transition: transform 0.3s ease; }
+        .ai-chat-box.active { transform: scale(1); }
+        
+        .ai-chat-header { background: #0f172a; color: white; padding: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .ai-chat-close { cursor: pointer; font-size: 1.2rem; }
+        
+        .ai-chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.9rem; }
+        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .ai-msg.bot { background: white; color: #0f172a; align-self: flex-start; border: 1px solid #e2e8f0; }
+        .ai-msg.user { background: #2563eb; color: white; align-self: flex-end; }
+        
+        .ai-chat-footer { padding: 10px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
+        .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.9rem; }
+        .ai-chat-footer button { background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- شاشة الهوية (تظهر فقط عند فتح الموقع أول مرة، أو عند الرجوع للرئيسية بصفتها هوية) -->
+    <!-- شاشة الهوية والترحيب -->
     <div id="splash-screen">
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
@@ -71,6 +76,24 @@
             أهلاً بك، تشرفنا بزيارتك للأكاديمية. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة. نعمل بكل جهد لجعل المنصة متكاملة ويوماً ما ستصبح منصة لا ينقصها شيء بإذن الله.
         </div>
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
+    </div>
+
+    <!-- زر المساعد الذكي العائم -->
+    <div class="ai-fab" onclick="toggleAIChat()" title="مساعد الذكاء الاصطناعي">🤖</div>
+
+    <!-- صندوق محادثة الذكاء الاصطناعي -->
+    <div class="ai-chat-box" id="aiChatBox">
+        <div class="ai-chat-header">
+            <span>مساعد AS Academy الذكي</span>
+            <span class="ai-chat-close" onclick="toggleAIChat()">✕</span>
+        </div>
+        <div class="ai-chat-body" id="aiChatBody">
+            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك فوراً.</div>
+        </div>
+        <div class="ai-chat-footer">
+            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك هنا..." onkeypress="checkEnter(event)">
+            <button onclick="sendAIMessage()">إرسال</button>
+        </div>
     </div>
 
     <nav class="navbar">
@@ -102,7 +125,7 @@
 
         {% if view == 'terms' %}
         <div class="grid-container">
-            {% for t_id, term_data in terms.items()  %}
+            {% for t_id, term_data in terms.items() %}
             <a href="/?year={{ y_id }}&term={{ t_id }}" class="card">{{ term_data.name }}</a>
             {% endfor %}
         </div>
@@ -163,21 +186,9 @@
     </footer>
 
     <script>
-    // التحقق من الرابط ومن ذاكرة المتصفح
-    window.addEventListener('DOMContentLoaded', (event) => {
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // إذا كان الطالب يتنقل داخل الأقسام (يوجد قيم في الرابط) أو زار الموقع مسبقاً في هذه الجلسة
-        if (urlParams.toString() !== '' || sessionStorage.getItem('seen_intro')) {
-            document.getElementById('splash-screen').style.display = 'none';
-        }
-    });
-
     function enterAcademy() {
         var splash = document.getElementById('splash-screen');
         splash.classList.add('hidden');
-        // حفظ في ذاكرة الجلسة أن الطالب شاهد المقدمة ولن تظهر حتى يغلق المتصفح ويفتحه مجدداً
-        sessionStorage.setItem('seen_intro', 'true');
     }
 
     function searchItems() {
@@ -188,6 +199,51 @@
             if (cards[i].innerText.toUpperCase().indexOf(filter) > -1) { cards[i].style.display = ""; } 
             else { cards[i].style.display = "none"; }
         }
+    }
+
+    // تفعيل نافذة الدردشة الذكية
+    function toggleAIChat() {
+        var box = document.getElementById('aiChatBox');
+        box.classList.toggle('active');
+    }
+
+    function checkEnter(e) {
+        if (e.key === 'Enter') {
+            sendAIMessage();
+        }
+    }
+
+    async function sendAIMessage() {
+        var input = document.getElementById('aiUserInput');
+        var body = document.getElementById('aiChatBody');
+        var text = input.value.trim();
+        if (!text) return;
+
+        // إضافة رسالة المستخدم
+        body.innerHTML += `<div class="ai-msg user">${text}</div>`;
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        // إضافة مؤشر جاري الكتابة
+        var loadingId = 'loading_' + Date.now();
+        body.innerHTML += `<div class="ai-msg bot" id="${loadingId}">جاري التفكير...</div>`;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            let res = await fetch('/ask-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            let data = await res.json();
+            
+            document.getElementById(loadingId).remove();
+            body.innerHTML += `<div class="ai-msg bot">${data.reply}</div>`;
+        } catch (err) {
+            document.getElementById(loadingId).remove();
+            body.innerHTML += `<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>`;
+        }
+        body.scrollTop = body.scrollHeight;
     }
     </script>
 </body>

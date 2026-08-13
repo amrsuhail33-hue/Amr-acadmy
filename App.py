@@ -2,26 +2,13 @@ import csv
 import io
 import requests
 from flask import Flask, render_template, request, jsonify
-import google.generativeai as genai
 
 app = Flask(__name__)
 
-# مفتاح الـ API الخاص بك (مهم: تأكد أنه بين علامتي تنصيص)
+# مفتاح الـ API الخاص بك (تأكد من وجوده بين علامتي التنصيص)
 AI_API_KEY = "AQ.Ab8RN6IhDhOE6PoE3kG_7qenQUwSoVD8vp5GSO1PcjNR4iZvkA"
-
-# --- الجزء الجديد والمعدل لحل الخطأ 404 ---
-# إعداد العميل (Client) مع تحديد عنوان URL الصحيح للخدمة
-try:
-    genai.configure(
-        api_key=AI_API_KEY,
-        transport='rest' # استخدام REST لضمان استقرار الاتصال
-    )
-    # إعداد النموذج مباشرة هنا
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    print(f"Error configuring Gemini: {e}")
-    model = None
-# ------------------------------------------
+# رابط الـ API للنموذج gemini-1.5-flash
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={AI_API_KEY}"
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
 
@@ -106,18 +93,32 @@ def home():
 
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
-    if not model:
-        return jsonify({"reply": "عذراً، المساعد الذكي غير مهيأ حالياً (لم يتم إضافة الـ API Key أو حدث خطأ في الإعداد)."}), 500
     try:
         user_message = request.json.get('message', '')
         if not user_message: return jsonify({"reply": "الرجاء كتابة سؤال."})
-        prompt_template = f"أنت مساعد Amr Suhail Academy الذكي. تساعد طلاب الهندسة والفيزياء في شرح الدروس والقوانين بطريقة مبسطة وواضحة باللغة العربية. سؤال الطالب هو: {user_message}"
-        # إرسال الطلب للنموذج
-        response = model.generate_content(prompt_template)
-        return jsonify({"reply": response.text})
+        
+        # بناء هيكل البيانات للاتصال بـ Gemini مباشرة عبر HTTP
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "contents": [{
+                "parts": [{"text": f"أنت مساعد Amr Suhail Academy الذكي. تساعد طلاب الهندسة والفيزياء في شرح الدروس والقوانين بطريقة مبسطة وواضحة بالغة العربية. سؤال الطالب هو: {user_message}"}]
+            }]
+        }
+        
+        # إرسال الطلب
+        response = requests.post(API_URL, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            ai_response = response.json()
+            # استخراج النص من الرد
+            reply_text = ai_response['candidates'][0]['content']['parts'][0]['text']
+            return jsonify({"reply": reply_text})
+        else:
+            return jsonify({"reply": f"عذراً، حدث خطأ في الاتصال بخادم الذكاء الاصطناعي (كود الخطأ: {response.status_code})."}), 500
+
     except Exception as e:
         print(f"Error generating AI response: {e}")
-        return jsonify({"reply": f"حدث خطأ أثناء معالجة الطلب من الذكاء الاصطناعي: {str(e)}"}), 500
+        return jsonify({"reply": f"حدث خطأ داخلي: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run()

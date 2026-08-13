@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية عمرو سهيل</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; }
+        h1 { color: #0f172a; margin-bottom: 20px; font-size: 1.8rem; }
+        .year-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .year-title { background: #2563eb; color: white; padding: 10px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
+        .subject-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 12px 0; text-align: right; }
+        .subject-title { font-weight: bold; color: #1e293b; margin-bottom: 10px; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; text-decoration: none; padding: 10px; border-radius: 6px; text-align: center; font-size: 0.85rem; font-weight: bold; color: white; }
+        .btn-video { background-color: #dc2626; }
+        .btn-pdf { background-color: #059669; }
+        .btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 أكاديمية عمرو سهيل</h1>
+
+        {% for year_id, year in data.items() %}
+        <div class="year-section">
+            <div class="year-title">{{ year.name }}</div>
+            {% for subject in year.subjects %}
+            <div class="subject-card">
+                <div class="subject-title">📌 {{ subject.title }}</div>
+                <div class="btn-group">
+                    <a href="{{ subject.video }}" target="_blank" class="btn btn-video">🎥 مشاهدة الشرح</a>
+                    <a href="{{ subject.pdf }}" target="_blank" class="btn btn-pdf">📄 تحميل الملخص (PDF)</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

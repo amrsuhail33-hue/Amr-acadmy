@@ -13,7 +13,6 @@
         }
         .container { max-width: 850px; margin: auto; padding: 20px; padding-bottom: 50px; }
         
-        /* شاشة الترحيب */
         #splash {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -27,12 +26,9 @@
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* الترويسة */
         header { text-align: center; margin: 20px 0 30px 0; }
         h1 { color: #0f172a; font-size: 2.2rem; font-weight: 900; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .subtitle { color: #64748b; font-size: 1rem; font-weight: 500; }
         
-        /* مسار التنقل */
         .breadcrumb { 
             display: inline-flex; gap: 10px; justify-content: center; background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(10px); padding: 12px 25px; border-radius: 50px; 
@@ -42,7 +38,6 @@
         .breadcrumb a:hover { color: #1d4ed8; }
         .breadcrumb span { color: #94a3b8; }
         
-        /* البطاقات والشبكات */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
         .card { 
             background: #ffffff; padding: 25px 20px; border-radius: 20px; text-align: center; 
@@ -59,7 +54,6 @@
         .card-type-video { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; border: none; }
         .card-type-file { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; border: none; }
 
-        /* المحتوى */
         .subject-header { text-align: center; font-size: 2rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
         
         .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
@@ -77,7 +71,6 @@
 </head>
 <body>
 
-    <!-- شاشة الترحيب -->
     {% if view == 'years' %}
     <div id="splash">
         <div class="splash-text">Amr Suhail Academy</div>
@@ -85,12 +78,10 @@
     {% endif %}
 
     <div class="container">
-        <!-- الترويسة -->
         <header>
             <h1>Amr Suhail Academy</h1>
         </header>
 
-        <!-- مسار التنقل -->
         <div style="text-align: center;">
             {% if view != 'years' %}
             <div class="breadcrumb">
@@ -111,11 +102,12 @@
         </div>
         {% endif %}
 
-        <!-- 2. اختيار الترم -->
+        <!-- 2. اختيار الترم (ديناميكي من الشيت) -->
         {% if view == 'terms' %}
         <div class="grid-container">
-            <a href="/?year={{ y_id }}&term=1" class="card card-term">الترم الأول</a>
-            <a href="/?year={{ y_id }}&term=2" class="card card-term">الترم الثاني</a>
+            {% for t_id, term_data in terms.items() %}
+            <a href="/?year={{ y_id }}&term={{ t_id }}" class="card card-term">{{ term_data.name }}</a>
+            {% endfor %}
         </div>
         {% endif %}
 
@@ -137,7 +129,7 @@
         </div>
         {% endif %}
 
-        <!-- 5. عرض قائمة المقاطع أو الملفات -->
+        <!-- 5. عرض المحتوى -->
         {% if view == 'content' %}
         <h2 class="subject-header">{{ subject.name }}</h2>
         

@@ -2,67 +2,136 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>أكاديمية عمرو سهيل</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #334155; }
-        .container { max-width: 800px; margin: auto; }
+        /* إعدادات اللمس والسلاسة */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+            margin: 0; padding: 0; color: #1e293b; min-height: 100vh;
+        }
+        .container { max-width: 850px; margin: auto; padding: 20px; padding-bottom: 50px; }
         
-        /* الترويسة والتنقل */
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #0f172a; font-size: 2rem; margin-bottom: 5px; }
-        .breadcrumb { display: flex; gap: 8px; justify-content: center; background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; font-weight: bold; }
-        .breadcrumb a { text-decoration: none; color: #2563eb; }
+        /* 🌟 شاشة الترحيب الملكية (Splash Screen) 🌟 */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            animation: fadeOut 0.8s ease-in-out 2.5s forwards;
+            pointer-events: none; /* لمنع التعليق بعد الاختفاء */
+        }
+        .splash-icon { font-size: 5.5rem; animation: floatIcon 2s ease-in-out infinite; }
+        .splash-text { font-size: 2.5rem; font-weight: 900; color: #ffffff; margin-top: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; animation: slideUp 0.8s forwards 0.3s; }
+        .splash-desc { color: #fbbf24; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; opacity: 0; animation: slideUp 0.8s forwards 0.6s; }
+
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* الترويسة العلوية */
+        header { text-align: center; margin: 20px 0 30px 0; }
+        h1 { color: #0f172a; font-size: 2.2rem; font-weight: 900; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .subtitle { color: #64748b; font-size: 1rem; font-weight: 500; }
         
-        /* البطاقات والشبكات */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; text-decoration: none; color: #0f172a; font-size: 1.2rem; font-weight: bold; border: 2px solid transparent; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: 0.3s; }
-        .card:hover { border-color: #2563eb; transform: translateY(-3px); }
-        .card-term { background: #eff6ff; border: 2px solid #bfdbfe; }
-        .card-subject { background: #f0fdf4; border: 2px solid #bbf7d0; font-size: 1.1rem; }
+        /* مسار التنقل (Breadcrumb) الفخم */
+        .breadcrumb { 
+            display: inline-flex; gap: 10px; justify-content: center; background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); padding: 12px 25px; border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; font-weight: bold; font-size: 0.95rem; border: 1px solid #ffffff;
+        }
+        .breadcrumb a { text-decoration: none; color: #2563eb; transition: 0.2s; }
+        .breadcrumb a:hover { color: #1d4ed8; }
+        .breadcrumb span { color: #94a3b8; }
         
+        /* البطاقات والشبكات (فخامة زجاجية) */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .card { 
+            background: #ffffff; padding: 25px 20px; border-radius: 20px; text-align: center; 
+            text-decoration: none; font-size: 1.3rem; font-weight: 800; color: #1e293b;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); touch-action: manipulation;
+        }
+        .card:hover { transform: translateY(-7px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-color: #bfdbfe; }
+        .card:active { transform: scale(0.97); }
+        
+        /* تلوين خاص للبطاقات */
+        .card-year { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; border: none; }
+        .card-year:hover { box-shadow: 0 15px 35px rgba(37,99,235,0.3); }
+        .card-term { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color: white; border: none; }
+        .card-term:hover { box-shadow: 0 15px 35px rgba(14,165,233,0.3); }
+        .card-subject { border-right: 5px solid #2563eb; }
+
         /* أقسام المحتوى (المادة) */
-        .section-title { font-size: 1.4rem; color: #1e293b; margin: 30px 0 15px 0; border-bottom: 3px solid #2563eb; display: inline-block; padding-bottom: 5px; }
-        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .item-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; text-decoration: none; font-size: 0.95rem; font-weight: bold; color: white; text-align: center; transition: 0.2s; }
-        .btn-video { background-color: #ef4444; }
-        .btn-video:hover { background-color: #dc2626; }
-        .btn-pdf { background-color: #10b981; }
-        .btn-pdf:hover { background-color: #059669; }
+        .subject-header { text-align: center; font-size: 2rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
+        .section-title { 
+            font-size: 1.3rem; color: #1e293b; margin: 35px 0 20px 0; font-weight: 800;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title::before { content: ""; display: block; width: 12px; height: 12px; background: #fbbf24; border-radius: 50%; }
+        
+        /* أزرار المحتوى (فيديو / PDF) */
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .item-btn { 
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; 
+            border-radius: 12px; text-decoration: none; font-size: 1rem; font-weight: 700; color: white; 
+            text-align: center; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); touch-action: manipulation;
+        }
+        .item-btn:hover { transform: translateY(-3px); }
+        .item-btn:active { transform: scale(0.95); }
+        
+        /* تدرجات لونية فخمة للأزرار */
+        .btn-video { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+        .btn-video:hover { box-shadow: 0 8px 20px rgba(239,68,68,0.4); }
+        .btn-pdf { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+        .btn-pdf:hover { box-shadow: 0 8px 20px rgba(16,185,129,0.4); }
     </style>
 </head>
 <body>
+
+    <!-- 🌟 شاشة الترحيب الملكية (في الصفحة الرئيسية فقط) 🌟 -->
+    {% if view == 'years' %}
+    <div id="splash">
+        <div class="splash-icon">🎓</div>
+        <div class="splash-text">أكاديمية عمرو سهيل</div>
+        <div class="splash-desc">لتبسيط المناهج الهندسية</div>
+    </div>
+    {% endif %}
+
     <div class="container">
+        <!-- الترويسة الدائمة -->
         <header>
-            <h1>🎓 أكاديمية عمرو سهيل</h1>
-            <p>منصة تعليمية متكاملة لتبسيط المناهج الهندسية</p>
+            <h1>أكاديمية عمرو سهيل</h1>
+            <div class="subtitle">بوابتك للتفوق الهندسي</div>
         </header>
 
-        <!-- مسار التنقل (Breadcrumb) -->
-        {% if view != 'years' %}
-        <div class="breadcrumb">
-            <a href="/">الرئيسية</a>
-            {% if view in ['subjects', 'subject'] %}
-                <span>/</span> <a href="/?year={{ y_id }}">{{ year_name }}</a>
-            {% endif %}
-            {% if view == 'subject' %}
-                <span>/</span> <a href="javascript:history.back()">رجوع للمواد</a>
+        <!-- مسار التنقل (Breadcrumb) الذكي -->
+        <div style="text-align: center;">
+            {% if view != 'years' %}
+            <div class="breadcrumb">
+                <a href="/">الرئيسية</a>
+                {% if view in ['subjects', 'subject'] %}
+                    <span>/</span> <a href="/?year={{ y_id }}">{{ year_name }}</a>
+                {% endif %}
+                {% if view == 'subject' %}
+                    <span>/</span> <a href="javascript:history.back()">الخلف</a>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
-        {% endif %}
 
         <!-- 1. شاشة اختيار السنة -->
         {% if view == 'years' %}
         <div class="grid-container">
             {% for id, year in data.items() %}
-                <a href="/?year={{ id }}" class="card">{{ year.name }}</a>
+                <a href="/?year={{ id }}" class="card card-year">{{ year.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
 
         <!-- 2. شاشة اختيار الترم -->
         {% if view == 'terms' %}
-        <h2 style="text-align:center;">اختر الترم الدراسي</h2>
         <div class="grid-container">
             <a href="/?year={{ y_id }}&term=1" class="card card-term">الترم الأول</a>
             <a href="/?year={{ y_id }}&term=2" class="card card-term">الترم الثاني</a>
@@ -71,31 +140,30 @@
 
         <!-- 3. شاشة اختيار المادة (7 مواد) -->
         {% if view == 'subjects' %}
-        <h2 style="text-align:center;">{{ term_name }} - المواد الدراسية</h2>
         <div class="grid-container">
             {% for subject in subjects %}
-                <a href="/?subject={{ subject.id }}" class="card card-subject">📚 {{ subject.name }}</a>
+                <a href="/?subject={{ subject.id }}" class="card card-subject">📘 {{ subject.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
 
         <!-- 4. شاشة محتوى المادة (فيديوهات + 20 شرح) -->
         {% if view == 'subject' %}
-        <h2 style="text-align:center; font-size: 1.8rem; color: #0f172a;">{{ subject.name }}</h2>
+        <h2 class="subject-header">{{ subject.name }}</h2>
         
         <!-- قسم الفيديوهات -->
-        <div class="section-title">🎥 شروحات الفيديو</div>
+        <div class="section-title">شروحات الفيديو (MP4)</div>
         <div class="content-grid">
             {% for video in subject.videos %}
-                <a href="{{ video.url }}" target="_blank" class="item-btn btn-video">{{ video.title }}</a>
+                <a href="{{ video.url }}" target="_blank" class="item-btn btn-video">▶ {{ video.title }}</a>
             {% endfor %}
         </div>
 
         <!-- قسم الملخصات والشروحات (20 ملف) -->
-        <div class="section-title">📄 الملفات والشروحات (PDF)</div>
+        <div class="section-title">الملفات والشروحات (PDF)</div>
         <div class="content-grid">
             {% for pdf in subject.explanations %}
-                <a href="{{ pdf.url }}" target="_blank" class="item-btn btn-pdf">{{ pdf.title }}</a>
+                <a href="{{ pdf.url }}" target="_blank" class="item-btn btn-pdf">⬇ {{ pdf.title }}</a>
             {% endfor %}
         </div>
         {% endif %}

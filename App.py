@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# --- توليد هيكل البيانات برمجياً لاختصار الكود ---
+# بناء هيكل البيانات برمجياً
 DATA = {}
 years = {"1": "السنة الأولى", "2": "السنة الثانية"}
 terms = {"1": "الترم الأول", "2": "الترم الثاني"}
@@ -13,7 +13,6 @@ for y_id, y_name in years.items():
     for t_id, t_name in terms.items():
         subjects = []
         
-        # تخصيص المواد للترم الحالي كمثال جاهز للاستخدام
         if y_id == "2" and t_id == "2":
             subj_names = [
                 "آلات كهربائية (DC Motors)", 
@@ -25,15 +24,14 @@ for y_id, y_name in years.items():
                 "تحكم كلاسيكي"
             ]
         else:
-            # توليد 7 مواد افتراضية لباقي الأترام
             subj_names = [f"مادة {i}" for i in range(1, 8)]
 
         for i, s_name in enumerate(subj_names):
-            # توليد فيديوهات (يمكنك مستقبلاً استبدال '#' بروابطك الحقيقية)
-            videos = [{"title": f"فيديو شرح {v}", "url": "#"} for v in range(1, 6)]
+            # 10 مقاطع فيديو وشروحات لكل مادة
+            videos = [{"title": f"فيديو / شرح {v}", "url": "#"} for v in range(1, 11)]
             
-            # توليد 20 ملف وشرح لكل مادة برمجياً
-            explanations = [{"title": f"ملف / ملخص رقم {e}", "url": "#"} for e in range(1, 21)]
+            # 10 ملفات لكل مادة
+            explanations = [{"title": f"ملف {e}", "url": "#"} for e in range(1, 11)]
             
             subjects.append({
                 "id": f"{y_id}_{t_id}_{i+1}",
@@ -44,20 +42,29 @@ for y_id, y_name in years.items():
             
         DATA[y_id]["terms"][t_id] = {"name": t_name, "subjects": subjects}
 
-# --- مسارات التنقل في الموقع ---
+# إدارة مسارات التنقل
 @app.route('/')
 def home():
     year = request.args.get('year')
     term = request.args.get('term')
     subject_id = request.args.get('subject')
+    content_type = request.args.get('type')  # 'videos' أو 'files'
 
-    # 4. شاشة عرض المحتوى (فيديوهات وملفات)
+    # 5. شاشة عرض المحتوى المحدد (إما مقاطع فيديو وشروحات أو ملفات)
+    if subject_id and content_type:
+        for y in DATA.values():
+            for t in y["terms"].values():
+                for s in t["subjects"]:
+                    if s["id"] == subject_id:
+                        return render_template('index.html', view='content', subject=s, content_type=content_type)
+
+    # 4. شاشة اختيار نوع المحتوى
     if subject_id:
         for y in DATA.values():
             for t in y["terms"].values():
                 for s in t["subjects"]:
                     if s["id"] == subject_id:
-                        return render_template('index.html', view='subject', subject=s)
+                        return render_template('index.html', view='select_type', subject=s)
 
     # 3. شاشة اختيار المادة
     if year and term:

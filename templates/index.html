@@ -68,7 +68,7 @@
 </head>
 <body class="notranslate">
 
-    <!-- شاشة الهوية والترحيب (تظهر عند الفتح لأول مرة فقط في الجلسة) -->
+    <!-- شاشة الهوية والترحيب -->
     <div id="splash-screen" class="hidden">
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
@@ -158,12 +158,24 @@
 
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
+        
+        <!-- قسم الفيديوهات -->
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
             {% for item in chapter.lessons %}
-                <div class="card" style="padding: 25px;">
-                    <div style="margin-bottom: 20px; font-weight:800;">{{ item.title }}</div>
-                    <div style="display: flex; gap: 10px;">
+                <div class="card" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="margin-bottom: 15px; font-weight:800;">{{ item.title }}</div>
+                        
+                        <!-- صندوق الملاحظات للفيديو -->
+                        {% if item.notes %}
+                        <div style="background-color: #fffbeb; color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; text-align: right; border: 1px solid #fde68a; line-height: 1.5;">
+                            💡 <b>ملاحظة:</b> {{ item.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: auto;">
                         {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
                         {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
                     </div>
@@ -171,13 +183,25 @@
             {% endfor %}
         </div>
         {% endif %}
+        
+        <!-- قسم الملفات -->
         {% if content_type == 'files' %}
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
             {% for item in chapter.lessons %}
-                {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf">{{ item.title }}</a>{% endif %}
+                <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #e2e8f0; box-shadow: none; background: #ffffff;">
+                    {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
+                    
+                    <!-- صندوق الملاحظات للملفات -->
+                    {% if item.notes %}
+                    <div style="background-color: #f0fdf4; color: #166534; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; border: 1px solid #bbf7d0; line-height: 1.5; margin-top: auto;">
+                        📌 {{ item.notes }}
+                    </div>
+                    {% endif %}
+                </div>
             {% endfor %}
         </div>
         {% endif %}
+        
         {% endif %}
     </div>
 

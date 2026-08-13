@@ -20,7 +20,8 @@ def get_data_from_sheet():
         csv_reader = csv.DictReader(io.StringIO(csv_text))
         
         for row in csv_reader:
-            year = term = subject = chapter = title = video_url = download_url = content_type = ""
+            # تمت إعادة المتغير file_url هنا
+            year = term = subject = chapter = title = video_url = download_url = content_type = file_url = ""
             for key, val in row.items():
                 if not key or val is None: continue
                 k = str(key).strip(); v = str(val).strip()
@@ -31,6 +32,7 @@ def get_data_from_sheet():
                 elif "عنوان" in k or "درس" in k: title = v
                 elif "رابط المقطع" in k: video_url = v
                 elif "تحميل" in k: download_url = v
+                elif "رابط الملف" in k: file_url = v  # <-- تمت إعادة قراءة عمود رابط الملف
                 elif "نوع" in k: content_type = v
             
             if not year or not term or not subject or not title: continue
@@ -50,7 +52,8 @@ def get_data_from_sheet():
                 subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({"title": title, "video": video_url, "download": download_url})
             elif "ملف" in content_type:
                 if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": download_url})
+                # تم التعديل ليقبل رابط الملف أو التحميل
+                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": file_url or download_url})
 
         for y in data.values():
             for t in y["terms"].values():
@@ -72,7 +75,6 @@ def home():
         content_type = request.args.get('type')
         chapter_name = request.args.get('chapter')
 
-        # 1. عرض محتوى الدروس (فيديوهات أو ملفات)
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
                 for t in y["terms"].values():
@@ -82,7 +84,6 @@ def home():
                                 if c["name"] == chapter_name:
                                     return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
 
-        # 2. عرض الشباتر/الفصول داخل المادة
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
@@ -90,7 +91,6 @@ def home():
                         if s["id"] == subject_id:
                             return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
 
-        # 3. اختيار نوع المحتوى (فيديو أو ملفات) للمادة
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
@@ -98,17 +98,14 @@ def home():
                         if s["id"] == subject_id:
                             return render_template('index.html', view='select_type', subject=s)
 
-        # 4. عرض المواد داخل الترم
         if year and term:
             if year in DATA and term in DATA[year]["terms"]:
                 return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year)
 
-        # 5. عرض الأترام داخل السنة (مثل السنة الثانية -> الترم الأول والثاني)
         if year:
             if year in DATA:
                 return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year)
 
-        # 6. الصفحة الرئيسية (عرض السنوات)
         return render_template('index.html', view='years', data=DATA)
     except Exception as e:
         return f"Error: {str(e)}"

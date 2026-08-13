@@ -15,6 +15,10 @@
         
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         
+        /* تصميم شريط البحث */
+        .search-box { margin-bottom: 30px; }
+        #searchInput { width: 100%; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none; }
+        
         .breadcrumb { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; font-size: 0.95rem; font-weight: 700; }
         .breadcrumb a { color: #2563eb; text-decoration: none; padding: 6px 14px; background: #eff6ff; border-radius: 20px; transition: 0.2s; }
         .breadcrumb a:hover { background: #dbeafe; color: #1d4ed8; }
@@ -47,11 +51,18 @@
 
     <div class="main-content">
         
+        <!-- شريط البحث يظهر في الصفحات الرئيسية -->
+        {% if view in ['years', 'terms', 'subjects'] %}
+        <div class="search-box">
+            <input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن مادة أو درس...">
+        </div>
+        {% endif %}
+
         {% if view != 'years' %}
         <div class="breadcrumb">
             <a href="/">الرئيسية</a>
             {% if view in ['subjects', 'chapters', 'select_type', 'content'] %}
-                <span>/</span> <a href="javascript:history.back()">رجوع للخلف</a>
+                <span>/</span> <a href="javascript:history.back()">رجوع</a>
             {% endif %}
         </div>
         {% endif %}
@@ -99,48 +110,46 @@
 
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
-        
-        <!-- قسم الفيديوهات مع زري المشاهدة والتحميل -->
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
             {% for item in chapter.lessons %}
-                <div class="card" style="padding: 25px 20px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 25px;">{{ item.title }}</div>
-                    <div style="display: flex; gap: 10px; width: 100%;">
-                        {% if item.video %}
-                        <a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex: 1;">▶ مشاهدة</a>
-                        {% endif %}
-                        {% if item.download %}
-                        <a href="{{ item.download }}" target="_blank" class="item-btn" style="flex: 1; background-color: #0ea5e9; color: white; border: none;">⬇ تحميل</a>
-                        {% endif %}
+                <div class="card" style="padding: 25px 20px;">
+                    <div style="margin-bottom: 25px; font-weight:800;">{{ item.title }}</div>
+                    <div style="display: flex; gap: 10px;">
+                        {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
+                        {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
                     </div>
                 </div>
             {% endfor %}
         </div>
         {% endif %}
-
-        <!-- قسم الملفات -->
         {% if content_type == 'files' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
             {% for item in chapter.lessons %}
-                {% if item.file %}
-                <a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf">{{ item.title }}</a>
-                {% endif %}
+                {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf">{{ item.title }}</a>{% endif %}
             {% endfor %}
         </div>
         {% endif %}
-
         {% endif %}
-
     </div>
 
     <footer class="footer">
         <div class="footer-brand">Amr Suhail Academy</div>
         <div>جميع الحقوق محفوظة &copy; 2026</div>
-        <div class="footer-contact">
-            للدعم والاستفسار: <a href="https://wa.me/967774485611" target="_blank" dir="ltr">+967 774 485 611</a>
-        </div>
+        <div class="footer-contact">للدعم: <a href="https://wa.me/967774485611" target="_blank" dir="ltr">+967 774 485 611</a></div>
     </footer>
 
+    <!-- كود البحث الذكي -->
+    <script>
+    function searchItems() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toUpperCase();
+        var cards = document.getElementsByClassName("card");
+        for (var i = 0; i < cards.length; i++) {
+            if (cards[i].innerText.toUpperCase().indexOf(filter) > -1) { cards[i].style.display = ""; } 
+            else { cards[i].style.display = "none"; }
+        }
+    }
+    </script>
 </body>
 </html>

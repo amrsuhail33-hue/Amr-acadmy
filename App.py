@@ -6,9 +6,9 @@ from google import genai
 
 app = Flask(__name__)
 
-# إعداد مفتاح الذكاء الاصطناعي الخاص بك
+# مفتاح الـ API الخاص بك
 AI_API_KEY = "AQ.Ab8RN6IhDhOE6PoE3kG_7qenQUwSoVD8vp5GSO1PcjNR4iZvkA"
-ai_client = genai.Client(api_key=AI_API_KEY) if AI_API_KEY != "YOUR_GEMINI_API_KEY" else None
+ai_client = genai.Client(api_key=AI_API_KEY)
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
 
@@ -128,9 +128,6 @@ def home():
 # مسار استقبال أسئلة الطلاب والرد عبر الذكاء الاصطناعي
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
-    if not ai_client:
-        return jsonify({"reply": "عذراً، مساعد الذكاء الاصطناعي غير مفعل حالياً."}), 400
-    
     try:
         user_message = request.json.get('message', '')
         if not user_message:
@@ -138,13 +135,14 @@ def ask_ai():
         
         prompt = f"أنت مساعد ذكاء اصطناعي ذكي لـ Amr Suhail Academy. تساعد طلاب الهندسة والفيزياء في شرح الدروس والقوانين بطريقة مبسطة وواضحة باللغة العربية. سؤال الطالب هو: {user_message}"
         
+        # تم تحديث النموذج إلى gemini-1.5-flash
         response = ai_client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=prompt
         )
         return jsonify({"reply": response.text})
     except Exception as e:
-        return jsonify({"reply": f"حدث خطأ أثناء معالجة الطلب: {str(e)}"}), 500
+        return jsonify({"reply": f"حدث خطأ: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run()

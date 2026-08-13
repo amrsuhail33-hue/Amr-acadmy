@@ -1,9 +1,14 @@
 import csv
 import io
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
+from google import genai
 
 app = Flask(__name__)
+
+# إعداد مفتاح الذكاء الاصطناعي الخاص بك
+AI_API_KEY = "AQ.Ab8RN6IhDhOE6PoE3kG_7qenQUwSoVD8vp5GSO1PcjNR4iZvkA"
+ai_client = genai.Client(api_key=AI_API_KEY) if AI_API_KEY != "YOUR_GEMINI_API_KEY" else None
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
 
@@ -50,22 +55,17 @@ def get_data_from_sheet():
 
             subj_data = data[year]["terms"][term]["subjects"][subject]
 
-            # تم تغيير الكلمة المحجوزة items إلى lessons لتفادي الخطأ
             if "فيديو" in content_type:
                 if chapter not in subj_data["types"]["videos"]["chapters"]:
                     subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
-                    "title": title, 
-                    "video": video_url,
-                    "download": download_url
+                    "title": title, "video": video_url, "download": download_url
                 })
-            
             elif "ملف" in content_type:
                 if chapter not in subj_data["types"]["files"]["chapters"]:
                     subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
-                    "title": title, 
-                    "file": file_url
+                    "title": title, "file": file_url
                 })
 
         for y in data.values():
@@ -84,7 +84,6 @@ def get_data_from_sheet():
 def home():
     try:
         DATA = get_data_from_sheet()
-        
         year = request.args.get('year')
         term = request.args.get('term')
         subject_id = request.args.get('subject')
@@ -105,8 +104,7 @@ def home():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id:
-                            chapters = s["types"][content_type]["chapters"]
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=chapters)
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
 
         if subject_id:
             for y in DATA.values():
@@ -124,9 +122,29 @@ def home():
                 return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year)
 
         return render_template('index.html', view='years', data=DATA)
-    
     except Exception as e:
-        return f"<div style='text-align:center; padding:50px; font-family:sans-serif;'><h2 style='color:red;'>حدث خطأ برمجي:</h2><p>{str(e)}</p><a href='/'>العودة للرئيسية</a></div>"
+        return f"Error: {str(e)}"
+
+# مسار استقبال أسئلة الطلاب والرد عبر الذكاء الاصطناعي
+@app.route('/ask-ai', methods=['POST'])
+def ask_ai():
+    if not ai_client:
+        return jsonify({"reply": "عذراً، مساعد الذكاء الاصطناعي غير مفعل حالياً."}), 400
+    
+    try:
+        user_message = request.json.get('message', '')
+        if not user_message:
+            return jsonify({"reply": "الرجاء كتابة سؤال."})
+        
+        prompt = f"أنت مساعد ذكاء اصطناعي ذكي لـ Amr Suhail Academy. تساعد طلاب الهندسة والفيزياء في شرح الدروس والقوانين بطريقة مبسطة وواضحة باللغة العربية. سؤال الطالب هو: {user_message}"
+        
+        response = ai_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        return jsonify({"reply": response.text})
+    except Exception as e:
+        return jsonify({"reply": f"حدث خطأ أثناء معالجة الطلب: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run()

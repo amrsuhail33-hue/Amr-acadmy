@@ -7,7 +7,6 @@ app = Flask(__name__)
 
 # مفتاح الـ API الخاص بك
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-# الرابط المعتمد
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
@@ -65,8 +64,54 @@ def get_data_from_sheet():
 
 @app.route('/')
 def home():
-    DATA = get_data_from_sheet()
-    return render_template('index.html', view='years', data=DATA)
+    try:
+        DATA = get_data_from_sheet()
+        year = request.args.get('year')
+        term = request.args.get('term')
+        subject_id = request.args.get('subject')
+        content_type = request.args.get('type')
+        chapter_name = request.args.get('chapter')
+
+        # 1. عرض محتوى الدروس (فيديوهات أو ملفات)
+        if subject_id and content_type and chapter_name:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            for c in s["types"][content_type]["chapters"]:
+                                if c["name"] == chapter_name:
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
+
+        # 2. عرض الشباتر/الفصول داخل المادة
+        if subject_id and content_type:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
+
+        # 3. اختيار نوع المحتوى (فيديو أو ملفات) للمادة
+        if subject_id:
+            for y in DATA.values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == subject_id:
+                            return render_template('index.html', view='select_type', subject=s)
+
+        # 4. عرض المواد داخل الترم
+        if year and term:
+            if year in DATA and term in DATA[year]["terms"]:
+                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year)
+
+        # 5. عرض الأترام داخل السنة (مثل السنة الثانية -> الترم الأول والثاني)
+        if year:
+            if year in DATA:
+                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year)
+
+        # 6. الصفحة الرئيسية (عرض السنوات)
+        return render_template('index.html', view='years', data=DATA)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -75,26 +120,20 @@ def ask_ai():
         if not user_message: return jsonify({"reply": "الرجاء كتابة سؤال."})
         
         headers = {'Content-Type': 'application/json', 'X-goog-api-key': AI_API_KEY}
-        
-        # تعليمات صارمة للذكاء الاصطناعي لتسهيل الرموز وسرعة الرد
         prompt_text = (f"أنت مساعد Amr Suhail Academy. اشرح للطالب في الهندسة والفيزياء بأسلوب بسيط جداً. "
-                       f"القوانين والمعادلات اكتبها بأرقام وحروف عادية واضحة دون أي رموز برمجة أو لاتكس. "
-                       f"كن مختصراً ومفيداً. سؤال الطالب: {user_message}")
+                       f"اكتب القوانين والمعادلات بأرقام وحروف عادية واضحة دون أي رموز برمجة معقدة. "
+                       f"سؤال الطالب: {user_message}")
         
         payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
-        
-        # إرسال الطلب مع timeout لسرعة الاستجابة ومنع تعليق الموقع
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=8)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=12)
         
         if response.status_code == 200:
             reply_text = response.json()['candidates'][0]['content']['parts'][0]['text']
             return jsonify({"reply": reply_text})
         else:
-            return jsonify({"reply": "المساعد مشغول، يرجى المحاولة لاحقاً."}), 500
-    except requests.exceptions.Timeout:
-        return jsonify({"reply": "عذراً، الرد استغرق وقتاً طويلاً. يرجى إعادة المحاولة."}), 500
+            return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
     except Exception as e:
-        return jsonify({"reply": "حدث خطأ في الاتصال، تأكد من اتصال الإنترنت."}), 500
+        return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
 
 if __name__ == '__main__':
     app.run()

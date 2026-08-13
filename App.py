@@ -5,10 +5,8 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# مفتاح الـ API الخاص بك
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
-
 CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
 
 def get_data_from_sheet():
@@ -20,8 +18,8 @@ def get_data_from_sheet():
         csv_reader = csv.DictReader(io.StringIO(csv_text))
         
         for row in csv_reader:
-            # تمت إعادة المتغير file_url هنا
-            year = term = subject = chapter = title = video_url = download_url = content_type = file_url = ""
+            # إضافة المتغير notes هنا
+            year = term = subject = chapter = title = video_url = download_url = content_type = file_url = notes = ""
             for key, val in row.items():
                 if not key or val is None: continue
                 k = str(key).strip(); v = str(val).strip()
@@ -32,7 +30,8 @@ def get_data_from_sheet():
                 elif "عنوان" in k or "درس" in k: title = v
                 elif "رابط المقطع" in k: video_url = v
                 elif "تحميل" in k: download_url = v
-                elif "رابط الملف" in k: file_url = v  # <-- تمت إعادة قراءة عمود رابط الملف
+                elif "رابط الملف" in k: file_url = v
+                elif "ملاحظ" in k: notes = v  # <-- قراءة عمود الملاحظات
                 elif "نوع" in k: content_type = v
             
             if not year or not term or not subject or not title: continue
@@ -49,11 +48,16 @@ def get_data_from_sheet():
             
             if "فيديو" in content_type:
                 if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({"title": title, "video": video_url, "download": download_url})
+                # حفظ الملاحظة مع بيانات الفيديو
+                subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
+                    "title": title, "video": video_url, "download": download_url, "notes": notes
+                })
             elif "ملف" in content_type:
                 if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                # تم التعديل ليقبل رابط الملف أو التحميل
-                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": file_url or download_url})
+                # حفظ الملاحظة مع بيانات الملف
+                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
+                    "title": title, "file": file_url or download_url, "notes": notes
+                })
 
         for y in data.values():
             for t in y["terms"].values():

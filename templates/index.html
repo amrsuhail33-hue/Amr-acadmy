@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amr Suhail Academy</title>
-    <!-- استدعاء خط احترافي من جوجل -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
@@ -14,7 +13,6 @@
             display: flex; flex-direction: column; min-height: 100vh;
         }
         
-        /* شريط التصفح العلوي (Navbar) */
         .navbar {
             position: sticky; top: 0; background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0;
@@ -29,15 +27,12 @@
         }
         .navbar-contact:hover { background-color: #334155; }
 
-        /* منطقة المحتوى الرئيسية */
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         
-        /* قسم الترحيب (Hero) */
         .hero-section { text-align: center; margin-bottom: 40px; }
         .hero-title { font-size: 2.2rem; font-weight: 900; color: #0f172a; margin: 0 0 10px 0; }
         .hero-subtitle { font-size: 1.1rem; color: #64748b; margin: 0; font-weight: 500; }
 
-        /* مسار التنقل */
         .breadcrumb { 
             display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; 
             font-size: 0.95rem; font-weight: 700; color: #64748b;
@@ -46,7 +41,6 @@
         .breadcrumb a:hover { background: #dbeafe; color: #1d4ed8; }
         .breadcrumb span { margin-top: 4px; }
         
-        /* البطاقات الاحترافية */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
         .card { 
             background: #ffffff; padding: 30px 20px; border-radius: 16px; text-align: center; 
@@ -56,16 +50,12 @@
         }
         .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border-color: #e2e8f0; }
         
-        /* ألوان البطاقات */
         .card-primary { background-color: #2563eb; color: #ffffff; border: none; }
         .card-primary:hover { box-shadow: 0 20px 25px -5px rgba(37,99,235,0.2); }
         .card-secondary { background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; }
         
-        /* عناوين الأقسام الداخلية */
         .section-header { text-align: center; font-size: 1.8rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
-        .sub-header { font-size: 1.2rem; font-weight: 700; color: #334155; margin-bottom: 20px; border-right: 4px solid #2563eb; padding-right: 10px; }
         
-        /* أزرار المحتوى (الفيديو والملفات) */
         .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 40px; }
         .item-btn { 
             display: flex; align-items: center; justify-content: center; padding: 14px 16px; 
@@ -79,7 +69,6 @@
         .btn-pdf { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .btn-pdf:hover { background-color: #a7f3d0; }
 
-        /* التذييل الاحترافي (Footer) */
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
         .footer-brand { font-size: 1.4rem; font-weight: 900; color: #ffffff; margin-bottom: 10px; }
         .footer-contact { margin-top: 15px; font-size: 0.95rem; }
@@ -88,16 +77,13 @@
 </head>
 <body>
 
-    <!-- شريط التصفح العلوي -->
     <nav class="navbar">
         <a href="/" class="navbar-brand">Amr Suhail Academy</a>
-        <!-- تم وضع كود اليمن 967 لضمان فتح الواتساب مباشرة من أي جهاز -->
         <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
     </nav>
 
     <div class="main-content">
         
-        <!-- الترحيب يظهر في الصفحة الرئيسية فقط -->
         {% if view == 'years' %}
         <div class="hero-section">
             <h1 class="hero-title">بوابتك للتفوق الهندسي</h1>
@@ -105,7 +91,6 @@
         </div>
         {% endif %}
 
-        <!-- مسار التنقل -->
         {% if view != 'years' %}
         <div class="breadcrumb">
             <a href="/">الرئيسية</a>
@@ -115,7 +100,7 @@
         </div>
         {% endif %}
 
-        <!-- 1. اختيار السنة -->
+        <!-- 1. السنة -->
         {% if view == 'years' %}
         <div class="grid-container">
             {% for id, year in data.items() %}
@@ -124,7 +109,7 @@
         </div>
         {% endif %}
 
-        <!-- 2. اختيار الترم -->
+        <!-- 2. الترم -->
         {% if view == 'terms' %}
         <div class="grid-container">
             {% for t_id, term_data in terms.items() %}
@@ -133,7 +118,7 @@
         </div>
         {% endif %}
 
-        <!-- 3. اختيار المادة -->
+        <!-- 3. المادة -->
         {% if view == 'subjects' %}
         <div class="grid-container">
             {% for subject in subjects %}
@@ -142,52 +127,37 @@
         </div>
         {% endif %}
 
-        <!-- 4. اختيار الشبتر -->
+        <!-- 4. اختيار النوع بعد المادة مباشرة -->
+        {% if view == 'select_type' %}
+        <h2 class="section-header">{{ subject.name }}</h2>
+        <div class="grid-container">
+            <a href="/?subject={{ subject.id }}&type=videos" class="card card-secondary">مقاطع الفيديو والشروحات</a>
+            <a href="/?subject={{ subject.id }}&type=files" class="card card-secondary">الملفات والمستندات</a>
+        </div>
+        {% endif %}
+
+        <!-- 5. عرض الشباتر بناء على النوع المختار -->
         {% if view == 'chapters' %}
         <h2 class="section-header">{{ subject.name }}</h2>
         <div class="grid-container">
-            {% for chapter in subject.chapters %}
-                <a href="/?chapter={{ chapter.id }}" class="card">{{ chapter.name }}</a>
+            {% for chapter in chapters %}
+                <a href="/?subject={{ subject.id }}&type={{ content_type }}&chapter={{ chapter.name }}" class="card">{{ chapter.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
 
-        <!-- 5. اختيار نوع المحتوى -->
-        {% if view == 'select_type' %}
-        <h2 class="section-header">{{ chapter.name }}</h2>
-        <div class="grid-container">
-            <a href="/?chapter={{ chapter.id }}&type=videos" class="card card-secondary">مقاطع الفيديو والشروحات</a>
-            <a href="/?chapter={{ chapter.id }}&type=files" class="card card-secondary">الملفات والمستندات</a>
-        </div>
-        {% endif %}
-
-        <!-- 6. عرض المحتوى -->
+        <!-- 6. عرض الروابط داخل الشبتر -->
         {% if view == 'content' %}
-        <h2 class="section-header">{{ chapter.name }}</h2>
-        
-        {% if content_type == 'videos' %}
-        <div class="sub-header">مقاطع الفيديو والشروحات</div>
+        <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
         <div class="content-grid">
-            {% for video in chapter.videos %}
-                <a href="{{ video.url }}" target="_blank" class="item-btn btn-video">{{ video.title }}</a>
+            {% for item in chapter.items %}
+                <a href="{{ item.url }}" target="_blank" class="item-btn {% if content_type == 'videos' %}btn-video{% else %}btn-pdf{% endif %}">{{ item.title }}</a>
             {% endfor %}
         </div>
-        {% endif %}
-
-        {% if content_type == 'files' %}
-        <div class="sub-header">الملفات (PDF)</div>
-        <div class="content-grid">
-            {% for pdf in chapter.explanations %}
-                <a href="{{ pdf.url }}" target="_blank" class="item-btn btn-pdf">{{ pdf.title }}</a>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         {% endif %}
 
     </div>
 
-    <!-- التذييل (Footer) -->
     <footer class="footer">
         <div class="footer-brand">Amr Suhail Academy</div>
         <div>جميع الحقوق محفوظة &copy; 2026</div>

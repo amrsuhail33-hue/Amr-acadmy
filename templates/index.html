@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- منع المتصفح من ترجمة الصفحة وتخريب الأكواد العربية والبرمجية -->
+    <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: #f8fafc; margin: 0; padding: 0; color: #0f172a; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* شاشة الهوية والترحيب */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; 
             z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -22,7 +23,6 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none; }
 
-        /* تصميم الموقع الأساسي */
         .navbar { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .navbar-brand { font-size: 1.4rem; font-weight: 900; color: #0f172a; text-decoration: none; }
         .navbar-contact { background-color: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 700; }
@@ -57,7 +57,7 @@
         .ai-chat-close { cursor: pointer; font-size: 1.2rem; }
         
         .ai-chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.9rem; }
-        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
         .ai-msg.bot { background: white; color: #0f172a; align-self: flex-start; border: 1px solid #e2e8f0; }
         .ai-msg.user { background: #2563eb; color: white; align-self: flex-end; }
         
@@ -66,7 +66,7 @@
         .ai-chat-footer button { background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
-<body>
+<body class="notranslate">
 
     <!-- شاشة الهوية والترحيب -->
     <div id="splash-screen">
@@ -201,7 +201,6 @@
         }
     }
 
-    // تفعيل نافذة الدردشة الذكية
     function toggleAIChat() {
         var box = document.getElementById('aiChatBox');
         box.classList.toggle('active');
@@ -219,14 +218,12 @@
         var text = input.value.trim();
         if (!text) return;
 
-        // إضافة رسالة المستخدم
-        body.innerHTML += `<div class="ai-msg user">${text}</div>`;
+        body.innerHTML += '<div class="ai-msg user">' + text + '</div>';
         input.value = '';
         body.scrollTop = body.scrollHeight;
 
-        // إضافة مؤشر جاري الكتابة
         var loadingId = 'loading_' + Date.now();
-        body.innerHTML += `<div class="ai-msg bot" id="${loadingId}">جاري التفكير...</div>`;
+        body.innerHTML += '<div class="ai-msg bot" id="' + loadingId + '">جاري التفكير...</div>';
         body.scrollTop = body.scrollHeight;
 
         try {
@@ -238,14 +235,13 @@
             let data = await res.json();
             
             document.getElementById(loadingId).remove();
-            body.innerHTML += `<div class="ai-msg bot">${data.reply}</div>`;
+            body.innerHTML += '<div class="ai-msg bot">' + data.reply + '</div>';
         } catch (err) {
             document.getElementById(loadingId).remove();
-            body.innerHTML += `<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>`;
+            body.innerHTML += '<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>';
         }
         body.scrollTop = body.scrollHeight;
     }
     </script>
 </body>
 </html>
-

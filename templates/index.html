@@ -4,83 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amr Suhail Academy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background-color: #f8fafc; margin: 0; padding: 0; color: #0f172a; }
+        body { background-color: #f8fafc; margin: 0; padding: 0; color: #0f172a; display: flex; flex-direction: column; min-height: 100vh; }
         
         /* شاشة الترحيب الانسيابية */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; 
             z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 1s ease-in-out;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            padding: 20px;
         }
-        .brand-container { text-align: center; transition: all 1s ease-in-out; }
-        .splash-brand { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #ffffff; letter-spacing: 5px; margin-bottom: 5px; }
-        .splash-slogan { font-size: 0.8rem; color: #64748b; font-weight: 200; letter-spacing: 2px; text-transform: uppercase; }
+        .splash-brand { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #ffffff; letter-spacing: 4px; margin-bottom: 5px; text-align: center; }
+        .splash-slogan { font-size: 0.85rem; color: #64748b; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center; }
         
         .welcome-text { 
-            width: 80%; max-width: 500px; color: #94a3b8; font-size: 1rem; line-height: 1.8; 
-            margin: 40px auto; text-align: center; opacity: 0; animation: fadeIn 1s forwards 1s;
+            width: 100%; max-width: 450px; color: #94a3b8; font-size: 0.95rem; line-height: 1.8; 
+            margin-bottom: 35px; text-align: center; font-weight: 300;
         }
         
         .enter-btn { 
-            background: #2563eb; color: white; padding: 15px 40px; border-radius: 50px; 
-            text-decoration: none; font-weight: 700; opacity: 0; animation: fadeIn 1s forwards 1.5s, pulse 2s infinite;
+            background: #2563eb; color: white; padding: 14px 35px; border-radius: 50px; 
+            text-decoration: none; font-weight: 700; font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            animation: pulse 2s infinite;
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
         
-        /* كلاس للانتقال للأعلى */
-        .move-up { transform: translateY(-35vh); }
-        .hidden { display: none !important; }
+        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-        /* باقي تصميم المنصة (Navbar, Footer, Grid...) */
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; border-bottom: 1px solid #e2e8f0; background: white; }
-        .main-content { width: 100%; max-width: 1000px; margin: auto; padding: 40px 20px; }
+        /* تصميم الموقع الأساسي */
+        .navbar { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .navbar-brand { font-size: 1.4rem; font-weight: 900; color: #0f172a; text-decoration: none; }
+        .navbar-contact { background-color: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 700; }
+        
+        .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .search-box { margin-bottom: 30px; }
+        #searchInput { width: 100%; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1.1rem; }
+        
+        .breadcrumb { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; font-size: 0.95rem; font-weight: 700; }
+        .breadcrumb a { color: #2563eb; text-decoration: none; padding: 6px 14px; background: #eff6ff; border-radius: 20px; }
+        
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 30px; border-radius: 16px; text-align: center; text-decoration: none; font-weight: 800; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .section-header { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .card { background: #ffffff; padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1); border-color: #e2e8f0; }
+        .card-primary { background-color: #2563eb; color: #ffffff; border: none; }
+        
+        .section-header { text-align: center; font-size: 1.8rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
+        .item-btn { display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: all 0.2s ease; }
+        .btn-video { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .btn-pdf { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 16px; font-size: 1.1rem; }
+
+        .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
     </style>
 </head>
 <body>
 
-    <!-- الشاشة الترحيبية -->
+    <!-- شاشة الترحيب -->
     <div id="splash-screen">
-        <div id="brand-container" class="brand-container">
-            <div class="splash-brand">Amr Suhail</div>
-            <div class="splash-slogan">From nothing to be something</div>
-        </div>
+        <div class="splash-brand">Amr Suhail Academy</div>
+        <div class="splash-slogan">From nothing to be something</div>
         <div class="welcome-text">
             أهلاً بك، تشرفنا بزيارتك للأكاديمية. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة. نعمل بكل جهد لجعل المنصة متكاملة ويوماً ما ستصبح منصة لا ينقصها شيء بإذن الله.
         </div>
-        <a href="#" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
+        <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
 
-    <!-- المحتوى الفعلي (مخفي) -->
-    <div id="main-ui" class="hidden">
-        <nav class="navbar">
-            <div style="font-weight:900;">Amr Suhail Academy</div>
-            <a href="https://wa.me/967774485611" target="_blank" style="background:#0f172a; color:white; padding:8px 16px; border-radius:20px; text-decoration:none; font-size:0.8rem;">تواصل معنا</a>
-        </nav>
-        <div class="main-content">
-            <h2 class="section-header">اختر السنة الدراسية</h2>
-            <div class="grid-container">
-                {% for id, year in data.items() %}
-                    <a href="/?year={{ id }}" class="card">{{ year.name }}</a>
-                {% endfor %}
-            </div>
+    <!-- الناف بار الأساسية -->
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">Amr Suhail Academy</a>
+        <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
+    </nav>
+
+    <div class="main-content">
+        {% if view in ['years', 'terms', 'subjects'] %}
+        <div class="search-box"><input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن مادة أو درس..."></div>
+        {% endif %}
+
+        {% if view != 'years' %}
+        <div class="breadcrumb">
+            <a href="/">الرئيسية</a>
+            {% if view in ['subjects', 'chapters', 'select_type', 'content'] %}
+                <span>/</span> <a href="javascript:history.back()">رجوع</a>
+            {% endif %}
         </div>
+        {% endif %}
+
+        {% if view == 'years' %}
+        <div class="grid-container">
+            {% for id, year in data.items() %}
+                <a href="/?year={{ id }}" class="card card-primary">{{ year.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'terms' %}
+        <div class="grid-container">
+            {% for t_id, term_data in terms.items() %}
+            <a href="/?year={{ y_id }}&term={{ t_id }}" class="card">{{ term_data.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'subjects' %}
+        <div class="grid-container">
+            {% for subject in subjects %}
+                <a href="/?subject={{ subject.id }}" class="card">{{ subject.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'select_type' %}
+        <h2 class="section-header">{{ subject.name }}</h2>
+        <div class="grid-container">
+            <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو</a>
+            <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات</a>
+        </div>
+        {% endif %}
+
+        {% if view == 'chapters' %}
+        <h2 class="section-header">{{ subject.name }}</h2>
+        <div class="grid-container">
+            {% for chapter in chapters %}
+                <a href="/?subject={{ subject.id }}&type={{ content_type }}&chapter={{ chapter.name }}" class="card">{{ chapter.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'content' %}
+        <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
+        {% if content_type == 'videos' %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            {% for item in chapter.lessons %}
+                <div class="card" style="padding: 25px;">
+                    <div style="margin-bottom: 20px; font-weight:800;">{{ item.title }}</div>
+                    <div style="display: flex; gap: 10px;">
+                        {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
+                        {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if content_type == 'files' %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+            {% for item in chapter.lessons %}
+                {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf">{{ item.title }}</a>{% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
+
+    <footer class="footer">
+        <div>Amr Suhail Academy &copy; 2026</div>
+    </footer>
 
     <script>
-        function enterAcademy() {
-            document.getElementById('brand-container').classList.add('move-up');
-            document.getElementById('splash-screen').style.backgroundColor = "transparent";
-            document.getElementById('splash-screen').style.pointerEvents = "none";
-            document.getElementById('main-ui').classList.remove('hidden');
+    function enterAcademy() {
+        var splash = document.getElementById('splash-screen');
+        splash.classList.add('hidden');
+    }
+
+    function searchItems() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toUpperCase();
+        var cards = document.getElementsByClassName("card");
+        for (var i = 0; i < cards.length; i++) {
+            if (cards[i].innerText.toUpperCase().indexOf(filter) > -1) { cards[i].style.display = ""; } 
+            else { cards[i].style.display = "none"; }
         }
+    }
     </script>
 </body>
 </html>

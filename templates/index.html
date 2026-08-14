@@ -8,8 +8,29 @@
     <title>Amr Suhail Academy</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
+        /* --- متغيرات الألوان للوضع الليلي والنهاري --- */
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --border: #e2e8f0;
+            --accent: #10b981;
+            --nav-bg: rgba(255, 255, 255, 0.95);
+        }
+        .dark-mode {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --border: #334155;
+            --nav-bg: rgba(30, 41, 59, 0.95);
+        }
+
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background-color: #f8fafc; margin: 0; padding: 0; color: #0f172a; display: flex; flex-direction: column; min-height: 100vh; }
+        body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; 
@@ -23,94 +44,178 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none; }
 
-        .navbar { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .navbar-brand { font-size: 1.4rem; font-weight: 900; color: #0f172a; text-decoration: none; }
-        .navbar-contact { background-color: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 700; }
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: background 0.3s; }
+        .navbar-brand { font-size: 1.4rem; font-weight: 900; color: var(--text-main); text-decoration: none; }
+        .navbar-contact { background-color: var(--text-main); color: var(--bg-card); padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: background 0.3s, color 0.3s; }
+        
+        .theme-toggle { cursor: pointer; background: none; border: none; color: var(--text-main); outline: none; transition: transform 0.3s; display: flex; align-items: center; justify-content: center; }
+        .theme-toggle:hover { transform: scale(1.1); }
+        .theme-toggle svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .search-box { margin-bottom: 30px; }
-        #searchInput { width: 100%; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1.1rem; }
+        #searchInput { width: 100%; padding: 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; background: var(--bg-card); color: var(--text-main); transition: background 0.3s, color 0.3s, border 0.3s; }
+        #searchInput:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
         
         .breadcrumb { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; font-size: 0.95rem; font-weight: 700; }
-        .breadcrumb a { color: #2563eb; text-decoration: none; padding: 6px 14px; background: #eff6ff; border-radius: 20px; }
+        .breadcrumb a { color: var(--primary); text-decoration: none; padding: 6px 14px; background: rgba(37, 99, 235, 0.1); border-radius: 20px; transition: background 0.3s; }
+        .breadcrumb a:hover { background: rgba(37, 99, 235, 0.2); }
         
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .card { background: #ffffff; padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: all 0.3s ease; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1); border-color: #e2e8f0; }
-        .card-primary { background-color: #2563eb; color: #ffffff; border: none; }
+        .card { background: var(--bg-card); padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: var(--text-main); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .card-primary { background-color: var(--primary); color: #ffffff !important; border: none; }
         
-        .section-header { text-align: center; font-size: 1.8rem; color: #0f172a; margin: 0 0 30px 0; font-weight: 900; }
+        .section-header { text-align: center; font-size: 1.8rem; color: var(--text-main); margin: 0 0 30px 0; font-weight: 900; }
         .item-btn { display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: all 0.2s ease; }
-        .btn-video { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .btn-pdf { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; padding: 16px; font-size: 1.1rem; }
+        .btn-video { background-color: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
+        .btn-pdf { background-color: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; font-size: 1.1rem; }
 
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
 
-        /* --- تصميم مساعد الذكاء الاصطناعي (العائم) --- */
-        .ai-fab { position: fixed; bottom: 25px; left: 25px; background: #2563eb; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(37,99,235,0.4); z-index: 1000; transition: transform 0.2s; }
-        .ai-fab:hover { transform: scale(1.1); }
+        /* --- تصميم الأزرار العائمة (اليسار) --- */
+        .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; transition: transform 0.2s; color: white; }
+        .fab-btn:hover { transform: scale(1.1); }
+        .fab-btn svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
-        .ai-chat-box { position: fixed; bottom: 95px; left: 25px; width: 320px; max-width: calc(100vw - 50px); height: 400px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; z-index: 1000; border: 1px solid #e2e8f0; overflow: hidden; transform: scale(0); transform-origin: bottom left; transition: transform 0.3s ease; }
-        .ai-chat-box.active { transform: scale(1); }
-        
-        .ai-chat-header { background: #0f172a; color: white; padding: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-        .ai-chat-close { cursor: pointer; font-size: 1.2rem; }
-        
-        .ai-chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.9rem; }
-        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
-        .ai-msg.bot { background: white; color: #0f172a; align-self: flex-start; border: 1px solid #e2e8f0; }
-        .ai-msg.user { background: #2563eb; color: white; align-self: flex-end; }
-        
-        .ai-chat-footer { padding: 10px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
-        .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.9rem; }
-        .ai-chat-footer button { background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        /* فقاعة المساعد الذكي (أسفل) */
+        .ai-fab { bottom: 25px; background: var(--primary); box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
+        /* فقاعة الحاسبة (فوق المساعد الذكي) */
+        .calc-fab { bottom: 95px; background: var(--accent); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
 
-        /* --- تصميم شريط التقدم الجديد --- */
-        .progress-container { background: #ffffff; padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: #0f172a; font-size: 1.1rem; }
-        .progress-bar-bg { width: 100%; height: 10px; background-color: #e2e8f0; border-radius: 20px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #3b82f6); border-radius: 20px; transition: width 0.5s ease; }
-        .lesson-card.completed { border-color: #10b981; background-color: #f0fdf4; }
-        .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
-        .btn-complete.active { background: #10b981; color: white; border-color: #059669; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        /* --- النوافذ المنبثقة --- */
+        .popup-box { position: fixed; left: 25px; bottom: 165px; width: 340px; max-width: calc(100vw - 50px); max-height: 50vh; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0); transform-origin: bottom left; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .popup-box.active { transform: scale(1); }
+        
+        .popup-header { color: white; padding: 15px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+        .popup-header svg { width: 20px; height: 20px; margin-left: 8px; vertical-align: middle; }
+        .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; }
+        .popup-body { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-body); flex: 1; }
+        
+        /* ألوان المساعد */
+        #aiChatBox { background: var(--bg-card); }
+        #aiChatBox .popup-header { background: var(--primary); }
+        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; color: var(--text-main); font-size: 0.9rem; }
+        .ai-msg.bot { background: var(--bg-card); align-self: flex-start; border: 1px solid var(--border); }
+        .ai-msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .ai-chat-footer { padding: 10px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.9rem; background: var(--bg-body); color: var(--text-main); }
+        .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+        /* ألوان الحاسبة */
+        #calcBox { background: var(--bg-card); }
+        #calcBox .popup-header { background: var(--accent); }
+        .calc-row { display: flex; gap: 10px; align-items: center; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.95rem; background: var(--bg-card); color: var(--text-main); text-align: center; transition: border 0.3s; }
+        .calc-input:focus { border-color: var(--accent); }
+        .btn-calc-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: opacity 0.3s; width: 100%; font-size: 1rem; }
+        .btn-calc-action:hover { opacity: 0.9; }
+        .btn-calc-outline { background: transparent; color: var(--accent); border: 2px dashed var(--accent); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background 0.3s; width: 100%; }
+        .calc-result-box { background: var(--bg-card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; display: none; }
+        .calc-result-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; }
+        .res-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* --- تصميم شريط التقدم --- */
+        .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; }
+        .progress-bar-bg { width: 100%; height: 10px; background-color: var(--border); border-radius: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary)); border-radius: 20px; transition: width 0.5s ease; }
+        .lesson-card.completed { border-color: var(--accent); }
+        .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
+        .btn-complete.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
     </style>
 </head>
 <body class="notranslate">
 
-    <!-- شاشة الهوية والترحيب -->
+    <!-- شاشة الترحيب -->
     <div id="splash-screen" class="hidden">
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
         <div class="welcome-text">
-            أهلاً بك، تشرفنا بزيارتك للأكاديمية. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة. نعمل بكل جهد لجعل المنصة متكاملة ويوماً ما ستصبح منصة لا ينقصها شيء بإذن الله.
+            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
         </div>
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
 
-    <!-- زر المساعد الذكي العائم -->
-    <div class="ai-fab" onclick="toggleAIChat()" title="مساعد الذكاء الاصطناعي">🤖</div>
-
-    <!-- صندوق محادثة الذكاء الاصطناعي -->
-    <div class="ai-chat-box" id="aiChatBox">
-        <div class="ai-chat-header">
-            <span>مساعد AS Academy الذكي</span>
-            <span class="ai-chat-close" onclick="toggleAIChat()">✕</span>
+    <!-- إخفاء الفقاعات في الصفحات الداخلية وإظهارها فقط في الرئيسية -->
+    {% if view == 'years' %}
+    
+    <!-- فقاعة حاسبة التقدير (فوق المساعد الذكي) -->
+    <div class="fab-btn calc-fab" onclick="toggleCalc()" title="حاسبة التقدير التراكمي">
+        <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
+    </div>
+    
+    <div class="popup-box" id="calcBox">
+        <div class="popup-header">
+            <div>
+                <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"></path></svg>
+                <span>حاسبة التقدير</span>
+            </div>
+            <span class="popup-close" onclick="toggleCalc()">✕</span>
         </div>
-        <div class="ai-chat-body" id="aiChatBody">
-            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك فوراً.</div>
-        </div>
-        <div class="ai-chat-footer">
-            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك هنا..." onkeypress="checkEnter(event)">
-            <button onclick="sendAIMessage()">إرسال</button>
+        <div class="popup-body">
+            <div id="subjectsList" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="calc-row">
+                    <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+                    <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+                </div>
+                <div class="calc-row">
+                    <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+                    <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+                </div>
+            </div>
+            <button class="btn-calc-outline" onclick="addRow()">+ إضافة مادة أخرى</button>
+            <button class="btn-calc-action" onclick="calcFinalGPA()">إصدار التقدير النهائي</button>
+            
+            <div id="calcResultBox" class="calc-result-box">
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">التقدير المتوقع</div>
+                <div id="resGrade" class="res-grade">-</div>
+                <div id="resDetails" class="res-details">النسبة: - | الساعات: -</div>
+            </div>
         </div>
     </div>
 
+    <!-- فقاعة المساعد الذكي (أسفل اليسار) -->
+    <div class="fab-btn ai-fab" onclick="toggleAIChat()" title="المساعد الذكي">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16.01"></line><line x1="16" y1="16" x2="16" y2="16.01"></line></svg>
+    </div>
+    
+    <div class="popup-box" id="aiChatBox">
+        <div class="popup-header">
+            <div>
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><path d="M8 16h.01M16 16h.01"></path></svg>
+                <span>مساعد AS Academy</span>
+            </div>
+            <span class="popup-close" onclick="toggleAIChat()">✕</span>
+        </div>
+        <div class="popup-body" id="aiChatBody">
+            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك.</div>
+        </div>
+        <div class="ai-chat-footer">
+            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك..." onkeypress="checkEnter(event)">
+            <button onclick="sendAIMessage()">إرسال</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- شريط التنقل -->
     <nav class="navbar">
         <a href="/" class="navbar-brand">Amr Suhail Academy</a>
-        <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="تبديل المظهر">
+                <!-- أيقونة القمر (الافتراضية) -->
+                <svg id="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <!-- أيقونة الشمس -->
+                <svg id="sun-icon" style="display: none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+            <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
+        </div>
     </nav>
 
     <div class="main-content">
+        
         {% if view in ['years', 'terms', 'subjects'] %}
         <div class="search-box"><input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن مادة أو درس..."></div>
         {% endif %}
@@ -127,7 +232,7 @@
         {% if view == 'years' %}
         <div class="grid-container">
             {% for id, year in data.items() %}
-                <a href="/?year={{ id }}" class="card card-primary">{{ year.name }}</a>
+                <a href="/?year={{ id }}" class="card card-primary" style="color: white;">{{ year.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
@@ -168,7 +273,6 @@
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
         
-        <!-- === إضافة شريط التقدم هنا === -->
         <div class="progress-container">
             <div class="progress-header">
                 <span>نسبة الإنجاز</span>
@@ -179,28 +283,23 @@
             </div>
         </div>
         
-        <!-- قسم الفيديوهات -->
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
             {% for item in chapter.lessons %}
-                <!-- إضافة كلاس lesson-card و data-id -->
                 <div class="card lesson-card" data-id="video_{{ item.title }}" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="margin-bottom: 15px; font-weight:800;">{{ item.title }}</div>
-                        
                         {% if item.notes %}
-                        <div style="background-color: #fffbeb; color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; text-align: right; border: 1px solid #fde68a; line-height: 1.5;">
+                        <div style="background-color: rgba(245, 158, 11, 0.1); color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; text-align: right; line-height: 1.5;">
                             💡 <b>ملاحظة:</b> {{ item.notes }}
                         </div>
                         {% endif %}
                     </div>
-                    
                     <div>
                         <div style="display: flex; gap: 10px; margin-top: auto;">
                             {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
                             {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
                         </div>
-                        <!-- زر تتبع التقدم للفيديو -->
                         <button class="btn-complete" onclick="toggleProgress(this, 'video_{{ item.title }}')">
                             <span class="btn-text">تحديد كمنجز</span>
                         </button>
@@ -210,24 +309,18 @@
         </div>
         {% endif %}
         
-        <!-- قسم الملفات -->
         {% if content_type == 'files' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
             {% for item in chapter.lessons %}
-                <!-- إضافة كلاس lesson-card و data-id -->
-                <div class="card lesson-card" data-id="file_{{ item.title }}" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #e2e8f0; box-shadow: none; background: #ffffff;">
-                    
+                <div class="card lesson-card" data-id="file_{{ item.title }}" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
-                        
                         {% if item.notes %}
-                        <div style="background-color: #f0fdf4; color: #166534; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; border: 1px solid #bbf7d0; line-height: 1.5; margin-top: auto;">
+                        <div style="background-color: rgba(16, 185, 129, 0.1); color: #059669; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; line-height: 1.5; margin-top: auto;">
                             📌 {{ item.notes }}
                         </div>
                         {% endif %}
                     </div>
-
-                    <!-- زر تتبع التقدم للملف -->
                     <button class="btn-complete" onclick="toggleProgress(this, 'file_{{ item.title }}')">
                         <span class="btn-text">تحديد كمنجز</span>
                     </button>
@@ -235,7 +328,6 @@
             {% endfor %}
         </div>
         {% endif %}
-        
         {% endif %}
     </div>
 
@@ -244,57 +336,81 @@
     </footer>
 
     <script>
-    // التحقق مما إذا زار المستخدم الموقع مسبقاً في هذه الجلسة
+    // --- نظام الوضع الليلي ---
+    function updateThemeIcon() {
+        const isDark = document.body.classList.contains('dark-mode');
+        document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+        document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        updateThemeIcon();
+    }
+
     window.addEventListener('DOMContentLoaded', (event) => {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        updateThemeIcon();
+
         if (!sessionStorage.getItem('visited')) {
             var splash = document.getElementById('splash-screen');
-            if (splash) {
-                splash.classList.remove('hidden');
-            }
+            if (splash) splash.classList.remove('hidden');
         }
-        // استدعاء دالة تحديث التقدم عند تحميل الصفحة
         updateProgressUI();
     });
 
     function enterAcademy() {
         var splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.classList.add('hidden');
-        }
+        if (splash) splash.classList.add('hidden');
         sessionStorage.setItem('visited', 'true');
     }
 
     function searchItems() {
         var input = document.getElementById("searchInput");
         var filter = input.value.toUpperCase();
-        var cards = document.getElementsByClassName("card");
+        var cards = document.querySelectorAll(".grid-container .card");
         for (var i = 0; i < cards.length; i++) {
             if (cards[i].innerText.toUpperCase().indexOf(filter) > -1) { cards[i].style.display = ""; } 
             else { cards[i].style.display = "none"; }
         }
     }
 
-    function toggleAIChat() {
-        var box = document.getElementById('aiChatBox');
-        box.classList.toggle('active');
-    }
-
-    function checkEnter(e) {
-        if (e.key === 'Enter') {
-            sendAIMessage();
+    // --- نظام النوافذ العائمة (مع إغلاق الأخرى تلقائياً) ---
+    function toggleAIChat() { 
+        const aiBox = document.getElementById('aiChatBox');
+        const calcBox = document.getElementById('calcBox');
+        if(aiBox) {
+            aiBox.classList.toggle('active'); 
+            if(calcBox && calcBox.classList.contains('active')) calcBox.classList.remove('active');
         }
     }
+    
+    function toggleCalc() { 
+        const calcBox = document.getElementById('calcBox');
+        const aiBox = document.getElementById('aiChatBox');
+        if(calcBox) {
+            calcBox.classList.toggle('active'); 
+            if(aiBox && aiBox.classList.contains('active')) aiBox.classList.remove('active');
+        }
+    }
+
+    function checkEnter(e) { if (e.key === 'Enter') sendAIMessage(); }
 
     async function sendAIMessage() {
         var input = document.getElementById('aiUserInput');
         var body = document.getElementById('aiChatBody');
+        if(!input || !body) return;
+        
         var text = input.value.trim();
         if (!text) return;
-
+        
         body.innerHTML += '<div class="ai-msg user">' + text + '</div>';
         input.value = '';
         body.scrollTop = body.scrollHeight;
-
+        
         var loadingId = 'loading_' + Date.now();
         body.innerHTML += '<div class="ai-msg bot" id="' + loadingId + '">جاري التفكير...</div>';
         body.scrollTop = body.scrollHeight;
@@ -306,7 +422,6 @@
                 body: JSON.stringify({ message: text })
             });
             let data = await res.json();
-            
             document.getElementById(loadingId).remove();
             body.innerHTML += '<div class="ai-msg bot">' + data.reply + '</div>';
         } catch (err) {
@@ -316,31 +431,84 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // === دوال نظام تتبع التقدم ===
-    const PROGRESS_KEY = "academy_progress_data";
-
-    function getCompletedItems() {
-        return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]");
+    // --- نظام الحاسبة التراكمية ---
+    function addRow() {
+        const div = document.createElement('div');
+        div.className = "calc-row";
+        div.innerHTML = `
+            <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+            <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+        `;
+        document.getElementById('subjectsList').appendChild(div);
+        
+        const calcBody = document.querySelector('#calcBox .popup-body');
+        calcBody.scrollTop = calcBody.scrollHeight;
     }
+
+    function calcFinalGPA() {
+        let totalWeighted = 0;
+        let totalHours = 0;
+        document.querySelectorAll('#subjectsList .calc-row').forEach(row => {
+            const hours = parseFloat(row.querySelector('.s-hours').value);
+            const grade = parseFloat(row.querySelector('.s-grade').value);
+            if(!isNaN(hours) && !isNaN(grade)) {
+                totalWeighted += (hours * grade);
+                totalHours += hours;
+            }
+        });
+
+        const resultBox = document.getElementById('calcResultBox');
+        const resGrade = document.getElementById('resGrade');
+        const resDetails = document.getElementById('resDetails');
+
+        if(totalHours === 0) {
+            resGrade.innerText = "⚠️ خطأ";
+            resGrade.style.color = "#dc2626";
+            resDetails.innerText = "يرجى إدخال الساعات والدرجات بشكل صحيح";
+            resultBox.classList.add('show');
+            return;
+        }
+        
+        const avg = totalWeighted / totalHours;
+        let letter = ''; let color = '';
+        
+        if(avg >= 90) { letter = 'A+ (ممتاز مرتفع)'; color = '#10b981'; }
+        else if(avg >= 85) { letter = 'A (ممتاز)'; color = '#10b981'; }
+        else if(avg >= 80) { letter = 'B+ (جيد جداً مرتفع)'; color = '#3b82f6'; }
+        else if(avg >= 75) { letter = 'B (جيد جداً)'; color = '#3b82f6'; }
+        else if(avg >= 70) { letter = 'C+ (جيد مرتفع)'; color = '#f59e0b'; }
+        else if(avg >= 65) { letter = 'C (جيد)'; color = '#f59e0b'; }
+        else if(avg >= 60) { letter = 'D (مقبول)'; color = '#f97316'; }
+        else { letter = 'F (راسب)'; color = '#dc2626'; }
+        
+        resGrade.innerText = letter;
+        resGrade.style.color = color;
+        resDetails.innerHTML = `النسبة المئوية: <b style="color:${color}">${avg.toFixed(2)}%</b> | إجمالي الساعات: <b>${totalHours}</b>`;
+        
+        resultBox.classList.add('show');
+        
+        const calcBody = document.querySelector('#calcBox .popup-body');
+        calcBody.scrollTop = calcBody.scrollHeight;
+    }
+
+    // --- نظام التقدم ---
+    const PROGRESS_KEY = "academy_progress_data";
+    function getCompletedItems() { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); }
 
     function toggleProgress(btn, itemId) {
         let completedList = getCompletedItems();
         let card = btn.closest('.lesson-card');
-
         if (completedList.includes(itemId)) {
-            // إزالة من المنجز
             completedList = completedList.filter(id => id !== itemId);
             btn.classList.remove('active');
             btn.querySelector('.btn-text').innerText = 'تحديد كمنجز';
             card.classList.remove('completed');
         } else {
-            // إضافة للمنجز
             completedList.push(itemId);
             btn.classList.add('active');
             btn.querySelector('.btn-text').innerText = 'مكتمل ✓';
             card.classList.add('completed');
         }
-
         localStorage.setItem(PROGRESS_KEY, JSON.stringify(completedList));
         calculateProgressPercentage();
     }
@@ -348,49 +516,28 @@
     function updateProgressUI() {
         const completedList = getCompletedItems();
         const cards = document.querySelectorAll('.lesson-card');
-        
         cards.forEach(card => {
             const itemId = card.getAttribute('data-id');
             const btn = card.querySelector('.btn-complete');
-            
             if (completedList.includes(itemId)) {
                 card.classList.add('completed');
-                if(btn) {
-                    btn.classList.add('active');
-                    btn.querySelector('.btn-text').innerText = 'مكتمل ✓';
-                }
+                if(btn) { btn.classList.add('active'); btn.querySelector('.btn-text').innerText = 'مكتمل ✓'; }
             }
         });
-        
         calculateProgressPercentage();
     }
 
     function calculateProgressPercentage() {
         const allCards = document.querySelectorAll('.lesson-card');
-        if (allCards.length === 0) return; // لا تفعل شيء إذا لم نكن في صفحة الدروس
-
+        if (allCards.length === 0) return;
         let completedCount = 0;
-        allCards.forEach(card => {
-            if (card.classList.contains('completed')) {
-                completedCount++;
-            }
-        });
-
+        allCards.forEach(card => { if (card.classList.contains('completed')) completedCount++; });
         const percentage = Math.round((completedCount / allCards.length) * 100);
-        
         const percentText = document.getElementById('progress-percent');
         const percentFill = document.getElementById('progress-fill');
-        
         if(percentText && percentFill) {
             percentText.innerText = percentage + "%";
             percentFill.style.width = percentage + "%";
-            
-            // تغيير لون الشريط إذا اكتمل الشابتر
-            if (percentage === 100) {
-                percentFill.style.background = "linear-gradient(90deg, #059669, #10b981)";
-            } else {
-                percentFill.style.background = "linear-gradient(90deg, #10b981, #3b82f6)";
-            }
         }
     }
     </script>

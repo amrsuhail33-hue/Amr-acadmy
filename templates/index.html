@@ -64,6 +64,15 @@
         .ai-chat-footer { padding: 10px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
         .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.9rem; }
         .ai-chat-footer button { background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+        /* --- تصميم شريط التقدم الجديد --- */
+        .progress-container { background: #ffffff; padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: #0f172a; font-size: 1.1rem; }
+        .progress-bar-bg { width: 100%; height: 10px; background-color: #e2e8f0; border-radius: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #3b82f6); border-radius: 20px; transition: width 0.5s ease; }
+        .lesson-card.completed { border-color: #10b981; background-color: #f0fdf4; }
+        .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #64748b; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
+        .btn-complete.active { background: #10b981; color: white; border-color: #059669; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
     </style>
 </head>
 <body class="notranslate">
@@ -159,15 +168,26 @@
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
         
+        <!-- === إضافة شريط التقدم هنا === -->
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>نسبة الإنجاز</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
         <!-- قسم الفيديوهات -->
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
             {% for item in chapter.lessons %}
-                <div class="card" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between;">
+                <!-- إضافة كلاس lesson-card و data-id -->
+                <div class="card lesson-card" data-id="video_{{ item.title }}" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="margin-bottom: 15px; font-weight:800;">{{ item.title }}</div>
                         
-                        <!-- صندوق الملاحظات للفيديو -->
                         {% if item.notes %}
                         <div style="background-color: #fffbeb; color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; text-align: right; border: 1px solid #fde68a; line-height: 1.5;">
                             💡 <b>ملاحظة:</b> {{ item.notes }}
@@ -175,9 +195,15 @@
                         {% endif %}
                     </div>
                     
-                    <div style="display: flex; gap: 10px; margin-top: auto;">
-                        {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
-                        {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
+                    <div>
+                        <div style="display: flex; gap: 10px; margin-top: auto;">
+                            {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
+                            {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
+                        </div>
+                        <!-- زر تتبع التقدم للفيديو -->
+                        <button class="btn-complete" onclick="toggleProgress(this, 'video_{{ item.title }}')">
+                            <span class="btn-text">تحديد كمنجز</span>
+                        </button>
                     </div>
                 </div>
             {% endfor %}
@@ -188,15 +214,23 @@
         {% if content_type == 'files' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
             {% for item in chapter.lessons %}
-                <div class="card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #e2e8f0; box-shadow: none; background: #ffffff;">
-                    {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
+                <!-- إضافة كلاس lesson-card و data-id -->
+                <div class="card lesson-card" data-id="file_{{ item.title }}" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #e2e8f0; box-shadow: none; background: #ffffff;">
                     
-                    <!-- صندوق الملاحظات للملفات -->
-                    {% if item.notes %}
-                    <div style="background-color: #f0fdf4; color: #166534; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; border: 1px solid #bbf7d0; line-height: 1.5; margin-top: auto;">
-                        📌 {{ item.notes }}
+                    <div>
+                        {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
+                        
+                        {% if item.notes %}
+                        <div style="background-color: #f0fdf4; color: #166534; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; border: 1px solid #bbf7d0; line-height: 1.5; margin-top: auto;">
+                            📌 {{ item.notes }}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
+
+                    <!-- زر تتبع التقدم للملف -->
+                    <button class="btn-complete" onclick="toggleProgress(this, 'file_{{ item.title }}')">
+                        <span class="btn-text">تحديد كمنجز</span>
+                    </button>
                 </div>
             {% endfor %}
         </div>
@@ -218,6 +252,8 @@
                 splash.classList.remove('hidden');
             }
         }
+        // استدعاء دالة تحديث التقدم عند تحميل الصفحة
+        updateProgressUI();
     });
 
     function enterAcademy() {
@@ -278,6 +314,84 @@
             body.innerHTML += '<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>';
         }
         body.scrollTop = body.scrollHeight;
+    }
+
+    // === دوال نظام تتبع التقدم ===
+    const PROGRESS_KEY = "academy_progress_data";
+
+    function getCompletedItems() {
+        return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]");
+    }
+
+    function toggleProgress(btn, itemId) {
+        let completedList = getCompletedItems();
+        let card = btn.closest('.lesson-card');
+
+        if (completedList.includes(itemId)) {
+            // إزالة من المنجز
+            completedList = completedList.filter(id => id !== itemId);
+            btn.classList.remove('active');
+            btn.querySelector('.btn-text').innerText = 'تحديد كمنجز';
+            card.classList.remove('completed');
+        } else {
+            // إضافة للمنجز
+            completedList.push(itemId);
+            btn.classList.add('active');
+            btn.querySelector('.btn-text').innerText = 'مكتمل ✓';
+            card.classList.add('completed');
+        }
+
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(completedList));
+        calculateProgressPercentage();
+    }
+
+    function updateProgressUI() {
+        const completedList = getCompletedItems();
+        const cards = document.querySelectorAll('.lesson-card');
+        
+        cards.forEach(card => {
+            const itemId = card.getAttribute('data-id');
+            const btn = card.querySelector('.btn-complete');
+            
+            if (completedList.includes(itemId)) {
+                card.classList.add('completed');
+                if(btn) {
+                    btn.classList.add('active');
+                    btn.querySelector('.btn-text').innerText = 'مكتمل ✓';
+                }
+            }
+        });
+        
+        calculateProgressPercentage();
+    }
+
+    function calculateProgressPercentage() {
+        const allCards = document.querySelectorAll('.lesson-card');
+        if (allCards.length === 0) return; // لا تفعل شيء إذا لم نكن في صفحة الدروس
+
+        let completedCount = 0;
+        allCards.forEach(card => {
+            if (card.classList.contains('completed')) {
+                completedCount++;
+            }
+        });
+
+        const percentage = Math.round((completedCount / allCards.length) * 100);
+        
+        const percentText = document.getElementById('progress-percent');
+        const percentFill = document.getElementById('progress-fill');
+        
+        if(percentText && percentFill) {
+            percentText.innerText = percentage + "%";
+            percentFill.style.width = percentage + "%";
+            
+            // تغيير لون الشريط إذا اكتمل الشابتر
+            if (percentage === 100) {
+                percentFill.style.background = "linear-gradient(90deg, #059669, #10b981)";
+            } else {
+                percentFill.style.background = "linear-gradient(90deg, #10b981, #3b82f6)";
+            }
+        }
     }
     </script>
 </body>

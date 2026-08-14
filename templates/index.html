@@ -114,8 +114,8 @@
         .btn-calc-outline { background: transparent; color: var(--accent); border: 2px dashed var(--accent); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background 0.3s; width: 100%; }
         .calc-result-box { background: var(--bg-card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; display: none; }
         .calc-result-box.show { display: block; animation: fadeIn 0.3s ease; }
-        .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; }
-        .res-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
+        .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; margin: 5px 0; }
+        .res-details { font-size: 0.9rem; color: var(--text-main); margin-top: 5px; line-height: 1.6; }
 
         /* --- تصميم شريط التقدم --- */
         .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
@@ -172,7 +172,7 @@
             <div id="calcResultBox" class="calc-result-box">
                 <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">التقدير المتوقع</div>
                 <div id="resGrade" class="res-grade">-</div>
-                <div id="resDetails" class="res-details">النسبة: - | الساعات: -</div>
+                <div id="resDetails" class="res-details"></div>
             </div>
         </div>
     </div>
@@ -431,7 +431,7 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // --- نظام الحاسبة التراكمية ---
+    // --- نظام الحاسبة التراكمية (المنبثقة بالقسمة على 20) ---
     function addRow() {
         const div = document.createElement('div');
         div.className = "calc-row";
@@ -469,21 +469,21 @@
             return;
         }
         
-        const avg = totalWeighted / totalHours;
+        const avg = totalWeighted / totalHours; // حساب النسبة المئوية
+        const gpa5 = avg / 20; // حساب المعدل من 5 بالقسمة على 20
+        
         let letter = ''; let color = '';
         
-        if(avg >= 90) { letter = 'A+ (ممتاز مرتفع)'; color = '#10b981'; }
-        else if(avg >= 85) { letter = 'A (ممتاز)'; color = '#10b981'; }
-        else if(avg >= 80) { letter = 'B+ (جيد جداً مرتفع)'; color = '#3b82f6'; }
-        else if(avg >= 75) { letter = 'B (جيد جداً)'; color = '#3b82f6'; }
-        else if(avg >= 70) { letter = 'C+ (جيد مرتفع)'; color = '#f59e0b'; }
-        else if(avg >= 65) { letter = 'C (جيد)'; color = '#f59e0b'; }
+        // التقييم بناءً على النسبة (أو ما يعادلها في نظام الـ 5)
+        if(avg >= 90) { letter = 'A (ممتاز)'; color = '#10b981'; }
+        else if(avg >= 80) { letter = 'B (جيد جداً)'; color = '#3b82f6'; }
+        else if(avg >= 70) { letter = 'C (جيد)'; color = '#f59e0b'; }
         else if(avg >= 60) { letter = 'D (مقبول)'; color = '#f97316'; }
         else { letter = 'F (راسب)'; color = '#dc2626'; }
         
         resGrade.innerText = letter;
         resGrade.style.color = color;
-        resDetails.innerHTML = `النسبة المئوية: <b style="color:${color}">${avg.toFixed(2)}%</b> | إجمالي الساعات: <b>${totalHours}</b>`;
+        resDetails.innerHTML = `النسبة: <b style="color:${color}">${avg.toFixed(2)}%</b> | المعدل: <b style="color:${color}">${gpa5.toFixed(2)} من 5</b><br><span style="font-size:0.8rem; margin-top:5px; display:block;">إجمالي الساعات: <b>${totalHours}</b></span>`;
         
         resultBox.classList.add('show');
         

@@ -169,7 +169,6 @@ def ask_ai():
         user_message = ""
         image_parts = []
 
-        # دعم استقبال البيانات كـ JSON أو كـ FormData (في حال إرفاق ملف)
         if request.is_json:
             user_message = request.json.get('message', '').strip()
         else:
@@ -194,24 +193,31 @@ def ask_ai():
             user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط."
 
         prompt_text = (
-            f"أنت مساعد Amr Suhail Academy. اشرح للطالب في الهندسة والفيزياء بأسلوب بسيط جداً وواضح. "
-            f"اكتب القوانين والمعادلات بتنسيق واضح. سؤال الطالب: {user_message}"
+            f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
+            f"اكتب القوانين والمعادلات بصيغة LaTeX القياسية مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة. "
+            f"سؤال الطالب: {user_message}"
         )
 
         parts = [{"text": prompt_text}] + image_parts
         payload = {"contents": [{"parts": parts}]}
         headers = {'Content-Type': 'application/json'}
 
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=25)
+        # زيادة وقت الاستجابة إلى 40 ثانية لتفادي انقطاع الاتصال عند معالجة الصور
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=40)
 
         if response.status_code == 200:
             result = response.json()
             reply_text = result['candidates'][0]['content']['parts'][0]['text']
             return jsonify({"reply": reply_text})
         else:
-            return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
+            print("AI API Status:", response.status_code, response.text)
+            return jsonify({"reply": "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."}), 500
+            
+    except requests.exceptions.Timeout:
+        return jsonify({"reply": "استغرقت معالجة الصورة وقتاً طويلاً، يرجى إعادة المحاولة بصورة أصغر أو الانتظار قليلاً."}), 500
     except Exception as e:
-        return jsonify({"reply": f"تعذر الاتصال بالخادم: {str(e)}"}), 500
+        print("Server Exception:", str(e))
+        return jsonify({"reply": f"تعذر الاتصال بالخادم حالياً: {str(e)}"}), 500
 
 # ==========================================
 # مسارات المخطط الذكي (Smart Planner)
@@ -228,7 +234,7 @@ def generate_plan():
     
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
+        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'}, timeout=40)
         return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -239,7 +245,7 @@ def reschedule_plan():
     prompt = f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} أرجع JSON للمصفوفة المحدثة."
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
+        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'}, timeout=40)
         return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
     except:
         return jsonify({"error": "failed"}), 500

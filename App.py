@@ -39,7 +39,6 @@ def send_gemini_request(url, payload, max_retries=3, timeout=40):
                         return parts[0]['text'], None
                 return None, "استجابة غير مكتملة من النموذج."
 
-            # في حال وجود ضغط أو انشغال
             if response.status_code in [429, 500, 503, 504]:
                 time.sleep(1.5 * (attempt + 1))
                 continue
@@ -208,7 +207,7 @@ def home():
 def ask_ai():
     try:
         user_message = ""
-        image_parts = []
+        parts = [] # تهيئة المصفوفة لتجنب الخطأ
 
         if request.is_json:
             user_message = request.json.get('message', '').strip()
@@ -220,27 +219,26 @@ def ask_ai():
                     image_bytes = file.read()
                     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                     mime_type = file.mimetype or 'image/jpeg'
-                    # تصحيح هيكل إرسال الصور ليكون متوافقاً مع معيار Gemini REST API
-                    image_parts.append({
+                    parts.append({
                         "inlineData": {
                             "mimeType": mime_type,
                             "data": image_b64
                         }
                     })
 
-        if not user_message and not image_parts:
+        if not user_message and not parts:
             return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
 
-        if not user_message:
-            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط وواضح."
+        # تحديد نص الموجه بشكل صحيح، سواء بوجود رسالة مستخدم أو بدونها (لتحليل صورة فقط)
+        prompt_text = "أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
+        if user_message:
+             prompt_text += f"سؤال الطالب: {user_message}"
+        else:
+             prompt_text += "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط وواضح."
 
-        prompt_text = (
-            f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
-            f"اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
-            f"سؤال الطالب: {user_message}"
-        )
-
-        parts = [{"text": prompt_text}] + image_parts
+        # إضافة النص كمحتوى منفصل في الـ parts كما هو مطلوب
+        parts.insert(0, {"text": prompt_text}) 
+        
         payload = {"contents": [{"parts": parts}]}
 
         reply_text, error = send_gemini_request(API_URL, payload, max_retries=3, timeout=40)

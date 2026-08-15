@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- منع المتصفح من ترجمة الصفحة وتخريب الأكواد -->
     <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
     
-    <!-- تم نقل سكربت قراءة الوضع الليلي هنا لمنع الوميض عند الانتقال بين الصفحات -->
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark-mode');
@@ -16,12 +14,10 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     
-    <!-- مكتبات استخراج الشهادة كصورة والاحتفالات -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        /* --- متغيرات الألوان للوضع الليلي والنهاري --- */
         :root {
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
@@ -33,7 +29,6 @@
             --nav-bg: rgba(255, 255, 255, 0.95);
         }
         
-        /* تغيير تحديد الوضع الليلي ليكون على مستوى html بدل body لتجنب الوميض */
         html.dark-mode {
             --bg-body: #0f172a;
             --bg-card: #1e293b;
@@ -88,14 +83,12 @@
 
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
 
-        /* --- تصميم الأزرار العائمة --- */
         .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; transition: transform 0.2s; color: white; }
         .fab-btn:hover { transform: scale(1.1); }
         .fab-btn svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .ai-fab { bottom: 25px; background: var(--primary); box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
         .calc-fab { bottom: 95px; background: var(--accent); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
 
-        /* --- النوافذ المنبثقة --- */
         .popup-box { position: fixed; left: 25px; bottom: 165px; width: 340px; max-width: calc(100vw - 50px); max-height: 50vh; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0); transform-origin: bottom left; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .popup-box.active { transform: scale(1); }
         
@@ -128,15 +121,22 @@
         .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; margin: 5px 0; }
         .res-details { font-size: 0.9rem; color: var(--text-main); margin-top: 5px; line-height: 1.6; }
 
-        /* --- تصميم الاختبار والشهادة --- */
+        /* --- تصميم الاختبارات المطور --- */
         .quiz-opt { padding: 15px; border: 2px solid var(--border); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1rem; font-weight: 700; }
-        .quiz-opt:hover { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); }
-        .quiz-opt.selected { border-color: var(--primary); background: var(--primary); color: white; }
+        .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); }
+        
+        /* ألوان الإجابات */
+        .quiz-opt.correct { background-color: #10b981 !important; border-color: #10b981 !important; color: white !important; }
+        .quiz-opt.wrong { background-color: #ef4444 !important; border-color: #ef4444 !important; color: white !important; }
+        
+        /* مربع الشرح والتوضيح */
+        .explanation-box { background-color: rgba(59, 130, 246, 0.1); border: 1px dashed var(--primary); padding: 15px; border-radius: 12px; margin-top: 15px; margin-bottom: 15px; color: var(--text-main); font-size: 0.95rem; line-height: 1.6; display: none; text-align: right; animation: fadeIn 0.3s ease; }
+        
         .quiz-progress-bg { width: 100%; height: 8px; background: var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
         .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary)); transition: width 0.3s ease; }
+        
         .certificate-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px 25px; position: relative; color: white; text-align: center; margin-bottom:20px; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
-        /* --- تصميم شريط التقدم --- */
         .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; }
         .progress-bar-bg { width: 100%; height: 10px; background-color: var(--border); border-radius: 20px; overflow: hidden; }
@@ -148,7 +148,6 @@
 </head>
 <body class="notranslate">
 
-    <!-- شاشة الترحيب -->
     <div id="splash-screen" class="hidden">
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
@@ -158,9 +157,7 @@
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
 
-    <!-- إخفاء الفقاعات في الصفحات الداخلية وإظهارها فقط في الرئيسية -->
     {% if view == 'years' %}
-    
     <div class="fab-btn calc-fab" onclick="toggleCalc()" title="حاسبة التقدير التراكمي">
         <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
     </div>
@@ -217,7 +214,6 @@
     </div>
     {% endif %}
 
-    <!-- شريط التنقل -->
     <nav class="navbar">
         <a href="/" class="navbar-brand">Amr Suhail Academy</a>
         <div style="display: flex; gap: 15px; align-items: center;">
@@ -289,32 +285,42 @@
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
         
-        <!-- قسم الاختبارات والشهادات -->
         {% if content_type == 'quiz' %}
         <div class="card" style="padding: 30px; text-align: right; border: 1px solid var(--border);">
             
-            <!-- شاشة بدء الاختبار -->
             <div id="quiz-start">
                 <h3 style="margin-bottom:15px; font-weight:900; color: var(--text-main); font-size:1.4rem;">🎓 تقييم فهمك للفصل</h3>
-                <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك والحصول على شهادة إنجاز معتمدة رقمياً من الأكاديمية.</p>
+                <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك. يمكنك تخطي الأسئلة والعودة لها لاحقاً.</p>
                 <label style="display:block; margin-bottom:8px; font-weight:700; color:var(--text-muted);">الاسم الثلاثي أو الرباعي (ليُطبع في الشهادة):</label>
                 <input type="text" id="studentNameInput" placeholder="مثال: عمرو سهيل مصطفى" style="width:100%; padding:16px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; font-family:'Tajawal'; background:var(--bg-body); color:var(--text-main); font-size:1.05rem; outline:none; transition:border 0.3s;">
                 <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
             </div>
 
-            <!-- شاشة عرض الأسئلة -->
+            <!-- شاشة عرض الأسئلة المتطورة -->
             <div id="quiz-view" class="hidden">
                 <div class="quiz-progress-bg"><div class="quiz-progress-fill" id="quizProgressBar"></div></div>
-                <div style="color: var(--accent); font-weight:800; margin-bottom:15px; font-size:0.95rem;" id="qCount"></div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div style="color: var(--accent); font-weight:800; font-size:0.95rem;" id="qCount"></div>
+                    <!-- زر إنهاء الاختبار في الأعلى للوصول السريع -->
+                    <button onclick="showQuizResult()" style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.9rem; cursor:pointer; text-decoration:underline;">إنهاء الاختبار وإعلان النتيجة</button>
+                </div>
+                
                 <h3 id="qText" style="margin-bottom:25px; font-weight:800; line-height:1.6; font-size:1.2rem;"></h3>
                 <div id="qOptions"></div>
-                <button class="btn-calc-action" style="margin-top:25px;" onclick="submitAnswer()">تأكيد والانتقال للسؤال التالي ←</button>
+                
+                <!-- مربع التوضيح والشرح -->
+                <div id="quizExplanation" class="explanation-box"></div>
+
+                <!-- أزرار التحكم السفلية -->
+                <div style="display: flex; gap: 10px; margin-top: 25px; align-items: stretch;">
+                    <button id="btnPrev" class="btn-calc-outline" style="flex: 1; display:none; border-color:var(--text-muted); color:var(--text-muted);" onclick="prevQuestion()">السابق</button>
+                    <button id="btnHint" class="btn-calc-action" style="flex: 1; background: #f59e0b;" onclick="showHint()">تلميح 💡</button>
+                    <button id="btnSkipNext" class="btn-calc-action" style="flex: 2;" onclick="nextQuestion()">تخطي ⏭</button>
+                </div>
             </div>
 
-            <!-- شاشة النتيجة واستخراج الشهادة -->
             <div id="result-view" class="hidden">
-                
-                <!-- تصميم بطاقة الشهادة التي سيتم التقاطها كصورة -->
                 <div id="certificateCard" class="certificate-card">
                     <div style="font-size:24px; color:#f59e0b; font-weight:900; margin-bottom:5px; font-family:'Playfair Display', serif; letter-spacing:2px;">Amr Suhail Academy</div>
                     <div style="font-size:15px; color:#cbd5e1; margin-bottom:25px; letter-spacing:1px;">شهادة إتمام تقييم أكاديمي</div>
@@ -350,7 +356,7 @@
             </div>
         </div>
         {% else %}
-        <!-- محتوى الفيديوهات أو الملفات المعتاد -->
+        <!-- محتوى الفيديوهات أو الملفات -->
         <div class="progress-container">
             <div class="progress-header">
                 <span>نسبة الإنجاز</span>
@@ -360,7 +366,6 @@
                 <div class="progress-bar-fill" id="progress-fill"></div>
             </div>
         </div>
-        {% endif %}
         
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
@@ -415,9 +420,7 @@
     </footer>
 
     <script>
-    // --- نظام الوضع الليلي ---
     function updateThemeIcon() {
-        // تحديث الأيقونات بناءً على وجود صنف dark-mode في عنصر html بدلاً من body
         const isDark = document.documentElement.classList.contains('dark-mode');
         document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
         document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
@@ -431,7 +434,6 @@
 
     window.addEventListener('DOMContentLoaded', (event) => {
         updateThemeIcon();
-
         if (!sessionStorage.getItem('visited')) {
             var splash = document.getElementById('splash-screen');
             if (splash) splash.classList.remove('hidden');
@@ -507,7 +509,6 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // --- نظام الحاسبة التراكمية المطورة مع درجات 5.0 ---
     function addRow() {
         const div = document.createElement('div');
         div.className = "calc-row";
@@ -516,7 +517,6 @@
             <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
         `;
         document.getElementById('subjectsList').appendChild(div);
-        
         const calcBody = document.querySelector('#calcBox .popup-body');
         calcBody.scrollTop = calcBody.scrollHeight;
     }
@@ -546,7 +546,7 @@
         }
         
         const avg = totalWeighted / totalHours; 
-        const gpa5 = avg / 20; // تحويل النسبة المئوية لمعدل من 5.0
+        const gpa5 = avg / 20; 
         
         let letter = ''; let color = '';
         if(avg >= 90) { letter = 'A (ممتاز)'; color = '#10b981'; }
@@ -564,7 +564,6 @@
         calcBody.scrollTop = calcBody.scrollHeight;
     }
 
-    // --- نظام التقدم وتحديد المكتمل ---
     const PROGRESS_KEY = "academy_progress_data";
     function getCompletedItems() { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); }
 
@@ -614,11 +613,10 @@
         }
     }
 
-    // --- نظام الاختبارات وإصدار الشهادات التفاعلي (مربوط بشيت جوجل) ---
-    // تم تحديث الرابط ليتضمن gid=1031832429 لجلب الاختبارات بشكل صحيح
+    // --- نظام الاختبارات التفاعلي الجديد ---
     const ALL_QUIZZES_CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429";
 
-    let quizState = { currentQ: 0, score: 0, studentName: "", chapterName: "", selectedOpt: null, questions: [] };
+    let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
 
     async function startQuiz(chapter) {
         const nameInput = document.getElementById('studentNameInput');
@@ -634,7 +632,6 @@
         
         quizState.chapterName = chapter;
         quizState.currentQ = 0;
-        quizState.score = 0;
         
         const btn = document.getElementById('startQuizBtn');
         const originalText = btn.innerText;
@@ -642,31 +639,24 @@
         btn.disabled = true;
 
         try {
-            // جلب البيانات من ملف جوجل شيت
-            // إضافة وقت عشوائي لمنع المتصفح من استخدام النسخة المخبأة (Cache)
             const freshUrl = `${ALL_QUIZZES_CSV_URL}&t=${Date.now()}`;
             const res = await fetch(freshUrl);
             const text = await res.text();
             
-            // تجاوز صف العناوين الأول
             const rows = text.trim().split("\n").slice(1);
 
-            // تفكيك الأسطر وترتيبها بحسب تنسيق الأعمدة الجديد الخاص بك
             quizState.questions = rows.map(row => {
-                // تقسيم السطر مع مراعاة الفواصل داخل علامات التنصيص
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 return {
-                    // الاعتماد على ترتيب الأعمدة في Sheet2 (الاختبارات)
-                    // العمود D (رقم 3) هو الشابتر
                     chapter: cols[3], 
-                    // العمود F (رقم 5) هو السؤال
                     q: cols[5],       
-                    // الأعمدة G, H, I, J (أرقام 6، 7، 8، 9) هي الخيارات
                     opts: [cols[6], cols[7], cols[8], cols[9]].filter(opt => opt !== undefined && opt !== ""), 
-                    // العمود K (رقم 10) هو الإجابة الصحيحة
-                    ans: parseInt(cols[10]) || 0 
+                    ans: parseInt(cols[10]) || 0,
+                    explain: cols[11] || "لا يوجد شرح إضافي مرفق مع هذا السؤال.", // العمود 12 للشرح
+                    status: 'unanswered', // حالات السؤال: unanswered, answered, skipped
+                    selectedOpt: null
                 };
-            }).filter(q => q.chapter === chapter && q.q !== undefined && q.q !== ""); // فلترة الأسئلة الفارغة
+            }).filter(q => q.chapter === chapter && q.q !== undefined && q.q !== "");
 
             if (quizState.questions.length === 0) {
                 alert("عذراً، لا توجد أسئلة متاحة لهذا الشابتر في قاعدة البيانات حالياً.");
@@ -680,15 +670,13 @@
             loadQuestion();
 
         } catch (error) {
-            console.error("خطأ أثناء جلب الاختبار من جوجل شيت:", error);
-            alert("حدث خطأ أثناء الاتصال بقاعدة البيانات. تأكد من صحة رابط الـ CSV المضاف في الكود.");
+            alert("حدث خطأ أثناء الاتصال بقاعدة البيانات. تأكد من صحة الرابط.");
             btn.innerText = originalText;
             btn.disabled = false;
         }
     }
 
     function loadQuestion() {
-        quizState.selectedOpt = null;
         const qData = quizState.questions[quizState.currentQ];
         
         document.getElementById('qCount').innerText = `السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
@@ -700,47 +688,99 @@
         const optsContainer = document.getElementById('qOptions');
         optsContainer.innerHTML = '';
         
+        // رسم الخيارات
         qData.opts.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'quiz-opt';
-            // إضافة رقم 1 ليتوافق مع الإجابة الصحيحة التي تبدأ من 1 بدلاً من 0
             btn.innerText = opt;
-            btn.onclick = () => {
-                document.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                // حفظ الاختيار بزيادة 1 لأن عمود الإجابة الصحيحة (1, 2, 3, 4)
-                quizState.selectedOpt = idx + 1;
-            };
+            
+            // إذا كان السؤال مجاباً مسبقاً، قم بتلوينه وتعطيل الأزرار
+            if (qData.status === 'answered') {
+                btn.disabled = true;
+                btn.style.cursor = 'default';
+                if (idx + 1 === qData.ans) {
+                    btn.classList.add('correct'); // الإجابة الصحيحة (أخضر)
+                } else if (idx + 1 === qData.selectedOpt) {
+                    btn.classList.add('wrong'); // الإجابة الخاطئة التي اختارها الطالب (أحمر)
+                }
+            } else {
+                // إذا لم يتم الإجابة بعد
+                btn.onclick = () => selectOption(idx);
+            }
             optsContainer.appendChild(btn);
         });
+
+        // إدارة مربع التوضيح
+        const expBox = document.getElementById('quizExplanation');
+        expBox.innerHTML = `<strong>💡 توضيح للإجابة:</strong><br>${qData.explain}`;
+        if (qData.status === 'answered') {
+            expBox.style.display = 'block'; // إظهار التوضيح إذا جاوب مسبقاً
+        } else {
+            expBox.style.display = 'none'; // إخفاء التوضيح
+        }
+
+        // إدارة الأزرار السفلية
+        document.getElementById('btnPrev').style.display = (quizState.currentQ > 0) ? 'block' : 'none';
+        
+        const btnSkipNext = document.getElementById('btnSkipNext');
+        if (qData.status === 'answered') {
+            btnSkipNext.innerText = (quizState.currentQ === quizState.questions.length - 1) ? "إنهاء الاختبار ✔" : "التالي ←";
+            btnSkipNext.style.background = "var(--primary)";
+        } else {
+            btnSkipNext.innerText = "تخطي السؤال ⏭";
+            btnSkipNext.style.background = "var(--text-muted)";
+        }
     }
 
-    function submitAnswer() {
-        if(quizState.selectedOpt === null) { 
-            alert("يرجى اختيار إجابة من الخيارات أولاً."); 
-            return; 
-        }
+    function selectOption(idx) {
+        const qData = quizState.questions[quizState.currentQ];
+        if (qData.status === 'answered') return; // منع تغيير الإجابة
+
+        qData.selectedOpt = idx + 1;
+        qData.status = 'answered';
         
-        // التحقق من صحة الإجابة بمقارنة الاختيار مع رقم الإجابة الصحيحة
-        if(quizState.selectedOpt === quizState.questions[quizState.currentQ].ans) { 
-            quizState.score++; 
+        // إعادة تحميل الواجهة لتلوين الأزرار وإظهار الشرح
+        loadQuestion();
+    }
+
+    function showHint() {
+        const expBox = document.getElementById('quizExplanation');
+        expBox.style.display = 'block';
+    }
+
+    function prevQuestion() {
+        if (quizState.currentQ > 0) {
+            quizState.currentQ--;
+            loadQuestion();
         }
+    }
+
+    function nextQuestion() {
+        const qData = quizState.questions[quizState.currentQ];
         
-        quizState.currentQ++;
-        if(quizState.currentQ < quizState.questions.length) {
+        // إذا ضغط تخطي (السؤال لم يُجاب)
+        if (qData.status !== 'answered') {
+            qData.status = 'skipped';
+        }
+
+        if (quizState.currentQ < quizState.questions.length - 1) {
+            quizState.currentQ++;
             loadQuestion();
         } else {
-            showQuizResult();
+            showQuizResult(); // إنهاء الاختبار إذا كان آخر سؤال
         }
     }
 
     function showQuizResult() {
+        // حساب الدرجات بناءً على الأسئلة المجابة بشكل صحيح فقط
+        const score = quizState.questions.filter(q => q.status === 'answered' && q.selectedOpt === q.ans).length;
+        
         document.getElementById('quiz-view').classList.add('hidden');
         document.getElementById('result-view').classList.remove('hidden');
         
-        const percentage = (quizState.score / quizState.questions.length) * 100;
+        const percentage = (score / quizState.questions.length) * 100;
         const gpa = percentage / 20; 
-        let grade = 'راسب (F)'; let color = '#dc2626';
+        let grade = 'راسب (F)'; let color = '#ef4444';
         
         if(percentage >= 90) { grade = 'ممتاز (A)'; color = '#10b981'; }
         else if(percentage >= 80) { grade = 'جيد جداً (B)'; color = '#3b82f6'; }

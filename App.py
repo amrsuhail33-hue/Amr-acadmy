@@ -1,6 +1,7 @@
 import csv
 import io
 import time
+import json
 import requests
 from flask import Flask, render_template, request, jsonify
 
@@ -112,6 +113,10 @@ def get_data_from_sheet():
         print(f"Error fetching CSV: {e}")
     return data
 
+
+# ==========================================
+# مسارات الموقع الأساسي
+# ==========================================
 @app.route('/')
 def home():
     try:
@@ -180,6 +185,72 @@ def ask_ai():
             return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
     except Exception as e:
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
+
+
+# ==========================================
+# مسارات المخطط الذكي (Smart Planner)
+# ==========================================
+@app.route('/planner')
+def planner():
+    # سيقوم هذا المسار بفتح ملف planner.html من مجلد templates
+    return render_template('planner.html')
+
+@app.route('/generate_plan', methods=['POST'])
+def generate_plan():
+    data = request.json
+    quran_clause = ""
+    if data.get('quran_enabled'):
+        quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً."
+
+    prompt = f"""
+    أنت نظام أكاديمي احترافي.
+    قاعدة هامة جداً (إجباري): يجب أن تولد خطة تحتوي على الأيام بالتسلسل من تاريخ اليوم ({data.get('current_date')}) وحتى تاريخ الانتهاء ({data.get('target_date')}).
+    ممنوع منعاً باتاً تلخيص الأيام أو توليد يومين فقط. يجب أن تكون مصفوفة "plans" كاملة تغطي كل الأيام المطلوبة حتى لو كانت 30 يوماً.
+
+    المعطيات:
+    - المواد: {data.get('subjects')}
+    - مستوى الانضباط: {data.get('discipline')}
+    - أوقات النوم: {data.get('sleep_hours')} | الدوام: {data.get('busy_hours')}
+    - أيام الراحة: {', '.join(data.get('off_days', [])) if data.get('off_days') else 'لا يوجد'}
+    - الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}
+    {quran_clause}
+
+    أرجع JSON حصراً:
+    {{
+      "plans": [
+        {{ "day_name": "الأحد", "date": "YYYY-MM-DD", "is_off_day": false, "tasks": [ {{ "title": "...", "allocated_hours": 1.5 }} ] }}
+      ]
+    }}
+    """
+    
+    PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    headers = {"Content-Type": "application/json"}
+    
+    try:
+        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
+        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
+        return jsonify(json.loads(res_text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/reschedule_plan', methods=['POST'])
+def reschedule_plan():
+    data = request.json
+    prompt = f"""
+    أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)}
+    ضمن الأيام القادمة المتبقية فقط: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
+    أرجع مصفوفة plans المُحدثة بـ JSON.
+    """
+    PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    headers = {"Content-Type": "application/json"}
+    try:
+        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
+        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
+        return jsonify(json.loads(res_text))
+    except:
+        return jsonify({"error": "failed"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amr suhail Acadmay | المخطط الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #090D16;
+            --bg-card: #131B2E;
+            --bg-card-inner: #1C2640;
+            --primary: #38BDF8;
+            --primary-glow: rgba(56, 189, 248, 0.15);
+            --success: #10B981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --danger: #EF4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --border: #23304E;
+        }
+
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 720px; }
+
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        .brand-title { font-size: 28px; font-weight: 900; background: linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 5px 0; display: inline-block; }
+        .brand-sub { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+
+        .form-group { margin-bottom: 18px; width: 100%; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; color: #E2E8F0; font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="time"], input[type="number"], select {
+            width: 100%; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 14px; transition: all 0.3s ease;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .time-inputs { display: flex; gap: 10px; }
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .time-inputs { flex-direction: column; gap: 8px; }
+            .main-card { padding: 20px 15px; }
+        }
+
+        .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 8px; }
+        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .checkbox-pill input { accent-color: var(--primary); }
+
+        /* الأزرار الاحترافية الجديدة (Neon Ghost) */
+        .btn { 
+            width: 100%; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; 
+            cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; margin-top: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary { background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%); border: none; color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
+        
+        .btn-action { background: var(--success-glow); border: 1px solid var(--success); color: var(--success); }
+        .btn-action:hover { background: var(--success); color: #fff; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        
+        .btn-export { background: var(--primary-glow); border: 1px solid var(--primary); color: var(--primary); }
+        .btn-export:hover { background: var(--primary); color: #fff; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+        
+        .btn-danger { background: var(--danger-glow); border: 1px solid var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); }
+
+        /* شريط التقدم */
+        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
+        .progress-track { height: 12px; background: var(--bg-card-inner); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-top: 10px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #38BDF8, #10B981); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .daily-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; margin-bottom: 20px; border-top: 4px solid var(--primary); }
+        .daily-date-badge { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
+        .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.25s; }
+        .task-card.completed { opacity: 0.45; background: #0D1424; border-color: transparent; }
+        .task-card.completed .task-title-text { text-decoration: line-through; color: var(--text-muted); }
+        .task-pill { background: rgba(56, 189, 248, 0.15); color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+
+        .view-section { display: none; }
+        .active-view { display: block; animation: viewIn 0.35s ease; }
+        @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .loading-state { text-align: center; padding: 40px 0; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* نافذة الاحتفال */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 35px 25px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: popUp 0.3s ease; }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* حاوية التصدير المخفية */
+        #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 800px; background: #090D16; padding: 40px; color: #F8FAFC; border-radius: 20px; font-family: 'Tajawal', sans-serif; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div class="brand-header">
+        <h1 class="brand-title">Amr suhail Acadmay</h1>
+        <div class="brand-sub">نظام التخطيط الدراسي الذكي والتتبع اليومي</div>
+    </div>
+
+    <!-- 1. شاشة الإعداد -->
+    <div id="setup-view" class="view-section active-view main-card">
+        <form id="planForm">
+            <div class="form-group">
+                <label>المسارات والمواد الدراسية:</label>
+                <input type="text" id="subjects" required placeholder="مثال: الدوائر الكهربائية، رسم هندسي">
+            </div>
+
+            <div class="grid-2 form-group">
+                <div>
+                    <label>تاريخ الهدف (الانتهاء):</label>
+                    <input type="date" id="target_date" required>
+                </div>
+                <div>
+                    <label>مستوى الانضباط والوتيرة:</label>
+                    <select id="discipline">
+                        <option value="متوازن">متوازن (طبيعي)</option>
+                        <option value="مرن">مرن (دراسة خفيفة)</option>
+                        <option value="مكثف">مكثف (تحضير للاختبارات)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2 form-group">
+                <div>
+                    <label>فترة النوم:</label>
+                    <div class="time-inputs">
+                        <input type="time" id="sleep_start" value="23:00">
+                        <input type="time" id="sleep_end" value="06:00">
+                    </div>
+                </div>
+                <div>
+                    <label>ساعات الانشغال/الدوام:</label>
+                    <div class="time-inputs">
+                        <input type="time" id="busy_start" value="08:00">
+                        <input type="time" id="busy_end" value="14:00">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>أيام الراحة الأسبوعية:</label>
+                <div class="days-grid">
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأحد"> الأحد</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الاثنين"> الاثنين</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الثلاثاء"> الثلاثاء</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأربعاء"> الأربعاء</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الخميس"> الخميس</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الجمعة" checked> الجمعة</label>
+                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="السبت"> السبت</label>
+                </div>
+            </div>
+
+            <div class="form-group" style="background: var(--bg-card-inner); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                <label class="checkbox-pill" style="justify-content: flex-start; background: transparent; border: none; padding: 0;">
+                    <input type="checkbox" id="wird" checked> تضمين الورد القرآني اليومي
+                </label>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+                    <label class="checkbox-pill" style="justify-content: flex-start; background: transparent; border: none; padding: 0;">
+                        <input type="checkbox" id="quran" onchange="document.getElementById('quran_field').style.display = this.checked ? 'block' : 'none'"> تفعيل برنامج حفظ القرآن
+                    </label>
+                    <div id="quran_field" style="display:none; margin-top:10px;">
+                        <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">توليد الخطة الذكية</button>
+        </form>
+    </div>
+
+    <!-- 2. حالة التحميل -->
+    <div id="loading-view" class="view-section main-card loading-state">
+        <div class="spinner"></div>
+        <h3 style="color: var(--primary);">جاري إعداد خطتك الشاملة...</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">يتم حساب وتوزيع الساعات بدقة على جميع الأيام المحددة</p>
+    </div>
+
+    <!-- 3. شاشة المعاينة -->
+    <div id="preview-view" class="view-section main-card">
+        <h3 style="color: var(--success); text-align: center; margin-top: 0;">تم إعداد الخطة بنجاح</h3>
+        <p style="color: var(--text-muted); text-align: center; font-size: 14px;">هذه مسودة الخطة، تأكد منها قبل الاعتماد</p>
+        <div id="preview-container" style="max-height: 350px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;"></div>
+        <div class="grid-2">
+            <button class="btn btn-secondary" onclick="switchView('setup-view')">تعديل المدخلات</button>
+            <button class="btn btn-action" onclick="acceptAndStart()">اعتماد الخطة</button>
+        </div>
+    </div>
+
+    <!-- 4. شاشة التتبع -->
+    <div id="tracking-view" class="view-section">
+        <div class="progress-box">
+            <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span style="font-size: 14px;">التقدم العام</span>
+                <span id="progress-percent-label" style="color: var(--primary); font-size: 16px;">0%</span>
+            </div>
+            <div class="progress-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+        </div>
+
+        <div id="daily-card-container"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-action" onclick="completeDayAction()">إنهاء اليوم والانتقال</button>
+            <button class="btn btn-export" onclick="exportFullPlan()">تصدير الخطة الشاملة كصورة</button>
+            <button class="btn btn-danger" onclick="confirmReset()">حذف الخطة وبدء جديد</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- نافذة الاحتفال بالإنجاز -->
+<div class="modal-overlay" id="success-modal">
+    <div class="modal-content">
+        <h2 style="color: var(--success); margin: 0 0 10px 0; font-weight: 800;">إنجاز ممتاز</h2>
+        <p style="color: var(--text-muted); font-size: 15px; margin-bottom: 20px;">لقد أتممت كافة المهام المجدولة بكل كفاءة وانضباط. استمر بهذا العزم!</p>
+        <button class="btn btn-primary" onclick="closeSuccessModal()">متابعة لليوم التالي</button>
+    </div>
+</div>
+
+<!-- حاوية تصدير الخطة الشاملة (مخفية) -->
+<div id="hidden-export-container"></div>
+
+<script>
+let draftPlans = null;
+
+document.getElementById('target_date').min = new Date().toISOString().split('T')[0];
+
+window.onload = () => {
+    if (localStorage.getItem('acadmay_schedule_data')) {
+        switchView('tracking-view');
+        renderTodayCard();
+    }
+};
+
+function formatHours(h) {
+    if (h < 1) return Math.round(h * 60) + ' دقيقة';
+    if (h === 1) return 'ساعة';
+    if (h === 1.5) return 'ساعة ونصف';
+    if (h === 2) return 'ساعتان';
+    return h + ' ساعات';
+}
+
+function switchView(id) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+    document.getElementById(id).classList.add('active-view');
+}
+
+// طلب إنشاء الخطة
+document.getElementById('planForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    switchView('loading-view');
+
+    const payload = {
+        current_date: new Date().toISOString().split('T')[0],
+        subjects: document.getElementById('subjects').value,
+        target_date: document.getElementById('target_date').value,
+        discipline: document.getElementById('discipline').value,
+        sleep_hours: `${document.getElementById('sleep_start').value}-${document.getElementById('sleep_end').value}`,
+        busy_hours: `${document.getElementById('busy_start').value}-${document.getElementById('busy_end').value}`,
+        off_days: Array.from(document.querySelectorAll('.off-day:checked')).map(c => c.value),
+        wird: document.getElementById('wird').checked,
+        quran_enabled: document.getElementById('quran').checked,
+        quran_pages: document.getElementById('quran_pages').value || 1
+    };
+
+    try {
+        const res = await fetch('/generate_plan', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        
+        if (!data.plans) throw new Error("Format error");
+        draftPlans = data.plans;
+        renderPreview(draftPlans);
+        switchView('preview-view');
+    } catch(err) {
+        alert("حدث خطأ، يرجى المحاولة مرة أخرى.");
+        switchView('setup-view');
+    }
+});
+
+function renderPreview(plans) {
+    let html = '';
+    plans.forEach(p => {
+        html += `<div style="background: var(--bg-card-inner); border: 1px solid var(--border); padding: 14px; border-radius: 12px; margin-bottom: 10px;">
+                    <div style="font-weight:700; color:var(--primary); margin-bottom:6px;">${p.day_name} (${p.date})</div>`;
+        if (p.is_off_day || !p.tasks || p.tasks.length === 0) {
+            html += `<span style="color:var(--text-muted); font-size:13px;">يوم مخصص للراحة وتجديد النشاط</span>`;
+        } else {
+            p.tasks.forEach(t => {
+                html += `<div style="font-size:13px; display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span>• ${t.title}</span><span style="color:var(--primary);">${formatHours(t.allocated_hours)}</span>
+                         </div>`;
+            });
+        }
+        html += `</div>`;
+    });
+    document.getElementById('preview-container').innerHTML = html;
+}
+
+function acceptAndStart() {
+    draftPlans.forEach(d => { if(d.tasks) d.tasks.forEach(t => t.done = false); });
+    localStorage.setItem('acadmay_schedule_data', JSON.stringify({ plans: draftPlans, currentIndex: 0 }));
+    switchView('tracking-view');
+    renderTodayCard();
+}
+
+function renderTodayCard() {
+    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
+    if (!store) return;
+
+    if (store.currentIndex >= store.plans.length) {
+        document.getElementById('daily-card-container').innerHTML = `
+            <div class="daily-schedule-card" style="text-align:center; padding: 40px 20px;">
+                <h2 style="color:var(--success); margin:0 0 10px 0;">أتممت الخطة بالكامل!</h2>
+                <p style="color:var(--text-muted);">أنت شخص عظيم ومثابر، أكاديمية عمرو سهيل فخورة بك.</p>
+            </div>`;
+        updateProgress(store);
+        return;
+    }
+
+    const today = store.plans[store.currentIndex];
+    let html = `<div class="daily-schedule-card">
+        <div class="daily-date-badge">
+            <span style="font-size: 18px; font-weight: 800; color: var(--primary);">${today.day_name}</span>
+            <span style="font-size: 13px; color: var(--text-muted);">${today.date}</span>
+        </div>`;
+
+    if (today.is_off_day || !today.tasks || today.tasks.length === 0) {
+        html += `<div style="text-align:center; padding: 20px; color: var(--text-muted);">يوم مخصص للراحة وتجديد النشاط</div>`;
+    } else {
+        today.tasks.forEach((task, idx) => {
+            const completedClass = task.done ? 'completed' : '';
+            const checkedAttr = task.done ? 'checked' : '';
+            html += `<div class="task-card ${completedClass}">
+                <div style="display:flex; align-items:center; gap:12px; flex:1;">
+                    <input type="checkbox" style="width:20px; height:20px; accent-color:var(--success);" ${checkedAttr} onchange="toggleTaskState(${idx}, this.checked)">
+                    <span class="task-title-text" style="font-size:14px; font-weight:600;">${task.title}</span>
+                </div>
+                <span class="task-pill">${formatHours(task.allocated_hours)}</span>
+            </div>`;
+        });
+    }
+    html += `</div>`;
+    document.getElementById('daily-card-container').innerHTML = html;
+    updateProgress(store);
+}
+
+function toggleTaskState(idx, isDone) {
+    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
+    store.plans[store.currentIndex].tasks[idx].done = isDone;
+    localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
+    renderTodayCard();
+    updateProgress(store);
+}
+
+function updateProgress(store) {
+    let total = 0, completed = 0;
+    store.plans.forEach(day => {
+        if (day.tasks) {
+            day.tasks.forEach(t => { total++; if (t.done) completed++; });
+        }
+    });
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    document.getElementById('progress-bar-fill').style.width = percentage + '%';
+    document.getElementById('progress-percent-label').innerText = percentage + '%';
+}
+
+// دالة إنهاء اليوم
+async function completeDayAction() {
+    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
+    const today = store.plans[store.currentIndex];
+    
+    let uncompleted = [];
+    if (today.is_off_day || !today.tasks || today.tasks.length === 0) {
+        uncompleted = [];
+    } else {
+        uncompleted = today.tasks.filter(t => !t.done);
+    }
+
+    if (uncompleted.length === 0) {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        document.getElementById('success-modal').style.display = 'flex';
+    } else {
+        const remainingDays = store.plans.slice(store.currentIndex + 1);
+        if (remainingDays.length === 0) { alert("هذا آخر يوم في الخطة! يرجى إنهاء مهامك المتبقية."); return; }
+        if (!confirm("لديك مهام غير مكتملة، سيتم ترحيلها للأيام القادمة بالذكاء الاصطناعي. موافق؟")) return;
+
+        switchView('loading-view');
+        try {
+            const res = await fetch('/reschedule_plan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ missed_tasks: uncompleted, remaining_plans: remainingDays })
+            });
+            const result = await res.json();
+            if (result.plans) {
+                store.plans.splice(store.currentIndex + 1, remainingDays.length, ...result.plans);
+                for (let i = store.currentIndex + 1; i < store.plans.length; i++) {
+                    if (store.plans[i].tasks) store.plans[i].tasks.forEach(t => t.done = false);
+                }
+            }
+        } catch (e) { alert("تم الانتقال لليوم التالي."); }
+        
+        store.currentIndex++;
+        localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
+        switchView('tracking-view');
+        renderTodayCard();
+    }
+}
+
+function closeSuccessModal() {
+    document.getElementById('success-modal').style.display = 'none';
+    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
+    store.currentIndex++;
+    localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
+    renderTodayCard();
+}
+
+function exportFullPlan() {
+    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
+    if (!store) return;
+    
+    let exportHTML = `
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #23304E; padding-bottom: 20px;">
+            <h1 style="color: #38BDF8; font-size: 35px; margin: 0 0 10px 0; font-weight: 900;">Amr suhail Acadmay</h1>
+            <h2 style="color: #F8FAFC; font-size: 20px; margin: 0;">الخطة الدراسية الشاملة المعتمدة</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    `;
+
+    store.plans.forEach(day => {
+        exportHTML += `
+            <div style="background: #131B2E; border: 1px solid #23304E; border-radius: 15px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #23304E; padding-bottom: 10px; margin-bottom: 15px;">
+                    <span style="color: #38BDF8; font-size: 18px; font-weight: bold;">${day.day_name}</span>
+                    <span style="color: #94A3B8; font-size: 14px;">${day.date}</span>
+                </div>
+        `;
+        
+        if (day.is_off_day || !day.tasks || day.tasks.length === 0) {
+            exportHTML += `<div style="text-align:center; color:#94A3B8; padding: 10px;">يوم مخصص للراحة وتجديد النشاط</div>`;
+        } else {
+            day.tasks.forEach(t => {
+                exportHTML += `
+                    <div style="background: #1C2640; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 14px; font-weight: bold;">${t.title}</span>
+                        <span style="background: rgba(56, 189, 248, 0.15); color: #38BDF8; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">${formatHours(t.allocated_hours)}</span>
+                    </div>
+                `;
+            });
+        }
+        exportHTML += `</div>`;
+    });
+    
+    exportHTML += `</div><div style="text-align:center; margin-top:30px; color:#94A3B8; font-size:14px;">تم إنشاء هذه الخطة آلياً عبر الذكاء الاصطناعي - أكاديمية عمرو سهيل</div>`;
+    
+    const container = document.getElementById('hidden-export-container');
+    container.innerHTML = exportHTML;
+    
+    html2canvas(container, { backgroundColor: '#090D16', scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Amr-Suhail-Full-Plan.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+
+function confirmReset() {
+    if (confirm("هل أنت متأكد من مسح خطتك بشكل نهائي؟")) {
+        localStorage.removeItem('acadmay_schedule_data');
+        location.reload();
+    }
+}
+</script>
+</body>
+</html>

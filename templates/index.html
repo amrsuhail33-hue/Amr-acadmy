@@ -113,26 +113,35 @@
         .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.95rem; background: var(--bg-card); color: var(--text-main); text-align: center; transition: border 0.3s; }
         .calc-input:focus { border-color: var(--accent); }
         .btn-calc-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: opacity 0.3s; width: 100%; font-size: 1rem; }
-        .btn-calc-action:hover { opacity: 0.9; }
-        .btn-calc-action:disabled { background: var(--text-muted); cursor: not-allowed; }
+        .btn-calc-action:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-calc-action:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; }
         .btn-calc-outline { background: transparent; color: var(--accent); border: 2px dashed var(--accent); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background 0.3s; width: 100%; }
         .calc-result-box { background: var(--bg-card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; display: none; }
         .calc-result-box.show { display: block; animation: fadeIn 0.3s ease; }
         .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; margin: 5px 0; }
         .res-details { font-size: 0.9rem; color: var(--text-main); margin-top: 5px; line-height: 1.6; }
 
-        /* --- تصميم الاختبارات المطور --- */
-        .quiz-opt { padding: 15px; border: 2px solid var(--border); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1rem; font-weight: 700; }
-        .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); }
+        /* --- تحسينات وتصميم الاختبارات الجديد الأنيق --- */
+        .q-container { animation: slideInUp 0.4s ease forwards; }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .quiz-opt { padding: 16px 20px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1.05rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
+        .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); transform: translateX(-8px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        .quiz-opt.correct { background-color: #10b981 !important; border-color: #10b981 !important; color: white !important; }
-        .quiz-opt.wrong { background-color: #ef4444 !important; border-color: #ef4444 !important; color: white !important; }
+        .quiz-opt.correct { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: white !important; animation: popCorrect 0.5s ease; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .quiz-opt.wrong { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border-color: #dc2626 !important; color: white !important; animation: shakeWrong 0.4s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
         
-        .explanation-box { background-color: rgba(59, 130, 246, 0.1); border: 1px dashed var(--primary); padding: 15px; border-radius: 12px; margin-top: 15px; margin-bottom: 15px; color: var(--text-main); font-size: 0.95rem; line-height: 1.6; display: none; text-align: right; animation: fadeIn 0.3s ease; }
+        @keyframes popCorrect { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        @keyframes shakeWrong { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
         
-        .quiz-progress-bg { width: 100%; height: 8px; background: var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
-        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary)); transition: width 0.3s ease; }
+        .explanation-box { background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-right: 4px solid #f59e0b; padding: 16px; border-radius: 12px; margin-top: 20px; margin-bottom: 15px; color: var(--text-main); font-size: 1rem; line-height: 1.7; display: none; text-align: right; animation: fadeIn 0.4s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         
+        .quiz-progress-bg { width: 100%; height: 12px; background: var(--border); border-radius: 20px; margin-bottom: 25px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); border-radius: 20px; }
+        
+        .btn-end-quiz { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s; }
+        .btn-end-quiz:hover { background: #ef4444; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+
         .certificate-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px 25px; position: relative; color: white; text-align: center; margin-bottom:20px; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
         .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
@@ -291,26 +300,43 @@
                 <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك. يمكنك تخطي الأسئلة والعودة لها لاحقاً.</p>
                 <label style="display:block; margin-bottom:8px; font-weight:700; color:var(--text-muted);">الاسم الثلاثي أو الرباعي (ليُطبع في الشهادة):</label>
                 <input type="text" id="studentNameInput" placeholder="مثال: عمرو سهيل مصطفى" style="width:100%; padding:16px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; font-family:'Tajawal'; background:var(--bg-body); color:var(--text-main); font-size:1.05rem; outline:none; transition:border 0.3s;">
-                <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
+                <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')" style="font-size:1.1rem; padding:15px; border-radius:12px;">بدء الاختبار الآن 🚀</button>
             </div>
 
             <div id="quiz-view" class="hidden">
                 <div class="quiz-progress-bg"><div class="quiz-progress-fill" id="quizProgressBar"></div></div>
                 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <div style="color: var(--accent); font-weight:800; font-size:0.95rem;" id="qCount"></div>
-                    <button onclick="showQuizResult()" style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.9rem; cursor:pointer; text-decoration:underline;">إنهاء الاختبار وإعلان النتيجة</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                    <div style="color: var(--accent); font-weight:900; font-size:1.1rem; background: rgba(16, 185, 129, 0.1); padding: 5px 15px; border-radius: 20px;" id="qCount"></div>
+                    
+                    <!-- زر إنهاء الاختبار الأنيق -->
+                    <button onclick="confirmEndQuiz()" class="btn-end-quiz" title="إنهاء فوري وحساب النتيجة">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        إنهاء الاختبار
+                    </button>
                 </div>
                 
-                <h3 id="qText" style="margin-bottom:25px; font-weight:800; line-height:1.6; font-size:1.2rem;"></h3>
-                <div id="qOptions"></div>
-                
-                <div id="quizExplanation" class="explanation-box"></div>
+                <!-- حاوية السؤال لإضافة تأثيرات حركية عند التغيير -->
+                <div id="qWrapper" class="q-container">
+                    <h3 id="qText" style="margin-bottom:25px; font-weight:900; line-height:1.6; font-size:1.3rem; color: var(--primary);"></h3>
+                    <div id="qOptions"></div>
+                    
+                    <div id="quizExplanation" class="explanation-box"></div>
+                </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 25px; align-items: stretch;">
-                    <button id="btnPrev" class="btn-calc-outline" style="flex: 1; display:none; border-color:var(--text-muted); color:var(--text-muted);" onclick="prevQuestion()">السابق</button>
-                    <button id="btnHint" class="btn-calc-action" style="flex: 1; background: #f59e0b;" onclick="showHint()">تلميح 💡</button>
-                    <button id="btnSkipNext" class="btn-calc-action" style="flex: 2;" onclick="nextQuestion()">تخطي ⏭</button>
+                <!-- أزرار التحكم السفلية المحدثة -->
+                <div style="display: flex; gap: 12px; margin-top: 30px; align-items: stretch;">
+                    <button id="btnPrev" class="btn-calc-outline" style="flex: 1; display:none; border-radius: 12px; border-color:var(--text-muted); color:var(--text-muted);" onclick="prevQuestion()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><path d="M9 18l6-6-6-6"/></svg> السابق
+                    </button>
+                    
+                    <button id="btnHint" class="btn-calc-action" style="flex: 1; background: #f59e0b; border-radius: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);" onclick="showHint()">
+                        تلميح 💡
+                    </button>
+                    
+                    <button id="btnSkipNext" class="btn-calc-action" style="flex: 2; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);" onclick="nextQuestion()">
+                        تخطي <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -612,7 +638,6 @@
         }
     }
 
-    // --- نظام الاختبارات التفاعلي الجديد ---
     const ALL_QUIZZES_CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429";
 
     let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
@@ -650,7 +675,7 @@
                     chapter: cols[3], 
                     q: cols[5],       
                     opts: [cols[6], cols[7], cols[8], cols[9]].filter(opt => opt !== undefined && opt !== ""), 
-                    ans: parseInt(cols[10]) || 0,
+                    ans: isNaN(parseInt(cols[10])) ? -1 : parseInt(cols[10]),
                     explain: cols[11] || "لا يوجد شرح إضافي مرفق مع هذا السؤال.", 
                     status: 'unanswered', 
                     selectedOpt: null
@@ -678,6 +703,12 @@
     function loadQuestion() {
         const qData = quizState.questions[quizState.currentQ];
         
+        // إعادة تهيئة حركة (Animation) دخول السؤال
+        const qWrapper = document.getElementById('qWrapper');
+        qWrapper.classList.remove('q-container');
+        void qWrapper.offsetWidth; // إجبار المتصفح على إعادة الحسابات
+        qWrapper.classList.add('q-container');
+        
         document.getElementById('qCount').innerText = `السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
         document.getElementById('qText').innerText = qData.q;
         
@@ -690,15 +721,18 @@
         qData.opts.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'quiz-opt';
-            btn.innerText = opt;
+            btn.innerHTML = `<span>${opt}</span>`;
             
             if (qData.status === 'answered') {
                 btn.disabled = true;
                 btn.style.cursor = 'default';
-                if (idx + 1 === qData.ans) {
+                
+                if (idx === qData.ans) {
                     btn.classList.add('correct'); 
-                } else if (idx + 1 === qData.selectedOpt) {
+                    btn.innerHTML += '<span style="font-size:1.4rem;">✓</span>';
+                } else if (idx === qData.selectedOpt) {
                     btn.classList.add('wrong'); 
+                    btn.innerHTML += '<span style="font-size:1.4rem;">✗</span>';
                 }
             } else {
                 btn.onclick = () => selectOption(idx);
@@ -718,10 +752,12 @@
         
         const btnSkipNext = document.getElementById('btnSkipNext');
         if (qData.status === 'answered') {
-            btnSkipNext.innerText = (quizState.currentQ === quizState.questions.length - 1) ? "إنهاء الاختبار ✔" : "التالي ←";
+            btnSkipNext.innerHTML = (quizState.currentQ === quizState.questions.length - 1) 
+                ? 'إنهاء الاختبار ✔' 
+                : 'التالي ←';
             btnSkipNext.style.background = "var(--primary)";
         } else {
-            btnSkipNext.innerText = "تخطي السؤال ⏭";
+            btnSkipNext.innerHTML = 'تخطي ⏭';
             btnSkipNext.style.background = "var(--text-muted)";
         }
     }
@@ -730,7 +766,7 @@
         const qData = quizState.questions[quizState.currentQ];
         if (qData.status === 'answered') return; 
 
-        qData.selectedOpt = idx + 1;
+        qData.selectedOpt = idx;
         qData.status = 'answered';
         
         loadQuestion();
@@ -760,6 +796,12 @@
             loadQuestion();
         } else {
             showQuizResult(); 
+        }
+    }
+    
+    function confirmEndQuiz() {
+        if(confirm("هل أنت متأكد أنك تريد إنهاء الاختبار الآن وإصدار النتيجة لِما قمت بحله فقط؟")) {
+            showQuizResult();
         }
     }
 

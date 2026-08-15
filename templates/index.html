@@ -8,11 +8,14 @@
     
     <!-- إعدادات تطبيق الويب PWA والشعار -->
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#38BDF8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AS Academy">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/a.png">
+    
+    <!-- أيقونات الموقع والتثبيت -->
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
 
     <script>
         if (localStorage.getItem('theme') === 'dark') {
@@ -165,7 +168,7 @@
 
     <!-- شاشة البداية بالشعار الجديد -->
     <div id="splash-screen" class="hidden">
-        <svg style="width: 80px; height: 80px; margin-bottom: 15px;" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
+        <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo" style="width: 110px; height: auto; margin-bottom: 20px; object-fit: contain;">
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
         <div class="welcome-text">
@@ -239,8 +242,8 @@
 
     <!-- الـ Navbar مع الشعار الجديد -->
     <nav class="navbar">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <svg style="width: 35px; height: 35px;" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo" style="height: 40px; width: auto; object-fit: contain;">
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">

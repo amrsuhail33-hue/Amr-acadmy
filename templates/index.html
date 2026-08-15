@@ -111,6 +111,7 @@
         .calc-input:focus { border-color: var(--accent); }
         .btn-calc-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: opacity 0.3s; width: 100%; font-size: 1rem; }
         .btn-calc-action:hover { opacity: 0.9; }
+        .btn-calc-action:disabled { background: var(--text-muted); cursor: not-allowed; }
         .btn-calc-outline { background: transparent; color: var(--accent); border: 2px dashed var(--accent); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background 0.3s; width: 100%; }
         .calc-result-box { background: var(--bg-card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; display: none; }
         .calc-result-box.show { display: block; animation: fadeIn 0.3s ease; }
@@ -262,8 +263,8 @@
         <div class="grid-container">
             <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو 🎥</a>
             <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات والمذكرات 📑</a>
-            <!-- تم إضافة خيار الاختبارات هنا كخيار ثالث -->
-            <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color: var(--accent); background: rgba(16, 185, 129, 0.05); color: var(--accent);">الاختبارات والشهادات 🏆</a>
+            <!-- تحديث اسم الخيار إلى "اختبر نفسك 🏆" -->
+            <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color: var(--accent); background: rgba(16, 185, 129, 0.05); color: var(--accent);">اختبر نفسك 🏆</a>
         </div>
         {% endif %}
 
@@ -289,7 +290,7 @@
                 <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك والحصول على شهادة إنجاز معتمدة رقمياً من الأكاديمية.</p>
                 <label style="display:block; margin-bottom:8px; font-weight:700; color:var(--text-muted);">الاسم الثلاثي أو الرباعي (ليُطبع في الشهادة):</label>
                 <input type="text" id="studentNameInput" placeholder="مثال: عمرو سهيل مصطفى" style="width:100%; padding:16px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; font-family:'Tajawal'; background:var(--bg-body); color:var(--text-main); font-size:1.05rem; outline:none; transition:border 0.3s;">
-                <button class="btn-calc-action" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
+                <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
             </div>
 
             <!-- شاشة عرض الأسئلة -->
@@ -606,18 +607,13 @@
         }
     }
 
-    // --- نظام الاختبارات وإصدار الشهادات التفاعلي ---
-    // هذه أسئلة افتراضية للتجربة في حال لم يتم الربط بقاعدة بيانات خارجية
-    const defaultQuizQuestions = [
-        { q: "ما هي قيمة جهد الحائل لدايود السيليكون عند الانحياز الأمامي؟", opts: ["0.3V", "0.7V", "1.1V", "2.0V"], ans: 1 },
-        { q: "ما هي قيمة معامل التموج (Ripple Factor) لمقوم الموجة الكاملة؟", opts: ["1.21", "0.48", "0.81", "2.00"], ans: 1 },
-        { q: "في مقوم نقطة المنتصف، كم يبلغ جهد العكس الأقصى (PIV) لكل دايود؟", opts: ["Vm", "2 Vm", "0.5 Vm", "4 Vm"], ans: 1 },
-        { q: "كيف يتم توصيل دايود الزينر في الدوائر ليعمل كمثبت ومُنظم للجهد؟", opts: ["انحياز أمامي مع الحمل", "انحياز عكسي على التوازي مع الحمل", "بالتوالي مع مصدر الدخل", "توصيل مباشر بدون مقاومات"], ans: 1 }
-    ];
+    // --- نظام الاختبارات وإصدار الشهادات التفاعلي (مربوط بشيت جوجل) ---
+    // !!! تأكد من وضع رابط الـ CSV الخاص بجدول أسئلتك هنا !!!
+    const ALL_QUIZZES_CSV_URL = "رابط_CSV_المنشور_من_جوجل_شيت_هنا";
 
-    let quizState = { currentQ: 0, score: 0, studentName: "", chapterName: "", selectedOpt: null, questions: defaultQuizQuestions };
+    let quizState = { currentQ: 0, score: 0, studentName: "", chapterName: "", selectedOpt: null, questions: [] };
 
-    function startQuiz(chapter) {
+    async function startQuiz(chapter) {
         const nameInput = document.getElementById('studentNameInput');
         if(nameInput) {
             const name = nameInput.value.trim();
@@ -633,9 +629,47 @@
         quizState.currentQ = 0;
         quizState.score = 0;
         
-        document.getElementById('quiz-start').classList.add('hidden');
-        document.getElementById('quiz-view').classList.remove('hidden');
-        loadQuestion();
+        const btn = document.getElementById('startQuizBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "جاري تحميل الأسئلة...";
+        btn.disabled = true;
+
+        try {
+            // جلب البيانات من ملف جوجل شيت
+            const res = await fetch(ALL_QUIZZES_CSV_URL);
+            const text = await res.text();
+            
+            // تجاوز صف العناوين الأول
+            const rows = text.trim().split("\n").slice(1);
+
+            // تفكيك الأسطر وترتيبها بحسب تنسيق الأعمدة الجديد الخاص بك
+            quizState.questions = rows.map(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                return {
+                    chapter: cols[3], // العمود D: اسم الشابتر
+                    q: cols[5],       // العمود F: السؤال
+                    opts: [cols[6], cols[7], cols[8], cols[9]], // الأعمدة G, H, I, J للخيارات الأربعة
+                    ans: parseInt(cols[10]) || 0 // العمود K: الإجابة الصحيحة
+                };
+            }).filter(q => q.chapter === chapter);
+
+            if (quizState.questions.length === 0) {
+                alert("عذراً، لا توجد أسئلة متاحة لهذا الشابتر في قاعدة البيانات حالياً.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            document.getElementById('quiz-start').classList.add('hidden');
+            document.getElementById('quiz-view').classList.remove('hidden');
+            loadQuestion();
+
+        } catch (error) {
+            console.error("خطأ أثناء جلب الاختبار من جوجل شيت:", error);
+            alert("حدث خطأ أثناء الاتصال بقاعدة البيانات. تأكد من صحة رابط الـ CSV المضاف في الكود.");
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     function loadQuestion() {
@@ -710,7 +744,6 @@
         const today = new Date();
         document.getElementById('certDate').innerText = today.toLocaleDateString('ar-EG');
         
-        // إطلاق احتفالية في حال اجتياز الاختبار بنجاح عالٍ
         if(percentage >= 80 && typeof confetti === 'function') {
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         }

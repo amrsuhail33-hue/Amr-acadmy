@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 
-# النماذج الأصلية المعتمدة لديك
+# النماذج المعتمدة لديك
 CHAT_MODEL_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
@@ -22,8 +22,7 @@ CSV_URLS = [
 
 def send_gemini_request(url, payload, max_retries=3, timeout=35):
     """
-    دالة إرسال الطلب مع آلية إعادة المحاولة التلقائية (Exponential Backoff)
-    لتفادي رسائل انشغال الخادم (429 و 503 و 500).
+    دالة إرسال الطلب مع آلية إعادة المحاولة التلقائية لتفادي انشغال الخادم.
     """
     headers = {'Content-Type': 'application/json'}
     last_error = "الخادم مشغول حالياً، يرجى المحاولة بعد قليل."
@@ -41,9 +40,8 @@ def send_gemini_request(url, payload, max_retries=3, timeout=35):
                         return parts[0]['text'], None
                 return None, "استجابة غير مكتملة من الخادم."
 
-            # في حال وجود ضغط على السيرفر (429 Too Many Requests أو 503 Service Unavailable)
             if response.status_code in [429, 500, 503, 504]:
-                time.sleep(1.5 * (attempt + 1))  # تأخير تصاعدي قبل المحاولة مجدداً
+                time.sleep(1.5 * (attempt + 1))
                 continue
             else:
                 last_error = f"خطأ في الطلب: {response.status_code}"
@@ -264,12 +262,37 @@ def planner():
 def generate_plan():
     data = request.json or {}
     quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً." if data.get('quran_enabled') else ""
-    prompt = (
-        f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. "
-        f"المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. "
-        f"أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. "
-        f"{quran_clause} أرجع مصفوفة JSON حصراً بهيكل plans."
-    )
+    
+    prompt = f"""
+أنت نظام أكاديمي ذكي واحترافي. المطلوب توليد خطة دراسية موزعة يومياً من {data.get('current_date')} إلى {data.get('target_date')}.
+المواد والمواضيع: {data.get('subjects')}.
+مستوى الانضباط وساعات الدراسة: {data.get('discipline')}.
+أيام الراحة الأسبوعية: {', '.join(data.get('off_days', []))}.
+الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}.
+{quran_clause}
+
+المخرج المطلوب حصراً JSON صالح بدون أي نصوص خارجية، ويجب أن يتبع هذا الهيكل الدقيق:
+{{
+  "plans": [
+    {{
+      "date": "2026-08-16",
+      "day_name": "الأحد",
+      "day": "الأحد",
+      "is_off": false,
+      "tasks": [
+        {{
+          "subject": "اسم المادة أو النشاط",
+          "name": "اسم المادة أو النشاط",
+          "hours": 2,
+          "duration": "2",
+          "details": "شرح المهام المحددة لهذا اليوم"
+        }}
+      ]
+    }}
+  ]
+}}
+ملاحظة: إذا كان اليوم راحة، اجعل "is_off": true وقائمة "tasks" فارغة [].
+"""
     
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -288,11 +311,32 @@ def generate_plan():
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     data = request.json or {}
-    prompt = (
-        f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} "
-        f"ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} "
-        f"أرجع مصفوفة JSON المحدثة حصراً."
-    )
+    prompt = f"""
+أعد توزيع ودمج المهام غير المنجزة: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)}
+ضمن الأيام المتبقية: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
+
+حافظ على نفس هيكل الـ JSON الموحد تماماً:
+{{
+  "plans": [
+    {{
+      "date": "YYYY-MM-DD",
+      "day_name": "اسم اليوم",
+      "day": "اسم اليوم",
+      "is_off": false,
+      "tasks": [
+        {{
+          "subject": "اسم المادة",
+          "name": "اسم المادة",
+          "hours": 2,
+          "duration": "2",
+          "details": "التفاصيل"
+        }}
+      ]
+    }}
+  ]
+}}
+أرجع مصفوفة JSON حصراً.
+"""
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"response_mime_type": "application/json"}

@@ -6,6 +6,14 @@
     <!-- منع المتصفح من ترجمة الصفحة وتخريب الأكواد -->
     <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
+    
+    <!-- تم نقل سكربت قراءة الوضع الليلي هنا لمنع الوميض عند الانتقال بين الصفحات -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     
     <!-- مكتبات استخراج الشهادة كصورة والاحتفالات -->
@@ -24,7 +32,9 @@
             --accent: #10b981;
             --nav-bg: rgba(255, 255, 255, 0.95);
         }
-        .dark-mode {
+        
+        /* تغيير تحديد الوضع الليلي ليكون على مستوى html بدل body لتجنب الوميض */
+        html.dark-mode {
             --bg-body: #0f172a;
             --bg-card: #1e293b;
             --text-main: #f8fafc;
@@ -263,7 +273,6 @@
         <div class="grid-container">
             <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو 🎥</a>
             <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات والمذكرات 📑</a>
-            <!-- تحديث اسم الخيار إلى "اختبر نفسك 🏆" -->
             <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color: var(--accent); background: rgba(16, 185, 129, 0.05); color: var(--accent);">اختبر نفسك 🏆</a>
         </div>
         {% endif %}
@@ -408,21 +417,19 @@
     <script>
     // --- نظام الوضع الليلي ---
     function updateThemeIcon() {
-        const isDark = document.body.classList.contains('dark-mode');
+        // تحديث الأيقونات بناءً على وجود صنف dark-mode في عنصر html بدلاً من body
+        const isDark = document.documentElement.classList.contains('dark-mode');
         document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
         document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
     }
 
     function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
         updateThemeIcon();
     }
 
     window.addEventListener('DOMContentLoaded', (event) => {
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
         updateThemeIcon();
 
         if (!sessionStorage.getItem('visited')) {
@@ -608,8 +615,8 @@
     }
 
     // --- نظام الاختبارات وإصدار الشهادات التفاعلي (مربوط بشيت جوجل) ---
-    // !!! تأكد من وضع رابط الـ CSV الخاص بجدول أسئلتك هنا !!!
-    const ALL_QUIZZES_CSV_URL = "رابط_CSV_المنشور_من_جوجل_شيت_هنا";
+    // تم تحديث الرابط ليتضمن gid=1031832429 لجلب الاختبارات بشكل صحيح
+    const ALL_QUIZZES_CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429";
 
     let quizState = { currentQ: 0, score: 0, studentName: "", chapterName: "", selectedOpt: null, questions: [] };
 
@@ -636,7 +643,9 @@
 
         try {
             // جلب البيانات من ملف جوجل شيت
-            const res = await fetch(ALL_QUIZZES_CSV_URL);
+            // إضافة وقت عشوائي لمنع المتصفح من استخدام النسخة المخبأة (Cache)
+            const freshUrl = `${ALL_QUIZZES_CSV_URL}&t=${Date.now()}`;
+            const res = await fetch(freshUrl);
             const text = await res.text();
             
             // تجاوز صف العناوين الأول
@@ -644,14 +653,20 @@
 
             // تفكيك الأسطر وترتيبها بحسب تنسيق الأعمدة الجديد الخاص بك
             quizState.questions = rows.map(row => {
+                // تقسيم السطر مع مراعاة الفواصل داخل علامات التنصيص
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 return {
-                    chapter: cols[3], // العمود D: اسم الشابتر
-                    q: cols[5],       // العمود F: السؤال
-                    opts: [cols[6], cols[7], cols[8], cols[9]], // الأعمدة G, H, I, J للخيارات الأربعة
-                    ans: parseInt(cols[10]) || 0 // العمود K: الإجابة الصحيحة
+                    // الاعتماد على ترتيب الأعمدة في Sheet2 (الاختبارات)
+                    // العمود D (رقم 3) هو الشابتر
+                    chapter: cols[3], 
+                    // العمود F (رقم 5) هو السؤال
+                    q: cols[5],       
+                    // الأعمدة G, H, I, J (أرقام 6، 7، 8، 9) هي الخيارات
+                    opts: [cols[6], cols[7], cols[8], cols[9]].filter(opt => opt !== undefined && opt !== ""), 
+                    // العمود K (رقم 10) هو الإجابة الصحيحة
+                    ans: parseInt(cols[10]) || 0 
                 };
-            }).filter(q => q.chapter === chapter);
+            }).filter(q => q.chapter === chapter && q.q !== undefined && q.q !== ""); // فلترة الأسئلة الفارغة
 
             if (quizState.questions.length === 0) {
                 alert("عذراً، لا توجد أسئلة متاحة لهذا الشابتر في قاعدة البيانات حالياً.");
@@ -688,11 +703,13 @@
         qData.opts.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'quiz-opt';
+            // إضافة رقم 1 ليتوافق مع الإجابة الصحيحة التي تبدأ من 1 بدلاً من 0
             btn.innerText = opt;
             btn.onclick = () => {
                 document.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                quizState.selectedOpt = idx;
+                // حفظ الاختيار بزيادة 1 لأن عمود الإجابة الصحيحة (1, 2, 3, 4)
+                quizState.selectedOpt = idx + 1;
             };
             optsContainer.appendChild(btn);
         });
@@ -704,6 +721,7 @@
             return; 
         }
         
+        // التحقق من صحة الإجابة بمقارنة الاختيار مع رقم الإجابة الصحيحة
         if(quizState.selectedOpt === quizState.questions[quizState.currentQ].ans) { 
             quizState.score++; 
         }

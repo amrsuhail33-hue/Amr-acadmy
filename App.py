@@ -17,7 +17,7 @@ CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
 
-# --- إضافة مسار لملف الـ PWA ---
+# --- مسار تفعيل التطبيق (PWA) ---
 @app.route('/sw.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js')
@@ -112,6 +112,9 @@ def get_data_from_sheet():
     return data
 
 
+# ==========================================
+# مسارات الموقع الأساسي
+# ==========================================
 @app.route('/')
 def home():
     try:
@@ -181,6 +184,9 @@ def ask_ai():
     except Exception as e:
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
 
+# ==========================================
+# مسارات المخطط الذكي (Smart Planner)
+# ==========================================
 @app.route('/planner')
 def planner():
     return render_template('planner.html')

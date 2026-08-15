@@ -8,15 +8,60 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
+# مفتاح API والنماذج المحدثة والمستقرة
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
-PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
+
+# النماذج الرسمية السريعة والاحتياطية
+PRIMARY_CHAT_MODEL = "gemini-2.5-flash"
+FALLBACK_CHAT_MODEL = "gemini-2.5-flash-lite"
+PLANNER_MODEL = "gemini-2.5-flash-lite"
 
 # الروابط للورقتين
 CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
+
+def make_gemini_request(payload, primary_model=PRIMARY_CHAT_MODEL, fallback_model=FALLBACK_CHAT_MODEL, max_retries=2):
+    """
+    دالة موحدة لإرسال الطلبات مع إعادة المحاولة التلقائية والتحويل للنموذج الاحتياطي عند الازدحام.
+    """
+    models_to_try = [primary_model]
+    if fallback_model and fallback_model != primary_model:
+        models_to_try.append(fallback_model)
+
+    headers = {'Content-Type': 'application/json'}
+
+    for model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={AI_API_KEY}"
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=25)
+                
+                # نجاح
+                if response.status_code == 200:
+                    res_json = response.json()
+                    candidates = res_json.get('candidates', [])
+                    if candidates and 'content' in candidates[0]:
+                        parts = candidates[0]['content'].get('parts', [])
+                        if parts and 'text' in parts[0]:
+                            return parts[0]['text'], None
+                    return None, "استجابة غير مكتملة من النموذج."
+
+                # خطأ ازدحام أو كثرة طلبات (429 أو 503) -> انتظار تصاعدي وإعادة المحاولة
+                if response.status_code in [429, 500, 503, 504]:
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                else:
+                    # أي خطأ آخر، كسر الحلقة وتجربة النموذج الاحتياطي
+                    break
+
+            except requests.exceptions.RequestException:
+                time.sleep(1)
+                continue
+
+    return None, "الخوادم تشهد ضغطاً مؤقتاً، يرجى المحاولة مرة أخرى بعد ثوانٍ."
 
 # --- مسار تفعيل التطبيق (PWA) ---
 @app.route('/sw.js')
@@ -190,34 +235,26 @@ def ask_ai():
             return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
 
         if not user_message:
-            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط."
+            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب هندسي واضح."
 
         prompt_text = (
             f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
-            f"اكتب القوانين والمعادلات بصيغة LaTeX القياسية مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة. "
+            f"اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
             f"سؤال الطالب: {user_message}"
         )
 
         parts = [{"text": prompt_text}] + image_parts
         payload = {"contents": [{"parts": parts}]}
-        headers = {'Content-Type': 'application/json'}
 
-        # زيادة وقت الاستجابة إلى 40 ثانية لتفادي انقطاع الاتصال عند معالجة الصور
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=40)
-
-        if response.status_code == 200:
-            result = response.json()
-            reply_text = result['candidates'][0]['content']['parts'][0]['text']
+        reply_text, error = make_gemini_request(payload, primary_model=PRIMARY_CHAT_MODEL, fallback_model=FALLBACK_CHAT_MODEL)
+        
+        if reply_text:
             return jsonify({"reply": reply_text})
         else:
-            print("AI API Status:", response.status_code, response.text)
-            return jsonify({"reply": "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."}), 500
+            return jsonify({"reply": error or "تعذر استلام رد حالياً."}), 500
             
-    except requests.exceptions.Timeout:
-        return jsonify({"reply": "استغرقت معالجة الصورة وقتاً طويلاً، يرجى إعادة المحاولة بصورة أصغر أو الانتظار قليلاً."}), 500
     except Exception as e:
-        print("Server Exception:", str(e))
-        return jsonify({"reply": f"تعذر الاتصال بالخادم حالياً: {str(e)}"}), 500
+        return jsonify({"reply": f"حدث خطأ داخلي: {str(e)}"}), 500
 
 # ==========================================
 # مسارات المخطط الذكي (Smart Planner)
@@ -228,27 +265,49 @@ def planner():
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
-    data = request.json
+    data = request.json or {}
     quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً." if data.get('quran_enabled') else ""
-    prompt = f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. {quran_clause} أرجع JSON حصراً بهيكل plans."
+    prompt = (
+        f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. "
+        f"المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. "
+        f"أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. "
+        f"{quran_clause} أرجع مصفوفة JSON حصراً بهيكل plans."
+    )
     
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"response_mime_type": "application/json"}
+    }
+    
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'}, timeout=40)
-        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
+        reply_text, error = make_gemini_request(payload, primary_model=PLANNER_MODEL, fallback_model=PRIMARY_CHAT_MODEL)
+        if reply_text:
+            cleaned_json = reply_text.replace('```json', '').replace('```', '').strip()
+            return jsonify(json.loads(cleaned_json))
+        return jsonify({"error": error or "failed"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
-    data = request.json
-    prompt = f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} أرجع JSON للمصفوفة المحدثة."
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    data = request.json or {}
+    prompt = (
+        f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} "
+        f"ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} "
+        f"أرجع مصفوفة JSON المحدثة حصراً."
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"response_mime_type": "application/json"}
+    }
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'}, timeout=40)
-        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
-    except:
-        return jsonify({"error": "failed"}), 500
+        reply_text, error = make_gemini_request(payload, primary_model=PLANNER_MODEL, fallback_model=PRIMARY_CHAT_MODEL)
+        if reply_text:
+            cleaned_json = reply_text.replace('```json', '').replace('```', '').strip()
+            return jsonify(json.loads(cleaned_json))
+        return jsonify({"error": error or "failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

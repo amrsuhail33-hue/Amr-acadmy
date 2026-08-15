@@ -2,13 +2,15 @@ import csv
 import io
 import time
 import json
+import base64
 import requests
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
+# مفتاح API ونماذجك الخاصة المعتمدة لديك
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 # الروابط للورقتين
@@ -16,6 +18,46 @@ CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
+
+def send_gemini_request(url, payload, max_retries=3, timeout=40):
+    """
+    دالة موحدة لإرسال الطلبات مع إعادة المحاولة التلقائية عند الضغط
+    """
+    headers = {'Content-Type': 'application/json'}
+    last_error = "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+            
+            if response.status_code == 200:
+                res_json = response.json()
+                candidates = res_json.get('candidates', [])
+                if candidates and 'content' in candidates[0]:
+                    parts = candidates[0]['content'].get('parts', [])
+                    if parts and 'text' in parts[0]:
+                        return parts[0]['text'], None
+                return None, "استجابة غير مكتملة من النموذج."
+
+            # في حال وجود ضغط أو انشغال
+            if response.status_code in [429, 500, 503, 504]:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            else:
+                print("API Error Response:", response.status_code, response.text)
+                last_error = f"خطأ من الخادم: {response.status_code}"
+                break
+
+        except requests.exceptions.Timeout:
+            time.sleep(1)
+            last_error = "استغرقت المعالجة وقتاً طويلاً، يرجى إعادة المحاولة."
+            continue
+        except requests.exceptions.RequestException as e:
+            time.sleep(1)
+            last_error = str(e)
+            continue
+
+    return None, last_error
 
 # --- مسار تفعيل التطبيق (PWA) ---
 @app.route('/sw.js')
@@ -165,24 +207,52 @@ def home():
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
-        user_message = request.json.get('message', '')
-        if not user_message: return jsonify({"reply": "الرجاء كتابة سؤال."})
-        
-        headers = {'Content-Type': 'application/json', 'X-goog-api-key': AI_API_KEY}
-        prompt_text = (f"أنت مساعد Amr Suhail Academy. اشرح للطالب في الهندسة والفيزياء بأسلوب بسيط جداً. "
-                       f"اكتب القوانين والمعادلات بأرقام وحروف عادية واضحة دون أي رموز برمجة معقدة. "
-                       f"سؤال الطالب: {user_message}")
-        
-        payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=12)
-        
-        if response.status_code == 200:
-            reply_text = response.json()['candidates'][0]['content']['parts'][0]['text']
+        user_message = ""
+        image_parts = []
+
+        if request.is_json:
+            user_message = request.json.get('message', '').strip()
+        else:
+            user_message = request.form.get('message', '').strip()
+            if 'file' in request.files:
+                file = request.files['file']
+                if file and file.filename != '':
+                    image_bytes = file.read()
+                    image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+                    mime_type = file.mimetype or 'image/jpeg'
+                    # تصحيح هيكل إرسال الصور ليكون متوافقاً مع معيار Gemini REST API
+                    image_parts.append({
+                        "inlineData": {
+                            "mimeType": mime_type,
+                            "data": image_b64
+                        }
+                    })
+
+        if not user_message and not image_parts:
+            return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
+
+        if not user_message:
+            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط وواضح."
+
+        prompt_text = (
+            f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
+            f"اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
+            f"سؤال الطالب: {user_message}"
+        )
+
+        parts = [{"text": prompt_text}] + image_parts
+        payload = {"contents": [{"parts": parts}]}
+
+        reply_text, error = send_gemini_request(API_URL, payload, max_retries=3, timeout=40)
+
+        if reply_text:
             return jsonify({"reply": reply_text})
         else:
-            return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
+            return jsonify({"reply": error or "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."}), 500
+            
     except Exception as e:
-        return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
+        print("Server Exception:", str(e))
+        return jsonify({"reply": f"تعذر الاتصال بالخادم حالياً: {str(e)}"}), 500
 
 # ==========================================
 # مسارات المخطط الذكي (Smart Planner)
@@ -193,27 +263,49 @@ def planner():
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
-    data = request.json
+    data = request.json or {}
     quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً." if data.get('quran_enabled') else ""
-    prompt = f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. {quran_clause} أرجع JSON حصراً بهيكل plans."
+    prompt = (
+        f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. "
+        f"المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. "
+        f"أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. "
+        f"{quran_clause} أرجع JSON حصراً بهيكل plans يحتوي على day_name و date و is_off_day و tasks التي تحوي title و allocated_hours."
+    )
     
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"response_mime_type": "application/json"}
+    }
+    
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
-        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
+        reply_text, error = send_gemini_request(PLANNER_API_URL, payload, max_retries=3, timeout=40)
+        if reply_text:
+            cleaned_json = reply_text.replace('```json', '').replace('```', '').strip()
+            return jsonify(json.loads(cleaned_json))
+        return jsonify({"error": error or "فشل في توليد الخطة"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
-    data = request.json
-    prompt = f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} أرجع JSON للمصفوفة المحدثة."
-    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    data = request.json or {}
+    prompt = (
+        f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} "
+        f"ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} "
+        f"أرجع JSON للمصفوفة المحدثة حصراً."
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"response_mime_type": "application/json"}
+    }
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
-        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
-    except:
-        return jsonify({"error": "failed"}), 500
+        reply_text, error = send_gemini_request(PLANNER_API_URL, payload, max_retries=3, timeout=40)
+        if reply_text:
+            cleaned_json = reply_text.replace('```json', '').replace('```', '').strip()
+            return jsonify(json.loads(cleaned_json))
+        return jsonify({"error": error or "فشل في إعادة الجدولة"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

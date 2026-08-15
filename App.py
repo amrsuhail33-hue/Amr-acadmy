@@ -19,8 +19,6 @@ def get_data_from_sheet():
         
         for row in csv_reader:
             year = term = subject = chapter = title = video_url = download_url = content_type = file_url = notes = ""
-            question = opt1 = opt2 = opt3 = opt4 = ans_idx = ""
-            
             for key, val in row.items():
                 if not key or val is None: continue
                 k = str(key).strip(); v = str(val).strip()
@@ -34,14 +32,8 @@ def get_data_from_sheet():
                 elif "رابط الملف" in k: file_url = v
                 elif "ملاحظ" in k: notes = v  
                 elif "نوع" in k: content_type = v
-                elif "Question" in k or "سؤال" in k: question = v
-                elif "Option 1" in k: opt1 = v
-                elif "Option 2" in k: opt2 = v
-                elif "Option 3" in k: opt3 = v
-                elif "Option 4" in k: opt4 = v
-                elif "Correct Answer" in k or "الإجابة" in k: ans_idx = v
             
-            if not year or not term or not subject: continue
+            if not year or not term or not subject or not title: continue
             if not chapter: chapter = "عام"
 
             if year not in data: data[year] = {"name": year, "terms": {}}
@@ -59,35 +51,27 @@ def get_data_from_sheet():
                 }
             subj_data = data[year]["terms"][term]["subjects"][subject]
             
-            # معالجة الفيديوهات
+            # فلترة نوع المحتوى (فيديو، ملف، أو اختبار) وإضافته للشابتر المناسب
             if "فيديو" in content_type:
-                if not title: continue
-                if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                if chapter not in subj_data["types"]["videos"]["chapters"]: 
+                    subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
                     "title": title, "video": video_url, "download": download_url, "notes": notes
                 })
-            # معالجة الملفات
             elif "ملف" in content_type:
-                if not title: continue
-                if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                if chapter not in subj_data["types"]["files"]["chapters"]: 
+                    subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
                     "title": title, "file": file_url or download_url, "notes": notes
                 })
-            # معالجة الاختبارات (الأسئلة)
             elif "إختبار" in content_type or "اختبار" in content_type:
                 if chapter not in subj_data["types"]["quiz"]["chapters"]: 
-                    subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "questions": []}
-                if question:
-                    try:
-                        ans_int = int(float(ans_idx))
-                    except:
-                        ans_int = 0
-                    subj_data["types"]["quiz"]["chapters"][chapter]["questions"].append({
-                        "q": question,
-                        "opts": [opt1, opt2, opt3, opt4],
-                        "ans": ans_int
-                    })
+                    subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                subj_data["types"]["quiz"]["chapters"][chapter]["lessons"].append({
+                    "title": title, "notes": notes
+                })
 
+        # تحويل القواميس إلى قوائم حتى يتمكن قالب HTML (Jinja) من قراءتها كحلقات تكرار
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -113,17 +97,19 @@ def home():
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id and content_type in s["types"]:
-                            for c in s["types"][content_type]["chapters"]:
-                                if c["name"] == chapter_name:
-                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
+                        if s["id"] == subject_id:
+                            if content_type in s["types"]:
+                                for c in s["types"][content_type]["chapters"]:
+                                    if c["name"] == chapter_name:
+                                        return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
 
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id and content_type in s["types"]:
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
+                        if s["id"] == subject_id:
+                            if content_type in s["types"]:
+                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
 
         if subject_id:
             for y in DATA.values():
@@ -167,4 +153,4 @@ def ask_ai():
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

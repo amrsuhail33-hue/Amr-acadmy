@@ -1,6 +1,7 @@
 import csv
 import io
 import time
+import json
 import requests
 from flask import Flask, render_template, request, jsonify
 
@@ -8,6 +9,7 @@ app = Flask(__name__)
 
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 # الروابط للورقتين
 CSV_URLS = [
@@ -18,7 +20,6 @@ CSV_URLS = [
 def get_data_from_sheet():
     data = {}
     try:
-        # --- 1. قراءة الورقة الأولى (الفيديوهات والملفات) ---
         res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
         if res1.status_code == 200:
             reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
@@ -66,19 +67,14 @@ def get_data_from_sheet():
                         "title": title, "file": file_url or download_url, "notes": notes
                     })
 
-        # --- 2. قراءة الورقة الثانية (الاختبارات) بالاعتماد على أرقام الأعمدة لتفادي العناوين الفارغة ---
         res2 = requests.get(f"{CSV_URLS[1]}&t={int(time.time())}", timeout=10)
         if res2.status_code == 200:
             reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
-            next(reader2, None) # تخطي صف العناوين الأول إن وجد
+            next(reader2, None)
             for row in reader2:
-                # التأكد من وجود بيانات كافية (السنة، الترم، المادة، الشابتر)
                 if len(row) < 4: continue 
                 
-                year = str(row[0]).strip()
-                term = str(row[1]).strip()
-                subject = str(row[2]).strip()
-                chapter = str(row[3]).strip()
+                year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
 
                 if not year or not term or not subject or not chapter: continue
 
@@ -93,13 +89,11 @@ def get_data_from_sheet():
 
                 subj_data = data[year]["terms"][term]["subjects"][subject]
 
-                # إنشاء الشابتر المخصص للاختبار وتسجيله
                 if chapter not in subj_data["types"]["quiz"]["chapters"]:
                     subj_data["types"]["quiz"]["chapters"][chapter] = {
                         "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
                     }
 
-        # --- 3. تحويل القواميس إلى قوائم ليعرضها قالب HTML ---
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -112,6 +106,10 @@ def get_data_from_sheet():
         print(f"Error fetching CSV: {e}")
     return data
 
+
+# ==========================================
+# مسارات الموقع الأساسي
+# ==========================================
 @app.route('/')
 def home():
     try:
@@ -180,6 +178,69 @@ def ask_ai():
             return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
     except Exception as e:
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
+
+
+# ==========================================
+# مسارات المخطط الذكي (Smart Planner)
+# ==========================================
+@app.route('/planner')
+def planner():
+    return render_template('planner.html')
+
+@app.route('/generate_plan', methods=['POST'])
+def generate_plan():
+    data = request.json
+    quran_clause = ""
+    if data.get('quran_enabled'):
+        quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً."
+
+    prompt = f"""
+    أنت نظام أكاديمي احترافي.
+    قاعدة هامة جداً (إجباري): يجب أن تولد خطة تحتوي على الأيام بالتسلسل من تاريخ اليوم ({data.get('current_date')}) وحتى تاريخ الانتهاء ({data.get('target_date')}).
+    ممنوع منعاً باتاً تلخيص الأيام أو توليد يومين فقط. يجب أن تكون مصفوفة "plans" كاملة تغطي كل الأيام المطلوبة حتى لو كانت 30 يوماً.
+
+    المعطيات:
+    - المواد: {data.get('subjects')}
+    - مستوى الانضباط: {data.get('discipline')}
+    - أوقات النوم: {data.get('sleep_hours')} | الدوام: {data.get('busy_hours')}
+    - أيام الراحة: {', '.join(data.get('off_days', [])) if data.get('off_days') else 'لا يوجد'}
+    - الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}
+    {quran_clause}
+
+    أرجع JSON حصراً:
+    {{
+      "plans": [
+        {{ "day_name": "الأحد", "date": "YYYY-MM-DD", "is_off_day": false, "tasks": [ {{ "title": "...", "allocated_hours": 1.5 }} ] }}
+      ]
+    }}
+    """
+    
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    headers = {"Content-Type": "application/json"}
+    
+    try:
+        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
+        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
+        return jsonify(json.loads(res_text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/reschedule_plan', methods=['POST'])
+def reschedule_plan():
+    data = request.json
+    prompt = f"""
+    أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)}
+    ضمن الأيام القادمة المتبقية فقط: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
+    أرجع مصفوفة plans المُحدثة بـ JSON.
+    """
+    payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
+    headers = {"Content-Type": "application/json"}
+    try:
+        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
+        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
+        return jsonify(json.loads(res_text))
+    except:
+        return jsonify({"error": "failed"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

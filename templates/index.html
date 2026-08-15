@@ -7,6 +7,11 @@
     <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات استخراج الشهادة كصورة والاحتفالات -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         /* --- متغيرات الألوان للوضع الليلي والنهاري --- */
         :root {
@@ -73,14 +78,11 @@
 
         .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
 
-        /* --- تصميم الأزرار العائمة (اليسار) --- */
+        /* --- تصميم الأزرار العائمة --- */
         .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; transition: transform 0.2s; color: white; }
         .fab-btn:hover { transform: scale(1.1); }
         .fab-btn svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        
-        /* فقاعة المساعد الذكي (أسفل) */
         .ai-fab { bottom: 25px; background: var(--primary); box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
-        /* فقاعة الحاسبة (فوق المساعد الذكي) */
         .calc-fab { bottom: 95px; background: var(--accent); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
 
         /* --- النوافذ المنبثقة --- */
@@ -92,7 +94,6 @@
         .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; }
         .popup-body { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-body); flex: 1; }
         
-        /* ألوان المساعد */
         #aiChatBox { background: var(--bg-card); }
         #aiChatBox .popup-header { background: var(--primary); }
         .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; color: var(--text-main); font-size: 0.9rem; }
@@ -102,7 +103,6 @@
         .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.9rem; background: var(--bg-body); color: var(--text-main); }
         .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
-        /* ألوان الحاسبة */
         #calcBox { background: var(--bg-card); }
         #calcBox .popup-header { background: var(--accent); }
         .calc-row { display: flex; gap: 10px; align-items: center; animation: fadeIn 0.3s ease; }
@@ -117,6 +117,14 @@
         .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; margin: 5px 0; }
         .res-details { font-size: 0.9rem; color: var(--text-main); margin-top: 5px; line-height: 1.6; }
 
+        /* --- تصميم الاختبار والشهادة --- */
+        .quiz-opt { padding: 15px; border: 2px solid var(--border); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1rem; font-weight: 700; }
+        .quiz-opt:hover { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); }
+        .quiz-opt.selected { border-color: var(--primary); background: var(--primary); color: white; }
+        .quiz-progress-bg { width: 100%; height: 8px; background: var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary)); transition: width 0.3s ease; }
+        .certificate-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px 25px; position: relative; color: white; text-align: center; margin-bottom:20px; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
         /* --- تصميم شريط التقدم --- */
         .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; }
@@ -142,7 +150,6 @@
     <!-- إخفاء الفقاعات في الصفحات الداخلية وإظهارها فقط في الرئيسية -->
     {% if view == 'years' %}
     
-    <!-- فقاعة حاسبة التقدير (فوق المساعد الذكي) -->
     <div class="fab-btn calc-fab" onclick="toggleCalc()" title="حاسبة التقدير التراكمي">
         <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
     </div>
@@ -151,7 +158,7 @@
         <div class="popup-header">
             <div>
                 <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"></path></svg>
-                <span>حاسبة التقدير</span>
+                <span>حاسبة التقدير الأكاديمي</span>
             </div>
             <span class="popup-close" onclick="toggleCalc()">✕</span>
         </div>
@@ -159,25 +166,24 @@
             <div id="subjectsList" style="display: flex; flex-direction: column; gap: 10px;">
                 <div class="calc-row">
                     <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
-                    <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+                    <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
                 </div>
                 <div class="calc-row">
                     <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
-                    <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+                    <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
                 </div>
             </div>
             <button class="btn-calc-outline" onclick="addRow()">+ إضافة مادة أخرى</button>
-            <button class="btn-calc-action" onclick="calcFinalGPA()">إصدار التقدير النهائي</button>
+            <button class="btn-calc-action" onclick="calcFinalGPA()">حساب المعدل والتقدير</button>
             
             <div id="calcResultBox" class="calc-result-box">
-                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">التقدير المتوقع</div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">التقدير النهائي المتوقع</div>
                 <div id="resGrade" class="res-grade">-</div>
                 <div id="resDetails" class="res-details"></div>
             </div>
         </div>
     </div>
 
-    <!-- فقاعة المساعد الذكي (أسفل اليسار) -->
     <div class="fab-btn ai-fab" onclick="toggleAIChat()" title="المساعد الذكي">
         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16.01"></line><line x1="16" y1="16" x2="16" y2="16.01"></line></svg>
     </div>
@@ -205,9 +211,7 @@
         <a href="/" class="navbar-brand">Amr Suhail Academy</a>
         <div style="display: flex; gap: 15px; align-items: center;">
             <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="تبديل المظهر">
-                <!-- أيقونة القمر (الافتراضية) -->
                 <svg id="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                <!-- أيقونة الشمس -->
                 <svg id="sun-icon" style="display: none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             </button>
             <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
@@ -256,8 +260,10 @@
         {% if view == 'select_type' %}
         <h2 class="section-header">{{ subject.name }}</h2>
         <div class="grid-container">
-            <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو</a>
-            <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات</a>
+            <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو 🎥</a>
+            <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات والمذكرات 📑</a>
+            <!-- تم إضافة خيار الاختبارات هنا كخيار ثالث -->
+            <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color: var(--accent); background: rgba(16, 185, 129, 0.05); color: var(--accent);">الاختبارات والشهادات 🏆</a>
         </div>
         {% endif %}
 
@@ -273,6 +279,68 @@
         {% if view == 'content' %}
         <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
         
+        <!-- قسم الاختبارات والشهادات -->
+        {% if content_type == 'quiz' %}
+        <div class="card" style="padding: 30px; text-align: right; border: 1px solid var(--border);">
+            
+            <!-- شاشة بدء الاختبار -->
+            <div id="quiz-start">
+                <h3 style="margin-bottom:15px; font-weight:900; color: var(--text-main); font-size:1.4rem;">🎓 تقييم فهمك للفصل</h3>
+                <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك والحصول على شهادة إنجاز معتمدة رقمياً من الأكاديمية.</p>
+                <label style="display:block; margin-bottom:8px; font-weight:700; color:var(--text-muted);">الاسم الثلاثي أو الرباعي (ليُطبع في الشهادة):</label>
+                <input type="text" id="studentNameInput" placeholder="مثال: عمرو سهيل مصطفى" style="width:100%; padding:16px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; font-family:'Tajawal'; background:var(--bg-body); color:var(--text-main); font-size:1.05rem; outline:none; transition:border 0.3s;">
+                <button class="btn-calc-action" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
+            </div>
+
+            <!-- شاشة عرض الأسئلة -->
+            <div id="quiz-view" class="hidden">
+                <div class="quiz-progress-bg"><div class="quiz-progress-fill" id="quizProgressBar"></div></div>
+                <div style="color: var(--accent); font-weight:800; margin-bottom:15px; font-size:0.95rem;" id="qCount"></div>
+                <h3 id="qText" style="margin-bottom:25px; font-weight:800; line-height:1.6; font-size:1.2rem;"></h3>
+                <div id="qOptions"></div>
+                <button class="btn-calc-action" style="margin-top:25px;" onclick="submitAnswer()">تأكيد والانتقال للسؤال التالي ←</button>
+            </div>
+
+            <!-- شاشة النتيجة واستخراج الشهادة -->
+            <div id="result-view" class="hidden">
+                
+                <!-- تصميم بطاقة الشهادة التي سيتم التقاطها كصورة -->
+                <div id="certificateCard" class="certificate-card">
+                    <div style="font-size:24px; color:#f59e0b; font-weight:900; margin-bottom:5px; font-family:'Playfair Display', serif; letter-spacing:2px;">Amr Suhail Academy</div>
+                    <div style="font-size:15px; color:#cbd5e1; margin-bottom:25px; letter-spacing:1px;">شهادة إتمام تقييم أكاديمي</div>
+                    
+                    <div style="font-size:28px; color:#fbbf24; font-weight:900; margin-bottom:15px; text-shadow: 0 0 15px rgba(251,191,36,0.4);" id="certStudentName"></div>
+                    <div style="color:#94a3b8; font-size:15px; margin-bottom:25px;">أتم بنجاح تقييم الفصل: <b style="color:white; font-size:16px;" id="certChapterName"></b></div>
+                    
+                    <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                        <div>
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">النسبة المئوية</div>
+                            <div style="font-size:22px; font-weight:900; color:#38bdf8;" id="certPercent"></div>
+                        </div>
+                        <div style="border-right: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); padding: 0 15px;">
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">المعدل (من 5.0)</div>
+                            <div style="font-size:22px; font-weight:900; color:#a855f7;" id="certGPA"></div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">التقدير العام</div>
+                            <div style="font-size:22px; font-weight:900; color:#10b981;" id="certGrade"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:25px; font-size:12px; color:#64748b; display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div style="text-align:right;">تاريخ الإصدار: <br><span id="certDate" style="color:#cbd5e1; font-weight:bold; font-size:13px;"></span></div>
+                        <div style="border:2px dashed rgba(245, 158, 11, 0.6); color:#f59e0b; padding:6px 12px; border-radius:8px; transform:rotate(-4deg); font-weight:900; background:rgba(245, 158, 11, 0.1);">مُعتمد رسمياً ✓</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px;">
+                    <button class="btn-calc-action" style="background:#10b981; flex:2;" onclick="downloadCertificate()">📥 حفظ الشهادة كصورة</button>
+                    <button class="btn-calc-outline" style="flex:1;" onclick="location.reload()">🔄 إعادة الاختبار</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- محتوى الفيديوهات أو الملفات المعتاد -->
         <div class="progress-container">
             <div class="progress-header">
                 <span>نسبة الإنجاز</span>
@@ -282,6 +350,7 @@
                 <div class="progress-bar-fill" id="progress-fill"></div>
             </div>
         </div>
+        {% endif %}
         
         {% if content_type == 'videos' %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
@@ -378,7 +447,6 @@
         }
     }
 
-    // --- نظام النوافذ العائمة (مع إغلاق الأخرى تلقائياً) ---
     function toggleAIChat() { 
         const aiBox = document.getElementById('aiChatBox');
         const calcBox = document.getElementById('calcBox');
@@ -431,13 +499,13 @@
         body.scrollTop = body.scrollHeight;
     }
 
-    // --- نظام الحاسبة التراكمية (المنبثقة بالقسمة على 20) ---
+    // --- نظام الحاسبة التراكمية المطورة مع درجات 5.0 ---
     function addRow() {
         const div = document.createElement('div');
         div.className = "calc-row";
         div.innerHTML = `
             <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
-            <input type="number" placeholder="الدرجة (من 100)" class="calc-input s-grade" min="0" max="100">
+            <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
         `;
         document.getElementById('subjectsList').appendChild(div);
         
@@ -469,12 +537,10 @@
             return;
         }
         
-        const avg = totalWeighted / totalHours; // حساب النسبة المئوية
-        const gpa5 = avg / 20; // حساب المعدل من 5 بالقسمة على 20
+        const avg = totalWeighted / totalHours; 
+        const gpa5 = avg / 20; // تحويل النسبة المئوية لمعدل من 5.0
         
         let letter = ''; let color = '';
-        
-        // التقييم بناءً على النسبة (أو ما يعادلها في نظام الـ 5)
         if(avg >= 90) { letter = 'A (ممتاز)'; color = '#10b981'; }
         else if(avg >= 80) { letter = 'B (جيد جداً)'; color = '#3b82f6'; }
         else if(avg >= 70) { letter = 'C (جيد)'; color = '#f59e0b'; }
@@ -483,15 +549,14 @@
         
         resGrade.innerText = letter;
         resGrade.style.color = color;
-        resDetails.innerHTML = `النسبة: <b style="color:${color}">${avg.toFixed(2)}%</b> | المعدل: <b style="color:${color}">${gpa5.toFixed(2)} من 5</b><br><span style="font-size:0.8rem; margin-top:5px; display:block;">إجمالي الساعات: <b>${totalHours}</b></span>`;
+        resDetails.innerHTML = `النسبة المئوية الإجمالية: <b style="color:${color}">${avg.toFixed(2)}%</b><br>المعدل التراكمي: <b style="color:${color}">${gpa5.toFixed(2)} من 5.0</b><br><span style="font-size:0.8rem; margin-top:5px; display:block;">تمت الحسابات لإجمالي: <b>${totalHours}</b> ساعات معتمدة</span>`;
         
         resultBox.classList.add('show');
-        
         const calcBody = document.querySelector('#calcBox .popup-body');
         calcBody.scrollTop = calcBody.scrollHeight;
     }
 
-    // --- نظام التقدم ---
+    // --- نظام التقدم وتحديد المكتمل ---
     const PROGRESS_KEY = "academy_progress_data";
     function getCompletedItems() { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); }
 
@@ -539,6 +604,130 @@
             percentText.innerText = percentage + "%";
             percentFill.style.width = percentage + "%";
         }
+    }
+
+    // --- نظام الاختبارات وإصدار الشهادات التفاعلي ---
+    // هذه أسئلة افتراضية للتجربة في حال لم يتم الربط بقاعدة بيانات خارجية
+    const defaultQuizQuestions = [
+        { q: "ما هي قيمة جهد الحائل لدايود السيليكون عند الانحياز الأمامي؟", opts: ["0.3V", "0.7V", "1.1V", "2.0V"], ans: 1 },
+        { q: "ما هي قيمة معامل التموج (Ripple Factor) لمقوم الموجة الكاملة؟", opts: ["1.21", "0.48", "0.81", "2.00"], ans: 1 },
+        { q: "في مقوم نقطة المنتصف، كم يبلغ جهد العكس الأقصى (PIV) لكل دايود؟", opts: ["Vm", "2 Vm", "0.5 Vm", "4 Vm"], ans: 1 },
+        { q: "كيف يتم توصيل دايود الزينر في الدوائر ليعمل كمثبت ومُنظم للجهد؟", opts: ["انحياز أمامي مع الحمل", "انحياز عكسي على التوازي مع الحمل", "بالتوالي مع مصدر الدخل", "توصيل مباشر بدون مقاومات"], ans: 1 }
+    ];
+
+    let quizState = { currentQ: 0, score: 0, studentName: "", chapterName: "", selectedOpt: null, questions: defaultQuizQuestions };
+
+    function startQuiz(chapter) {
+        const nameInput = document.getElementById('studentNameInput');
+        if(nameInput) {
+            const name = nameInput.value.trim();
+            if(!name) { 
+                alert("يرجى إدخال اسمك الكريم للبدء واستخراج الشهادة."); 
+                nameInput.style.borderColor = "#dc2626";
+                return; 
+            }
+            quizState.studentName = name;
+        }
+        
+        quizState.chapterName = chapter;
+        quizState.currentQ = 0;
+        quizState.score = 0;
+        
+        document.getElementById('quiz-start').classList.add('hidden');
+        document.getElementById('quiz-view').classList.remove('hidden');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        quizState.selectedOpt = null;
+        const qData = quizState.questions[quizState.currentQ];
+        
+        document.getElementById('qCount').innerText = `السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
+        document.getElementById('qText').innerText = qData.q;
+        
+        const progress = ((quizState.currentQ) / quizState.questions.length) * 100;
+        document.getElementById('quizProgressBar').style.width = progress + '%';
+        
+        const optsContainer = document.getElementById('qOptions');
+        optsContainer.innerHTML = '';
+        
+        qData.opts.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-opt';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                document.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                quizState.selectedOpt = idx;
+            };
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function submitAnswer() {
+        if(quizState.selectedOpt === null) { 
+            alert("يرجى اختيار إجابة من الخيارات أولاً."); 
+            return; 
+        }
+        
+        if(quizState.selectedOpt === quizState.questions[quizState.currentQ].ans) { 
+            quizState.score++; 
+        }
+        
+        quizState.currentQ++;
+        if(quizState.currentQ < quizState.questions.length) {
+            loadQuestion();
+        } else {
+            showQuizResult();
+        }
+    }
+
+    function showQuizResult() {
+        document.getElementById('quiz-view').classList.add('hidden');
+        document.getElementById('result-view').classList.remove('hidden');
+        
+        const percentage = (quizState.score / quizState.questions.length) * 100;
+        const gpa = percentage / 20; 
+        let grade = 'راسب (F)'; let color = '#dc2626';
+        
+        if(percentage >= 90) { grade = 'ممتاز (A)'; color = '#10b981'; }
+        else if(percentage >= 80) { grade = 'جيد جداً (B)'; color = '#3b82f6'; }
+        else if(percentage >= 70) { grade = 'جيد (C)'; color = '#f59e0b'; }
+        else if(percentage >= 60) { grade = 'مقبول (D)'; color = '#f97316'; }
+        
+        document.getElementById('certStudentName').innerText = quizState.studentName;
+        document.getElementById('certChapterName').innerText = quizState.chapterName;
+        
+        document.getElementById('certPercent').innerText = percentage.toFixed(0) + "%";
+        document.getElementById('certPercent').style.color = color;
+        
+        document.getElementById('certGPA').innerText = gpa.toFixed(2);
+        document.getElementById('certGPA').style.color = color;
+        
+        document.getElementById('certGrade').innerText = grade;
+        document.getElementById('certGrade').style.color = color;
+        
+        const today = new Date();
+        document.getElementById('certDate').innerText = today.toLocaleDateString('ar-EG');
+        
+        // إطلاق احتفالية في حال اجتياز الاختبار بنجاح عالٍ
+        if(percentage >= 80 && typeof confetti === 'function') {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        }
+    }
+
+    function downloadCertificate() {
+        const card = document.getElementById('certificateCard');
+        html2canvas(card, { 
+            scale: 2, 
+            backgroundColor: null,
+            useCORS: true 
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `شهادة_Amr_Academy_${quizState.studentName.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
     }
     </script>
 </body>

@@ -3,7 +3,7 @@ import io
 import time
 import json
 import requests
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -16,6 +16,11 @@ CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
+
+# --- إضافة مسار لملف الـ PWA ---
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('static', 'sw.js')
 
 def get_data_from_sheet():
     data = {}
@@ -107,9 +112,6 @@ def get_data_from_sheet():
     return data
 
 
-# ==========================================
-# مسارات الموقع الأساسي
-# ==========================================
 @app.route('/')
 def home():
     try:
@@ -179,10 +181,6 @@ def ask_ai():
     except Exception as e:
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
 
-
-# ==========================================
-# مسارات المخطط الذكي (Smart Planner)
-# ==========================================
 @app.route('/planner')
 def planner():
     return render_template('planner.html')
@@ -190,55 +188,24 @@ def planner():
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     data = request.json
-    quran_clause = ""
-    if data.get('quran_enabled'):
-        quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً."
-
-    prompt = f"""
-    أنت نظام أكاديمي احترافي.
-    قاعدة هامة جداً (إجباري): يجب أن تولد خطة تحتوي على الأيام بالتسلسل من تاريخ اليوم ({data.get('current_date')}) وحتى تاريخ الانتهاء ({data.get('target_date')}).
-    ممنوع منعاً باتاً تلخيص الأيام أو توليد يومين فقط. يجب أن تكون مصفوفة "plans" كاملة تغطي كل الأيام المطلوبة حتى لو كانت 30 يوماً.
-
-    المعطيات:
-    - المواد: {data.get('subjects')}
-    - مستوى الانضباط: {data.get('discipline')}
-    - أوقات النوم: {data.get('sleep_hours')} | الدوام: {data.get('busy_hours')}
-    - أيام الراحة: {', '.join(data.get('off_days', [])) if data.get('off_days') else 'لا يوجد'}
-    - الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}
-    {quran_clause}
-
-    أرجع JSON حصراً:
-    {{
-      "plans": [
-        {{ "day_name": "الأحد", "date": "YYYY-MM-DD", "is_off_day": false, "tasks": [ {{ "title": "...", "allocated_hours": 1.5 }} ] }}
-      ]
-    }}
-    """
+    quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً." if data.get('quran_enabled') else ""
+    prompt = f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. {quran_clause} أرجع JSON حصراً بهيكل plans."
     
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    headers = {"Content-Type": "application/json"}
-    
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
-        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
-        return jsonify(json.loads(res_text))
+        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
+        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     data = request.json
-    prompt = f"""
-    أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)}
-    ضمن الأيام القادمة المتبقية فقط: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
-    أرجع مصفوفة plans المُحدثة بـ JSON.
-    """
+    prompt = f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} أرجع JSON للمصفوفة المحدثة."
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
-    headers = {"Content-Type": "application/json"}
     try:
-        response = requests.post(PLANNER_API_URL, json=payload, headers=headers)
-        res_text = response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()
-        return jsonify(json.loads(res_text))
+        response = requests.post(PLANNER_API_URL, json=payload, headers={'Content-Type': 'application/json'})
+        return jsonify(json.loads(response.json()['candidates'][0]['content']['parts'][0]['text'].replace('```json', '').replace('```', '').strip()))
     except:
         return jsonify({"error": "failed"}), 500
 

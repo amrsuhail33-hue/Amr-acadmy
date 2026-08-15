@@ -6,9 +6,12 @@
     <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
     
-    <!-- إعدادات تطبيق الويب PWA -->
+    <!-- إعدادات تطبيق الويب PWA والشعار -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AS Academy">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/a.png">
 
     <script>
@@ -22,73 +25,859 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        :root { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --primary: #2563eb; --border: #e2e8f0; --accent: #10b981; --nav-bg: rgba(255, 255, 255, 0.95); }
-        html.dark-mode { --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --border: #334155; --nav-bg: rgba(30, 41, 59, 0.95); }
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --border: #e2e8f0;
+            --accent: #10b981;
+            --nav-bg: rgba(255, 255, 255, 0.95);
+        }
+        
+        html.dark-mode {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --border: #334155;
+            --nav-bg: rgba(30, 41, 59, 0.95);
+        }
+
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
-        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; padding: 20px; }
-        .logo-a { width: 80px; height: 80px; margin-bottom: 20px; }
-        .hidden { display: none !important; }
-        .enter-btn { background: #2563eb; color: white; padding: 14px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; margin-top: 30px; }
+        #splash-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; 
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease; padding: 20px;
+        }
+        .splash-brand { font-family: 'Playfair Display', serif; font-size: 2.4rem; color: #ffffff; letter-spacing: 4px; margin-bottom: 5px; text-align: center; }
+        .splash-slogan { font-size: 0.85rem; color: #64748b; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center; }
+        .welcome-text { width: 100%; max-width: 480px; color: #94a3b8; font-size: 1rem; line-height: 1.8; margin-bottom: 35px; text-align: center; font-weight: 300; }
+        .enter-btn { background: #2563eb; color: white; padding: 14px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+        .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none; }
 
-        .navbar { position: sticky; top: 0; background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 100; border-bottom: 1px solid var(--border); }
-        .navbar-brand { font-size: 1.3rem; font-weight: 900; color: var(--text-main); text-decoration: none; }
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: background 0.3s; }
+        .navbar-brand { font-size: 1.4rem; font-weight: 900; color: var(--text-main); text-decoration: none; }
+        .navbar-contact { background-color: var(--text-main); color: var(--bg-card); padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: background 0.3s, color 0.3s; }
+        
+        .theme-toggle { cursor: pointer; background: none; border: none; color: var(--text-main); outline: none; transition: transform 0.3s; display: flex; align-items: center; justify-content: center; }
+        .theme-toggle:hover { transform: scale(1.1); }
+        .theme-toggle svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .card { background: var(--bg-card); padding: 30px 20px; border-radius: 16px; text-align: center; color: var(--text-main); border: 1px solid var(--border); transition: 0.3s; }
+        .search-box { margin-bottom: 30px; }
+        #searchInput { width: 100%; padding: 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; background: var(--bg-card); color: var(--text-main); transition: background 0.3s, color 0.3s, border 0.3s; }
+        #searchInput:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
         
-        /* الأزرار العائمة */
-        .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1000; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .ai-fab { bottom: 25px; background: var(--primary); }
-        .calc-fab { bottom: 95px; background: var(--accent); }
-        .planner-fab { bottom: 165px; background: #8b5cf6; text-decoration: none; }
-        .popup-box { position: fixed; left: 25px; bottom: 235px; width: 340px; max-height: 50vh; border-radius: 16px; display: none; z-index: 1000; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
-        .popup-box.active { display: flex; flex-direction: column; }
+        .breadcrumb { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; font-size: 0.95rem; font-weight: 700; }
+        .breadcrumb a { color: var(--primary); text-decoration: none; padding: 6px 14px; background: rgba(37, 99, 235, 0.1); border-radius: 20px; transition: background 0.3s; }
+        .breadcrumb a:hover { background: rgba(37, 99, 235, 0.2); }
+        
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .card { background: var(--bg-card); padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: var(--text-main); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .card-primary { background-color: var(--primary); color: #ffffff !important; border: none; }
+        
+        .section-header { text-align: center; font-size: 1.8rem; color: var(--text-main); margin: 0 0 30px 0; font-weight: 900; }
+        .item-btn { display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.95rem; font-weight: 700; transition: all 0.2s ease; }
+        .btn-video { background-color: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
+        .btn-pdf { background-color: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; font-size: 1.1rem; }
+
+        .footer { background-color: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; margin-top: auto; }
+
+        /* تعديلات أزرار الفقاعة الثلاثة */
+        .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; transition: transform 0.2s; color: white; }
+        .fab-btn:hover { transform: scale(1.1); }
+        .fab-btn svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .ai-fab { bottom: 25px; background: var(--primary); box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
+        .calc-fab { bottom: 95px; background: var(--accent); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+        .planner-fab { bottom: 165px; background: #8b5cf6; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); text-decoration: none; }
+
+        .popup-box { position: fixed; left: 25px; bottom: 235px; width: 340px; max-width: calc(100vw - 50px); max-height: 50vh; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0); transform-origin: bottom left; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .popup-box.active { transform: scale(1); }
+        
+        .popup-header { color: white; padding: 15px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+        .popup-header svg { width: 20px; height: 20px; margin-left: 8px; vertical-align: middle; }
+        .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; }
+        .popup-body { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-body); flex: 1; }
+        
+        #aiChatBox { background: var(--bg-card); }
+        #aiChatBox .popup-header { background: var(--primary); }
+        .ai-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; color: var(--text-main); font-size: 0.9rem; }
+        .ai-msg.bot { background: var(--bg-card); align-self: flex-start; border: 1px solid var(--border); }
+        .ai-msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .ai-chat-footer { padding: 10px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .ai-chat-footer input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.9rem; background: var(--bg-body); color: var(--text-main); }
+        .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+        #calcBox { background: var(--bg-card); }
+        #calcBox .popup-header { background: var(--accent); }
+        .calc-row { display: flex; gap: 10px; align-items: center; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-size: 0.95rem; background: var(--bg-card); color: var(--text-main); text-align: center; transition: border 0.3s; }
+        .calc-input:focus { border-color: var(--accent); }
+        .btn-calc-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: opacity 0.3s; width: 100%; font-size: 1rem; }
+        .btn-calc-action:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-calc-action:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; }
+        .btn-calc-outline { background: transparent; color: var(--accent); border: 2px dashed var(--accent); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background 0.3s; width: 100%; }
+        .calc-result-box { background: var(--bg-card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; display: none; }
+        .calc-result-box.show { display: block; animation: fadeIn 0.3s ease; }
+        .res-grade { font-size: 1.8rem; font-weight: 900; color: var(--accent); direction: ltr; margin: 5px 0; }
+        .res-details { font-size: 0.9rem; color: var(--text-main); margin-top: 5px; line-height: 1.6; }
+
+        .q-container { animation: slideInUp 0.4s ease forwards; }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .quiz-opt { padding: 16px 20px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1.05rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
+        .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); transform: translateX(-8px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        .quiz-opt.correct { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: white !important; animation: popCorrect 0.5s ease; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .quiz-opt.wrong { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border-color: #dc2626 !important; color: white !important; animation: shakeWrong 0.4s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+        
+        @keyframes popCorrect { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        @keyframes shakeWrong { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
+        
+        .explanation-box { background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-right: 4px solid #f59e0b; padding: 16px; border-radius: 12px; margin-top: 20px; margin-bottom: 15px; color: var(--text-main); font-size: 1rem; line-height: 1.7; display: none; text-align: right; animation: fadeIn 0.4s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        
+        .quiz-progress-bg { width: 100%; height: 12px; background: var(--border); border-radius: 20px; margin-bottom: 25px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); border-radius: 20px; }
+        
+        .btn-end-quiz { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s; }
+        .btn-end-quiz:hover { background: #ef4444; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+
+        .certificate-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px 25px; position: relative; color: white; text-align: center; margin-bottom:20px; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; }
+        .progress-bar-bg { width: 100%; height: 10px; background-color: var(--border); border-radius: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--primary)); border-radius: 20px; transition: width 0.5s ease; }
+        .lesson-card.completed { border-color: var(--accent); }
+        .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
+        .btn-complete.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
     </style>
 </head>
-<body>
+<body class="notranslate">
 
-    <div id="splash-screen">
-        <svg class="logo-a" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
-        <h1 style="color:white; font-size:2rem; font-weight:900;">Amr Suhail Academy</h1>
-        <button onclick="enterAcademy()" class="enter-btn">ابدأ رحلتك</button>
+    <!-- شاشة البداية بالشعار الجديد -->
+    <div id="splash-screen" class="hidden">
+        <svg style="width: 80px; height: 80px; margin-bottom: 15px;" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
+        <div class="splash-brand">Amr Suhail Academy</div>
+        <div class="splash-slogan">From nothing to be something</div>
+        <div class="welcome-text">
+            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
+        </div>
+        <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
 
-    <!-- الأزرار العائمة -->
-    <div class="fab-btn calc-fab" onclick="toggleCalc()"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/></svg></div>
-    <a href="/planner" target="_blank" class="fab-btn planner-fab"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></a>
-    <div class="fab-btn ai-fab" onclick="toggleAIChat()"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/></svg></div>
+    {% if view == 'years' %}
+    <!-- أزرار الفقاعة الثلاثة (تمت إضافة المخطط) -->
+    
+    <div class="fab-btn calc-fab" onclick="toggleCalc()" title="حاسبة التقدير التراكمي">
+        <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
+    </div>
+    
+    <a href="/planner" target="_blank" class="fab-btn planner-fab" title="المخطط الدراسي الذكي">
+        <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><line x1="8" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="12" y2="18"></line></svg>
+    </a>
+    
+    <div class="popup-box" id="calcBox">
+        <div class="popup-header">
+            <div>
+                <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"></path></svg>
+                <span>حاسبة التقدير الأكاديمي</span>
+            </div>
+            <span class="popup-close" onclick="toggleCalc()">✕</span>
+        </div>
+        <div class="popup-body">
+            <div id="subjectsList" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="calc-row">
+                    <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+                    <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
+                </div>
+                <div class="calc-row">
+                    <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+                    <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
+                </div>
+            </div>
+            <button class="btn-calc-outline" onclick="addRow()">+ إضافة مادة أخرى</button>
+            <button class="btn-calc-action" onclick="calcFinalGPA()">حساب المعدل والتقدير</button>
+            
+            <div id="calcResultBox" class="calc-result-box">
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">التقدير النهائي المتوقع</div>
+                <div id="resGrade" class="res-grade">-</div>
+                <div id="resDetails" class="res-details"></div>
+            </div>
+        </div>
+    </div>
 
+    <div class="fab-btn ai-fab" onclick="toggleAIChat()" title="المساعد الذكي">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16.01"></line><line x1="16" y1="16" x2="16" y2="16.01"></line></svg>
+    </div>
+    
+    <div class="popup-box" id="aiChatBox">
+        <div class="popup-header">
+            <div>
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><path d="M8 16h.01M16 16h.01"></path></svg>
+                <span>مساعد AS Academy</span>
+            </div>
+            <span class="popup-close" onclick="toggleAIChat()">✕</span>
+        </div>
+        <div class="popup-body" id="aiChatBody">
+            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك.</div>
+        </div>
+        <div class="ai-chat-footer">
+            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك..." onkeypress="checkEnter(event)">
+            <button onclick="sendAIMessage()">إرسال</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- الـ Navbar مع الشعار الجديد -->
     <nav class="navbar">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <svg class="logo-a" width="30" height="30" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <svg style="width: 35px; height: 35px;" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
         </div>
-        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer;">☀️/🌙</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="تبديل المظهر">
+                <svg id="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg id="sun-icon" style="display: none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+            <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">تواصل معنا</a>
+        </div>
     </nav>
 
     <div class="main-content">
+        
+        {% if view in ['years', 'terms', 'subjects'] %}
+        <div class="search-box"><input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن مادة أو درس..."></div>
+        {% endif %}
+
+        {% if view != 'years' %}
+        <div class="breadcrumb">
+            <a href="/">الرئيسية</a>
+            {% if view in ['subjects', 'chapters', 'select_type', 'content'] %}
+                <span>/</span> <a href="javascript:history.back()">رجوع</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
         {% if view == 'years' %}
         <div class="grid-container">
             {% for id, year in data.items() %}
-                <a href="/?year={{ id }}" class="card card-primary">{{ year.name }}</a>
+                <a href="/?year={{ id }}" class="card card-primary" style="color: white;">{{ year.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
+
+        {% if view == 'terms' %}
+        <div class="grid-container">
+            {% for t_id, term_data in terms.items() %}
+            <a href="/?year={{ y_id }}&term={{ t_id }}" class="card">{{ term_data.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'subjects' %}
+        <div class="grid-container">
+            {% for subject in subjects %}
+                <a href="/?subject={{ subject.id }}" class="card">{{ subject.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'select_type' %}
+        <h2 class="section-header">{{ subject.name }}</h2>
+        <div class="grid-container">
+            <a href="/?subject={{ subject.id }}&type=videos" class="card">مقاطع الفيديو 🎥</a>
+            <a href="/?subject={{ subject.id }}&type=files" class="card">الملفات والمذكرات 📑</a>
+            <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color: var(--accent); background: rgba(16, 185, 129, 0.05); color: var(--accent);">اختبر نفسك 🏆</a>
+        </div>
+        {% endif %}
+
+        {% if view == 'chapters' %}
+        <h2 class="section-header">{{ subject.name }}</h2>
+        <div class="grid-container">
+            {% for chapter in chapters %}
+                <a href="/?subject={{ subject.id }}&type={{ content_type }}&chapter={{ chapter.name }}" class="card">{{ chapter.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if view == 'content' %}
+        <h2 class="section-header">{{ subject.name }} - {{ chapter.name }}</h2>
+        
+        {% if content_type == 'quiz' %}
+        <div class="card" style="padding: 30px; text-align: right; border: 1px solid var(--border);">
+            
+            <div id="quiz-start">
+                <h3 style="margin-bottom:15px; font-weight:900; color: var(--text-main); font-size:1.4rem;">🎓 تقييم فهمك للفصل</h3>
+                <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك. يمكنك تخطي الأسئلة والعودة لها لاحقاً.</p>
+                <label style="display:block; margin-bottom:8px; font-weight:700; color:var(--text-muted);">الاسم الثلاثي أو الرباعي (ليُطبع في الشهادة):</label>
+                <input type="text" id="studentNameInput" placeholder="مثال: عمرو سهيل مصطفى" style="width:100%; padding:16px; border-radius:10px; border:1px solid var(--border); margin-bottom:20px; font-family:'Tajawal'; background:var(--bg-body); color:var(--text-main); font-size:1.05rem; outline:none; transition:border 0.3s;">
+                <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')" style="font-size:1.1rem; padding:15px; border-radius:12px;">بدء الاختبار الآن 🚀</button>
+            </div>
+
+            <div id="quiz-view" class="hidden">
+                <div class="quiz-progress-bg"><div class="quiz-progress-fill" id="quizProgressBar"></div></div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                    <div style="color: var(--accent); font-weight:900; font-size:1.1rem; background: rgba(16, 185, 129, 0.1); padding: 5px 15px; border-radius: 20px;" id="qCount"></div>
+                    
+                    <button onclick="confirmEndQuiz()" class="btn-end-quiz" title="إنهاء فوري وحساب النتيجة">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        إنهاء الاختبار
+                    </button>
+                </div>
+                
+                <div id="qWrapper" class="q-container">
+                    <h3 id="qText" style="margin-bottom:25px; font-weight:900; line-height:1.6; font-size:1.3rem; color: var(--primary);"></h3>
+                    <div id="qOptions"></div>
+                    
+                    <div id="quizExplanation" class="explanation-box"></div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 30px; align-items: stretch;">
+                    <button id="btnPrev" class="btn-calc-outline" style="flex: 1; display:none; border-radius: 12px; border-color:var(--text-muted); color:var(--text-muted);" onclick="prevQuestion()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><path d="M9 18l6-6-6-6"/></svg> السابق
+                    </button>
+                    
+                    <button id="btnHint" class="btn-calc-action" style="flex: 1; background: #f59e0b; border-radius: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);" onclick="showHint()">
+                        تلميح 💡
+                    </button>
+                    
+                    <button id="btnSkipNext" class="btn-calc-action" style="flex: 2; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);" onclick="nextQuestion()">
+                        تخطي <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 5px;"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="result-view" class="hidden">
+                <div id="certificateCard" class="certificate-card">
+                    <div style="font-size:24px; color:#f59e0b; font-weight:900; margin-bottom:5px; font-family:'Playfair Display', serif; letter-spacing:2px;">Amr Suhail Academy</div>
+                    <div style="font-size:15px; color:#cbd5e1; margin-bottom:25px; letter-spacing:1px;">شهادة إتمام تقييم أكاديمي</div>
+                    
+                    <div style="font-size:28px; color:#fbbf24; font-weight:900; margin-bottom:15px; text-shadow: 0 0 15px rgba(251,191,36,0.4);" id="certStudentName"></div>
+                    <div style="color:#94a3b8; font-size:15px; margin-bottom:25px;">أتم بنجاح تقييم الفصل: <b style="color:white; font-size:16px;" id="certChapterName"></b></div>
+                    
+                    <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                        <div>
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">النسبة المئوية</div>
+                            <div style="font-size:22px; font-weight:900; color:#38bdf8;" id="certPercent"></div>
+                        </div>
+                        <div style="border-right: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); padding: 0 15px;">
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">المعدل (من 5.0)</div>
+                            <div style="font-size:22px; font-weight:900; color:#a855f7;" id="certGPA"></div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">التقدير العام</div>
+                            <div style="font-size:22px; font-weight:900; color:#10b981;" id="certGrade"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:25px; font-size:12px; color:#64748b; display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div style="text-align:right;">تاريخ الإصدار: <br><span id="certDate" style="color:#cbd5e1; font-weight:bold; font-size:13px;"></span></div>
+                        <div style="border:2px dashed rgba(245, 158, 11, 0.6); color:#f59e0b; padding:6px 12px; border-radius:8px; transform:rotate(-4deg); font-weight:900; background:rgba(245, 158, 11, 0.1);">مُعتمد رسمياً ✓</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px;">
+                    <button class="btn-calc-action" style="background:#10b981; flex:2;" onclick="downloadCertificate()">📥 حفظ الشهادة كصورة</button>
+                    <button class="btn-calc-outline" style="flex:1;" onclick="location.reload()">🔄 إعادة الاختبار</button>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>نسبة الإنجاز</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        {% if content_type == 'videos' %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            {% for item in chapter.lessons %}
+                <div class="card lesson-card" data-id="video_{{ item.title }}" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="margin-bottom: 15px; font-weight:800;">{{ item.title }}</div>
+                        {% if item.notes %}
+                        <div style="background-color: rgba(245, 158, 11, 0.1); color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; text-align: right; line-height: 1.5;">
+                            💡 <b>ملاحظة:</b> {{ item.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div style="display: flex; gap: 10px; margin-top: auto;">
+                            {% if item.video %}<a href="{{ item.video }}" target="_blank" class="item-btn btn-video" style="flex:1;">▶ مشاهدة</a>{% endif %}
+                            {% if item.download %}<a href="{{ item.download }}" target="_blank" class="item-btn" style="flex:1; background-color: #0ea5e9; color: white;">⬇ تحميل</a>{% endif %}
+                        </div>
+                        <button class="btn-complete" onclick="toggleProgress(this, 'video_{{ item.title }}')">
+                            <span class="btn-text">تحديد كمنجز</span>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if content_type == 'files' %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+            {% for item in chapter.lessons %}
+                <div class="card lesson-card" data-id="file_{{ item.title }}" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
+                        {% if item.notes %}
+                        <div style="background-color: rgba(16, 185, 129, 0.1); color: #059669; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; line-height: 1.5; margin-top: auto;">
+                            📌 {{ item.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button class="btn-complete" onclick="toggleProgress(this, 'file_{{ item.title }}')">
+                        <span class="btn-text">تحديد كمنجز</span>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% endif %}
+        
+        {% endif %}
+
     </div>
 
+    <footer class="footer">
+        <div>Amr Suhail Academy &copy; 2026</div>
+    </footer>
+
+    <!-- سكربت تسجيل تطبيق الويب PWA -->
     <script>
-        function enterAcademy() { document.getElementById('splash-screen').classList.add('hidden'); }
-        function toggleTheme() { document.documentElement.classList.toggle('dark-mode'); localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light'); }
-        function toggleCalc() { document.getElementById('calcBox').classList.toggle('active'); }
-        function toggleAIChat() { document.getElementById('aiChatBox').classList.toggle('active'); }
-        
-        // تسجيل الـ PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Failed', err));
+        });
+    }
+
+    function updateThemeIcon() {
+        const isDark = document.documentElement.classList.contains('dark-mode');
+        document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
+        document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
+    }
+
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark-mode');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
+        updateThemeIcon();
+    }
+
+    window.addEventListener('DOMContentLoaded', (event) => {
+        updateThemeIcon();
+        if (!sessionStorage.getItem('visited')) {
+            var splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.remove('hidden');
         }
+        updateProgressUI();
+    });
+
+    function enterAcademy() {
+        var splash = document.getElementById('splash-screen');
+        if (splash) splash.classList.add('hidden');
+        sessionStorage.setItem('visited', 'true');
+    }
+
+    function searchItems() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toUpperCase();
+        var cards = document.querySelectorAll(".grid-container .card");
+        for (var i = 0; i < cards.length; i++) {
+            if (cards[i].innerText.toUpperCase().indexOf(filter) > -1) { cards[i].style.display = ""; } 
+            else { cards[i].style.display = "none"; }
+        }
+    }
+
+    function toggleAIChat() { 
+        const aiBox = document.getElementById('aiChatBox');
+        const calcBox = document.getElementById('calcBox');
+        if(aiBox) {
+            aiBox.classList.toggle('active'); 
+            if(calcBox && calcBox.classList.contains('active')) calcBox.classList.remove('active');
+        }
+    }
+    
+    function toggleCalc() { 
+        const calcBox = document.getElementById('calcBox');
+        const aiBox = document.getElementById('aiChatBox');
+        if(calcBox) {
+            calcBox.classList.toggle('active'); 
+            if(aiBox && aiBox.classList.contains('active')) aiBox.classList.remove('active');
+        }
+    }
+
+    function checkEnter(e) { if (e.key === 'Enter') sendAIMessage(); }
+
+    async function sendAIMessage() {
+        var input = document.getElementById('aiUserInput');
+        var body = document.getElementById('aiChatBody');
+        if(!input || !body) return;
+        
+        var text = input.value.trim();
+        if (!text) return;
+        
+        body.innerHTML += '<div class="ai-msg user">' + text + '</div>';
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+        
+        var loadingId = 'loading_' + Date.now();
+        body.innerHTML += '<div class="ai-msg bot" id="' + loadingId + '">جاري التفكير...</div>';
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            let res = await fetch('/ask-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            let data = await res.json();
+            document.getElementById(loadingId).remove();
+            body.innerHTML += '<div class="ai-msg bot">' + data.reply + '</div>';
+        } catch (err) {
+            document.getElementById(loadingId).remove();
+            body.innerHTML += '<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>';
+        }
+        body.scrollTop = body.scrollHeight;
+    }
+
+    function addRow() {
+        const div = document.createElement('div');
+        div.className = "calc-row";
+        div.innerHTML = `
+            <input type="number" placeholder="الساعات" class="calc-input s-hours" min="1">
+            <input type="number" placeholder="الدرجة المئوية" class="calc-input s-grade" min="0" max="100">
+        `;
+        document.getElementById('subjectsList').appendChild(div);
+        const calcBody = document.querySelector('#calcBox .popup-body');
+        calcBody.scrollTop = calcBody.scrollHeight;
+    }
+
+    function calcFinalGPA() {
+        let totalWeighted = 0;
+        let totalHours = 0;
+        document.querySelectorAll('#subjectsList .calc-row').forEach(row => {
+            const hours = parseFloat(row.querySelector('.s-hours').value);
+            const grade = parseFloat(row.querySelector('.s-grade').value);
+            if(!isNaN(hours) && !isNaN(grade)) {
+                totalWeighted += (hours * grade);
+                totalHours += hours;
+            }
+        });
+
+        const resultBox = document.getElementById('calcResultBox');
+        const resGrade = document.getElementById('resGrade');
+        const resDetails = document.getElementById('resDetails');
+
+        if(totalHours === 0) {
+            resGrade.innerText = "⚠️ خطأ";
+            resGrade.style.color = "#dc2626";
+            resDetails.innerText = "يرجى إدخال الساعات والدرجات بشكل صحيح";
+            resultBox.classList.add('show');
+            return;
+        }
+        
+        const avg = totalWeighted / totalHours; 
+        const gpa5 = avg / 20; 
+        
+        let letter = ''; let color = '';
+        if(avg >= 90) { letter = 'A (ممتاز)'; color = '#10b981'; }
+        else if(avg >= 80) { letter = 'B (جيد جداً)'; color = '#3b82f6'; }
+        else if(avg >= 70) { letter = 'C (جيد)'; color = '#f59e0b'; }
+        else if(avg >= 60) { letter = 'D (مقبول)'; color = '#f97316'; }
+        else { letter = 'F (راسب)'; color = '#dc2626'; }
+        
+        resGrade.innerText = letter;
+        resGrade.style.color = color;
+        resDetails.innerHTML = `النسبة المئوية الإجمالية: <b style="color:${color}">${avg.toFixed(2)}%</b><br>المعدل التراكمي: <b style="color:${color}">${gpa5.toFixed(2)} من 5.0</b><br><span style="font-size:0.8rem; margin-top:5px; display:block;">تمت الحسابات لإجمالي: <b>${totalHours}</b> ساعات معتمدة</span>`;
+        
+        resultBox.classList.add('show');
+        const calcBody = document.querySelector('#calcBox .popup-body');
+        calcBody.scrollTop = calcBody.scrollHeight;
+    }
+
+    const PROGRESS_KEY = "academy_progress_data";
+    function getCompletedItems() { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "[]"); }
+
+    function toggleProgress(btn, itemId) {
+        let completedList = getCompletedItems();
+        let card = btn.closest('.lesson-card');
+        if (completedList.includes(itemId)) {
+            completedList = completedList.filter(id => id !== itemId);
+            btn.classList.remove('active');
+            btn.querySelector('.btn-text').innerText = 'تحديد كمنجز';
+            card.classList.remove('completed');
+        } else {
+            completedList.push(itemId);
+            btn.classList.add('active');
+            btn.querySelector('.btn-text').innerText = 'مكتمل ✓';
+            card.classList.add('completed');
+        }
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(completedList));
+        calculateProgressPercentage();
+    }
+
+    function updateProgressUI() {
+        const completedList = getCompletedItems();
+        const cards = document.querySelectorAll('.lesson-card');
+        cards.forEach(card => {
+            const itemId = card.getAttribute('data-id');
+            const btn = card.querySelector('.btn-complete');
+            if (completedList.includes(itemId)) {
+                card.classList.add('completed');
+                if(btn) { btn.classList.add('active'); btn.querySelector('.btn-text').innerText = 'مكتمل ✓'; }
+            }
+        });
+        calculateProgressPercentage();
+    }
+
+    function calculateProgressPercentage() {
+        const allCards = document.querySelectorAll('.lesson-card');
+        if (allCards.length === 0) return;
+        let completedCount = 0;
+        allCards.forEach(card => { if (card.classList.contains('completed')) completedCount++; });
+        const percentage = Math.round((completedCount / allCards.length) * 100);
+        const percentText = document.getElementById('progress-percent');
+        const percentFill = document.getElementById('progress-fill');
+        if(percentText && percentFill) {
+            percentText.innerText = percentage + "%";
+            percentFill.style.width = percentage + "%";
+        }
+    }
+
+    const ALL_QUIZZES_CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429";
+
+    let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
+
+    async function startQuiz(chapter) {
+        const nameInput = document.getElementById('studentNameInput');
+        if(nameInput) {
+            const name = nameInput.value.trim();
+            if(!name) { 
+                alert("يرجى إدخال اسمك الكريم للبدء واستخراج الشهادة."); 
+                nameInput.style.borderColor = "#dc2626";
+                return; 
+            }
+            quizState.studentName = name;
+        }
+        
+        quizState.chapterName = chapter;
+        quizState.currentQ = 0;
+        
+        const btn = document.getElementById('startQuizBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "جاري تحميل الأسئلة...";
+        btn.disabled = true;
+
+        try {
+            const freshUrl = `${ALL_QUIZZES_CSV_URL}&t=${Date.now()}`;
+            const res = await fetch(freshUrl);
+            const text = await res.text();
+            
+            const rows = text.trim().split("\n").slice(1);
+
+            quizState.questions = rows.map(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                return {
+                    chapter: cols[3], 
+                    q: cols[5],       
+                    opts: [cols[6], cols[7], cols[8], cols[9]].filter(opt => opt !== undefined && opt !== ""), 
+                    ans: isNaN(parseInt(cols[10])) ? -1 : parseInt(cols[10]),
+                    explain: cols[11] || "لا يوجد شرح إضافي مرفق مع هذا السؤال.", 
+                    status: 'unanswered', 
+                    selectedOpt: null
+                };
+            }).filter(q => q.chapter === chapter && q.q !== undefined && q.q !== "");
+
+            if (quizState.questions.length === 0) {
+                alert("عذراً، لا توجد أسئلة متاحة لهذا الشابتر في قاعدة البيانات حالياً.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            document.getElementById('quiz-start').classList.add('hidden');
+            document.getElementById('quiz-view').classList.remove('hidden');
+            loadQuestion();
+
+        } catch (error) {
+            alert("حدث خطأ أثناء الاتصال بقاعدة البيانات. تأكد من صحة الرابط.");
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function loadQuestion() {
+        const qData = quizState.questions[quizState.currentQ];
+        
+        const qWrapper = document.getElementById('qWrapper');
+        qWrapper.classList.remove('q-container');
+        void qWrapper.offsetWidth; 
+        qWrapper.classList.add('q-container');
+        
+        document.getElementById('qCount').innerText = `السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
+        document.getElementById('qText').innerText = qData.q;
+        
+        const progress = ((quizState.currentQ) / quizState.questions.length) * 100;
+        document.getElementById('quizProgressBar').style.width = progress + '%';
+        
+        const optsContainer = document.getElementById('qOptions');
+        optsContainer.innerHTML = '';
+        
+        qData.opts.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-opt';
+            btn.innerHTML = `<span>${opt}</span>`;
+            
+            if (qData.status === 'answered') {
+                btn.disabled = true;
+                btn.style.cursor = 'default';
+                
+                if (idx === qData.ans) {
+                    btn.classList.add('correct'); 
+                    btn.innerHTML += '<span style="font-size:1.4rem;">✓</span>';
+                } else if (idx === qData.selectedOpt) {
+                    btn.classList.add('wrong'); 
+                    btn.innerHTML += '<span style="font-size:1.4rem;">✗</span>';
+                }
+            } else {
+                btn.onclick = () => selectOption(idx);
+            }
+            optsContainer.appendChild(btn);
+        });
+
+        const expBox = document.getElementById('quizExplanation');
+        expBox.innerHTML = `<strong>💡 توضيح للإجابة:</strong><br>${qData.explain}`;
+        if (qData.status === 'answered') {
+            expBox.style.display = 'block'; 
+        } else {
+            expBox.style.display = 'none'; 
+        }
+
+        document.getElementById('btnPrev').style.display = (quizState.currentQ > 0) ? 'block' : 'none';
+        
+        const btnSkipNext = document.getElementById('btnSkipNext');
+        if (qData.status === 'answered') {
+            btnSkipNext.innerHTML = (quizState.currentQ === quizState.questions.length - 1) 
+                ? 'إنهاء الاختبار ✔' 
+                : 'التالي ←';
+            btnSkipNext.style.background = "var(--primary)";
+        } else {
+            btnSkipNext.innerHTML = 'تخطي ⏭';
+            btnSkipNext.style.background = "var(--text-muted)";
+        }
+    }
+
+    function selectOption(idx) {
+        const qData = quizState.questions[quizState.currentQ];
+        if (qData.status === 'answered') return; 
+
+        qData.selectedOpt = idx;
+        qData.status = 'answered';
+        
+        loadQuestion();
+    }
+
+    function showHint() {
+        const expBox = document.getElementById('quizExplanation');
+        expBox.style.display = 'block';
+    }
+
+    function prevQuestion() {
+        if (quizState.currentQ > 0) {
+            quizState.currentQ--;
+            loadQuestion();
+        }
+    }
+
+    function nextQuestion() {
+        const qData = quizState.questions[quizState.currentQ];
+        
+        if (qData.status !== 'answered') {
+            qData.status = 'skipped';
+        }
+
+        if (quizState.currentQ < quizState.questions.length - 1) {
+            quizState.currentQ++;
+            loadQuestion();
+        } else {
+            showQuizResult(); 
+        }
+    }
+    
+    function confirmEndQuiz() {
+        if(confirm("هل أنت متأكد أنك تريد إنهاء الاختبار الآن وإصدار النتيجة لِما قمت بحله فقط؟")) {
+            showQuizResult();
+        }
+    }
+
+    function showQuizResult() {
+        const score = quizState.questions.filter(q => q.status === 'answered' && q.selectedOpt === q.ans).length;
+        
+        document.getElementById('quiz-view').classList.add('hidden');
+        document.getElementById('result-view').classList.remove('hidden');
+        
+        const percentage = (score / quizState.questions.length) * 100;
+        const gpa = percentage / 20; 
+        let grade = 'راسب (F)'; let color = '#ef4444';
+        
+        if(percentage >= 90) { grade = 'ممتاز (A)'; color = '#10b981'; }
+        else if(percentage >= 80) { grade = 'جيد جداً (B)'; color = '#3b82f6'; }
+        else if(percentage >= 70) { grade = 'جيد (C)'; color = '#f59e0b'; }
+        else if(percentage >= 60) { grade = 'مقبول (D)'; color = '#f97316'; }
+        
+        document.getElementById('certStudentName').innerText = quizState.studentName;
+        document.getElementById('certChapterName').innerText = quizState.chapterName;
+        
+        document.getElementById('certPercent').innerText = percentage.toFixed(0) + "%";
+        document.getElementById('certPercent').style.color = color;
+        
+        document.getElementById('certGPA').innerText = gpa.toFixed(2);
+        document.getElementById('certGPA').style.color = color;
+        
+        document.getElementById('certGrade').innerText = grade;
+        document.getElementById('certGrade').style.color = color;
+        
+        const today = new Date();
+        document.getElementById('certDate').innerText = today.toLocaleDateString('ar-EG');
+        
+        if(percentage >= 80 && typeof confetti === 'function') {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        }
+    }
+
+    function downloadCertificate() {
+        const card = document.getElementById('certificateCard');
+        html2canvas(card, { 
+            scale: 2, 
+            backgroundColor: null,
+            useCORS: true 
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `شهادة_Amr_Academy_${quizState.studentName.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
     </script>
 </body>
 </html>

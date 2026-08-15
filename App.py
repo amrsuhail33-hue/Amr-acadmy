@@ -9,6 +9,7 @@ app = Flask(__name__)
 
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 # الروابط للورقتين
 CSV_URLS = [
@@ -19,7 +20,6 @@ CSV_URLS = [
 def get_data_from_sheet():
     data = {}
     try:
-        # --- 1. قراءة الورقة الأولى (الفيديوهات والملفات) ---
         res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
         if res1.status_code == 200:
             reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
@@ -67,19 +67,14 @@ def get_data_from_sheet():
                         "title": title, "file": file_url or download_url, "notes": notes
                     })
 
-        # --- 2. قراءة الورقة الثانية (الاختبارات) بالاعتماد على أرقام الأعمدة لتفادي العناوين الفارغة ---
         res2 = requests.get(f"{CSV_URLS[1]}&t={int(time.time())}", timeout=10)
         if res2.status_code == 200:
             reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
-            next(reader2, None) # تخطي صف العناوين الأول إن وجد
+            next(reader2, None)
             for row in reader2:
-                # التأكد من وجود بيانات كافية (السنة، الترم، المادة، الشابتر)
                 if len(row) < 4: continue 
                 
-                year = str(row[0]).strip()
-                term = str(row[1]).strip()
-                subject = str(row[2]).strip()
-                chapter = str(row[3]).strip()
+                year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
 
                 if not year or not term or not subject or not chapter: continue
 
@@ -94,13 +89,11 @@ def get_data_from_sheet():
 
                 subj_data = data[year]["terms"][term]["subjects"][subject]
 
-                # إنشاء الشابتر المخصص للاختبار وتسجيله
                 if chapter not in subj_data["types"]["quiz"]["chapters"]:
                     subj_data["types"]["quiz"]["chapters"][chapter] = {
                         "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
                     }
 
-        # --- 3. تحويل القواميس إلى قوائم ليعرضها قالب HTML ---
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -192,7 +185,6 @@ def ask_ai():
 # ==========================================
 @app.route('/planner')
 def planner():
-    # سيقوم هذا المسار بفتح ملف planner.html من مجلد templates
     return render_template('planner.html')
 
 @app.route('/generate_plan', methods=['POST'])
@@ -223,7 +215,6 @@ def generate_plan():
     }}
     """
     
-    PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     headers = {"Content-Type": "application/json"}
     
@@ -242,7 +233,6 @@ def reschedule_plan():
     ضمن الأيام القادمة المتبقية فقط: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
     أرجع مصفوفة plans المُحدثة بـ JSON.
     """
-    PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
     payload = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}}
     headers = {"Content-Type": "application/json"}
     try:

@@ -125,11 +125,9 @@
         .quiz-opt { padding: 15px; border: 2px solid var(--border); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1rem; font-weight: 700; }
         .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); }
         
-        /* ألوان الإجابات */
         .quiz-opt.correct { background-color: #10b981 !important; border-color: #10b981 !important; color: white !important; }
         .quiz-opt.wrong { background-color: #ef4444 !important; border-color: #ef4444 !important; color: white !important; }
         
-        /* مربع الشرح والتوضيح */
         .explanation-box { background-color: rgba(59, 130, 246, 0.1); border: 1px dashed var(--primary); padding: 15px; border-radius: 12px; margin-top: 15px; margin-bottom: 15px; color: var(--text-main); font-size: 0.95rem; line-height: 1.6; display: none; text-align: right; animation: fadeIn 0.3s ease; }
         
         .quiz-progress-bg { width: 100%; height: 8px; background: var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
@@ -296,23 +294,19 @@
                 <button class="btn-calc-action" id="startQuizBtn" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار الآن 🚀</button>
             </div>
 
-            <!-- شاشة عرض الأسئلة المتطورة -->
             <div id="quiz-view" class="hidden">
                 <div class="quiz-progress-bg"><div class="quiz-progress-fill" id="quizProgressBar"></div></div>
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <div style="color: var(--accent); font-weight:800; font-size:0.95rem;" id="qCount"></div>
-                    <!-- زر إنهاء الاختبار في الأعلى للوصول السريع -->
                     <button onclick="showQuizResult()" style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.9rem; cursor:pointer; text-decoration:underline;">إنهاء الاختبار وإعلان النتيجة</button>
                 </div>
                 
                 <h3 id="qText" style="margin-bottom:25px; font-weight:800; line-height:1.6; font-size:1.2rem;"></h3>
                 <div id="qOptions"></div>
                 
-                <!-- مربع التوضيح والشرح -->
                 <div id="quizExplanation" class="explanation-box"></div>
 
-                <!-- أزرار التحكم السفلية -->
                 <div style="display: flex; gap: 10px; margin-top: 25px; align-items: stretch;">
                     <button id="btnPrev" class="btn-calc-outline" style="flex: 1; display:none; border-color:var(--text-muted); color:var(--text-muted);" onclick="prevQuestion()">السابق</button>
                     <button id="btnHint" class="btn-calc-action" style="flex: 1; background: #f59e0b;" onclick="showHint()">تلميح 💡</button>
@@ -355,8 +349,9 @@
                 </div>
             </div>
         </div>
+
         {% else %}
-        <!-- محتوى الفيديوهات أو الملفات -->
+        
         <div class="progress-container">
             <div class="progress-header">
                 <span>نسبة الإنجاز</span>
@@ -412,7 +407,11 @@
             {% endfor %}
         </div>
         {% endif %}
+
         {% endif %}
+        
+        {% endif %}
+
     </div>
 
     <footer class="footer">
@@ -652,8 +651,8 @@
                     q: cols[5],       
                     opts: [cols[6], cols[7], cols[8], cols[9]].filter(opt => opt !== undefined && opt !== ""), 
                     ans: parseInt(cols[10]) || 0,
-                    explain: cols[11] || "لا يوجد شرح إضافي مرفق مع هذا السؤال.", // العمود 12 للشرح
-                    status: 'unanswered', // حالات السؤال: unanswered, answered, skipped
+                    explain: cols[11] || "لا يوجد شرح إضافي مرفق مع هذا السؤال.", 
+                    status: 'unanswered', 
                     selectedOpt: null
                 };
             }).filter(q => q.chapter === chapter && q.q !== undefined && q.q !== "");
@@ -688,38 +687,33 @@
         const optsContainer = document.getElementById('qOptions');
         optsContainer.innerHTML = '';
         
-        // رسم الخيارات
         qData.opts.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'quiz-opt';
             btn.innerText = opt;
             
-            // إذا كان السؤال مجاباً مسبقاً، قم بتلوينه وتعطيل الأزرار
             if (qData.status === 'answered') {
                 btn.disabled = true;
                 btn.style.cursor = 'default';
                 if (idx + 1 === qData.ans) {
-                    btn.classList.add('correct'); // الإجابة الصحيحة (أخضر)
+                    btn.classList.add('correct'); 
                 } else if (idx + 1 === qData.selectedOpt) {
-                    btn.classList.add('wrong'); // الإجابة الخاطئة التي اختارها الطالب (أحمر)
+                    btn.classList.add('wrong'); 
                 }
             } else {
-                // إذا لم يتم الإجابة بعد
                 btn.onclick = () => selectOption(idx);
             }
             optsContainer.appendChild(btn);
         });
 
-        // إدارة مربع التوضيح
         const expBox = document.getElementById('quizExplanation');
         expBox.innerHTML = `<strong>💡 توضيح للإجابة:</strong><br>${qData.explain}`;
         if (qData.status === 'answered') {
-            expBox.style.display = 'block'; // إظهار التوضيح إذا جاوب مسبقاً
+            expBox.style.display = 'block'; 
         } else {
-            expBox.style.display = 'none'; // إخفاء التوضيح
+            expBox.style.display = 'none'; 
         }
 
-        // إدارة الأزرار السفلية
         document.getElementById('btnPrev').style.display = (quizState.currentQ > 0) ? 'block' : 'none';
         
         const btnSkipNext = document.getElementById('btnSkipNext');
@@ -734,12 +728,11 @@
 
     function selectOption(idx) {
         const qData = quizState.questions[quizState.currentQ];
-        if (qData.status === 'answered') return; // منع تغيير الإجابة
+        if (qData.status === 'answered') return; 
 
         qData.selectedOpt = idx + 1;
         qData.status = 'answered';
         
-        // إعادة تحميل الواجهة لتلوين الأزرار وإظهار الشرح
         loadQuestion();
     }
 
@@ -758,7 +751,6 @@
     function nextQuestion() {
         const qData = quizState.questions[quizState.currentQ];
         
-        // إذا ضغط تخطي (السؤال لم يُجاب)
         if (qData.status !== 'answered') {
             qData.status = 'skipped';
         }
@@ -767,12 +759,11 @@
             quizState.currentQ++;
             loadQuestion();
         } else {
-            showQuizResult(); // إنهاء الاختبار إذا كان آخر سؤال
+            showQuizResult(); 
         }
     }
 
     function showQuizResult() {
-        // حساب الدرجات بناءً على الأسئلة المجابة بشكل صحيح فقط
         const score = quizState.questions.filter(q => q.status === 'answered' && q.selectedOpt === q.ans).length;
         
         document.getElementById('quiz-view').classList.add('hidden');

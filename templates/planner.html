@@ -4,14 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amr suhail Acadmay | المخطط الذكي</title>
+    
+    <!-- سكربت قراءة وضع الموقع الأساسي فوراً لمنع الوميض الأبيض -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
+        /* =========================================
+           1. الوضع النهاري (الأساسي - Light Mode)
+           ========================================= */
         :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-inner: #f1f5f9;
+            --bg-completed: #e2e8f0;
+            --primary: #2563eb;
+            --primary-glow: rgba(37, 99, 235, 0.15);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --brand-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
+            --modal-bg: rgba(15, 23, 42, 0.6);
+        }
+
+        /* =========================================
+           2. الوضع الليلي (Dark Mode) المربوط بموقعك
+           ========================================= */
+        html.dark-mode {
             --bg-body: #090D16;
             --bg-card: #131B2E;
             --bg-card-inner: #1C2640;
+            --bg-completed: #0D1424;
             --primary: #38BDF8;
             --primary-glow: rgba(56, 189, 248, 0.15);
             --success: #10B981;
@@ -21,20 +55,23 @@
             --text-main: #F8FAFC;
             --text-muted: #94A3B8;
             --border: #23304E;
+            --brand-gradient: linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%);
+            --modal-bg: rgba(9, 13, 22, 0.85);
         }
 
         * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .app-container { width: 100%; max-width: 720px; }
 
         .brand-header { text-align: center; margin-bottom: 25px; }
-        .brand-title { font-size: 28px; font-weight: 900; background: linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 5px 0; display: inline-block; }
+        .brand-title { font-size: 28px; font-weight: 900; background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 5px 0; display: inline-block; }
         .brand-sub { font-size: 13px; color: var(--text-muted); font-weight: 500; }
 
-        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); transition: background 0.3s, border 0.3s; }
+        html.dark-mode .main-card { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
 
         .form-group { margin-bottom: 18px; width: 100%; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; color: #E2E8F0; font-size: 14px; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--text-main); font-size: 14px; }
         input[type="text"], input[type="date"], input[type="time"], input[type="number"], select {
             width: 100%; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 14px; transition: all 0.3s ease;
         }
@@ -49,41 +86,41 @@
         }
 
         .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 8px; }
-        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: border 0.3s; color: var(--text-main); }
         .checkbox-pill input { accent-color: var(--primary); }
 
-        /* الأزرار الاحترافية الجديدة (Neon Ghost) */
+        /* الأزرار الاحترافية */
         .btn { 
             width: 100%; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; 
             cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; margin-top: 10px;
         }
         .btn:active { transform: scale(0.98); }
         
-        .btn-primary { background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%); border: none; color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, #818CF8 100%); border: none; color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
         
         .btn-action { background: var(--success-glow); border: 1px solid var(--success); color: var(--success); }
-        .btn-action:hover { background: var(--success); color: #fff; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        .btn-action:hover { background: var(--success); color: #fff; box-shadow: 0 0 15px var(--success-glow); }
         
         .btn-export { background: var(--primary-glow); border: 1px solid var(--primary); color: var(--primary); }
-        .btn-export:hover { background: var(--primary); color: #fff; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+        .btn-export:hover { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--primary-glow); }
         
         .btn-danger { background: var(--danger-glow); border: 1px solid var(--danger); color: var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px var(--danger-glow); }
 
         .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
         .btn-secondary:hover { border-color: var(--text-main); color: var(--text-main); }
 
         /* شريط التقدم */
-        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
+        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; transition: background 0.3s, border 0.3s;}
         .progress-track { height: 12px; background: var(--bg-card-inner); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-top: 10px; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #38BDF8, #10B981); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .daily-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; margin-bottom: 20px; border-top: 4px solid var(--primary); }
+        .daily-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; margin-bottom: 20px; border-top: 4px solid var(--primary); transition: background 0.3s; }
         .daily-date-badge { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
         .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.25s; }
-        .task-card.completed { opacity: 0.45; background: #0D1424; border-color: transparent; }
+        .task-card.completed { background: var(--bg-completed); border-color: transparent; }
         .task-card.completed .task-title-text { text-decoration: line-through; color: var(--text-muted); }
-        .task-pill { background: rgba(56, 189, 248, 0.15); color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .task-pill { background: var(--primary-glow); color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
 
         .view-section { display: none; }
         .active-view { display: block; animation: viewIn 0.35s ease; }
@@ -94,11 +131,11 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* نافذة الاحتفال */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 35px 25px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: popUp 0.3s ease; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; transition: background 0.3s; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 35px 25px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popUp 0.3s ease; }
         @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* حاوية التصدير المخفية */
+        /* حاوية التصدير المخفية - تبقى دائماً بتصميم الـ Dark Mode لأجل الصورة */
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 800px; background: #090D16; padding: 40px; color: #F8FAFC; border-radius: 20px; font-family: 'Tajawal', sans-serif; }
     </style>
 </head>
@@ -204,7 +241,7 @@
     <div id="tracking-view" class="view-section">
         <div class="progress-box">
             <div style="display: flex; justify-content: space-between; font-weight: 700;">
-                <span style="font-size: 14px;">التقدم العام</span>
+                <span style="font-size: 14px; color: var(--text-main);">التقدم العام</span>
                 <span id="progress-percent-label" style="color: var(--primary); font-size: 16px;">0%</span>
             </div>
             <div class="progress-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
@@ -237,6 +274,17 @@
 let draftPlans = null;
 
 document.getElementById('target_date').min = new Date().toISOString().split('T')[0];
+
+// ميزة التزامن المباشر للوضع الليلي/النهاري مع نافذة الموقع الأساسي
+window.addEventListener('storage', (e) => {
+    if (e.key === 'theme') {
+        if (e.newValue === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+        }
+    }
+});
 
 window.onload = () => {
     if (localStorage.getItem('acadmay_schedule_data')) {
@@ -293,7 +341,7 @@ document.getElementById('planForm').addEventListener('submit', async (e) => {
 function renderPreview(plans) {
     let html = '';
     plans.forEach(p => {
-        html += `<div style="background: var(--bg-card-inner); border: 1px solid var(--border); padding: 14px; border-radius: 12px; margin-bottom: 10px;">
+        html += `<div style="background: var(--bg-card-inner); border: 1px solid var(--border); padding: 14px; border-radius: 12px; margin-bottom: 10px; color: var(--text-main);">
                     <div style="font-weight:700; color:var(--primary); margin-bottom:6px;">${p.day_name} (${p.date})</div>`;
         if (p.is_off_day || !p.tasks || p.tasks.length === 0) {
             html += `<span style="color:var(--text-muted); font-size:13px;">يوم مخصص للراحة وتجديد النشاط</span>`;
@@ -346,7 +394,7 @@ function renderTodayCard() {
             html += `<div class="task-card ${completedClass}">
                 <div style="display:flex; align-items:center; gap:12px; flex:1;">
                     <input type="checkbox" style="width:20px; height:20px; accent-color:var(--success);" ${checkedAttr} onchange="toggleTaskState(${idx}, this.checked)">
-                    <span class="task-title-text" style="font-size:14px; font-weight:600;">${task.title}</span>
+                    <span class="task-title-text" style="font-size:14px; font-weight:600; color: var(--text-main);">${task.title}</span>
                 </div>
                 <span class="task-pill">${formatHours(task.allocated_hours)}</span>
             </div>`;

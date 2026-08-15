@@ -8,10 +8,9 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
+# مفتاح API ونماذجك الخاصة المعتمدة لديك
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-
-# النماذج المعتمدة لديك
-CHAT_MODEL_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 # الروابط للورقتين
@@ -20,12 +19,12 @@ CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
 
-def send_gemini_request(url, payload, max_retries=3, timeout=35):
+def send_gemini_request(url, payload, max_retries=3, timeout=40):
     """
-    دالة إرسال الطلب مع آلية إعادة المحاولة التلقائية لتفادي انشغال الخادم.
+    دالة موحدة لإرسال الطلبات مع إعادة المحاولة التلقائية عند الضغط
     """
     headers = {'Content-Type': 'application/json'}
-    last_error = "الخادم مشغول حالياً، يرجى المحاولة بعد قليل."
+    last_error = "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."
 
     for attempt in range(max_retries):
         try:
@@ -38,18 +37,19 @@ def send_gemini_request(url, payload, max_retries=3, timeout=35):
                     parts = candidates[0]['content'].get('parts', [])
                     if parts and 'text' in parts[0]:
                         return parts[0]['text'], None
-                return None, "استجابة غير مكتملة من الخادم."
+                return None, "استجابة غير مكتملة من النموذج."
 
             if response.status_code in [429, 500, 503, 504]:
                 time.sleep(1.5 * (attempt + 1))
                 continue
             else:
-                last_error = f"خطأ في الطلب: {response.status_code}"
+                print("API Error Response:", response.status_code, response.text)
+                last_error = f"خطأ من الخادم: {response.status_code}"
                 break
 
         except requests.exceptions.Timeout:
             time.sleep(1)
-            last_error = "استغرق الطلب وقتاً أطول من المعتاد."
+            last_error = "استغرقت المعالجة وقتاً طويلاً، يرجى إعادة المحاولة."
             continue
         except requests.exceptions.RequestException as e:
             time.sleep(1)
@@ -207,7 +207,7 @@ def home():
 def ask_ai():
     try:
         user_message = ""
-        image_parts = []
+        parts = [] # تهيئة المصفوفة لتجنب الخطأ
 
         if request.is_json:
             user_message = request.json.get('message', '').strip()
@@ -219,37 +219,38 @@ def ask_ai():
                     image_bytes = file.read()
                     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                     mime_type = file.mimetype or 'image/jpeg'
-                    image_parts.append({
-                        "inline_data": {
-                            "mime_type": mime_type,
+                    parts.append({
+                        "inlineData": {
+                            "mimeType": mime_type,
                             "data": image_b64
                         }
                     })
 
-        if not user_message and not image_parts:
+        if not user_message and not parts:
             return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
 
-        if not user_message:
-            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب هندسي واضح."
+        # تحديد نص الموجه بشكل صحيح، سواء بوجود رسالة مستخدم أو بدونها (لتحليل صورة فقط)
+        prompt_text = "أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
+        if user_message:
+             prompt_text += f"سؤال الطالب: {user_message}"
+        else:
+             prompt_text += "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط وواضح."
 
-        prompt_text = (
-            f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
-            f"اكتب القوانين والمعادلات بصيغة LaTeX مستخدماً $$ للمعادلات المستقلة و $ للمعادلات المضمنة.\n"
-            f"سؤال الطالب: {user_message}"
-        )
-
-        parts = [{"text": prompt_text}] + image_parts
+        # إضافة النص كمحتوى منفصل في الـ parts كما هو مطلوب
+        parts.insert(0, {"text": prompt_text}) 
+        
         payload = {"contents": [{"parts": parts}]}
 
-        reply_text, error = send_gemini_request(CHAT_MODEL_URL, payload, max_retries=3, timeout=35)
+        reply_text, error = send_gemini_request(API_URL, payload, max_retries=3, timeout=40)
 
         if reply_text:
             return jsonify({"reply": reply_text})
         else:
-            return jsonify({"reply": error or "المساعد مشغول حالياً، يرجى المحاولة بعد قليل."}), 500
+            return jsonify({"reply": error or "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."}), 500
             
     except Exception as e:
-        return jsonify({"reply": f"حدث خطأ داخلي: {str(e)}"}), 500
+        print("Server Exception:", str(e))
+        return jsonify({"reply": f"تعذر الاتصال بالخادم حالياً: {str(e)}"}), 500
 
 # ==========================================
 # مسارات المخطط الذكي (Smart Planner)
@@ -262,37 +263,12 @@ def planner():
 def generate_plan():
     data = request.json or {}
     quran_clause = f"- أضف مهمة حفظ {data.get('quran_pages')} صفحة قرآنية يومياً." if data.get('quran_enabled') else ""
-    
-    prompt = f"""
-أنت نظام أكاديمي ذكي واحترافي. المطلوب توليد خطة دراسية موزعة يومياً من {data.get('current_date')} إلى {data.get('target_date')}.
-المواد والمواضيع: {data.get('subjects')}.
-مستوى الانضباط وساعات الدراسة: {data.get('discipline')}.
-أيام الراحة الأسبوعية: {', '.join(data.get('off_days', []))}.
-الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}.
-{quran_clause}
-
-المخرج المطلوب حصراً JSON صالح بدون أي نصوص خارجية، ويجب أن يتبع هذا الهيكل الدقيق:
-{{
-  "plans": [
-    {{
-      "date": "2026-08-16",
-      "day_name": "الأحد",
-      "day": "الأحد",
-      "is_off": false,
-      "tasks": [
-        {{
-          "subject": "اسم المادة أو النشاط",
-          "name": "اسم المادة أو النشاط",
-          "hours": 2,
-          "duration": "2",
-          "details": "شرح المهام المحددة لهذا اليوم"
-        }}
-      ]
-    }}
-  ]
-}}
-ملاحظة: إذا كان اليوم راحة، اجعل "is_off": true وقائمة "tasks" فارغة [].
-"""
+    prompt = (
+        f"أنت نظام أكاديمي احترافي. ولد خطة دراسية من {data.get('current_date')} لـ {data.get('target_date')}. "
+        f"المواد: {data.get('subjects')}. الانضباط: {data.get('discipline')}. "
+        f"أيام الراحة: {', '.join(data.get('off_days', []))}. الورد القرآني: {'نصف ساعة' if data.get('wird') else 'لا يوجد'}. "
+        f"{quran_clause} أرجع JSON حصراً بهيكل plans يحتوي على day_name و date و is_off_day و tasks التي تحوي title و allocated_hours."
+    )
     
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -311,32 +287,11 @@ def generate_plan():
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     data = request.json or {}
-    prompt = f"""
-أعد توزيع ودمج المهام غير المنجزة: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)}
-ضمن الأيام المتبقية: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)}
-
-حافظ على نفس هيكل الـ JSON الموحد تماماً:
-{{
-  "plans": [
-    {{
-      "date": "YYYY-MM-DD",
-      "day_name": "اسم اليوم",
-      "day": "اسم اليوم",
-      "is_off": false,
-      "tasks": [
-        {{
-          "subject": "اسم المادة",
-          "name": "اسم المادة",
-          "hours": 2,
-          "duration": "2",
-          "details": "التفاصيل"
-        }}
-      ]
-    }}
-  ]
-}}
-أرجع مصفوفة JSON حصراً.
-"""
+    prompt = (
+        f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks', []), ensure_ascii=False)} "
+        f"ضمن الأيام القادمة: {json.dumps(data.get('remaining_plans', []), ensure_ascii=False)} "
+        f"أرجع JSON للمصفوفة المحدثة حصراً."
+    )
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"response_mime_type": "application/json"}

@@ -19,6 +19,8 @@ def get_data_from_sheet():
         
         for row in csv_reader:
             year = term = subject = chapter = title = video_url = download_url = content_type = file_url = notes = ""
+            question = opt1 = opt2 = opt3 = opt4 = ans_idx = ""
+            
             for key, val in row.items():
                 if not key or val is None: continue
                 k = str(key).strip(); v = str(val).strip()
@@ -32,14 +34,19 @@ def get_data_from_sheet():
                 elif "رابط الملف" in k: file_url = v
                 elif "ملاحظ" in k: notes = v  
                 elif "نوع" in k: content_type = v
+                elif "Question" in k or "سؤال" in k: question = v
+                elif "Option 1" in k: opt1 = v
+                elif "Option 2" in k: opt2 = v
+                elif "Option 3" in k: opt3 = v
+                elif "Option 4" in k: opt4 = v
+                elif "Correct Answer" in k or "الإجابة" in k: ans_idx = v
             
-            if not year or not term or not subject or not title: continue
+            if not year or not term or not subject: continue
             if not chapter: chapter = "عام"
 
             if year not in data: data[year] = {"name": year, "terms": {}}
             if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
             
-            # تهيئة الأقسام الثلاثة (فيديو، ملفات، واختبارات)
             if subject not in data[year]["terms"][term]["subjects"]:
                 data[year]["terms"][term]["subjects"][subject] = {
                     "id": f"{year}_{term}_{subject}".replace(" ", "_"),
@@ -47,25 +54,39 @@ def get_data_from_sheet():
                     "types": {
                         "videos": {"chapters": {}}, 
                         "files": {"chapters": {}},
-                        "quiz": {"chapters": {}}  # تم إضافة قسم الاختبارات هنا لتفادي الخطأ
+                        "quiz": {"chapters": {}}
                     }
                 }
             subj_data = data[year]["terms"][term]["subjects"][subject]
             
-            # بمجرد وجود شابتر، قم بإضافته لقائمة الشباتر في قسم الاختبارات تلقائياً
-            if chapter not in subj_data["types"]["quiz"]["chapters"]:
-                subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-            
+            # معالجة الفيديوهات
             if "فيديو" in content_type:
+                if not title: continue
                 if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
                     "title": title, "video": video_url, "download": download_url, "notes": notes
                 })
+            # معالجة الملفات
             elif "ملف" in content_type:
+                if not title: continue
                 if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                 subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
                     "title": title, "file": file_url or download_url, "notes": notes
                 })
+            # معالجة الاختبارات (الأسئلة)
+            elif "إختبار" in content_type or "اختبار" in content_type:
+                if chapter not in subj_data["types"]["quiz"]["chapters"]: 
+                    subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "questions": []}
+                if question:
+                    try:
+                        ans_int = int(float(ans_idx))
+                    except:
+                        ans_int = 0
+                    subj_data["types"]["quiz"]["chapters"][chapter]["questions"].append({
+                        "q": question,
+                        "opts": [opt1, opt2, opt3, opt4],
+                        "ans": ans_int
+                    })
 
         for y in data.values():
             for t in y["terms"].values():
@@ -73,7 +94,7 @@ def get_data_from_sheet():
                 for s in t["subjects"]:
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
-                    s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values()) # تحويل قواميس الاختبارات إلى مصفوفة
+                    s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
     except Exception as e:
         print(f"Error fetching CSV: {e}")
     return data
@@ -88,29 +109,22 @@ def home():
         content_type = request.args.get('type')
         chapter_name = request.args.get('chapter')
 
-        # عرض محتوى الدرس أو صفحة الاختبار
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id:
-                            # التأكد من أن النوع موجود (videos, files, quiz)
-                            if content_type in s["types"]:
-                                for c in s["types"][content_type]["chapters"]:
-                                    if c["name"] == chapter_name:
-                                        return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
+                        if s["id"] == subject_id and content_type in s["types"]:
+                            for c in s["types"][content_type]["chapters"]:
+                                if c["name"] == chapter_name:
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
 
-        # عرض قائمة الشباتر بناءً على النوع المختار
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id:
-                            # التأكد من أن النوع موجود قبل استدعائه لتفادي الخطأ
-                            if content_type in s["types"]:
-                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
+                        if s["id"] == subject_id and content_type in s["types"]:
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
 
-        # اختيار نوع المحتوى (فيديو، ملفات، أو اختبارات)
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():

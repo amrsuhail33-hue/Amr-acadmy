@@ -8,9 +8,13 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
-AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
-PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
+# --- إعدادات OpenRouter ---
+OPENROUTER_API_KEY = "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"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# مفتاح المخطط الذكي
+PLANNER_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
+PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={PLANNER_API_KEY}"
 
 # الروابط للورقتين
 CSV_URLS = [
@@ -163,11 +167,14 @@ def home():
     except Exception as e:
         return f"Error: {str(e)}"
 
+# ==========================================
+# مسار الذكاء الاصطناعي عبر OpenRouter
+# ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
         user_message = ""
-        image_parts = []
+        user_content = []
 
         if request.is_json:
             user_message = request.json.get('message', '').strip()
@@ -179,42 +186,56 @@ def ask_ai():
                     image_bytes = file.read()
                     image_b64 = base64.b64encode(image_bytes).decode('utf-8')
                     mime_type = file.mimetype or 'image/jpeg'
-                    image_parts.append({
-                        "inline_data": {
-                            "mime_type": mime_type,
-                            "data": image_b64
+                    user_content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{mime_type};base64,{image_b64}"
                         }
                     })
 
-        if not user_message and not image_parts:
+        if not user_message and not user_content:
             return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
 
         if not user_message:
-            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط."
+            user_message = "اشرح محتوى هذه الصورة الهندسية/الرياضية بالتفصيل وبأسلوب مبسط."
 
         prompt_text = (
-            f"أنت مساعد Amr Suhail Academy الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح. "
-            f"اكتب القوانين والمعادلات بصيغة LaTeX القياسية مستخدماً علامات $$ للمعادلات المستقلة و $ للمعادلات المضمنة. "
+            f"أنت مساعد Amr Suhail Academy. اشرح للطالب بأسلوب هندسي واضح وبسيط. "
+            f"اكتب القوانين والمعادلات بصيغة LaTeX واضحة (استخدم $$ للمعادلات المستقلة و $ للمعادلات المضمنة). "
             f"سؤال الطالب: {user_message}"
         )
 
-        parts = [{"text": prompt_text}] + image_parts
-        payload = {"contents": [{"parts": parts}]}
-        headers = {'Content-Type': 'application/json'}
+        user_content.append({"type": "text", "text": prompt_text})
 
-        # زيادة وقت الاستجابة إلى 40 ثانية لتفادي انقطاع الاتصال عند معالجة الصور
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=40)
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://amrsuhail.academy",
+            "X-Title": "Amr Suhail Academy"
+        }
+
+        payload = {
+            "model": "google/gemini-2.0-flash-exp:free",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": user_content
+                }
+            ]
+        }
+
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=40)
 
         if response.status_code == 200:
             result = response.json()
-            reply_text = result['candidates'][0]['content']['parts'][0]['text']
+            reply_text = result['choices'][0]['message']['content']
             return jsonify({"reply": reply_text})
         else:
-            print("AI API Status:", response.status_code, response.text)
-            return jsonify({"reply": "المساعد مشغول حالياً، يرجى المحاولة بعد لحظات."}), 500
-            
+            print("OpenRouter Error:", response.status_code, response.text)
+            return jsonify({"reply": "المساعد مشغول مؤقتاً، يرجى المحاولة مرة أخرى."}), 500
+
     except requests.exceptions.Timeout:
-        return jsonify({"reply": "استغرقت معالجة الصورة وقتاً طويلاً، يرجى إعادة المحاولة بصورة أصغر أو الانتظار قليلاً."}), 500
+        return jsonify({"reply": "استغرقت الاستجابة وقتاً أطول من المعتاد، يرجى إعادة المحاولة."}), 500
     except Exception as e:
         print("Server Exception:", str(e))
         return jsonify({"reply": f"تعذر الاتصال بالخادم حالياً: {str(e)}"}), 500

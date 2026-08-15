@@ -6,7 +6,7 @@
     <meta name="google" content="notranslate">
     <title>Amr Suhail Academy</title>
     
-    <!-- إعدادات الـ PWA -->
+    <!-- إعدادات تطبيق الويب PWA -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#2563eb">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/a.png">
@@ -27,59 +27,65 @@
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
-        /* شعار A الهندسي */
-        .logo-a { width: 60px; height: 60px; }
-        .brand-header { text-align: center; margin-bottom: 25px; margin-top: 20px; }
-        .brand-title { font-size: 2.2rem; font-weight: 900; color: var(--text-main); margin: 10px 0 5px 0; }
-        
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; padding: 20px; }
-        .hidden { display: none; }
-        .enter-btn { background: #2563eb; color: white; padding: 14px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; margin-top: 30px; }
+        .logo-a { width: 80px; height: 80px; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        .enter-btn { background: #2563eb; color: white; padding: 14px 40px; border-radius: 50px; text-decoration: none; font-weight: 700; margin-top: 30px; }
 
-        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; }
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 100; border-bottom: 1px solid var(--border); }
+        .navbar-brand { font-size: 1.3rem; font-weight: 900; color: var(--text-main); text-decoration: none; }
+        
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .card { background: var(--bg-card); padding: 30px 20px; border-radius: 16px; text-align: center; text-decoration: none; font-size: 1.25rem; font-weight: 800; color: var(--text-main); border: 1px solid var(--border); transition: all 0.3s ease; }
-        .card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .card { background: var(--bg-card); padding: 30px 20px; border-radius: 16px; text-align: center; color: var(--text-main); border: 1px solid var(--border); transition: 0.3s; }
         
         /* الأزرار العائمة */
-        .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; color: white; }
+        .fab-btn { position: fixed; left: 25px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1000; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .ai-fab { bottom: 25px; background: var(--primary); }
         .calc-fab { bottom: 95px; background: var(--accent); }
-        .planner-fab { bottom: 165px; background: #8b5cf6; }
+        .planner-fab { bottom: 165px; background: #8b5cf6; text-decoration: none; }
+        .popup-box { position: fixed; left: 25px; bottom: 235px; width: 340px; max-height: 50vh; border-radius: 16px; display: none; z-index: 1000; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
+        .popup-box.active { display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
 
-    <!-- شعار A الهندسي في البداية -->
     <div id="splash-screen">
         <svg class="logo-a" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
-        <div class="brand-title" style="color:white;">Amr Suhail Academy</div>
-        <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">ابدأ رحلتك</a>
+        <h1 style="color:white; font-size:2rem; font-weight:900;">Amr Suhail Academy</h1>
+        <button onclick="enterAcademy()" class="enter-btn">ابدأ رحلتك</button>
     </div>
 
-    <!-- أزرار الفقاعة -->
-    <div class="fab-btn calc-fab" onclick="toggleCalc()"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/></svg></div>
-    <a href="/planner" target="_blank" class="fab-btn planner-fab"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></a>
-    <div class="fab-btn ai-fab" onclick="toggleAIChat()"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/></svg></div>
+    <!-- الأزرار العائمة -->
+    <div class="fab-btn calc-fab" onclick="toggleCalc()"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/></svg></div>
+    <a href="/planner" target="_blank" class="fab-btn planner-fab"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></a>
+    <div class="fab-btn ai-fab" onclick="toggleAIChat()"><svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/></svg></div>
 
     <nav class="navbar">
         <div style="display:flex; align-items:center; gap:10px;">
             <svg class="logo-a" width="30" height="30" viewBox="0 0 24 24"><path d="M12 2L2 22H6L12 10L18 22H22L12 2Z" fill="#38BDF8"/></svg>
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
         </div>
-        <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
+        <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer;">☀️/🌙</button>
     </nav>
 
     <div class="main-content">
-        <!-- بقية محتواك هنا -->
-        <h1 class="section-header">مرحباً بك في منصتك الهندسية</h1>
+        {% if view == 'years' %}
+        <div class="grid-container">
+            {% for id, year in data.items() %}
+                <a href="/?year={{ id }}" class="card card-primary">{{ year.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <script>
         function enterAcademy() { document.getElementById('splash-screen').classList.add('hidden'); }
-        function toggleTheme() { document.documentElement.classList.toggle('dark-mode'); }
-        // تسجيل الـ Service Worker
+        function toggleTheme() { document.documentElement.classList.toggle('dark-mode'); localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light'); }
+        function toggleCalc() { document.getElementById('calcBox').classList.toggle('active'); }
+        function toggleAIChat() { document.getElementById('aiChatBox').classList.toggle('active'); }
+        
+        // تسجيل الـ PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }

@@ -2,13 +2,14 @@ import csv
 import io
 import time
 import json
+import base64
 import requests
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 # الروابط للورقتين
@@ -165,24 +166,52 @@ def home():
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
-        user_message = request.json.get('message', '')
-        if not user_message: return jsonify({"reply": "الرجاء كتابة سؤال."})
-        
-        headers = {'Content-Type': 'application/json', 'X-goog-api-key': AI_API_KEY}
-        prompt_text = (f"أنت مساعد Amr Suhail Academy. اشرح للطالب في الهندسة والفيزياء بأسلوب بسيط جداً. "
-                       f"اكتب القوانين والمعادلات بأرقام وحروف عادية واضحة دون أي رموز برمجة معقدة. "
-                       f"سؤال الطالب: {user_message}")
-        
-        payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=12)
-        
+        user_message = ""
+        image_parts = []
+
+        # دعم استقبال البيانات كـ JSON أو كـ FormData (في حال إرفاق ملف)
+        if request.is_json:
+            user_message = request.json.get('message', '').strip()
+        else:
+            user_message = request.form.get('message', '').strip()
+            if 'file' in request.files:
+                file = request.files['file']
+                if file and file.filename != '':
+                    image_bytes = file.read()
+                    image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+                    mime_type = file.mimetype or 'image/jpeg'
+                    image_parts.append({
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": image_b64
+                        }
+                    })
+
+        if not user_message and not image_parts:
+            return jsonify({"reply": "الرجاء كتابة سؤال أو إرفاق صورة."})
+
+        if not user_message:
+            user_message = "اشرح محتوى هذه الصورة والمسائل أو المخططات الموجودة فيها بالتفصيل وبأسلوب بسيط."
+
+        prompt_text = (
+            f"أنت مساعد Amr Suhail Academy. اشرح للطالب في الهندسة والفيزياء بأسلوب بسيط جداً وواضح. "
+            f"اكتب القوانين والمعادلات بتنسيق واضح. سؤال الطالب: {user_message}"
+        )
+
+        parts = [{"text": prompt_text}] + image_parts
+        payload = {"contents": [{"parts": parts}]}
+        headers = {'Content-Type': 'application/json'}
+
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=25)
+
         if response.status_code == 200:
-            reply_text = response.json()['candidates'][0]['content']['parts'][0]['text']
+            result = response.json()
+            reply_text = result['candidates'][0]['content']['parts'][0]['text']
             return jsonify({"reply": reply_text})
         else:
             return jsonify({"reply": "المساعد مشغول قليلاً، حاول مجدداً."}), 500
     except Exception as e:
-        return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
+        return jsonify({"reply": f"تعذر الاتصال بالخادم: {str(e)}"}), 500
 
 # ==========================================
 # مسارات المخطط الذكي (Smart Planner)

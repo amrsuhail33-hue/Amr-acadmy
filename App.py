@@ -1,5 +1,6 @@
 import csv
 import io
+import time
 import requests
 from flask import Flask, render_template, request, jsonify
 
@@ -7,64 +8,106 @@ app = Flask(__name__)
 
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
-CSV_URL = "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv"
+
+# الروابط للورقتين
+CSV_URLS = [
+    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
+    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
+]
 
 def get_data_from_sheet():
     data = {}
     try:
-        response = requests.get(CSV_URL, timeout=10)
-        if response.status_code != 200: return {}
-        csv_text = response.content.decode('utf-8')
-        csv_reader = csv.DictReader(io.StringIO(csv_text))
-        
-        for row in csv_reader:
-            # إضافة المتغير notes هنا
-            year = term = subject = chapter = title = video_url = download_url = content_type = file_url = notes = ""
-            for key, val in row.items():
-                if not key or val is None: continue
-                k = str(key).strip(); v = str(val).strip()
-                if "سنة" in k: year = v
-                elif "ترم" in k: term = v
-                elif "مادة" in k: subject = v
-                elif "شبتر" in k or "فصل" in k: chapter = v
-                elif "عنوان" in k or "درس" in k: title = v
-                elif "رابط المقطع" in k: video_url = v
-                elif "تحميل" in k: download_url = v
-                elif "رابط الملف" in k: file_url = v
-                elif "ملاحظ" in k: notes = v  # <-- قراءة عمود الملاحظات
-                elif "نوع" in k: content_type = v
-            
-            if not year or not term or not subject or not title: continue
-            if not chapter: chapter = "عام"
+        # --- 1. قراءة الورقة الأولى (الفيديوهات والملفات) ---
+        res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
+        if res1.status_code == 200:
+            reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
+            for row in reader1:
+                year=term=subject=chapter=title=content_type=video_url=download_url=file_url=notes=""
+                for k, v in row.items():
+                    if not k or v is None: continue
+                    k = str(k).strip().lower()
+                    v = str(v).strip()
+                    if "سنة" in k: year = v
+                    elif "ترم" in k: term = v
+                    elif "مادة" in k: subject = v
+                    elif "شبتر" in k or "فصل" in k: chapter = v
+                    elif "نوع" in k: content_type = v
+                    elif "عنوان" in k or "درس" in k: title = v
+                    elif "رابط المقطع" in k: video_url = v
+                    elif "تحميل" in k: download_url = v
+                    elif "رابط الملف" in k: file_url = v
+                    elif "ملاحظ" in k: notes = v
 
-            if year not in data: data[year] = {"name": year, "terms": {}}
-            if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
-            if subject not in data[year]["terms"][term]["subjects"]:
-                data[year]["terms"][term]["subjects"][subject] = {
-                    "id": f"{year}_{term}_{subject}".replace(" ", "_"),
-                    "name": subject, "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}}
-                }
-            subj_data = data[year]["terms"][term]["subjects"][subject]
-            
-            if "فيديو" in content_type:
-                if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                # حفظ الملاحظة مع بيانات الفيديو
-                subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
-                    "title": title, "video": video_url, "download": download_url, "notes": notes
-                })
-            elif "ملف" in content_type:
-                if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                # حفظ الملاحظة مع بيانات الملف
-                subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
-                    "title": title, "file": file_url or download_url, "notes": notes
-                })
+                if not year or not term or not subject or not title: continue
+                if not chapter: chapter = "عام"
 
+                if year not in data: data[year] = {"name": year, "terms": {}}
+                if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
+                if subject not in data[year]["terms"][term]["subjects"]:
+                    data[year]["terms"][term]["subjects"][subject] = {
+                        "id": f"{year}_{term}_{subject}".replace(" ", "_"),
+                        "name": subject,
+                        "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
+                    }
+
+                subj_data = data[year]["terms"][term]["subjects"][subject]
+
+                if "فيديو" in content_type:
+                    if chapter not in subj_data["types"]["videos"]["chapters"]:
+                        subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                    subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
+                        "title": title, "video": video_url, "download": download_url, "notes": notes
+                    })
+                elif "ملف" in content_type:
+                    if chapter not in subj_data["types"]["files"]["chapters"]:
+                        subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                    subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
+                        "title": title, "file": file_url or download_url, "notes": notes
+                    })
+
+        # --- 2. قراءة الورقة الثانية (الاختبارات) بالاعتماد على أرقام الأعمدة لتفادي العناوين الفارغة ---
+        res2 = requests.get(f"{CSV_URLS[1]}&t={int(time.time())}", timeout=10)
+        if res2.status_code == 200:
+            reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
+            next(reader2, None) # تخطي صف العناوين الأول إن وجد
+            for row in reader2:
+                # التأكد من وجود بيانات كافية (السنة، الترم، المادة، الشابتر)
+                if len(row) < 4: continue 
+                
+                year = str(row[0]).strip()
+                term = str(row[1]).strip()
+                subject = str(row[2]).strip()
+                chapter = str(row[3]).strip()
+
+                if not year or not term or not subject or not chapter: continue
+
+                if year not in data: data[year] = {"name": year, "terms": {}}
+                if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
+                if subject not in data[year]["terms"][term]["subjects"]:
+                    data[year]["terms"][term]["subjects"][subject] = {
+                        "id": f"{year}_{term}_{subject}".replace(" ", "_"),
+                        "name": subject,
+                        "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
+                    }
+
+                subj_data = data[year]["terms"][term]["subjects"][subject]
+
+                # إنشاء الشابتر المخصص للاختبار وتسجيله
+                if chapter not in subj_data["types"]["quiz"]["chapters"]:
+                    subj_data["types"]["quiz"]["chapters"][chapter] = {
+                        "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
+                    }
+
+        # --- 3. تحويل القواميس إلى قوائم ليعرضها قالب HTML ---
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
                 for s in t["subjects"]:
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
+                    s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
+
     except Exception as e:
         print(f"Error fetching CSV: {e}")
     return data
@@ -84,16 +127,18 @@ def home():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id:
-                            for c in s["types"][content_type]["chapters"]:
-                                if c["name"] == chapter_name:
-                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
+                            if content_type in s["types"]:
+                                for c in s["types"][content_type]["chapters"]:
+                                    if c["name"] == chapter_name:
+                                        return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type)
 
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id:
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
+                            if content_type in s["types"]:
+                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
 
         if subject_id:
             for y in DATA.values():
@@ -137,4 +182,4 @@ def ask_ai():
         return jsonify({"reply": "تعذر الاتصال بالخادم حالياً."}), 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

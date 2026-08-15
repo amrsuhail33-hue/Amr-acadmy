@@ -26,6 +26,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- مكتبة MathJax لتنسيق المعادلات الرياضية بشكل جميل -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { typeset: false } // منع التحميل التلقائي لنقوم به برمجياً بعد وصول رد الذكاء الاصطناعي
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         :root {
@@ -73,7 +82,6 @@
         .theme-toggle:active { transform: scale(0.9); }
         .theme-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
-        /* تنسيق زر تواصل معنا الاحترافي */
         .navbar-contact {
             background: linear-gradient(135deg, var(--primary), #1d4ed8);
             color: #ffffff !important;
@@ -116,7 +124,6 @@
         .btn-video { background-color: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
         .btn-pdf { background-color: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; font-size: 1.1rem; }
 
-        /* القائمة العائمة المجمعة (Menu FAB) */
         .fab-container { position: fixed; left: 25px; bottom: 25px; z-index: 1000; display: flex; flex-direction: column-reverse; align-items: center; gap: 15px; pointer-events: none; }
         .fab-container > * { pointer-events: auto; }
         .fab-main { width: 60px; height: 60px; border-radius: 20px; background: linear-gradient(135deg, var(--primary), #8b5cf6); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -130,8 +137,7 @@
         .fab-container.open .fab-item:nth-child(5) { transition-delay: 0.2s; }
         .fab-item:hover { background: var(--bg-body); transform: scale(1.1) !important; }
 
-        /* النوافذ المنبثقة (Popups) */
-        .popup-box { position: fixed; left: 25px; bottom: 100px; width: 340px; max-width: calc(100vw - 50px); max-height: 60vh; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0.9) translateY(20px); opacity: 0; visibility: hidden; transform-origin: bottom left; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-card); }
+        .popup-box { position: fixed; left: 25px; bottom: 100px; width: 340px; max-width: calc(100vw - 50px); max-height: 65vh; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0.9) translateY(20px); opacity: 0; visibility: hidden; transform-origin: bottom left; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-card); }
         .popup-box.active { transform: scale(1) translateY(0); opacity: 1; visibility: visible; }
         
         .popup-header { color: white; padding: 18px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
@@ -143,12 +149,19 @@
         #calcBox .popup-header { background: linear-gradient(135deg, var(--accent), #047857); }
         #socialBox .popup-header { background: linear-gradient(135deg, #ec4899, #be185d); }
 
-        .ai-msg { padding: 12px 16px; border-radius: 14px; max-width: 85%; line-height: 1.5; font-size: 0.95rem; }
-        .ai-msg.bot { background: var(--bg-body); align-self: flex-start; border: 1px solid var(--border); color: var(--text-main); border-bottom-right-radius: 4px; }
+        .ai-msg { padding: 12px 16px; border-radius: 14px; max-width: 85%; line-height: 1.6; font-size: 0.95rem; }
+        .ai-msg.bot { background: var(--bg-body); align-self: flex-start; border: 1px solid var(--border); color: var(--text-main); border-bottom-right-radius: 4px; overflow-x: auto; }
         .ai-msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-left-radius: 4px; }
-        .ai-chat-footer { padding: 15px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .ai-chat-footer input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: var(--bg-body); color: var(--text-main); }
-        .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 18px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .ai-chat-footer { padding: 10px 15px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; position: relative; }
+        .ai-chat-footer input[type="text"] { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: var(--bg-body); color: var(--text-main); }
+        .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 16px; height: 42px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        
+        /* أدوات رفع الصورة في الذكاء الاصطناعي */
+        .upload-icon-btn { color: var(--text-muted); cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.3s, color 0.3s; display: flex; align-items: center; justify-content: center; }
+        .upload-icon-btn:hover { background: var(--bg-body); color: var(--primary); }
+        .img-preview-container { position: absolute; bottom: 100%; right: 15px; margin-bottom: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 5px; box-shadow: var(--card-shadow); display: none; }
+        .img-preview-container img { max-height: 80px; max-width: 120px; border-radius: 6px; display: block; }
+        .img-remove-btn { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; cursor: pointer; border: 2px solid var(--bg-card); }
 
         .calc-row { display: flex; gap: 10px; align-items: center; }
         .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; text-align: center; background: var(--bg-body); color: var(--text-main); }
@@ -157,7 +170,6 @@
         .btn-calc-outline { background: transparent; color: var(--text-main); border: 2px dashed var(--border); padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: border-color 0.3s; }
         .btn-calc-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-        /* تنسيقات الاختبار والانجازات */
         .q-container { animation: slideInUp 0.4s ease forwards; }
         @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .quiz-opt { padding: 16px 20px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1.05rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
@@ -206,22 +218,18 @@
             <svg id="fabCloseIcon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </div>
         
-        <!-- فقاعة السوشيال ميديا -->
         <a href="javascript:void(0)" class="fab-item" onclick="togglePopup('socialBox')" title="تواصل معنا">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
         </a>
         
-        <!-- فقاعة المخطط -->
         <a href="/planner" target="_blank" class="fab-item" title="المخطط الدراسي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
         </a>
         
-        <!-- فقاعة الحاسبة -->
         <div class="fab-item" onclick="togglePopup('calcBox')" title="الحاسبة التراكمية">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line></svg>
         </div>
         
-        <!-- فقاعة الذكاء الاصطناعي -->
         <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path></svg>
         </div>
@@ -273,23 +281,31 @@
         </div>
     </div>
 
-    <!-- نافذة الذكاء الاصطناعي -->
+    <!-- نافذة الذكاء الاصطناعي مع دعم إرفاق الصور -->
     <div class="popup-box" id="aiChatBox">
         <div class="popup-header">
             <span>مساعد AS Academy</span>
             <span class="popup-close" onclick="togglePopup('aiChatBox')">✕</span>
         </div>
         <div class="popup-body" id="aiChatBody">
-            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك.</div>
+            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو قم برفع صورة لمسألة لأقوم بشرحها لك.</div>
         </div>
         <div class="ai-chat-footer">
-            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك..." onkeypress="checkEnter(event)">
+            <div class="img-preview-container" id="aiImgPreviewBox">
+                <span class="img-remove-btn" onclick="clearAiImage()">✕</span>
+                <img id="aiImgPreview" src="" alt="preview">
+            </div>
+            <label for="aiImageUpload" class="upload-icon-btn" title="إرفاق صورة">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </label>
+            <input type="file" id="aiImageUpload" accept="image/*" style="display:none;" onchange="previewAiImage()">
+            <input type="text" id="aiUserInput" placeholder="سؤالك (اختياري مع الصورة)..." onkeypress="checkEnter(event)">
             <button onclick="sendAIMessage()">إرسال</button>
         </div>
     </div>
     {% endif %}
 
-    <!-- الشريط العلوي (Navbar) مع زر تواصل معنا الاحترافي -->
+    <!-- الشريط العلوي (Navbar) -->
     <nav class="navbar">
         <div style="display: flex; align-items: center;">
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
@@ -315,7 +331,6 @@
         {% endif %}
 
         {% if view != 'years' %}
-        <!-- أزرار التنقل (المنزل و الرجوع) -->
         <div class="breadcrumb">
             <a href="/" class="nav-btn" title="الرئيسية">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -522,7 +537,6 @@
         Amr Suhail Academy &copy; 2026
     </footer>
 
-    <!-- سكربت تسجيل تطبيق الويب PWA و الكود البرمجي -->
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -569,7 +583,6 @@
         }
     }
 
-    // سكريبت القائمة المجمعة (FAB)
     function toggleFabMenu() {
         const menu = document.getElementById('fabMenu');
         const mainIcon = document.getElementById('fabMainIcon');
@@ -585,7 +598,6 @@
         }
     }
 
-    // دالة موحدة لفتح النوافذ المنبثقة وإغلاق البقية
     function togglePopup(boxId) {
         const boxes = ['aiChatBox', 'calcBox', 'socialBox'];
         boxes.forEach(id => {
@@ -604,33 +616,79 @@
 
     function checkEnter(e) { if (e.key === 'Enter') sendAIMessage(); }
 
+    /* --- وظائف الذكاء الاصطناعي مع إرفاق الصور و MathJax --- */
+    function previewAiImage() {
+        const fileInput = document.getElementById('aiImageUpload');
+        const previewBox = document.getElementById('aiImgPreviewBox');
+        const previewImg = document.getElementById('aiImgPreview');
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewBox.style.display = 'block';
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    function clearAiImage() {
+        document.getElementById('aiImageUpload').value = '';
+        document.getElementById('aiImgPreviewBox').style.display = 'none';
+        document.getElementById('aiImgPreview').src = '';
+    }
+
     async function sendAIMessage() {
-        var input = document.getElementById('aiUserInput');
-        var body = document.getElementById('aiChatBody');
+        const input = document.getElementById('aiUserInput');
+        const fileInput = document.getElementById('aiImageUpload');
+        const body = document.getElementById('aiChatBody');
         if(!input || !body) return;
         
-        var text = input.value.trim();
-        if (!text) return;
+        const text = input.value.trim();
+        const file = fileInput.files[0];
         
-        body.innerHTML += '<div class="ai-msg user">' + text + '</div>';
+        if (!text && !file) return;
+        
+        let userContent = '';
+        if (file) {
+            userContent += `<img src="${URL.createObjectURL(file)}" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; display: block;">`;
+        }
+        if (text) {
+            userContent += `<div>${text}</div>`;
+        }
+        
+        body.innerHTML += '<div class="ai-msg user">' + userContent + '</div>';
         input.value = '';
+        clearAiImage();
         body.scrollTop = body.scrollHeight;
         
-        var loadingId = 'loading_' + Date.now();
+        const loadingId = 'loading_' + Date.now();
         body.innerHTML += '<div class="ai-msg bot" id="' + loadingId + '">جاري التفكير...</div>';
         body.scrollTop = body.scrollHeight;
 
         try {
-            let res = await fetch('/ask-ai', {
+            const formData = new FormData();
+            if (text) formData.append('message', text);
+            if (file) formData.append('file', file);
+
+            const res = await fetch('/ask-ai', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: formData 
             });
-            let data = await res.json();
+            const data = await res.json();
             document.getElementById(loadingId).remove();
-            body.innerHTML += '<div class="ai-msg bot">' + data.reply + '</div>';
+            
+            const replyId = 'reply_' + Date.now();
+            let formattedReply = data.reply.replace(/\n/g, '<br>');
+            body.innerHTML += '<div class="ai-msg bot" id="' + replyId + '">' + formattedReply + '</div>';
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise([document.getElementById(replyId)]).catch(function (err) {
+                    console.log('MathJax Error:', err.message);
+                });
+            }
+            
         } catch (err) {
-            document.getElementById(loadingId).remove();
+            if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
             body.innerHTML += '<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>';
         }
         body.scrollTop = body.scrollHeight;

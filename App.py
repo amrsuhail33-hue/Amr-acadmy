@@ -27,7 +27,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # كلمات المرور للصلاحيات
 ADMIN_PASSWORD = "123"
-ASSISTANT_PASSWORD = "AhmedAI"  # تم تعديل كلمة مرور المساعد
+ASSISTANT_PASSWORD = "AhmedAI"  
 
 db = SQLAlchemy(app)
 
@@ -127,7 +127,6 @@ def admin_required(f):
 def can_manage_content(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # مسموح للمسؤول أو المساعد
         if not (session.get('is_admin') or session.get('is_assistant')):
             return jsonify({"status": "error", "message": "غير مصرح لك برفع أو تعديل المحتوى"}), 403
         return f(*args, **kwargs)
@@ -322,7 +321,7 @@ def admin_login():
 def admin_logout():
     session.pop('is_admin', None)
     session.pop('is_assistant', None)
-    return redirect('/')
+    return jsonify({"status": "success"})
 
 @app.route('/admin/status', methods=['GET'])
 def admin_status(): 
@@ -351,14 +350,15 @@ def add_custom_content():
         return jsonify({"status": "success", "message": "تمت الإضافة بنجاح وتحديث الموقع فورياً!"})
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
-# دالة التعديل التي كانت مفقودة وتسبب الخطأ
 @app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
 @can_manage_content
 def edit_custom_content(content_id):
     try:
-        item = CustomLesson.query.get_or_404(content_id)
+        item = CustomLesson.query.get(content_id)
+        if not item:
+            return jsonify({"status": "error", "message": "الدرس أو الملف غير موجود بقاعدة البيانات"}), 404
+            
         data = request.json or request.form
-        
         item.year = data.get('year', '').strip()
         item.term = data.get('term', '').strip()
         item.subject_name = data.get('subject_name', '').strip()
@@ -373,7 +373,7 @@ def edit_custom_content(content_id):
             return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
             
         db.session.commit()
-        return jsonify({"status": "success", "message": "تم تحديث المحتوى بنجاح!"})
+        return jsonify({"status": "success", "message": "تم التعديل بنجاح!"})
     except Exception as e: 
         return jsonify({"status": "error", "message": str(e)}), 500
 

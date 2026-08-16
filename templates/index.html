@@ -26,6 +26,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- مكتبة MathJax لتنسيق المعادلات الرياضية بشكل جميل -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { typeset: false } 
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         :root {
@@ -73,7 +82,6 @@
         .theme-toggle:active { transform: scale(0.9); }
         .theme-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
-        /* تنسيق زر تواصل معنا الاحترافي */
         .navbar-contact {
             background: linear-gradient(135deg, var(--primary), #1d4ed8);
             color: #ffffff !important;
@@ -116,8 +124,7 @@
         .btn-video { background-color: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
         .btn-pdf { background-color: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; font-size: 1.1rem; }
 
-        /* القائمة العائمة المجمعة (Menu FAB) */
-        .fab-container { position: fixed; left: 25px; bottom: 25px; z-index: 1000; display: flex; flex-direction: column-reverse; align-items: center; gap: 15px; pointer-events: none; }
+        .fab-container { position: fixed; left: 25px; bottom: 25px; z-index: 2005; display: flex; flex-direction: column-reverse; align-items: center; gap: 15px; pointer-events: none; }
         .fab-container > * { pointer-events: auto; }
         .fab-main { width: 60px; height: 60px; border-radius: 20px; background: linear-gradient(135deg, var(--primary), #8b5cf6); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .fab-main:hover, .fab-main:active { transform: scale(1.08); }
@@ -130,26 +137,119 @@
         .fab-container.open .fab-item:nth-child(5) { transition-delay: 0.2s; }
         .fab-item:hover { background: var(--bg-body); transform: scale(1.1) !important; }
 
-        /* النوافذ المنبثقة (Popups) */
-        .popup-box { position: fixed; left: 25px; bottom: 100px; width: 340px; max-width: calc(100vw - 50px); max-height: 60vh; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); display: flex; flex-direction: column; z-index: 1000; border: 1px solid var(--border); overflow: hidden; transform: scale(0.9) translateY(20px); opacity: 0; visibility: hidden; transform-origin: bottom left; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-card); }
-        .popup-box.active { transform: scale(1) translateY(0); opacity: 1; visibility: visible; }
+        /* طبقة التعتيم الخلفية */
+        .chat-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 2000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .chat-overlay.active { opacity: 1; visibility: visible; }
+
+        /* النوافذ المنبثقة العامة */
+        .popup-box { 
+            position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -45%) scale(0.95); 
+            opacity: 0; visibility: hidden; z-index: 2010; 
+            background: var(--bg-card); border: 1px solid var(--border); 
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+            display: flex; flex-direction: column; overflow: hidden; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .popup-box.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
+
+        /* تخصيص النوافذ الصغيرة (الحاسبة والسوشيال) */
+        #calcBox, #socialBox { width: 92%; max-width: 400px; max-height: 80vh; }
+
+        /* تخصيص نافذة الذكاء الاصطناعي (مساحة كاملة) */
+        #aiChatBox { width: 95%; max-width: 1000px; height: 92vh; max-height: 92vh; border-radius: 24px; }
         
-        .popup-header { color: white; padding: 18px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
-        .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.1); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.3s; }
+        .popup-header { color: white; padding: 18px 25px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; }
+        .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.1); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.3s; }
         .popup-close:hover { background: rgba(0,0,0,0.3); }
-        .popup-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .popup-body { padding: 25px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; background: var(--bg-body); }
         
         #aiChatBox .popup-header { background: linear-gradient(135deg, var(--primary), #1d4ed8); }
         #calcBox .popup-header { background: linear-gradient(135deg, var(--accent), #047857); }
         #socialBox .popup-header { background: linear-gradient(135deg, #ec4899, #be185d); }
 
-        .ai-msg { padding: 12px 16px; border-radius: 14px; max-width: 85%; line-height: 1.5; font-size: 0.95rem; }
-        .ai-msg.bot { background: var(--bg-body); align-self: flex-start; border: 1px solid var(--border); color: var(--text-main); border-bottom-right-radius: 4px; }
-        .ai-msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-left-radius: 4px; }
-        .ai-chat-footer { padding: 15px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .ai-chat-footer input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: var(--bg-body); color: var(--text-main); }
-        .ai-chat-footer button { background: var(--primary); color: white; border: none; padding: 0 18px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        /* تصميم رسائل المحادثة الاحترافي (شبيهاً بـ Gemini) */
+        .ai-msg-wrapper { display: flex; gap: 15px; width: 100%; align-items: flex-start; }
+        .ai-msg-wrapper.user-wrapper { flex-direction: row-reverse; }
+        
+        .ai-avatar { 
+            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; flex-shrink: 0; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
+        }
+        .bot-avatar { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        .user-avatar { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
+        
+        .ai-msg { 
+            line-height: 1.8; font-size: 1.05rem; word-break: break-word; 
+            color: var(--text-main); max-width: 85%;
+        }
+        
+        /* رسالة المساعد (نص حر وبدون خلفية ملونة لتبدو مثل Gemini) */
+        .ai-msg.bot { padding: 5px 0; }
+        .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; } /* تلوين العناوين العريضة */
+        
+        /* رسالة المستخدم (فقاعة رمادية/بيضاء) */
+        .ai-msg.user { 
+            background: var(--bg-card); border: 1px solid var(--border); 
+            padding: 14px 20px; border-radius: 20px; border-top-left-radius: 4px; 
+            box-shadow: var(--card-shadow); 
+        }
 
+        /* شريط إدخال الذكاء الاصطناعي (Pill Design) */
+        .ai-chat-footer { 
+            padding: 15px 20px 20px; background: var(--bg-body); border-top: 1px solid transparent; 
+            display: flex; justify-content: center; align-items: center; position: relative;
+        }
+        .ai-input-pill {
+            display: flex; align-items: flex-end; background: var(--bg-card); border: 1px solid var(--border); 
+            border-radius: 30px; padding: 8px 12px 8px 20px; width: 100%; max-width: 800px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .ai-input-pill:focus-within { border-color: var(--primary); box-shadow: 0 5px 25px rgba(37, 99, 235, 0.15); }
+        
+        .ai-input-pill input[type="text"] { 
+            flex: 1; border: none; background: transparent; outline: none; padding: 12px 0; 
+            font-size: 1.05rem; color: var(--text-main); min-height: 48px;
+        }
+        
+        .ai-input-pill .upload-icon-btn { 
+            color: var(--text-muted); cursor: pointer; padding: 12px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; margin-left: 5px; margin-bottom: 2px;
+            transition: all 0.2s ease;
+        }
+        .ai-input-pill .upload-icon-btn:hover { background: var(--bg-body); color: var(--primary); }
+        
+        .ai-input-pill .send-btn { 
+            background: var(--primary); color: white; border: none; width: 44px; height: 44px; margin-bottom: 4px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: transform 0.2s, background 0.2s; flex-shrink: 0;
+        }
+        .ai-input-pill .send-btn:hover { transform: scale(1.05); background: #1d4ed8; }
+        
+        /* أدوات رفع الصورة في الذكاء الاصطناعي */
+        .img-preview-container { 
+            position: absolute; bottom: 100%; right: 40px; margin-bottom: 15px; 
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; z-index: 10;
+        }
+        .img-preview-container img { max-height: 100px; max-width: 150px; border-radius: 8px; display: block; }
+        .img-remove-btn { 
+            position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; width: 26px; height: 26px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; 
+            font-weight: bold; cursor: pointer; border: 2px solid var(--bg-card); transition: transform 0.2s;
+        }
+        .img-remove-btn:hover { transform: scale(1.1); }
+
+        /* تنسيقات الحاسبة والاختبارات بقيت كما هي لضمان عملها */
         .calc-row { display: flex; gap: 10px; align-items: center; }
         .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; text-align: center; background: var(--bg-body); color: var(--text-main); }
         .btn-calc-action { display: flex; align-items: center; justify-content: center; gap: 10px; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; text-decoration: none; font-size: 1rem; width: 100%; transition: transform 0.2s; }
@@ -157,7 +257,6 @@
         .btn-calc-outline { background: transparent; color: var(--text-main); border: 2px dashed var(--border); padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: border-color 0.3s; }
         .btn-calc-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-        /* تنسيقات الاختبار والانجازات */
         .q-container { animation: slideInUp 0.4s ease forwards; }
         @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .quiz-opt { padding: 16px 20px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-body); color: var(--text-main); text-align: right; width: 100%; font-size: 1.05rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
@@ -197,31 +296,29 @@
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
 
+    <!-- طبقة التعتيم للخلفية -->
+    <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
+
     {% if view == 'years' %}
     <!-- القائمة العائمة المجمعة (FAB Menu) -->
     <div class="fab-container" id="fabMenu">
-        
         <div class="fab-main" onclick="toggleFabMenu()" title="القائمة السريعة">
             <svg id="fabMainIcon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             <svg id="fabCloseIcon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </div>
         
-        <!-- فقاعة السوشيال ميديا -->
         <a href="javascript:void(0)" class="fab-item" onclick="togglePopup('socialBox')" title="تواصل معنا">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
         </a>
         
-        <!-- فقاعة المخطط -->
         <a href="/planner" target="_blank" class="fab-item" title="المخطط الدراسي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
         </a>
         
-        <!-- فقاعة الحاسبة -->
         <div class="fab-item" onclick="togglePopup('calcBox')" title="الحاسبة التراكمية">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line></svg>
         </div>
         
-        <!-- فقاعة الذكاء الاصطناعي -->
         <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path></svg>
         </div>
@@ -231,7 +328,7 @@
     <div class="popup-box" id="socialBox">
         <div class="popup-header">
             <span>منصاتنا وحساباتنا</span>
-            <span class="popup-close" onclick="togglePopup('socialBox')">✕</span>
+            <span class="popup-close" onclick="closeAllPopups()">✕</span>
         </div>
         <div class="popup-body">
             <a href="https://t.me/a0mrr1eng" target="_blank" class="btn-calc-action" style="background:#229ED9;">
@@ -249,7 +346,7 @@
     <div class="popup-box" id="calcBox">
         <div class="popup-header">
             <span>حاسبة التقدير التراكمي</span>
-            <span class="popup-close" onclick="togglePopup('calcBox')">✕</span>
+            <span class="popup-close" onclick="closeAllPopups()">✕</span>
         </div>
         <div class="popup-body">
             <div id="subjectsList" style="display: flex; flex-direction: column; gap: 10px;">
@@ -273,23 +370,49 @@
         </div>
     </div>
 
-    <!-- نافذة الذكاء الاصطناعي -->
+    <!-- نافذة الذكاء الاصطناعي الواسعة والاحترافية -->
     <div class="popup-box" id="aiChatBox">
         <div class="popup-header">
-            <span>مساعد AS Academy</span>
-            <span class="popup-close" onclick="togglePopup('aiChatBox')">✕</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12V2.5a9.5 9.5 0 0 1 9.5 9.5H12z"></path></svg>
+                مساعد AS Academy
+            </div>
+            <span class="popup-close" onclick="closeAllPopups()">✕</span>
         </div>
+        
         <div class="popup-body" id="aiChatBody">
-            <div class="ai-msg bot">أهلاً بك يا مهندس! اسألني عن أي قانون أو مفهوم دراسي وسأشرحه لك.</div>
+            <div class="ai-msg-wrapper bot-wrapper">
+                <div class="ai-avatar bot-avatar">✨</div>
+                <div class="ai-msg bot">
+                    أهلاً بك يا مهندس! أنا مساعدك الذكي الخاص بـ Amr Suhail Academy.<br>
+                    اسألني عن أي قانون، أو قم بإرفاق صورة لمعادلة أو مخطط لأقوم بشرحه وتفصيله لك بأسلوب مبسط.
+                </div>
+            </div>
         </div>
+        
         <div class="ai-chat-footer">
-            <input type="text" id="aiUserInput" placeholder="اكتب سؤالك..." onkeypress="checkEnter(event)">
-            <button onclick="sendAIMessage()">إرسال</button>
+            <div class="ai-input-pill">
+                <input type="file" id="aiImageUpload" accept="image/*" style="display:none;" onchange="previewAiImage()">
+                <label for="aiImageUpload" class="upload-icon-btn" title="إرفاق صورة">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </label>
+                
+                <input type="text" id="aiUserInput" placeholder="اكتب سؤالك هنا..." onkeypress="checkEnter(event)">
+                
+                <button class="send-btn" onclick="sendAIMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg) translateX(2px);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+
+            <div class="img-preview-container" id="aiImgPreviewBox">
+                <span class="img-remove-btn" onclick="clearAiImage()">✕</span>
+                <img id="aiImgPreview" src="" alt="preview">
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- الشريط العلوي (Navbar) مع زر تواصل معنا الاحترافي -->
+    <!-- الشريط العلوي (Navbar) -->
     <nav class="navbar">
         <div style="display: flex; align-items: center;">
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
@@ -315,7 +438,6 @@
         {% endif %}
 
         {% if view != 'years' %}
-        <!-- أزرار التنقل (المنزل و الرجوع) -->
         <div class="breadcrumb">
             <a href="/" class="nav-btn" title="الرئيسية">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -522,7 +644,6 @@
         Amr Suhail Academy &copy; 2026
     </footer>
 
-    <!-- سكربت تسجيل تطبيق الويب PWA و الكود البرمجي -->
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -569,7 +690,6 @@
         }
     }
 
-    // سكريبت القائمة المجمعة (FAB)
     function toggleFabMenu() {
         const menu = document.getElementById('fabMenu');
         const mainIcon = document.getElementById('fabMainIcon');
@@ -585,53 +705,151 @@
         }
     }
 
-    // دالة موحدة لفتح النوافذ المنبثقة وإغلاق البقية
     function togglePopup(boxId) {
         const boxes = ['aiChatBox', 'calcBox', 'socialBox'];
+        let isAnyOpen = false;
+        
         boxes.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 if (id === boxId) {
                     el.classList.toggle('active');
+                    if (el.classList.contains('active')) isAnyOpen = true;
                 } else {
                     el.classList.remove('active');
                 }
             }
         });
+        
+        const overlay = document.getElementById('chatOverlay');
+        if (overlay) {
+            if (isAnyOpen) overlay.classList.add('active');
+            else overlay.classList.remove('active');
+        }
+        
         const menu = document.getElementById('fabMenu');
         if(menu && menu.classList.contains('open')) toggleFabMenu();
     }
 
+    function closeAllPopups() {
+        const boxes = ['aiChatBox', 'calcBox', 'socialBox'];
+        boxes.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+        const overlay = document.getElementById('chatOverlay');
+        if (overlay) overlay.classList.remove('active');
+    }
+
     function checkEnter(e) { if (e.key === 'Enter') sendAIMessage(); }
 
+    /* --- وظائف الذكاء الاصطناعي مع إرفاق الصور و MathJax --- */
+    function previewAiImage() {
+        const fileInput = document.getElementById('aiImageUpload');
+        const previewBox = document.getElementById('aiImgPreviewBox');
+        const previewImg = document.getElementById('aiImgPreview');
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewBox.style.display = 'block';
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    function clearAiImage() {
+        document.getElementById('aiImageUpload').value = '';
+        document.getElementById('aiImgPreviewBox').style.display = 'none';
+        document.getElementById('aiImgPreview').src = '';
+    }
+
     async function sendAIMessage() {
-        var input = document.getElementById('aiUserInput');
-        var body = document.getElementById('aiChatBody');
+        const input = document.getElementById('aiUserInput');
+        const fileInput = document.getElementById('aiImageUpload');
+        const body = document.getElementById('aiChatBody');
         if(!input || !body) return;
         
-        var text = input.value.trim();
-        if (!text) return;
+        const text = input.value.trim();
+        const file = fileInput.files[0];
         
-        body.innerHTML += '<div class="ai-msg user">' + text + '</div>';
+        if (!text && !file) return;
+        
+        let userContent = '';
+        if (file) {
+            userContent += `<img src="${URL.createObjectURL(file)}" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px; display: block; border: 1px solid var(--border);">`;
+        }
+        if (text) {
+            userContent += `<div>${text}</div>`;
+        }
+        
+        // بناء فقاعة المستخدم الجديدة
+        const userHtml = `
+            <div class="ai-msg-wrapper user-wrapper">
+                <div class="ai-avatar user-avatar">👤</div>
+                <div class="ai-msg user">${userContent}</div>
+            </div>
+        `;
+        
+        body.innerHTML += userHtml;
         input.value = '';
+        clearAiImage();
         body.scrollTop = body.scrollHeight;
         
-        var loadingId = 'loading_' + Date.now();
-        body.innerHTML += '<div class="ai-msg bot" id="' + loadingId + '">جاري التفكير...</div>';
+        const loadingId = 'loading_' + Date.now();
+        const loadingHtml = `
+            <div class="ai-msg-wrapper bot-wrapper" id="${loadingId}">
+                <div class="ai-avatar bot-avatar" style="animation: pulse 1.5s infinite;">✨</div>
+                <div class="ai-msg bot" style="color: var(--text-muted);">جاري التحليل واستخراج الإجابة...</div>
+            </div>
+        `;
+        body.innerHTML += loadingHtml;
         body.scrollTop = body.scrollHeight;
 
         try {
-            let res = await fetch('/ask-ai', {
+            const formData = new FormData();
+            if (text) formData.append('message', text);
+            if (file) formData.append('file', file);
+
+            const res = await fetch('/ask-ai', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: formData 
             });
-            let data = await res.json();
-            document.getElementById(loadingId).remove();
-            body.innerHTML += '<div class="ai-msg bot">' + data.reply + '</div>';
+            const data = await res.json();
+            
+            if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+            
+            const replyId = 'reply_' + Date.now();
+            
+            // تحويل البولد في النص (**نص**) والتنسيقات الأساسية
+            let formattedReply = data.reply
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/\n/g, '<br>');
+
+            const botHtml = `
+                <div class="ai-msg-wrapper bot-wrapper">
+                    <div class="ai-avatar bot-avatar">✨</div>
+                    <div class="ai-msg bot" id="${replyId}">${formattedReply}</div>
+                </div>
+            `;
+            
+            body.innerHTML += botHtml;
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise([document.getElementById(replyId)]).catch(function (err) {
+                    console.log('MathJax Error:', err.message);
+                });
+            }
+            
         } catch (err) {
-            document.getElementById(loadingId).remove();
-            body.innerHTML += '<div class="ai-msg bot">عذراً، حدث خطأ في الاتصال بالمساعد.</div>';
+            if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+            body.innerHTML += `
+                <div class="ai-msg-wrapper bot-wrapper">
+                    <div class="ai-avatar bot-avatar" style="background: #ef4444;">⚠️</div>
+                    <div class="ai-msg bot" style="color: #ef4444;">عذراً، حدث خطأ أثناء الاتصال بالمساعد.</div>
+                </div>
+            `;
         }
         body.scrollTop = body.scrollHeight;
     }

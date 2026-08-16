@@ -16,17 +16,15 @@ app.secret_key = 'amr_suhail_academy_secure_secret_key_2026'
 # كلمة مرور المشرف/المعلم
 ADMIN_PASSWORD = "123"
 
-
-  
-
 # إعداد قاعدة بيانات محلية مدمجة
- main
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///academy_qa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# الجداول
+# ==========================================
+# نماذج قواعد البيانات (Database Models)
+# ==========================================
 class LessonQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     subject_id = db.Column(db.String(150), nullable=False)
@@ -36,35 +34,8 @@ class LessonQuestion(db.Model):
     answer_text = db.Column(db.Text, nullable=True)
     is_answered = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     def to_dict(self):
-        return {"id": self.id, "subject_id": self.subject_id, "chapter_name": self.chapter_name, "student_name": self.student_name, "question_text": self.question_text, "answer_text": self.answer_text, "is_answered": self.is_answered, "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")}
-
-class PlatformUpdate(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    tag = db.Column(db.String(50), default="ميزة جديدة")
-    description = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    def to_dict(self):
- 
-        return {"id": self.id, "title": self.title, "tag": self.tag, "description": self.description, "date": self.created_at.strftime("%Y-%m-%d")}
-
-class CustomLesson(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    year = db.Column(db.String(100), nullable=False)
-    term = db.Column(db.String(100), nullable=False)
-    subject_name = db.Column(db.String(150), nullable=False)
-    chapter_name = db.Column(db.String(150), nullable=False)
-    content_type = db.Column(db.String(20), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    url = db.Column(db.Text, nullable=True)
-    download_url = db.Column(db.Text, nullable=True)
-    notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    def to_dict(self):
-        return {"id": self.id, "year": self.year, "term": self.term, "subject_name": self.subject_name, "chapter_name": self.chapter_name, "content_type": self.content_type, "title": self.title, "url": self.url or "", "download_url": self.download_url or "", "notes": self.notes or "", "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")}
-
-
         return {
             "id": self.id,
             "subject_id": self.subject_id,
@@ -76,7 +47,6 @@ class CustomLesson(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
         }
 
-# جدول تحديثات المنصة (ما الجديد)
 class PlatformUpdate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -93,8 +63,35 @@ class PlatformUpdate(db.Model):
             "date": self.created_at.strftime("%Y-%m-%d")
         }
 
-# إنشاء قاعدة البيانات تلقائياً مع إضافة تحديث أولي إذا كانت فارغة
- main
+class CustomLesson(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(100), nullable=False)
+    subject_name = db.Column(db.String(150), nullable=False)
+    chapter_name = db.Column(db.String(150), nullable=False)
+    content_type = db.Column(db.String(20), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    url = db.Column(db.Text, nullable=True)
+    download_url = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "year": self.year,
+            "term": self.term,
+            "subject_name": self.subject_name,
+            "chapter_name": self.chapter_name,
+            "content_type": self.content_type,
+            "title": self.title,
+            "url": self.url or "",
+            "download_url": self.download_url or "",
+            "notes": self.notes or "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+        }
+
+# إنشاء الجداول عند بدء التشغيل
 with app.app_context():
     db.create_all()
     if PlatformUpdate.query.count() == 0:
@@ -106,10 +103,9 @@ with app.app_context():
         db.session.add(initial_update)
         db.session.commit()
 
- Dev
-
-# حماية مسارات المشرف
- main
+# ==========================================
+# التحقق والديكوريتورز
+# ==========================================
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -236,7 +232,7 @@ def get_data_from_sheet():
                         "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
                     }
 
-        # 2. الدمج الذكي للبيانات المضافة عبر لوحة المعلم
+        # 2. الدمج للبيانات المضافة عبر لوحة المعلم
         custom_items = CustomLesson.query.all()
         for item in custom_items:
             c_year = item.year.strip()
@@ -246,9 +242,8 @@ def get_data_from_sheet():
             c_type = item.content_type.strip()
 
             if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
+            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
             
-            # إذا كانت المادة غير موجودة مسبقاً، ننشئها
             if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
                 data[c_year]["terms"][c_term]["subjects"][c_subject] = {
                     "id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),
@@ -284,6 +279,9 @@ def get_data_from_sheet():
         print(f"Error fetching data: {e}")
     return data
 
+# ==========================================
+# المسارات العامة (Main Routes)
+# ==========================================
 @app.route('/')
 def home():
     try:
@@ -337,8 +335,9 @@ def home():
     except Exception as e:
         return f"Error: {str(e)}"
 
- Dev
-# مسارات الإضافة والتعديل المباشر
+# ==========================================
+# مسارات الإدارة والمحتوى المخصص
+# ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @admin_required
 def add_custom_content():
@@ -355,13 +354,64 @@ def add_custom_content():
         notes = data.get('notes', '').strip()
 
         if not year or not term or not subject_name or not title:
-            return jsonify({"status": "error", "message": "البيانات الأساسية (السنة، الترم، المادة، العنوان) مطلوبة"}), 400
+            return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
             
         if not url and not download_url:
             return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل واحد على الأقل"}), 400
 
+        new_lesson = CustomLesson(
+            year=year, term=term, subject_name=subject_name, chapter_name=chapter_name,
+            content_type=content_type, title=title, url=url, download_url=download_url, notes=notes
+        )
+        db.session.add(new_lesson)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت الإضافة بنجاح!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
+@admin_required
+def edit_custom_content(content_id):
+    try:
+        lesson = CustomLesson.query.get_or_404(content_id)
+        data = request.json or request.form
+        lesson.year = data.get('year', lesson.year).strip()
+        lesson.term = data.get('term', lesson.term).strip()
+        lesson.subject_name = data.get('subject_name', lesson.subject_name).strip()
+        lesson.chapter_name = data.get('chapter_name', lesson.chapter_name).strip() or 'عام'
+        lesson.content_type = data.get('content_type', lesson.content_type).strip()
+        lesson.title = data.get('title', lesson.title).strip()
+        lesson.url = data.get('url', lesson.url or '').strip()
+        lesson.download_url = data.get('download_url', lesson.download_url or '').strip()
+        lesson.notes = data.get('notes', lesson.notes or '').strip()
+
+        if not lesson.url and not lesson.download_url:
+            return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل واحد على الأقل"}), 400
+
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث البيانات بنجاح!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/custom-content', methods=['GET'])
+@admin_required
+def get_custom_content():
+    lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
+    return jsonify([l.to_dict() for l in lessons])
+
+@app.route('/admin/delete-content/<int:content_id>', methods=['POST', 'DELETE'])
+@admin_required
+def delete_custom_content(content_id):
+    try:
+        lesson = CustomLesson.query.get_or_404(content_id)
+        db.session.delete(lesson)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم الحذف"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 # ==========================================
-# مسارات التحديثات والإشعارات (What's New API)
+# مسارات التحديثات (What's New API)
 # ==========================================
 @app.route('/api/updates', methods=['GET'])
 def get_updates():
@@ -399,7 +449,7 @@ def delete_update(update_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# مصادقة وإدارة المعلم (Admin Auth & Q&A)
+# مصادقة المعلم (Admin Auth)
 # ==========================================
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
@@ -407,62 +457,21 @@ def admin_login():
     password = data.get('password', '').strip()
     if password == ADMIN_PASSWORD:
         session['is_admin'] = True
-        return jsonify({"status": "success", "message": "تم تسجيل دخول المعلم بنجاح"})
+        return jsonify({"status": "success", "message": "تم تسجيل الدخول بنجاح"})
     return jsonify({"status": "error", "message": "كلمة المرور غير صحيحة"}), 401
-main
 
-        new_lesson = CustomLesson(
-            year=year, term=term, subject_name=subject_name, chapter_name=chapter_name,
-            content_type=content_type, title=title, url=url, download_url=download_url, notes=notes
-        )
-        db.session.add(new_lesson)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "تمت الإضافة بنجاح!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/admin/logout', methods=['POST', 'GET'])
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect('/')
 
-@app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
-@admin_required
-def edit_custom_content(content_id):
-    try:
-        lesson = CustomLesson.query.get_or_404(content_id)
-        data = request.json or request.form
-        lesson.year = data.get('year', lesson.year).strip()
-        lesson.term = data.get('term', lesson.term).strip()
-        lesson.subject_name = data.get('subject_name', lesson.subject_name).strip()
-        lesson.chapter_name = data.get('chapter_name', lesson.chapter_name).strip() or 'عام'
-        lesson.content_type = data.get('content_type', lesson.content_type).strip()
-        lesson.title = data.get('title', lesson.title).strip()
-        lesson.url = data.get('url', lesson.url or '').strip()
-        lesson.download_url = data.get('download_url', lesson.download_url or '').strip()
-        lesson.notes = data.get('notes', lesson.notes or '').strip()
+@app.route('/admin/status', methods=['GET'])
+def admin_status():
+    return jsonify({"is_admin": session.get('is_admin', False)})
 
-        if not lesson.url and not lesson.download_url:
-             return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل واحد على الأقل"}), 400
-
-        db.session.commit()
-        return jsonify({"status": "success", "message": "تم تحديث البيانات بنجاح!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/admin/custom-content', methods=['GET'])
-@admin_required
-def get_custom_content():
-    lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
-    return jsonify([l.to_dict() for l in lessons])
-
-@app.route('/admin/delete-content/<int:content_id>', methods=['POST', 'DELETE'])
-@admin_required
-def delete_custom_content(content_id):
-    try:
-        lesson = CustomLesson.query.get_or_404(content_id)
-        db.session.delete(lesson)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "تم الحذف"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# مسارات الاستفسارات (الأسئلة والردود)
+# ==========================================
+# مسارات الاستفسارات (Q&A)
+# ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
@@ -491,12 +500,14 @@ def reply_question(question_id):
     try:
         q = LessonQuestion.query.get_or_404(question_id)
         ans = request.form.get('answer_text') or (request.json.get('answer_text') if request.is_json else None)
-        if not ans or not ans.strip(): return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
+        if not ans or not ans.strip(): 
+            return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
         q.answer_text = ans.strip()
         q.is_answered = True
         db.session.commit()
         return jsonify({"status": "success", "message": "تم النشر"})
-    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: 
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/delete-question/<int:question_id>', methods=['POST', 'DELETE'])
 @admin_required
@@ -505,42 +516,14 @@ def delete_question(question_id):
         db.session.delete(LessonQuestion.query.get_or_404(question_id))
         db.session.commit()
         return jsonify({"status": "success"})
-    except Exception: return jsonify({"status": "error"}), 500
+    except Exception: 
+        return jsonify({"status": "error"}), 500
 
-# إشعارات التحديثات
-@app.route('/api/updates', methods=['GET'])
-def get_updates():
-    return jsonify([u.to_dict() for u in PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()])
-
-@app.route('/admin/add-update', methods=['POST'])
-@admin_required
-def add_update():
-    data = request.json or request.form
-    db.session.add(PlatformUpdate(title=data.get('title','').strip(), tag=data.get('tag','ميزة جديدة').strip(), description=data.get('description','').strip()))
-    db.session.commit()
-    return jsonify({"status": "success"})
-
-# تسجيل الدخول
-@app.route('/admin/login', methods=['POST'])
-def admin_login():
-    if (request.json or {}).get('password', '').strip() == ADMIN_PASSWORD:
-        session['is_admin'] = True
-        return jsonify({"status": "success"})
-    return jsonify({"status": "error"}), 401
-
-@app.route('/admin/logout', methods=['POST', 'GET'])
-def admin_logout():
-    session.pop('is_admin', None)
-    return redirect('/')
-
-@app.route('/admin/status', methods=['GET'])
-def admin_status():
-    return jsonify({"is_admin": session.get('is_admin', False)})
-
-# الذكاء الاصطناعي والمخطط
+# ==========================================
+# الذكاء الاصطناعي والمخطط (AI & Planner)
+# ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
-    # نفس الكود المعتاد
     try:
         user_message = (request.json.get('message', '') if request.is_json else request.form.get('message', '')).strip()
         parts = []
@@ -552,10 +535,12 @@ def ask_ai():
         parts.insert(0, {"text": prompt})
         reply, error = send_gemini_request(API_URL, {"contents": [{"parts": parts}]})
         return jsonify({"reply": reply}) if reply else (jsonify({"reply": error}), 500)
-    except Exception as e: return jsonify({"reply": str(e)}), 500
+    except Exception as e: 
+        return jsonify({"reply": str(e)}), 500
 
 @app.route('/planner')
-def planner(): return render_template('planner.html')
+def planner(): 
+    return render_template('planner.html')
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
@@ -572,4 +557,5 @@ def reschedule_plan():
     reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
     return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
 
-if __name__ == '__main__': app.run(debug=True)
+if __name__ == '__main__': 
+    app.run(debug=True)

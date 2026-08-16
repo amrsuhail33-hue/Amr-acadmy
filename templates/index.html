@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -226,7 +227,7 @@
     <nav class="navbar">
         <div class="navbar-brand-container" onclick="handleSecretAdminClick()" title="لوحة الإدارة المخفية">
             <div class="nav-title">Amr Suhail Academy</div>
-            {% if is_admin %}<span class="admin-indicator-dot"></span>{% endif %}
+            {% if is_admin or is_assistant %}<span class="admin-indicator-dot"></span>{% endif %}
         </div>
 
         <div class="nav-actions">
@@ -301,13 +302,17 @@
     <!-- 3. popup: Admin Box -->
     <div class="popup-box" id="adminBox">
         <div class="popup-header" style="background: var(--bg-card); border-bottom: 2px solid var(--warning);">
-            <div><i class="fa-solid fa-gear header-icon" style="color:var(--warning);"></i> لوحة التحكم الشاملة</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
+            <div><i class="fa-solid fa-gear header-icon" style="color:var(--warning);"></i> لوحة التحكم</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="logoutAdmin()" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+                <span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
+            </div>
         </div>
         <div class="popup-body">
             <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button onclick="switchAdminTab('qa')" class="btn-calc-outline" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
-                <button onclick="switchAdminTab('content')" class="btn-calc-outline"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
-                <button onclick="switchAdminTab('updates')" class="btn-calc-outline"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
+                <button onclick="switchAdminTab('qa')" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
+                <button onclick="switchAdminTab('content')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
+                <button onclick="switchAdminTab('updates')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
             </div>
 
             <div id="adminTab_qa">
@@ -800,17 +805,40 @@
     async function handleSecretAdminClick() {
         try {
             const res = await fetch('/admin/status'); const data = await res.json();
-            if (data.is_admin) { togglePopup('adminBox'); loadAdminQuestions(); } 
+            if (data.is_admin || data.is_assistant) { 
+                togglePopup('adminBox'); 
+                if(data.is_assistant && !data.is_admin) {
+                    const buttons = document.querySelectorAll('#adminBox .admin-tab-btn');
+                    if(buttons.length >= 3) { buttons[0].style.display = 'none'; buttons[2].style.display = 'none'; }
+                    switchAdminTab('content');
+                } else {
+                    switchAdminTab('qa');
+                }
+            } 
             else {
-                const pass = prompt("رمز الدخول السري للوحة الإدارة:", "");
-                if (pass) {
-                    const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
-                    if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                const choice = prompt("اختر نوع الدخول:\n1- مسؤول المنصة (Admin)\n2- مساعد (Assistant)", "1");
+                if (choice === "1" || choice === "2") {
+                    const pass = prompt("أدخل الرمز السري:", "");
+                    if (pass) {
+                        const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+                        if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                    }
                 }
             }
         } catch (e) { alert("حدث خطأ في الاتصال بالخادم."); }
     }
     
+    // دالة تسجيل الخروج الجديدة
+    async function logoutAdmin() {
+        if(!confirm("هل تريد تسجيل الخروج حقاً؟")) return;
+        try {
+            await fetch('/admin/logout', { method: 'POST' });
+            location.reload();
+        } catch (e) {
+            location.reload();
+        }
+    }
+
     function switchAdminTab(tabName) {
         document.querySelectorAll('#adminBox .btn-calc-outline').forEach(btn => {btn.style.color=''; btn.style.borderColor='';});
         event.currentTarget.style.color='var(--primary)'; event.currentTarget.style.borderColor='var(--primary)';
@@ -859,6 +887,7 @@
         document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> حفظ ونشر`; document.getElementById('btn_cancel_edit').style.display = "none";
     }
     
+    // دالة تحديث التعديلات
     async function submitNewContent() {
         const editId = document.getElementById('edit_content_id').value;
         const payload = {
@@ -868,15 +897,26 @@
             url: document.getElementById('add_url').value.trim(), download_url: document.getElementById('add_download').value.trim(), notes: document.getElementById('add_notes').value.trim()
         };
         try {
-            const res = await fetch(editId ? `/admin/edit-content/${editId}` : '/admin/add-content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const url = editId ? `/admin/edit-content/${editId}` : '/admin/add-content';
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const data = await res.json();
-            if (data.status === 'success') { alert("تم الحفظ بنجاح!"); resetContentForm(); loadCustomContentList(); if(!editId && location.href.includes('type=')) location.reload(); } else alert(data.message);
-        } catch (err) { alert("خطأ في الاتصال"); }
+            
+            if (data.status === 'success') { 
+                alert("تم الحفظ بنجاح!"); 
+                resetContentForm(); 
+                loadCustomContentList(); 
+                if(!editId && location.href.includes('type=')) location.reload(); 
+                if(editId) location.reload(); 
+            } else {
+                alert(data.message);
+            }
+        } catch (err) { alert("حدث خطأ أثناء الاتصال بالخادم."); }
     }
     
     async function deleteAdminContent(id) {
         if (!confirm("هل أنت متأكد من الحذف؟")) return;
-        await fetch(`/admin/delete-content/${id}`, { method: 'POST' }); loadCustomContentList();
+        await fetch(`/admin/delete-content/${id}`, { method: 'POST' }); 
+        location.reload(); // تم إضافة تحديث الصفحة ليختفي المحتوى المحذوف مباشرة
     }
 
     async function loadAdminQuestions() {

@@ -13,10 +13,10 @@ app = Flask(__name__)
 # مفتاح سري لتشفير الجلسات (Sessions)
 app.secret_key = 'amr_suhail_academy_secure_secret_key_2026'
 
-# كلمة مرور المشرف/المعلم (يمكنك تغييرها في أي وقت)
+# كلمة مرور المشرف/المعلم
 ADMIN_PASSWORD = "123"
 
-# إعداد قاعدة بيانات محلية مدمجة للأسئلة
+# إعداد قاعدة بيانات محلية مدمجة
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///academy_qa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -45,11 +45,36 @@ class LessonQuestion(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
         }
 
-# إنشاء قاعدة البيانات تلقائياً
+# جدول تحديثات المنصة (ما الجديد)
+class PlatformUpdate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    tag = db.Column(db.String(50), default="ميزة جديدة")
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "tag": self.tag,
+            "description": self.description,
+            "date": self.created_at.strftime("%Y-%m-%d")
+        }
+
+# إنشاء قاعدة البيانات تلقائياً مع إضافة تحديث أولي إذا كانت فارغة
 with app.app_context():
     db.create_all()
+    if PlatformUpdate.query.count() == 0:
+        initial_update = PlatformUpdate(
+            title="إطلاق نظام الأسئلة والشريك الرسمي",
+            tag="تحديث رئيسي 🚀",
+            description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة، كما نرحب بانضمام مكتبة ميكا درايف كشريك رسمي للأكاديمية!"
+        )
+        db.session.add(initial_update)
+        db.session.commit()
 
-# Decorator للتحقق من هوية المشرف وحماية المسارات الحساسة
+# حماية مسارات المشرف
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -221,7 +246,6 @@ def home():
                             if content_type in s["types"]:
                                 for c in s["types"][content_type]["chapters"]:
                                     if c["name"] == chapter_name:
-                                        # المعلم يرى جميع الأسئلة للإجابة، بينما الطالب يرى المجاب عنها فقط
                                         if is_admin:
                                             questions = LessonQuestion.query.filter_by(
                                                 subject_id=subject_id,
@@ -270,6 +294,44 @@ def home():
         return render_template('index.html', view='years', data=DATA, is_admin=is_admin)
     except Exception as e:
         return f"Error: {str(e)}"
+
+# ==========================================
+# مسارات التحديثات والإشعارات (What's New API)
+# ==========================================
+@app.route('/api/updates', methods=['GET'])
+def get_updates():
+    updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+    return jsonify([u.to_dict() for u in updates])
+
+@app.route('/admin/add-update', methods=['POST'])
+@admin_required
+def add_update():
+    try:
+        data = request.json or request.form
+        title = data.get('title', '').strip()
+        tag = data.get('tag', 'ميزة جديدة').strip()
+        description = data.get('description', '').strip()
+
+        if not title or not description:
+            return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
+
+        new_update = PlatformUpdate(title=title, tag=tag, description=description)
+        db.session.add(new_update)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم نشر التحديث الجديد بنجاح!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/delete-update/<int:update_id>', methods=['POST', 'DELETE'])
+@admin_required
+def delete_update(update_id):
+    try:
+        up = PlatformUpdate.query.get_or_404(update_id)
+        db.session.delete(up)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف التحديث"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # مصادقة وإدارة المعلم (Admin Auth & Q&A)

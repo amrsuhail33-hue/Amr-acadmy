@@ -5,14 +5,21 @@ import json
 import base64
 import requests
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
+from functools import wraps
+from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+# مفتاح سري لتشفير الجلسات (Sessions)
+app.secret_key = 'amr_suhail_academy_secure_secret_key_2026'
+
+# كلمة مرور المشرف/المعلم (يمكنك تغييرها في أي وقت)
+ADMIN_PASSWORD = "123"
 
 # إعداد قاعدة بيانات محلية مدمجة للأسئلة
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///academy_qa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 # جدول الأسئلة والأجوبة
@@ -41,6 +48,15 @@ class LessonQuestion(db.Model):
 # إنشاء قاعدة البيانات تلقائياً
 with app.app_context():
     db.create_all()
+
+# Decorator للتحقق من هوية المشرف وحماية المسارات الحساسة
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('is_admin'):
+            return jsonify({"status": "error", "message": "غير مصرح لك بالوصول"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
 
 # مفتاح API والنماذج
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
@@ -195,6 +211,8 @@ def home():
         content_type = request.args.get('type')
         chapter_name = request.args.get('chapter')
 
+        is_admin = session.get('is_admin', False)
+
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
                 for t in y["terms"].values():
@@ -203,12 +221,18 @@ def home():
                             if content_type in s["types"]:
                                 for c in s["types"][content_type]["chapters"]:
                                     if c["name"] == chapter_name:
-                                        # جلب الأسئلة المجاب عنها فقط للدرس/الفصل الحالي
-                                        answered_questions = LessonQuestion.query.filter_by(
-                                            subject_id=subject_id,
-                                            chapter_name=chapter_name,
-                                            is_answered=True
-                                        ).order_by(LessonQuestion.created_at.desc()).all()
+                                        # المعلم يرى جميع الأسئلة للإجابة، بينما الطالب يرى المجاب عنها فقط
+                                        if is_admin:
+                                            questions = LessonQuestion.query.filter_by(
+                                                subject_id=subject_id,
+                                                chapter_name=chapter_name
+                                            ).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
+                                        else:
+                                            questions = LessonQuestion.query.filter_by(
+                                                subject_id=subject_id,
+                                                chapter_name=chapter_name,
+                                                is_answered=True
+                                            ).order_by(LessonQuestion.created_at.desc()).all()
 
                                         return render_template(
                                             'index.html', 
@@ -216,7 +240,8 @@ def home():
                                             subject=s, 
                                             chapter=c, 
                                             content_type=content_type,
-                                            questions=answered_questions
+                                            questions=questions,
+                                            is_admin=is_admin
                                         )
 
         if subject_id and content_type:
@@ -225,37 +250,58 @@ def home():
                     for s in t["subjects"]:
                         if s["id"] == subject_id:
                             if content_type in s["types"]:
-                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"])
+                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin)
 
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id:
-                            return render_template('index.html', view='select_type', subject=s)
+                            return render_template('index.html', view='select_type', subject=s, is_admin=is_admin)
 
         if year and term:
             if year in DATA and term in DATA[year]["terms"]:
-                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year)
+                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin)
 
         if year:
             if year in DATA:
-                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year)
+                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin)
 
-        return render_template('index.html', view='years', data=DATA)
+        return render_template('index.html', view='years', data=DATA, is_admin=is_admin)
     except Exception as e:
         return f"Error: {str(e)}"
 
 # ==========================================
-# مسارات الأسئلة والأجوبة (Q&A System)
+# مصادقة وإدارة المعلم (Admin Auth & Q&A)
 # ==========================================
+@app.route('/admin/login', methods=['POST'])
+def admin_login():
+    data = request.json or {}
+    password = data.get('password', '').strip()
+    if password == ADMIN_PASSWORD:
+        session['is_admin'] = True
+        return jsonify({"status": "success", "message": "تم تسجيل دخول المعلم بنجاح"})
+    return jsonify({"status": "error", "message": "كلمة المرور غير صحيحة"}), 401
+
+@app.route('/admin/logout', methods=['POST', 'GET'])
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect(request.referrer or '/')
+
+@app.route('/admin/status', methods=['GET'])
+def admin_status():
+    return jsonify({"is_admin": session.get('is_admin', False)})
+
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
-        subject_id = request.form.get('subject_id')
-        chapter_name = request.form.get('chapter_name')
-        student_name = request.form.get('student_name', 'طالب').strip() or 'طالب'
-        question_text = request.form.get('question_text', '').strip()
+        subject_id = request.form.get('subject_id') or (request.json.get('subject_id') if request.is_json else None)
+        chapter_name = request.form.get('chapter_name') or (request.json.get('chapter_name') if request.is_json else None)
+        student_name = (request.form.get('student_name') if not request.is_json else request.json.get('student_name')) or 'طالب'
+        question_text = (request.form.get('question_text') if not request.is_json else request.json.get('question_text')) or ''
+
+        student_name = student_name.strip() or 'طالب'
+        question_text = question_text.strip()
 
         if not question_text or not subject_id or not chapter_name:
             return jsonify({"status": "error", "message": "بيانات غير مكتملة"}), 400
@@ -269,24 +315,26 @@ def submit_question():
         db.session.add(new_q)
         db.session.commit()
 
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({"status": "success", "message": "تم إرسال السؤال بنجاح"})
         return redirect(request.referrer or '/')
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/questions', methods=['GET'])
+@admin_required
 def get_pending_questions():
-    """جلب الأسئلة التي تنتظر الرد للوحة التحكم"""
-    pending = LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.asc()).all()
+    pending = LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()
     return jsonify([q.to_dict() for q in pending])
 
 @app.route('/admin/reply/<int:question_id>', methods=['POST'])
+@admin_required
 def reply_question(question_id):
-    """إرسال رد على سؤال محدد ونشره"""
     try:
         question = LessonQuestion.query.get_or_404(question_id)
         reply_text = request.form.get('answer_text') or (request.json.get('answer_text') if request.is_json else None)
         
-        if not reply_text:
+        if not reply_text or not reply_text.strip():
             return jsonify({"status": "error", "message": "نص الرد مطلوب"}), 400
 
         question.answer_text = reply_text.strip()
@@ -294,8 +342,19 @@ def reply_question(question_id):
         db.session.commit()
 
         if request.is_json:
-            return jsonify({"status": "success", "message": "تم الرد ونشر السؤال بنجاح"})
+            return jsonify({"status": "success", "message": "تم نشر الرد بنجاح"})
         return redirect(request.referrer or '/')
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/delete-question/<int:question_id>', methods=['POST', 'DELETE'])
+@admin_required
+def delete_question(question_id):
+    try:
+        question = LessonQuestion.query.get_or_404(question_id)
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف السؤال بنجاح"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

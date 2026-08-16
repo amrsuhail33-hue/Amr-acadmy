@@ -13,10 +13,10 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
 
-# إبقاء جلسة الأدمن محفوظة لأسبوع كامل لمنع تسجيل الخروج التلقائي
+# إبقاء الجلسة لمدة أسبوع
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# إعداد قاعدة البيانات التلقائي (PostgreSQL على Render أو SQLite على جهازك)
+# إعداد قاعدة البيانات التلقائي 
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -100,16 +100,14 @@ class CustomLesson(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
         }
 
-# إنشاء الجداول تلقائياً إن لم تكن موجودة
 with app.app_context():
     db.create_all()
     if PlatformUpdate.query.count() == 0:
-        initial_update = PlatformUpdate(
+        db.session.add(PlatformUpdate(
             title="إطلاق نظام الأسئلة والشريك الرسمي",
             tag="تحديث رئيسي 🚀",
             description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة."
-        )
-        db.session.add(initial_update)
+        ))
         db.session.commit()
 
 # ==========================================
@@ -124,7 +122,7 @@ def admin_required(f):
     return decorated_function
 
 # ==========================================
-# Gemini AI Configuration & Functions
+# AI APIs
 # ==========================================
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
@@ -155,11 +153,7 @@ def send_gemini_request(url, payload, max_retries=3, timeout=40):
             else:
                 last_error = f"خطأ من الخادم: {response.status_code}"
                 break
-        except requests.exceptions.Timeout:
-            time.sleep(1)
-            last_error = "استغرقت المعالجة وقتاً طويلاً."
-            continue
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             time.sleep(1)
             last_error = str(e)
             continue
@@ -172,7 +166,6 @@ def serve_sw():
 def get_data_from_sheet():
     data = {}
     try:
-        # 1. جلب البيانات من Google Sheets
         res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
         if res1.status_code == 200:
             reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
@@ -204,21 +197,13 @@ def get_data_from_sheet():
                         "name": subject,
                         "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
                     }
-
                 subj_data = data[year]["terms"][term]["subjects"][subject]
-
                 if "فيديو" in content_type:
-                    if chapter not in subj_data["types"]["videos"]["chapters"]:
-                        subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                    subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({
-                        "title": title, "video": video_url, "download": download_url, "notes": notes
-                    })
+                    if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                    subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({"title": title, "video": video_url, "download": download_url, "notes": notes})
                 elif "ملف" in content_type:
-                    if chapter not in subj_data["types"]["files"]["chapters"]:
-                        subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                    subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({
-                        "title": title, "file": file_url or download_url, "notes": notes
-                    })
+                    if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
+                    subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": file_url or download_url, "notes": notes})
 
         res2 = requests.get(f"{CSV_URLS[1]}&t={int(time.time())}", timeout=10)
         if res2.status_code == 200:
@@ -228,57 +213,28 @@ def get_data_from_sheet():
                 if len(row) < 4: continue 
                 year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
                 if not year or not term or not subject or not chapter: continue
-
                 if year not in data: data[year] = {"name": year, "terms": {}}
                 if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
                 if subject not in data[year]["terms"][term]["subjects"]:
-                    data[year]["terms"][term]["subjects"][subject] = {
-                        "id": f"{year}_{term}_{subject}".replace(" ", "_"),
-                        "name": subject,
-                        "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
-                    }
-
+                    data[year]["terms"][term]["subjects"][subject] = {"id": f"{year}_{term}_{subject}".replace(" ", "_"), "name": subject, "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
                 subj_data = data[year]["terms"][term]["subjects"][subject]
-                if chapter not in subj_data["types"]["quiz"]["chapters"]:
-                    subj_data["types"]["quiz"]["chapters"][chapter] = {
-                        "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
-                    }
+                if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
 
-        # 2. الدمج مع الدروس المضافة يدوياً من قاعدة البيانات
-        custom_items = CustomLesson.query.all()
-        for item in custom_items:
-            c_year = item.year.strip()
-            c_term = item.term.strip()
-            c_subject = item.subject_name.strip()
-            c_chapter = item.chapter_name.strip() or "عام"
-            c_type = item.content_type.strip()
-
+        # دمج الدروس المضافة يدوياً من قاعدة البيانات
+        for item in CustomLesson.query.all():
+            c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
             if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
             if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
-            
             if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
-                data[c_year]["terms"][c_term]["subjects"][c_subject] = {
-                    "id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),
-                    "name": c_subject,
-                    "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
-                }
-
+                data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
             subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
-
             if c_type == "videos":
-                if c_chapter not in subj_data["types"]["videos"]["chapters"]:
-                    subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({
-                    "title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id
-                })
+                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
             elif c_type == "files":
-                if c_chapter not in subj_data["types"]["files"]["chapters"]:
-                    subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({
-                    "title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id
-                })
+                if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
 
-        # 3. تحويل القواميس إلى قوائم للعرض
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -286,14 +242,9 @@ def get_data_from_sheet():
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
-
-    except Exception as e:
-        print(f"Error fetching data: {e}")
+    except Exception as e: print(f"Error fetching data: {e}")
     return data
 
-# ==========================================
-# Main Routes
-# ==========================================
 @app.route('/')
 def home():
     try:
@@ -303,58 +254,41 @@ def home():
         subject_id = request.args.get('subject')
         content_type = request.args.get('type')
         chapter_name = request.args.get('chapter')
-
         is_admin = session.get('is_admin', False)
 
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id:
-                            if content_type in s["types"]:
-                                for c in s["types"][content_type]["chapters"]:
-                                    if c["name"] == chapter_name:
-                                        if is_admin:
-                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
-                                        else:
-                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
-                                        return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, is_admin=is_admin)
-
+                        if s["id"] == subject_id and content_type in s["types"]:
+                            for c in s["types"][content_type]["chapters"]:
+                                if c["name"] == chapter_name:
+                                    if is_admin: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
+                                    else: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, is_admin=is_admin)
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id:
-                            if content_type in s["types"]:
-                                return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin)
-
+                        if s["id"] == subject_id and content_type in s["types"]:
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin)
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id:
-                            return render_template('index.html', view='select_type', subject=s, is_admin=is_admin)
-
+                        if s["id"] == subject_id: return render_template('index.html', view='select_type', subject=s, is_admin=is_admin)
         if year and term:
-            if year in DATA and term in DATA[year]["terms"]:
-                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin)
-
+            if year in DATA and term in DATA[year]["terms"]: return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin)
         if year:
-            if year in DATA:
-                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin)
+            if year in DATA: return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin)
 
         return render_template('index.html', view='years', data=DATA, is_admin=is_admin)
-    except Exception as e:
-        return f"Error: {str(e)}"
+    except Exception as e: return f"Error: {str(e)}"
 
-# ==========================================
-# Admin Management & Authentication
-# ==========================================
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
     data = request.json or request.form or {}
-    password = data.get('password', '').strip()
-    if password == ADMIN_PASSWORD:
+    if data.get('password', '').strip() == ADMIN_PASSWORD:
         session.permanent = True
         session['is_admin'] = True
         return jsonify({"status": "success", "message": "تم تسجيل الدخول بنجاح"})
@@ -366,159 +300,101 @@ def admin_logout():
     return redirect('/')
 
 @app.route('/admin/status', methods=['GET'])
-def admin_status():
-    return jsonify({"is_admin": session.get('is_admin', False)})
+def admin_status(): return jsonify({"is_admin": session.get('is_admin', False)})
 
-# ==========================================
-# Custom Content API (Admin)
-# ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @admin_required
 def add_custom_content():
     try:
         data = request.json or request.form
-        year = data.get('year', '').strip()
-        term = data.get('term', '').strip()
-        subject_name = data.get('subject_name', '').strip()
-        chapter_name = data.get('chapter_name', '').strip() or 'عام'
-        content_type = data.get('content_type', 'videos').strip()
-        title = data.get('title', '').strip()
-        url = data.get('url', '').strip()
-        download_url = data.get('download_url', '').strip()
-        notes = data.get('notes', '').strip()
+        year, term, subject_name = data.get('year', '').strip(), data.get('term', '').strip(), data.get('subject_name', '').strip()
+        chapter_name, content_type, title = data.get('chapter_name', '').strip() or 'عام', data.get('content_type', 'videos').strip(), data.get('title', '').strip()
+        url, download_url, notes = data.get('url', '').strip(), data.get('download_url', '').strip(), data.get('notes', '').strip()
 
-        if not year or not term or not subject_name or not title:
-            return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
-            
-        if not url and not download_url:
-            return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل"}), 400
+        if not year or not term or not subject_name or not title: return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
+        if not url and not download_url: return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل"}), 400
 
-        new_lesson = CustomLesson(
-            year=year, term=term, subject_name=subject_name, chapter_name=chapter_name,
-            content_type=content_type, title=title, url=url, download_url=download_url, notes=notes
-        )
-        db.session.add(new_lesson)
+        db.session.add(CustomLesson(year=year, term=term, subject_name=subject_name, chapter_name=chapter_name, content_type=content_type, title=title, url=url, download_url=download_url, notes=notes))
         db.session.commit()
         return jsonify({"status": "success", "message": "تمت الإضافة بنجاح!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/custom-content', methods=['GET'])
 @admin_required
-def get_custom_content():
-    lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
-    return jsonify([l.to_dict() for l in lessons])
+def get_custom_content(): return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
 
-@app.route('/admin/delete-content/<int:content_id>', methods=['POST', 'DELETE'])
+@app.route('/admin/delete-content/<int:content_id>', methods=['POST'])
 @admin_required
 def delete_custom_content(content_id):
     try:
-        lesson = CustomLesson.query.get_or_404(content_id)
-        db.session.delete(lesson)
+        db.session.delete(CustomLesson.query.get_or_404(content_id))
         db.session.commit()
-        return jsonify({"status": "success", "message": "تم الحذف"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "success"})
+    except Exception: return jsonify({"status": "error"}), 500
 
-# ==========================================
-# Student Questions API
-# ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
-        data = request.json or request.form
-        subject_id = data.get('subject_id')
-        chapter_name = data.get('chapter_name')
+        data = request.form if request.form else request.json
+        subject_id, chapter_name = data.get('subject_id'), data.get('chapter_name')
         student_name = (data.get('student_name') or 'طالب').strip() or 'طالب'
         question_text = (data.get('question_text') or '').strip()
 
-        if not question_text or not subject_id or not chapter_name:
-            return jsonify({"status": "error", "message": "بيانات غير مكتملة"}), 400
-
-        db.session.add(LessonQuestion(
-            subject_id=subject_id,
-            chapter_name=chapter_name,
-            student_name=student_name,
-            question_text=question_text
-        ))
+        if not question_text or not subject_id or not chapter_name: return jsonify({"status": "error", "message": "بيانات غير مكتملة"}), 400
+        db.session.add(LessonQuestion(subject_id=subject_id, chapter_name=chapter_name, student_name=student_name, question_text=question_text))
         db.session.commit()
         return jsonify({"status": "success", "message": "تم إرسال السؤال بنجاح"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/questions', methods=['GET'])
 @admin_required
-def get_pending_questions():
-    questions = LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()
-    return jsonify([q.to_dict() for q in questions])
+def get_pending_questions(): return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
 
 @app.route('/admin/reply/<int:question_id>', methods=['POST'])
 @admin_required
 def reply_question(question_id):
     try:
         q = LessonQuestion.query.get_or_404(question_id)
-        data = request.json or request.form
-        ans = data.get('answer_text', '').strip()
-        if not ans:
-            return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
-        q.answer_text = ans
-        q.is_answered = True
+        ans = (request.json or request.form).get('answer_text', '').strip()
+        if not ans: return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
+        q.answer_text = ans; q.is_answered = True
         db.session.commit()
         return jsonify({"status": "success", "message": "تم نشر الرد بنجاح"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/admin/delete-question/<int:question_id>', methods=['POST', 'DELETE'])
+@app.route('/admin/delete-question/<int:question_id>', methods=['POST'])
 @admin_required
 def delete_question(question_id):
     try:
-        q = LessonQuestion.query.get_or_404(question_id)
-        db.session.delete(q)
+        db.session.delete(LessonQuestion.query.get_or_404(question_id))
         db.session.commit()
         return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception: return jsonify({"status": "error"}), 500
 
-# ==========================================
-# Platform Updates API
-# ==========================================
 @app.route('/api/updates', methods=['GET'])
-def get_updates():
-    updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
-    return jsonify([u.to_dict() for u in updates])
+def get_updates(): return jsonify([u.to_dict() for u in PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()])
 
 @app.route('/admin/add-update', methods=['POST'])
 @admin_required
 def add_update():
     try:
         data = request.json or request.form
-        title = data.get('title', '').strip()
-        tag = data.get('tag', 'ميزة جديدة').strip()
-        description = data.get('description', '').strip()
-
-        if not title or not description:
-            return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
-
+        title, tag, description = data.get('title', '').strip(), data.get('tag', 'ميزة جديدة').strip(), data.get('description', '').strip()
+        if not title or not description: return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
         db.session.add(PlatformUpdate(title=title, tag=tag, description=description))
         db.session.commit()
-        return jsonify({"status": "success", "message": "تم نشر التحديث بنجاح!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "success"})
+    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/admin/delete-update/<int:update_id>', methods=['POST', 'DELETE'])
+@app.route('/admin/delete-update/<int:update_id>', methods=['POST'])
 @admin_required
 def delete_update(update_id):
     try:
-        up = PlatformUpdate.query.get_or_404(update_id)
-        db.session.delete(up)
+        db.session.delete(PlatformUpdate.query.get_or_404(update_id))
         db.session.commit()
-        return jsonify({"status": "success", "message": "تم حذف التحديث"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "success"})
+    except Exception: return jsonify({"status": "error"}), 500
 
-# ==========================================
-# AI Assistant & Planner
-# ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
@@ -527,23 +403,19 @@ def ask_ai():
         if not request.is_json and 'file' in request.files and request.files['file'].filename != '':
             file = request.files['file']
             parts.append({"inlineData": {"mimeType": file.mimetype or 'image/jpeg', "data": base64.b64encode(file.read()).decode('utf-8')}})
-        
         prompt = "أنت مساعد الأكاديمية الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح.\n" + (f"سؤال: {user_message}" if user_message else "اشرح الصورة.")
         parts.insert(0, {"text": prompt})
         reply, error = send_gemini_request(API_URL, {"contents": [{"parts": parts}]})
         return jsonify({"reply": reply}) if reply else (jsonify({"reply": error}), 500)
-    except Exception as e:
-        return jsonify({"reply": str(e)}), 500
+    except Exception as e: return jsonify({"reply": str(e)}), 500
 
 @app.route('/planner')
-def planner():
-    return render_template('planner.html')
+def planner(): return render_template('planner.html')
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     data = request.json or {}
-    quran = f"- حفظ {data.get('quran_pages')} صفحة قرآنية." if data.get('quran_enabled') else ""
-    prompt = f"ولد خطة من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد: {'نعم' if data.get('wird') else 'لا'}. {quran} أرجع JSON فقط."
+    prompt = f"ولد خطة من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد: {'نعم' if data.get('wird') else 'لا'}. أرجع JSON فقط."
     reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
     return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
 
@@ -554,5 +426,4 @@ def reschedule_plan():
     reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
     return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == '__main__': app.run(debug=True)

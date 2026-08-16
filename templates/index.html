@@ -27,7 +27,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <!-- مكتبة MathJax لتنسيق المعادلات الرياضية بشكل جميل -->
+    <!-- مكتبة MathJax لتنسيق المعادلات الرياضية -->
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -135,6 +135,7 @@
         .fab-container.open .fab-item:nth-child(3) { transition-delay: 0.1s; }
         .fab-container.open .fab-item:nth-child(4) { transition-delay: 0.15s; }
         .fab-container.open .fab-item:nth-child(5) { transition-delay: 0.2s; }
+        .fab-container.open .fab-item:nth-child(6) { transition-delay: 0.25s; }
         .fab-item:hover { background: var(--bg-body); transform: scale(1.1) !important; }
 
         /* طبقة التعتيم الخلفية */
@@ -150,7 +151,7 @@
         }
         .chat-overlay.active { opacity: 1; visibility: visible; }
 
-        /* النوافذ المنبثقة العامة */
+        /* النوافذ المنبثقة */
         .popup-box { 
             position: fixed; top: 50%; left: 50%; 
             transform: translate(-50%, -45%) scale(0.95); 
@@ -162,10 +163,7 @@
         }
         .popup-box.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
 
-        /* تخصيص النوافذ الصغيرة (الحاسبة والسوشيال) */
-        #calcBox, #socialBox { width: 92%; max-width: 400px; max-height: 80vh; }
-
-        /* تخصيص نافذة الذكاء الاصطناعي (مساحة كاملة) */
+        #calcBox, #socialBox, #adminBox { width: 92%; max-width: 500px; max-height: 85vh; }
         #aiChatBox { width: 95%; max-width: 1000px; height: 92vh; max-height: 92vh; border-radius: 24px; }
         
         .popup-header { color: white; padding: 18px 25px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; }
@@ -176,80 +174,32 @@
         #aiChatBox .popup-header { background: linear-gradient(135deg, var(--primary), #1d4ed8); }
         #calcBox .popup-header { background: linear-gradient(135deg, var(--accent), #047857); }
         #socialBox .popup-header { background: linear-gradient(135deg, #ec4899, #be185d); }
+        #adminBox .popup-header { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-        /* تصميم رسائل المحادثة الاحترافي (شبيهاً بـ Gemini) */
+        /* رسائل المحادثة للذكاء الاصطناعي */
         .ai-msg-wrapper { display: flex; gap: 15px; width: 100%; align-items: flex-start; }
         .ai-msg-wrapper.user-wrapper { flex-direction: row-reverse; }
-        
-        .ai-avatar { 
-            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; 
-            justify-content: center; flex-shrink: 0; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
-        }
+        .ai-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         .bot-avatar { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
         .user-avatar { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
-        
-        .ai-msg { 
-            line-height: 1.8; font-size: 1.05rem; word-break: break-word; 
-            color: var(--text-main); max-width: 85%;
-        }
-        
-        /* رسالة المساعد (نص حر وبدون خلفية ملونة لتبدو مثل Gemini) */
+        .ai-msg { line-height: 1.8; font-size: 1.05rem; word-break: break-word; color: var(--text-main); max-width: 85%; }
         .ai-msg.bot { padding: 5px 0; }
-        .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; } /* تلوين العناوين العريضة */
-        
-        /* رسالة المستخدم (فقاعة رمادية/بيضاء) */
-        .ai-msg.user { 
-            background: var(--bg-card); border: 1px solid var(--border); 
-            padding: 14px 20px; border-radius: 20px; border-top-left-radius: 4px; 
-            box-shadow: var(--card-shadow); 
-        }
+        .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; }
+        .ai-msg.user { background: var(--bg-card); border: 1px solid var(--border); padding: 14px 20px; border-radius: 20px; border-top-left-radius: 4px; box-shadow: var(--card-shadow); }
 
-        /* شريط إدخال الذكاء الاصطناعي (Pill Design) */
-        .ai-chat-footer { 
-            padding: 15px 20px 20px; background: var(--bg-body); border-top: 1px solid transparent; 
-            display: flex; justify-content: center; align-items: center; position: relative;
-        }
-        .ai-input-pill {
-            display: flex; align-items: flex-end; background: var(--bg-card); border: 1px solid var(--border); 
-            border-radius: 30px; padding: 8px 12px 8px 20px; width: 100%; max-width: 800px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: border-color 0.3s, box-shadow 0.3s;
-        }
+        .ai-chat-footer { padding: 15px 20px 20px; background: var(--bg-body); border-top: 1px solid transparent; display: flex; justify-content: center; align-items: center; position: relative; }
+        .ai-input-pill { display: flex; align-items: flex-end; background: var(--bg-card); border: 1px solid var(--border); border-radius: 30px; padding: 8px 12px 8px 20px; width: 100%; max-width: 800px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); transition: border-color 0.3s, box-shadow 0.3s; }
         .ai-input-pill:focus-within { border-color: var(--primary); box-shadow: 0 5px 25px rgba(37, 99, 235, 0.15); }
-        
-        .ai-input-pill input[type="text"] { 
-            flex: 1; border: none; background: transparent; outline: none; padding: 12px 0; 
-            font-size: 1.05rem; color: var(--text-main); min-height: 48px;
-        }
-        
-        .ai-input-pill .upload-icon-btn { 
-            color: var(--text-muted); cursor: pointer; padding: 12px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; margin-left: 5px; margin-bottom: 2px;
-            transition: all 0.2s ease;
-        }
+        .ai-input-pill input[type="text"] { flex: 1; border: none; background: transparent; outline: none; padding: 12px 0; font-size: 1.05rem; color: var(--text-main); min-height: 48px; }
+        .ai-input-pill .upload-icon-btn { color: var(--text-muted); cursor: pointer; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 5px; margin-bottom: 2px; transition: all 0.2s ease; }
         .ai-input-pill .upload-icon-btn:hover { background: var(--bg-body); color: var(--primary); }
-        
-        .ai-input-pill .send-btn { 
-            background: var(--primary); color: white; border: none; width: 44px; height: 44px; margin-bottom: 4px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; transition: transform 0.2s, background 0.2s; flex-shrink: 0;
-        }
+        .ai-input-pill .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; margin-bottom: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
         .ai-input-pill .send-btn:hover { transform: scale(1.05); background: #1d4ed8; }
         
-        /* أدوات رفع الصورة في الذكاء الاصطناعي */
-        .img-preview-container { 
-            position: absolute; bottom: 100%; right: 40px; margin-bottom: 15px; 
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
-            padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; z-index: 10;
-        }
+        .img-preview-container { position: absolute; bottom: 100%; right: 40px; margin-bottom: 15px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; z-index: 10; }
         .img-preview-container img { max-height: 100px; max-width: 150px; border-radius: 8px; display: block; }
-        .img-remove-btn { 
-            position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; width: 26px; height: 26px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; 
-            font-weight: bold; cursor: pointer; border: 2px solid var(--bg-card); transition: transform 0.2s;
-        }
-        .img-remove-btn:hover { transform: scale(1.1); }
+        .img-remove-btn { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid var(--bg-card); transition: transform 0.2s; }
 
-        /* تنسيقات الحاسبة والاختبارات بقيت كما هي لضمان عملها */
         .calc-row { display: flex; gap: 10px; align-items: center; }
         .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; text-align: center; background: var(--bg-body); color: var(--text-main); }
         .btn-calc-action { display: flex; align-items: center; justify-content: center; gap: 10px; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; text-decoration: none; font-size: 1rem; width: 100%; transition: transform 0.2s; }
@@ -263,13 +213,10 @@
         .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: rgba(37, 99, 235, 0.05); transform: translateX(-8px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .quiz-opt.correct { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: white !important; animation: popCorrect 0.5s ease; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
         .quiz-opt.wrong { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border-color: #dc2626 !important; color: white !important; animation: shakeWrong 0.4s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
-        @keyframes popCorrect { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        @keyframes shakeWrong { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
-        .explanation-box { background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-right: 4px solid #f59e0b; padding: 16px; border-radius: 12px; margin-top: 20px; margin-bottom: 15px; color: var(--text-main); font-size: 1rem; line-height: 1.7; display: none; text-align: right; animation: fadeIn 0.4s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .explanation-box { background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-right: 4px solid #f59e0b; padding: 16px; border-radius: 12px; margin-top: 20px; margin-bottom: 15px; color: var(--text-main); font-size: 1rem; line-height: 1.7; display: none; text-align: right; animation: fadeIn 0.4s ease; }
         .quiz-progress-bg { width: 100%; height: 12px; background: var(--border); border-radius: 20px; margin-bottom: 25px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); border-radius: 20px; }
+        .quiz-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
         .btn-end-quiz { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s; }
-        .btn-end-quiz:hover { background: #ef4444; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
         .certificate-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px 25px; position: relative; color: white; text-align: center; margin-bottom:20px; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
         .progress-container { background: var(--bg-card); padding: 20px; border-radius: 16px; margin-bottom: 30px; box-shadow: var(--card-shadow); border: 1px solid var(--border); }
@@ -280,7 +227,51 @@
         .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
         .btn-complete.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
 
+        /* قسم الأسئلة والردود أسفل الدرس */
+        .qa-container { margin-top: 45px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 30px 25px; box-shadow: var(--card-shadow); }
+        .qa-title { font-size: 1.35rem; font-weight: 900; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .qa-input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 1rem; margin-bottom: 12px; outline: none; transition: border-color 0.3s; }
+        .qa-input-field:focus { border-color: var(--primary); }
+        .qa-item-card { background: var(--bg-body); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 15px; }
+        .qa-author { font-weight: 800; color: var(--primary); font-size: 1rem; margin-bottom: 6px; }
+        .qa-question-text { color: var(--text-main); line-height: 1.6; margin-bottom: 12px; font-size: 1rem; }
+        .qa-reply-box { background: rgba(16, 185, 129, 0.08); border-right: 4px solid var(--accent); padding: 12px 16px; border-radius: 8px; }
+        .qa-reply-header { font-weight: 800; color: var(--accent); font-size: 0.9rem; margin-bottom: 4px; }
+        .qa-reply-text { color: var(--text-main); line-height: 1.6; margin: 0; font-size: 0.95rem; }
+        
+        .qa-alert-success { background: rgba(16, 185, 129, 0.12); border: 1px solid var(--accent); color: #059669; padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; display: none; line-height: 1.5; }
+
+        /* شارة المعلم */
+        .admin-badge { background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; }
+
         .footer { background-color: transparent; color: var(--text-muted); text-align: center; padding: 30px 20px; font-weight: 700; font-size: 0.9rem; margin-top: auto; }
+
+        /* زر الشريك الرسمي في التذييل */
+        .partner-link {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            font-weight: 900;
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .partner-link:hover {
+            background: var(--primary);
+            color: #ffffff !important;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35);
+            border-color: var(--primary);
+        }
+        html.dark-mode .partner-link {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.35);
+        }
     </style>
 </head>
 <body class="notranslate">
@@ -291,7 +282,7 @@
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
         <div class="welcome-text">
-            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
+            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>مكتبة ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
         </div>
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
@@ -321,6 +312,10 @@
         
         <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path></svg>
+        </div>
+
+        <div class="fab-item" onclick="handleAdminFabClick()" title="لوحة المعلم">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
         </div>
     </div>
     
@@ -370,7 +365,24 @@
         </div>
     </div>
 
-    <!-- نافذة الذكاء الاصطناعي الواسعة والاحترافية -->
+    <!-- نافذة لوحة المعلم المخصصة لإدارة الأسئلة -->
+    <div class="popup-box" id="adminBox">
+        <div class="popup-header">
+            <span>لوحة المعلم - إدارة الأسئلة</span>
+            <span class="popup-close" onclick="closeAllPopups()">✕</span>
+        </div>
+        <div class="popup-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">الأسئلة المعلقة بالانتظار:</span>
+                <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-size: 0.85rem; font-weight: 800;">تسجيل الخروج ✕</a>
+            </div>
+            <div id="adminQuestionsList">
+                <div style="text-align: center; color: var(--text-muted); padding: 20px;">جاري جلب الأسئلة...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الذكاء الاصطناعي -->
     <div class="popup-box" id="aiChatBox">
         <div class="popup-header">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -414,8 +426,11 @@
 
     <!-- الشريط العلوي (Navbar) -->
     <nav class="navbar">
-        <div style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
             <a href="/" class="navbar-brand">Amr Suhail Academy</a>
+            {% if is_admin %}
+                <span class="admin-badge">وضع المعلم</span>
+            {% endif %}
         </div>
         
         <div style="display: flex; gap: 12px; align-items: center;">
@@ -521,7 +536,6 @@
                 <div id="qWrapper" class="q-container">
                     <h3 id="qText" style="margin-bottom:25px; font-weight:900; line-height:1.6; font-size:1.3rem; color: var(--primary);"></h3>
                     <div id="qOptions"></div>
-                    
                     <div id="quizExplanation" class="explanation-box"></div>
                 </div>
 
@@ -634,14 +648,88 @@
         </div>
         {% endif %}
 
+        <!-- قسم الأسئلة والاستفسارات أسفل الدرس -->
+        <div class="qa-container">
+            <div class="qa-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                استفسارات وأسئلة الطلاب حول هذا الفصل
+            </div>
+
+            <!-- رسالة تأكيد الإرسال الفوري -->
+            <div id="qaSuccessAlert" class="qa-alert-success">
+                ✓ تم إرسال سؤالك بنجاح! سيظهر هنا في الصفحة فور مراجعته والرد عليه من الأستاذ.
+            </div>
+
+            <!-- نموذج طرح سؤال جديد للطالب -->
+            <form id="askQuestionForm" onsubmit="handleQuestionSubmit(event)" style="margin-bottom: 25px;">
+                <input type="hidden" id="qa_subject_id" name="subject_id" value="{{ subject.id }}">
+                <input type="hidden" id="qa_chapter_name" name="chapter_name" value="{{ chapter.name }}">
+                
+                <input type="text" id="qa_student_name" name="student_name" placeholder="اسمك الكريم (اختياري)" class="qa-input-field">
+                <textarea id="qa_question_text" name="question_text" rows="3" placeholder="اكتب سؤالك أو استفسارك هنا..." required class="qa-input-field" style="resize: vertical;"></textarea>
+                
+                <button type="submit" id="qaSubmitBtn" class="btn-calc-action" style="background: var(--primary); padding: 14px; font-size: 1rem; border-radius: 12px;">
+                    إرسال السؤال للأستاذ 🚀
+                </button>
+            </form>
+
+            <!-- عرض الأسئلة والردود -->
+            <div class="qa-list">
+                {% if questions and questions|length > 0 %}
+                    {% for q in questions %}
+                        <div class="qa-item-card" id="q_card_{{ q.id }}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div class="qa-author">👤 {{ q.student_name }}</div>
+                                {% if is_admin %}
+                                    <div style="display:flex; gap: 8px; align-items: center;">
+                                        {% if not q.is_answered %}
+                                            <span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold;">بانتظار ردك</span>
+                                        {% endif %}
+                                        <button onclick="deleteQuestionDirect({{ q.id }})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">حذف ✕</button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="qa-question-text">{{ q.question_text }}</div>
+                            
+                            {% if q.is_answered %}
+                                <div class="qa-reply-box">
+                                    <div class="qa-reply-header">رد المنصة الأكاديمية:</div>
+                                    <p class="qa-reply-text">{{ q.answer_text }}</p>
+                                </div>
+                            {% elif is_admin %}
+                                <!-- نموذج رد سريع خاص بالمعلم مباشرة من الصفحة -->
+                                <div style="margin-top: 10px; background: rgba(37,99,235,0.05); padding: 12px; border-radius: 8px; border: 1px dashed var(--primary);">
+                                    <textarea id="inline_reply_{{ q.id }}" rows="2" placeholder="اكتب ردك هنا لنشره للطلاب..." class="qa-input-field" style="margin-bottom: 8px;"></textarea>
+                                    <button onclick="submitInlineReply({{ q.id }})" class="btn-calc-action" style="background: var(--accent); padding: 8px; font-size: 0.9rem; border-radius: 8px;">اعتماد ونشر الرد ✓</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; padding: 15px 0;">
+                        لا توجد استفسارات منشورة بعد لهذا الفصل. اطرح سؤالك ليجيبك الأستاذ!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
         {% endif %}
         
         {% endif %}
 
     </div>
 
+    <!-- تذييل الصفحة الرسمي (Footer) -->
     <footer class="footer">
-        Amr Suhail Academy &copy; 2026
+        <div style="margin-bottom: 15px;">
+            Amr Suhail Academy &copy; 2026
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; flex-wrap: wrap;">
+            <span style="color: var(--text-muted); font-weight: 700;">الشريك الرسمي</span>
+            <!-- رابط Google Drive الرسمي لمكتبة ميكا درايف -->
+            <a href="https://drive.google.com/drive/folders/1-OhOQh6KMZ1IPlggniaPxpRgkV0nXF5d" target="_blank" class="partner-link"><strong>مكتبة ميكا درايف</strong></a>
+        </div>
     </footer>
 
     <script>
@@ -706,7 +794,7 @@
     }
 
     function togglePopup(boxId) {
-        const boxes = ['aiChatBox', 'calcBox', 'socialBox'];
+        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox'];
         let isAnyOpen = false;
         
         boxes.forEach(id => {
@@ -732,13 +820,184 @@
     }
 
     function closeAllPopups() {
-        const boxes = ['aiChatBox', 'calcBox', 'socialBox'];
+        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox'];
         boxes.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('active');
         });
         const overlay = document.getElementById('chatOverlay');
         if (overlay) overlay.classList.remove('active');
+    }
+
+    /* --- إدارة المعلم (Admin Server Authentication) --- */
+    async function handleAdminFabClick() {
+        try {
+            const res = await fetch('/admin/status');
+            const data = await res.json();
+            
+            if (data.is_admin) {
+                togglePopup('adminBox');
+                loadAdminQuestions();
+            } else {
+                const pass = prompt("أدخل كلمة مرور المعلم للتحكم:", "");
+                if (pass) {
+                    const loginRes = await fetch('/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: pass })
+                    });
+                    const loginData = await loginRes.json();
+                    if (loginData.status === 'success') {
+                        location.reload(); // إعادة التحميل لتفعيل جلسة المعلم
+                    } else {
+                        alert("كلمة المرور غير صحيحة!");
+                    }
+                }
+            }
+        } catch (e) {
+            alert("حدث خطأ في الاتصال.");
+        }
+    }
+
+    async function loadAdminQuestions() {
+        const container = document.getElementById('adminQuestionsList');
+        if (!container) return;
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted);">جاري فحص الأسئلة المعلقة...</div>`;
+        
+        try {
+            const res = await fetch('/admin/questions');
+            if (res.status === 403) {
+                container.innerHTML = `<div style="color:#ef4444; text-align:center;">غير مصرح لك. يرجى تسجيل الدخول مجدداً.</div>`;
+                return;
+            }
+            const questions = await res.json();
+            
+            if (!questions || questions.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--accent); font-weight:bold; padding:20px;">✓ لا توجد أسئلة معلقة حالياً، كل الأسئلة تم الرد عليها!</div>`;
+                return;
+            }
+
+            container.innerHTML = questions.map(q => `
+                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:15px; margin-bottom:15px;">
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">المادة: <b>${q.subject_id}</b> | الفصل: <b>${q.chapter_name}</b></div>
+                    <div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">👤 ${q.student_name}:</div>
+                    <div style="margin-bottom:10px; line-height:1.5;">${q.question_text}</div>
+                    <textarea id="reply_input_${q.id}" rows="2" placeholder="اكتب ردك هنا لنشره..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); margin-bottom:8px;"></textarea>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="submitAdminReply(${q.id})" style="background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; flex:2;">نشر الرد ✓</button>
+                        <button onclick="deleteQuestionDirect(${q.id})" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer; flex:1;">حذف ✕</button>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (e) {
+            container.innerHTML = `<div style="color:#ef4444; text-align:center;">حدث خطأ أثناء جلب الأسئلة.</div>`;
+        }
+    }
+
+    async function submitAdminReply(qId) {
+        const replyText = document.getElementById(`reply_input_${qId}`).value.trim();
+        if (!replyText) {
+            alert("يرجى كتابة نص الرد قبل النشر.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/admin/reply/${qId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer_text: replyText })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم نشر الرد بنجاح!");
+                loadAdminQuestions();
+                if (location.href.includes('type=')) location.reload();
+            } else {
+                alert("تعذر حفظ الرد: " + data.message);
+            }
+        } catch (err) {
+            alert("حدث خطأ في الاتصال بالخادم.");
+        }
+    }
+
+    async function submitInlineReply(qId) {
+        const replyText = document.getElementById(`inline_reply_${qId}`).value.trim();
+        if (!replyText) {
+            alert("يرجى كتابة الرد.");
+            return;
+        }
+        try {
+            const res = await fetch(`/admin/reply/${qId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer_text: replyText })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم نشر الرد بنجاح!");
+                location.reload();
+            } else {
+                alert("تعذر حفظ الرد: " + data.message);
+            }
+        } catch (err) {
+            alert("حدث خطأ في الاتصال.");
+        }
+    }
+
+    async function deleteQuestionDirect(qId) {
+        if (!confirm("هل أنت متأكد من حذف هذا السؤال نهائياً؟")) return;
+        try {
+            const res = await fetch(`/admin/delete-question/${qId}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const el = document.getElementById(`q_card_${qId}`);
+                if (el) el.remove();
+                loadAdminQuestions();
+            }
+        } catch (e) {
+            alert("تعذر الحذف.");
+        }
+    }
+
+    /* --- إرسال الطالب للسؤال عبر AJAX --- */
+    async function handleQuestionSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('qaSubmitBtn');
+        const alertBox = document.getElementById('qaSuccessAlert');
+        const subject_id = document.getElementById('qa_subject_id').value;
+        const chapter_name = document.getElementById('qa_chapter_name').value;
+        const student_name = document.getElementById('qa_student_name').value;
+        const question_text = document.getElementById('qa_question_text').value;
+
+        btn.disabled = true;
+        btn.innerText = "جاري الإرسال...";
+
+        const formData = new FormData();
+        formData.append('subject_id', subject_id);
+        formData.append('chapter_name', chapter_name);
+        formData.append('student_name', student_name);
+        formData.append('question_text', question_text);
+
+        try {
+            const res = await fetch('/ask-question', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+
+            btn.disabled = false;
+            btn.innerText = "إرسال السؤال للأستاذ 🚀";
+
+            document.getElementById('qa_question_text').value = '';
+            alertBox.style.display = 'block';
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerText = "إرسال السؤال للأستاذ 🚀";
+            alert("حدث خطأ أثناء الإرسال، يرجى المحاولة مرة أخرى.");
+        }
     }
 
     function checkEnter(e) { if (e.key === 'Enter') sendAIMessage(); }
@@ -783,7 +1042,6 @@
             userContent += `<div>${text}</div>`;
         }
         
-        // بناء فقاعة المستخدم الجديدة
         const userHtml = `
             <div class="ai-msg-wrapper user-wrapper">
                 <div class="ai-avatar user-avatar">👤</div>
@@ -821,7 +1079,6 @@
             
             const replyId = 'reply_' + Date.now();
             
-            // تحويل البولد في النص (**نص**) والتنسيقات الأساسية
             let formattedReply = data.reply
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')

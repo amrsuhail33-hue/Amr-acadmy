@@ -3,3 +3,4 @@ gunicorn
 requests
 google-generativeai
 Pillow
+Flask-SQLAlchemy

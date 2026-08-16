@@ -15,7 +15,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# إعداد قاعدة البيانات التلقائي ومعالجة الرابط
+# إعداد قاعدة البيانات التلقائي ومعالجة الرابط لـ Supabase/Render
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
@@ -27,7 +27,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # كلمات المرور للصلاحيات
 ADMIN_PASSWORD = "123"
-ASSISTANT_PASSWORD = "uploader123"  # كلمة مرور المساعد (يمكنك تغييرها)
+ASSISTANT_PASSWORD = "AhmedAI"  
 
 db = SQLAlchemy(app)
 
@@ -127,9 +127,8 @@ def admin_required(f):
 def can_manage_content(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # مسموح للمسؤول أو المساعد فقط
         if not (session.get('is_admin') or session.get('is_assistant')):
-            return jsonify({"status": "error", "message": "غير مصرح لك برفع المحتوى"}), 403
+            return jsonify({"status": "error", "message": "غير مصرح لك برفع أو تعديل المحتوى"}), 403
         return f(*args, **kwargs)
     return decorated_function
 
@@ -232,7 +231,7 @@ def get_data_from_sheet():
                 subj_data = data[year]["terms"][term]["subjects"][subject]
                 if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
 
-        # دمج الدروس المضافة من قاعدة البيانات مباشرة وتحديثها فورياً
+        # دمج الدروس المضافة يدوياً من قاعدة البيانات
         for item in CustomLesson.query.all():
             c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
             if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
@@ -299,7 +298,7 @@ def home():
     except Exception as e: return f"Error: {str(e)}"
 
 # ==========================================
-# مصادقة المشرف والمساعد
+# مصادقة الإدارة والمساعد
 # ==========================================
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
@@ -322,7 +321,7 @@ def admin_login():
 def admin_logout():
     session.pop('is_admin', None)
     session.pop('is_assistant', None)
-    return redirect('/')
+    return jsonify({"status": "success"})
 
 @app.route('/admin/status', methods=['GET'])
 def admin_status(): 
@@ -332,7 +331,7 @@ def admin_status():
     })
 
 # ==========================================
-# إدارة ورفع المحتوى (مسموح للمسؤول والمساعد)
+# إدارة ورفع وتعديل المحتوى (للمسؤول والمساعد)
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
@@ -351,6 +350,33 @@ def add_custom_content():
         return jsonify({"status": "success", "message": "تمت الإضافة بنجاح وتحديث الموقع فورياً!"})
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
+@can_manage_content
+def edit_custom_content(content_id):
+    try:
+        item = CustomLesson.query.get(content_id)
+        if not item:
+            return jsonify({"status": "error", "message": "الدرس أو الملف غير موجود بقاعدة البيانات"}), 404
+            
+        data = request.json or request.form
+        item.year = data.get('year', '').strip()
+        item.term = data.get('term', '').strip()
+        item.subject_name = data.get('subject_name', '').strip()
+        item.chapter_name = data.get('chapter_name', '').strip() or 'عام'
+        item.content_type = data.get('content_type', 'videos').strip()
+        item.title = data.get('title', '').strip()
+        item.url = data.get('url', '').strip()
+        item.download_url = data.get('download_url', '').strip()
+        item.notes = data.get('notes', '').strip()
+        
+        if not item.year or not item.term or not item.subject_name or not item.title:
+            return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
+            
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم التعديل بنجاح!"})
+    except Exception as e: 
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/custom-content', methods=['GET'])
 @can_manage_content
 def get_custom_content(): return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
@@ -365,7 +391,7 @@ def delete_custom_content(content_id):
     except Exception: return jsonify({"status": "error"}), 500
 
 # ==========================================
-# الأسئلة والتحديثات (صلاحية المسؤول فقط)
+# الأسئلة والتحديثات (للمسؤول فقط)
 # ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
@@ -431,7 +457,7 @@ def delete_update(update_id):
     except Exception: return jsonify({"status": "error"}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي
+# خدمات الذكاء الاصطناعي والمخطط
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():

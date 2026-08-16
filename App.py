@@ -16,10 +16,16 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 # إبقاء الجلسة لمدة أسبوع
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# إعداد قاعدة البيانات التلقائي 
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db')
+# ==========================================
+# إعداد وتصحيح رابط قاعدة البيانات التلقائي
+# ==========================================
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
+
+# تنظيف وتوحيد بروتوكول الاتصال ليتوافق مع SQLAlchemy و PostgreSQL
 if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+psycopg2://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -426,4 +432,5 @@ def reschedule_plan():
     reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
     return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
 
-if __name__ == '__main__': app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

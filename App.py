@@ -13,15 +13,10 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
 
-# إبقاء الجلسة لمدة أسبوع
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# ==========================================
-# إعداد وتصحيح رابط قاعدة البيانات التلقائي
-# ==========================================
+# إعداد قاعدة البيانات التلقائي ومعالجة الرابط لـ Supabase/Render
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
-
-# تنظيف وتوحيد بروتوكول الاتصال ليتوافق مع SQLAlchemy و PostgreSQL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
 elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+psycopg2://"):
@@ -30,7 +25,9 @@ elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+ps
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# كلمات المرور للصلاحيات
 ADMIN_PASSWORD = "123"
+ASSISTANT_PASSWORD = "AhmedAI"  # تم تعديل كلمة مرور المساعد
 
 db = SQLAlchemy(app)
 
@@ -117,7 +114,7 @@ with app.app_context():
         db.session.commit()
 
 # ==========================================
-# Auth Decorator
+# Auth Decorators
 # ==========================================
 def admin_required(f):
     @wraps(f)
@@ -127,8 +124,17 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def can_manage_content(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # مسموح للمسؤول أو المساعد
+        if not (session.get('is_admin') or session.get('is_assistant')):
+            return jsonify({"status": "error", "message": "غير مصرح لك برفع أو تعديل المحتوى"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ==========================================
-# AI APIs
+# AI APIs & Sheets
 # ==========================================
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
@@ -261,6 +267,7 @@ def home():
         content_type = request.args.get('type')
         chapter_name = request.args.get('chapter')
         is_admin = session.get('is_admin', False)
+        is_assistant = session.get('is_assistant', False)
 
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
@@ -271,45 +278,64 @@ def home():
                                 if c["name"] == chapter_name:
                                     if is_admin: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
                                     else: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
-                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, is_admin=is_admin)
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, is_admin=is_admin, is_assistant=is_assistant)
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id and content_type in s["types"]:
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin)
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin, is_assistant=is_assistant)
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id: return render_template('index.html', view='select_type', subject=s, is_admin=is_admin)
+                        if s["id"] == subject_id: return render_template('index.html', view='select_type', subject=s, is_admin=is_admin, is_assistant=is_assistant)
         if year and term:
-            if year in DATA and term in DATA[year]["terms"]: return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin)
+            if year in DATA and term in DATA[year]["terms"]: return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin, is_assistant=is_assistant)
         if year:
-            if year in DATA: return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin)
+            if year in DATA: return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin, is_assistant=is_assistant)
 
-        return render_template('index.html', view='years', data=DATA, is_admin=is_admin)
+        return render_template('index.html', view='years', data=DATA, is_admin=is_admin, is_assistant=is_assistant)
     except Exception as e: return f"Error: {str(e)}"
 
+# ==========================================
+# مصادقة الإدارة والمساعد
+# ==========================================
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
     data = request.json or request.form or {}
-    if data.get('password', '').strip() == ADMIN_PASSWORD:
-        session.permanent = True
+    pwd = data.get('password', '').strip()
+    session.permanent = True
+
+    if pwd == ADMIN_PASSWORD:
         session['is_admin'] = True
-        return jsonify({"status": "success", "message": "تم تسجيل الدخول بنجاح"})
+        session['is_assistant'] = False
+        return jsonify({"status": "success", "role": "admin", "message": "تم تسجيل دخول المسؤول بنجاح"})
+    elif pwd == ASSISTANT_PASSWORD:
+        session['is_admin'] = False
+        session['is_assistant'] = True
+        return jsonify({"status": "success", "role": "assistant", "message": "تم تسجيل دخول المساعد بنجاح"})
+
     return jsonify({"status": "error", "message": "كلمة المرور غير صحيحة"}), 401
 
 @app.route('/admin/logout', methods=['POST', 'GET'])
 def admin_logout():
     session.pop('is_admin', None)
+    session.pop('is_assistant', None)
     return redirect('/')
 
 @app.route('/admin/status', methods=['GET'])
-def admin_status(): return jsonify({"is_admin": session.get('is_admin', False)})
+def admin_status(): 
+    return jsonify({
+        "is_admin": session.get('is_admin', False),
+        "is_assistant": session.get('is_assistant', False)
+    })
 
+# ==========================================
+# إدارة ورفع وتعديل المحتوى (للمسؤول والمساعد)
+# ==========================================
 @app.route('/admin/add-content', methods=['POST'])
-@admin_required
+@can_manage_content
 def add_custom_content():
     try:
         data = request.json or request.form
@@ -322,15 +348,41 @@ def add_custom_content():
 
         db.session.add(CustomLesson(year=year, term=term, subject_name=subject_name, chapter_name=chapter_name, content_type=content_type, title=title, url=url, download_url=download_url, notes=notes))
         db.session.commit()
-        return jsonify({"status": "success", "message": "تمت الإضافة بنجاح!"})
+        return jsonify({"status": "success", "message": "تمت الإضافة بنجاح وتحديث الموقع فورياً!"})
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
+# دالة التعديل التي كانت مفقودة وتسبب الخطأ
+@app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
+@can_manage_content
+def edit_custom_content(content_id):
+    try:
+        item = CustomLesson.query.get_or_404(content_id)
+        data = request.json or request.form
+        
+        item.year = data.get('year', '').strip()
+        item.term = data.get('term', '').strip()
+        item.subject_name = data.get('subject_name', '').strip()
+        item.chapter_name = data.get('chapter_name', '').strip() or 'عام'
+        item.content_type = data.get('content_type', 'videos').strip()
+        item.title = data.get('title', '').strip()
+        item.url = data.get('url', '').strip()
+        item.download_url = data.get('download_url', '').strip()
+        item.notes = data.get('notes', '').strip()
+        
+        if not item.year or not item.term or not item.subject_name or not item.title:
+            return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
+            
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث المحتوى بنجاح!"})
+    except Exception as e: 
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/custom-content', methods=['GET'])
-@admin_required
+@can_manage_content
 def get_custom_content(): return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
 
 @app.route('/admin/delete-content/<int:content_id>', methods=['POST'])
-@admin_required
+@can_manage_content
 def delete_custom_content(content_id):
     try:
         db.session.delete(CustomLesson.query.get_or_404(content_id))
@@ -338,6 +390,9 @@ def delete_custom_content(content_id):
         return jsonify({"status": "success"})
     except Exception: return jsonify({"status": "error"}), 500
 
+# ==========================================
+# الأسئلة والتحديثات (للمسؤول فقط)
+# ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
@@ -401,6 +456,9 @@ def delete_update(update_id):
         return jsonify({"status": "success"})
     except Exception: return jsonify({"status": "error"}), 500
 
+# ==========================================
+# خدمات الذكاء الاصطناعي والمخطط
+# ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:

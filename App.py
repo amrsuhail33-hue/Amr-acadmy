@@ -62,7 +62,36 @@ class PlatformUpdate(db.Model):
             "date": self.created_at.strftime("%Y-%m-%d")
         }
 
-# إنشاء قاعدة البيانات تلقائياً مع إضافة تحديث أولي إذا كانت فارغة
+# جدول المحتوى والدروس المضافة مباشرة من لوحة المعلم
+class CustomLesson(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(100), nullable=False)
+    subject_name = db.Column(db.String(150), nullable=False)
+    chapter_name = db.Column(db.String(150), nullable=False)
+    content_type = db.Column(db.String(20), nullable=False) # 'videos' or 'files'
+    title = db.Column(db.String(200), nullable=False)
+    url = db.Column(db.Text, nullable=False)
+    download_url = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "year": self.year,
+            "term": self.term,
+            "subject_name": self.subject_name,
+            "chapter_name": self.chapter_name,
+            "content_type": self.content_type,
+            "title": self.title,
+            "url": self.url,
+            "download_url": self.download_url or "",
+            "notes": self.notes or "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+        }
+
+# إنشاء قاعدة البيانات تلقائياً
 with app.app_context():
     db.create_all()
     if PlatformUpdate.query.count() == 0:
@@ -136,6 +165,7 @@ def serve_sw():
 def get_data_from_sheet():
     data = {}
     try:
+        # 1. جلب البيانات من Google Sheets
         res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
         if res1.status_code == 200:
             reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
@@ -189,9 +219,7 @@ def get_data_from_sheet():
             next(reader2, None)
             for row in reader2:
                 if len(row) < 4: continue 
-                
                 year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
-
                 if not year or not term or not subject or not chapter: continue
 
                 if year not in data: data[year] = {"name": year, "terms": {}}
@@ -204,12 +232,45 @@ def get_data_from_sheet():
                     }
 
                 subj_data = data[year]["terms"][term]["subjects"][subject]
-
                 if chapter not in subj_data["types"]["quiz"]["chapters"]:
                     subj_data["types"]["quiz"]["chapters"][chapter] = {
                         "name": chapter, "lessons": [{"title": "بدء الاختبار"}]
                     }
 
+        # 2. دمج المحتوى المضاف مباشرة من لوحة المعلم
+        custom_items = CustomLesson.query.all()
+        for item in custom_items:
+            c_year = item.year.strip()
+            c_term = item.term.strip()
+            c_subject = item.subject_name.strip()
+            c_chapter = item.chapter_name.strip() or "عام"
+            c_type = item.content_type.strip()
+
+            if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
+            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
+            if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
+                data[c_year]["terms"][c_term]["subjects"][c_subject] = {
+                    "id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),
+                    "name": c_subject,
+                    "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
+                }
+
+            subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
+
+            if c_type == "videos":
+                if c_chapter not in subj_data["types"]["videos"]["chapters"]:
+                    subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({
+                    "title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id
+                })
+            elif c_type == "files":
+                if c_chapter not in subj_data["types"]["files"]["chapters"]:
+                    subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({
+                    "title": item.title, "file": item.url, "notes": item.notes, "custom_id": item.id
+                })
+
+        # 3. تحويل القواميس إلى مصفوفات
         for y in data.values():
             for t in y["terms"].values():
                 t["subjects"] = list(t["subjects"].values())
@@ -219,7 +280,7 @@ def get_data_from_sheet():
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
 
     except Exception as e:
-        print(f"Error fetching CSV: {e}")
+        print(f"Error fetching CSV or custom data: {e}")
     return data
 
 
@@ -294,6 +355,61 @@ def home():
         return render_template('index.html', view='years', data=DATA, is_admin=is_admin)
     except Exception as e:
         return f"Error: {str(e)}"
+
+# ==========================================
+# مسارات الإضافة المباشرة للدروس والملفات
+# ==========================================
+@app.route('/admin/add-content', methods=['POST'])
+@admin_required
+def add_custom_content():
+    try:
+        data = request.json or request.form
+        year = data.get('year', '').strip()
+        term = data.get('term', '').strip()
+        subject_name = data.get('subject_name', '').strip()
+        chapter_name = data.get('chapter_name', '').strip() or 'عام'
+        content_type = data.get('content_type', 'videos').strip()
+        title = data.get('title', '').strip()
+        url = data.get('url', '').strip()
+        download_url = data.get('download_url', '').strip()
+        notes = data.get('notes', '').strip()
+
+        if not year or not term or not subject_name or not title or not url:
+            return jsonify({"status": "error", "message": "يرجى تعبئة الحقول الأساسية (السنة، الترم، المادة، العنوان، الرابط)"}), 400
+
+        new_lesson = CustomLesson(
+            year=year,
+            term=term,
+            subject_name=subject_name,
+            chapter_name=chapter_name,
+            content_type=content_type,
+            title=title,
+            url=url,
+            download_url=download_url,
+            notes=notes
+        )
+        db.session.add(new_lesson)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم إضافة المحتوى بنجاح وظهوره في المنصة فوراً!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/custom-content', methods=['GET'])
+@admin_required
+def get_custom_content():
+    lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
+    return jsonify([l.to_dict() for l in lessons])
+
+@app.route('/admin/delete-content/<int:content_id>', methods=['POST', 'DELETE'])
+@admin_required
+def delete_custom_content(content_id):
+    try:
+        lesson = CustomLesson.query.get_or_404(content_id)
+        db.session.delete(lesson)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف العنصر بنجاح"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # مسارات التحديثات والإشعارات (What's New API)

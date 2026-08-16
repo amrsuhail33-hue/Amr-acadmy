@@ -191,19 +191,24 @@
         }
         .popup-box.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
 
-        #calcBox, #socialBox, #adminBox, #whatsNewBox { width: 92%; max-width: 500px; max-height: 85vh; }
+        #calcBox, #socialBox, #adminBox, #whatsNewBox { width: 92%; max-width: 530px; max-height: 88vh; }
         #aiChatBox { width: 95%; max-width: 1000px; height: 92vh; max-height: 92vh; border-radius: 24px; }
         
         .popup-header { color: white; padding: 18px 25px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; }
         .popup-close { cursor: pointer; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.1); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.3s; }
         .popup-close:hover { background: rgba(0,0,0,0.3); }
-        .popup-body { padding: 25px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; background: var(--bg-body); }
+        .popup-body { padding: 22px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; flex: 1; background: var(--bg-body); }
         
         #aiChatBox .popup-header { background: linear-gradient(135deg, var(--primary), #1d4ed8); }
         #calcBox .popup-header { background: linear-gradient(135deg, var(--accent), #047857); }
         #socialBox .popup-header { background: linear-gradient(135deg, #ec4899, #be185d); }
         #adminBox .popup-header { background: linear-gradient(135deg, #f59e0b, #d97706); }
         #whatsNewBox .popup-header { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+
+        /* تبويبات لوحة المعلم */
+        .admin-tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 5px; }
+        .admin-tab-btn { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .admin-tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* رسائل المحادثة للذكاء الاصطناعي */
         .ai-msg-wrapper { display: flex; gap: 15px; width: 100%; align-items: flex-start; }
@@ -259,7 +264,7 @@
         /* قسم الأسئلة والردود أسفل الدرس */
         .qa-container { margin-top: 45px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 30px 25px; box-shadow: var(--card-shadow); }
         .qa-title { font-size: 1.35rem; font-weight: 900; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
-        .qa-input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 1rem; margin-bottom: 12px; outline: none; transition: border-color 0.3s; }
+        .qa-input-field { width: 100%; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 0.98rem; margin-bottom: 10px; outline: none; transition: border-color 0.3s; }
         .qa-input-field:focus { border-color: var(--primary); }
         .qa-item-card { background: var(--bg-body); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 15px; }
         .qa-author { font-weight: 800; color: var(--primary); font-size: 1rem; margin-bottom: 6px; }
@@ -364,7 +369,7 @@
                 قناة التليجرام
             </a>
             <a href="https://youtube.com/@a0mrr1eng?si=Czh5KxknxgwFyDto" target="_blank" class="btn-calc-action" style="background:#ef4444;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 قناة اليوتيوب
             </a>
         </div>
@@ -409,31 +414,78 @@
         </div>
     </div>
 
-    <!-- نافذة لوحة المعلم -->
+    <!-- نافذة لوحة المعلم الشاملة -->
     <div class="popup-box" id="adminBox">
         <div class="popup-header">
             <span>لوحة تحكم المعلم</span>
             <span class="popup-close" onclick="closeAllPopups()">✕</span>
         </div>
         <div class="popup-body">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                <span style="font-weight: 800; color: var(--text-main);">لوحة الإدارة</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <span style="font-weight: 900; color: var(--text-main);">لوحة الإدارة والمحتوى</span>
                 <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-size: 0.85rem; font-weight: 800;">تسجيل الخروج ✕</a>
             </div>
 
-            <!-- نموذج إضافة تحديث جديد (ما الجديد) -->
-            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;">
-                <div style="font-weight: 800; color: var(--primary); margin-bottom: 10px; font-size: 1rem;">📢 نشر تحديث جديد للمنصة (ما الجديد):</div>
-                <input type="text" id="new_update_title" placeholder="عنوان التحديث (مثال: إضافة ملخصات جديدة)" class="qa-input-field">
-                <input type="text" id="new_update_tag" placeholder="الوسم (مثال: محتوى جديد، ميزة جديدة)" class="qa-input-field" value="ميزة جديدة">
-                <textarea id="new_update_desc" rows="2" placeholder="تفاصيل وشرح ما الجديد..." class="qa-input-field"></textarea>
-                <button onclick="publishNewUpdate()" class="btn-calc-action" style="background: #8b5cf6; padding: 10px; font-size: 0.95rem; border-radius: 8px;">نشر وإشعار الطلاب 🚀</button>
+            <!-- تبويبات لوحة التحكم -->
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="switchAdminTab('qa')">💬 الأسئلة</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('content')">➕ إضافة درس/ملف</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('updates')">📢 ما الجديد</button>
             </div>
 
-            <!-- قائمة الأسئلة المعلقة -->
-            <div style="font-weight: 800; color: var(--text-main); margin-top: 10px;">الأسئلة المعلقة بالانتظار:</div>
-            <div id="adminQuestionsList">
-                <div style="text-align: center; color: var(--text-muted); padding: 20px;">جاري جلب الأسئلة...</div>
+            <!-- تبويب 1: الأسئلة المعلقة -->
+            <div id="adminTab_qa">
+                <div style="font-weight: 800; color: var(--text-main); margin-bottom: 8px;">الأسئلة المعلقة بانتظار الرد:</div>
+                <div id="adminQuestionsList">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px;">جاري جلب الأسئلة...</div>
+                </div>
+            </div>
+
+            <!-- تبويب 2: الإضافة المباشرة للدروس والملفات -->
+            <div id="adminTab_content" style="display: none;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 15px;">
+                    <div style="font-weight: 900; color: var(--primary); margin-bottom: 10px;">إضافة درس أو مذكرة جديدة للمنصة:</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <input type="text" id="add_year" placeholder="السنة (مثال: السنة الأولى)" class="qa-input-field">
+                        <input type="text" id="add_term" placeholder="الترم (مثال: الترم الأول)" class="qa-input-field">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <input type="text" id="add_subject" placeholder="اسم المادة (مثال: رياضيات 1)" class="qa-input-field">
+                        <input type="text" id="add_chapter" placeholder="الشابتر (مثال: الفصل الأول)" class="qa-input-field">
+                    </div>
+
+                    <select id="add_type" class="qa-input-field" style="font-weight: 700;">
+                        <option value="videos">مقطع فيديو 🎥</option>
+                        <option value="files">ملف PDF / مذكرة 📑</option>
+                    </select>
+
+                    <input type="text" id="add_title" placeholder="عنوان الدرس أو الملف" class="qa-input-field">
+                    <input type="url" id="add_url" placeholder="رابط المشاهدة أو رابط ملف Drive" class="qa-input-field">
+                    <input type="url" id="add_download" placeholder="رابط التحميل المباشر (اختياري)" class="qa-input-field">
+                    <input type="text" id="add_notes" placeholder="ملاحظة تظهر للطالب (اختياري)" class="qa-input-field">
+
+                    <button onclick="submitNewContent()" class="btn-calc-action" style="background: var(--accent); padding: 12px; font-size: 0.95rem; border-radius: 10px;">
+                        حفظ ونشر في المنصة فوراً 🚀
+                    </button>
+                </div>
+
+                <div style="font-weight: 800; color: var(--text-main); margin-bottom: 8px;">المحتوى المضاف من اللوحة:</div>
+                <div id="adminCustomContentList">
+                    <div style="text-align: center; color: var(--text-muted); padding: 10px;">جاري جلب المحتوى...</div>
+                </div>
+            </div>
+
+            <!-- تبويب 3: نشر تحديث ما الجديد -->
+            <div id="adminTab_updates" style="display: none;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;">
+                    <div style="font-weight: 800; color: var(--primary); margin-bottom: 10px; font-size: 1rem;">📢 نشر تحديث جديد للمنصة:</div>
+                    <input type="text" id="new_update_title" placeholder="عنوان التحديث (مثال: إضافة ملخصات جديدة)" class="qa-input-field">
+                    <input type="text" id="new_update_tag" placeholder="الوسم (مثال: محتوى جديد، ميزة جديدة)" class="qa-input-field" value="ميزة جديدة">
+                    <textarea id="new_update_desc" rows="3" placeholder="تفاصيل وشرح ما الجديد..." class="qa-input-field"></textarea>
+                    <button onclick="publishNewUpdate()" class="btn-calc-action" style="background: #8b5cf6; padding: 11px; font-size: 0.95rem; border-radius: 10px;">نشر وإشعار الطلاب 🚀</button>
+                </div>
             </div>
         </div>
     </div>
@@ -667,7 +719,12 @@
             {% for item in chapter.lessons %}
                 <div class="card lesson-card" data-id="video_{{ item.title }}" style="padding: 25px; display: flex; flex-direction: column; justify-content: space-between; text-align: right; box-shadow: var(--card-shadow);">
                     <div>
-                        <div style="margin-bottom: 15px; font-weight:800; font-size: 1.2rem;">{{ item.title }}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div style="font-weight:800; font-size: 1.2rem;">{{ item.title }}</div>
+                            {% if is_admin and item.custom_id %}
+                                <button onclick="deleteCustomContentDirect({{ item.custom_id }})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">حذف ✕</button>
+                            {% endif %}
+                        </div>
                         {% if item.notes %}
                         <div style="background-color: rgba(245, 158, 11, 0.1); color: #b45309; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
                             💡 <b>ملاحظة:</b> {{ item.notes }}
@@ -693,7 +750,12 @@
             {% for item in chapter.lessons %}
                 <div class="card lesson-card" data-id="file_{{ item.title }}" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--card-shadow);">
                     <div>
-                        {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="margin-bottom: 15px;">📄 {{ item.title }}</a>{% endif %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            {% if item.file %}<a href="{{ item.file }}" target="_blank" class="item-btn btn-pdf" style="flex: 1;">📄 {{ item.title }}</a>{% endif %}
+                            {% if is_admin and item.custom_id %}
+                                <button onclick="deleteCustomContentDirect({{ item.custom_id }})" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; margin-right: 8px;">حذف ✕</button>
+                            {% endif %}
+                        </div>
                         {% if item.notes %}
                         <div style="background-color: rgba(16, 185, 129, 0.1); color: #059669; padding: 10px; border-radius: 8px; font-size: 0.85rem; text-align: right; line-height: 1.5; margin-top: auto;">
                             📌 {{ item.notes }}
@@ -981,6 +1043,106 @@
             }
         } catch (err) {
             alert("تعذر الاتصال بالخادم.");
+        }
+    }
+
+    /* --- تبديل تبويبات لوحة المعلم --- */
+    function switchAdminTab(tabName) {
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('adminTab_qa').style.display = 'none';
+        document.getElementById('adminTab_content').style.display = 'none';
+        document.getElementById('adminTab_updates').style.display = 'none';
+
+        if (tabName === 'qa') {
+            event.target.classList.add('active');
+            document.getElementById('adminTab_qa').style.display = 'block';
+            loadAdminQuestions();
+        } else if (tabName === 'content') {
+            event.target.classList.add('active');
+            document.getElementById('adminTab_content').style.display = 'block';
+            loadCustomContentList();
+        } else if (tabName === 'updates') {
+            event.target.classList.add('active');
+            document.getElementById('adminTab_updates').style.display = 'block';
+        }
+    }
+
+    /* --- إدارة المحتوى المضاف من المعلم مباشرة --- */
+    async function submitNewContent() {
+        const year = document.getElementById('add_year').value.trim();
+        const term = document.getElementById('add_term').value.trim();
+        const subject_name = document.getElementById('add_subject').value.trim();
+        const chapter_name = document.getElementById('add_chapter').value.trim();
+        const content_type = document.getElementById('add_type').value;
+        const title = document.getElementById('add_title').value.trim();
+        const url = document.getElementById('add_url').value.trim();
+        const download_url = document.getElementById('add_download').value.trim();
+        const notes = document.getElementById('add_notes').value.trim();
+
+        if (!year || !term || !subject_name || !title || !url) {
+            alert("يرجى إدخال السنة والترم واسم المادة وعنوان الدرس والرابط.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/admin/add-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year, term, subject_name, chapter_name, content_type, title, url, download_url, notes })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم إضافة المحتوى بنجاح! سيظهر في الموقع فوراً.");
+                document.getElementById('add_title').value = '';
+                document.getElementById('add_url').value = '';
+                document.getElementById('add_download').value = '';
+                document.getElementById('add_notes').value = '';
+                loadCustomContentList();
+            } else {
+                alert("تعذر الحفظ: " + data.message);
+            }
+        } catch (err) {
+            alert("حدث خطأ في الاتصال بالخادم.");
+        }
+    }
+
+    async function loadCustomContentList() {
+        const container = document.getElementById('adminCustomContentList');
+        if (!container) return;
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">جاري جلب المحتوى المضاف...</div>`;
+        try {
+            const res = await fetch('/admin/custom-content');
+            const list = await res.json();
+            if (!list || list.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">لم تقم بإضافة أي محتوى مخصص بعد.</div>`;
+                return;
+            }
+            container.innerHTML = list.map(item => `
+                <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.95rem; color:var(--text-main);">${item.content_type === 'videos' ? '🎥' : '📄'} ${item.title}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${item.year} | ${item.term} | ${item.subject_name} (${item.chapter_name})</div>
+                    </div>
+                    <button onclick="deleteCustomContentDirect(${item.id})" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:6px; font-size:0.75rem; cursor:pointer;">حذف ✕</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = `<div style="color:#ef4444; text-align:center;">تعذر جلب المحتوى.</div>`;
+        }
+    }
+
+    async function deleteCustomContentDirect(id) {
+        if (!confirm("هل أنت متأكد من حذف هذا العنصر؟")) return;
+        try {
+            const res = await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم الحذف بنجاح!");
+                loadCustomContentList();
+                if (location.href.includes('type=')) location.reload();
+            }
+        } catch (e) {
+            alert("تعذر الحذف.");
         }
     }
 

@@ -193,11 +193,9 @@
             color: var(--text-main); max-width: 85%;
         }
         
-        /* رسالة المساعد (نص حر وبدون خلفية ملونة لتبدو مثل Gemini) */
         .ai-msg.bot { padding: 5px 0; }
         .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; } 
         
-        /* رسالة المستخدم (فقاعة رمادية/بيضاء) */
         .ai-msg.user { 
             background: var(--bg-card); border: 1px solid var(--border); 
             padding: 14px 20px; border-radius: 20px; border-top-left-radius: 4px; 
@@ -235,7 +233,6 @@
         }
         .ai-input-pill .send-btn:hover { transform: scale(1.05); background: #1d4ed8; }
         
-        /* أدوات رفع الصورة في الذكاء الاصطناعي */
         .img-preview-container { 
             position: absolute; bottom: 100%; right: 40px; margin-bottom: 15px; 
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
@@ -249,7 +246,6 @@
         }
         .img-remove-btn:hover { transform: scale(1.1); }
 
-        /* تنسيقات الحاسبة والاختبارات بقيت كما هي لضمان عملها */
         .calc-row { display: flex; gap: 10px; align-items: center; }
         .calc-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; text-align: center; background: var(--bg-body); color: var(--text-main); }
         .btn-calc-action { display: flex; align-items: center; justify-content: center; gap: 10px; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; text-decoration: none; font-size: 1rem; width: 100%; transition: transform 0.2s; }
@@ -280,9 +276,80 @@
         .btn-complete { width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
         .btn-complete.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
 
+        /* تنسيقات قسم الأسئلة والردود أسفل الدرس */
+        .qa-container {
+            margin-top: 45px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-shadow: var(--card-shadow);
+        }
+        .qa-title {
+            font-size: 1.35rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .qa-input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 1rem;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .qa-input-field:focus {
+            border-color: var(--primary);
+        }
+        .qa-item-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+        .qa-author {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .qa-question-text {
+            color: var(--text-main);
+            line-height: 1.6;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        .qa-reply-box {
+            background: rgba(16, 185, 129, 0.08);
+            border-right: 4px solid var(--accent);
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+        .qa-reply-header {
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .qa-reply-text {
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
         .footer { background-color: transparent; color: var(--text-muted); text-align: center; padding: 30px 20px; font-weight: 700; font-size: 0.9rem; margin-top: auto; }
 
-        /* تنسيقات زر الشريك الرسمي في التذييل */
+        /* زر الشريك الرسمي في التذييل */
         .partner-link {
             background: rgba(37, 99, 235, 0.1);
             color: var(--primary);
@@ -318,7 +385,7 @@
         <div class="splash-brand">Amr Suhail Academy</div>
         <div class="splash-slogan">From nothing to be something</div>
         <div class="welcome-text">
-            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
+            أهلاً بك، تشرفنا بزيارتك للأكاديمية بالتعاون مع <strong>مكتبة ميكا درايف</strong>. هنا نطمح لجعل حياة الطالب الدراسية أسهل بتوفير الملفات والشروحات التي يحتاجها بكل سهولة.
         </div>
         <a href="javascript:void(0);" onclick="enterAcademy()" class="enter-btn">الإنتقال للصفحة الرئيسية</a>
     </div>
@@ -661,6 +728,48 @@
         </div>
         {% endif %}
 
+        <!-- قسم الأسئلة والاستفسارات أسفل الدرس -->
+        <div class="qa-container">
+            <div class="qa-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                استفسارات حول هذا الفصل
+            </div>
+
+            <!-- نموذج طرح سؤال جديد -->
+            <form action="/ask-question" method="POST" style="margin-bottom: 25px;">
+                <input type="hidden" name="subject_id" value="{{ subject.id }}">
+                <input type="hidden" name="chapter_name" value="{{ chapter.name }}">
+                
+                <input type="text" name="student_name" placeholder="اسمك الكريم (اختياري)" class="qa-input-field">
+                <textarea name="question_text" rows="3" placeholder="اكتب سؤالك أو استفسارك هنا..." required class="qa-input-field" style="resize: vertical;"></textarea>
+                
+                <button type="submit" class="btn-calc-action" style="background: var(--primary); padding: 12px; font-size: 1rem; border-radius: 10px;">
+                    إرسال السؤال للمراجعة والرد 🚀
+                </button>
+            </form>
+
+            <!-- عرض الأسئلة والردود المعتمدة -->
+            <div class="qa-list">
+                {% if questions and questions|length > 0 %}
+                    {% for q in questions %}
+                        <div class="qa-item-card">
+                            <div class="qa-author">👤 {{ q.student_name }}</div>
+                            <div class="qa-question-text">{{ q.question_text }}</div>
+                            
+                            <div class="qa-reply-box">
+                                <div class="qa-reply-header">رد المنصة الأكاديمية:</div>
+                                <p class="qa-reply-text">{{ q.answer_text }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; padding: 15px 0;">
+                        لا توجد استفسارات منشورة بعد لهذا الفصل. كن أول من يسأل!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
         {% endif %}
         
         {% endif %}
@@ -674,8 +783,7 @@
         </div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; flex-wrap: wrap;">
             <span style="color: var(--text-muted); font-weight: 700;">الشريك الرسمي</span>
-            <!-- قم بتعديل الرابط (#) برابط مكتبة ميكا درايف الخاص بك -->
-            <a href="#" target="_blank" class="partner-link">مكتبة ميكا درايف</a>
+            <a href="https://t.me/a0mrr1eng" target="_blank" class="partner-link"><strong>مكتبة ميكا درايف</strong></a>
         </div>
     </footer>
 
@@ -818,7 +926,6 @@
             userContent += `<div>${text}</div>`;
         }
         
-        // بناء فقاعة المستخدم الجديدة
         const userHtml = `
             <div class="ai-msg-wrapper user-wrapper">
                 <div class="ai-avatar user-avatar">👤</div>
@@ -856,7 +963,6 @@
             
             const replyId = 'reply_' + Date.now();
             
-            // تحويل البولد في النص (**نص**) والتنسيقات الأساسية
             let formattedReply = data.reply
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')

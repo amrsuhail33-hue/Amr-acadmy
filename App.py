@@ -16,7 +16,11 @@ app.secret_key = 'amr_suhail_academy_secure_secret_key_2026'
 # كلمة مرور المشرف/المعلم
 ADMIN_PASSWORD = "123"
 
-# إعداد قاعدة البيانات
+
+  
+
+# إعداد قاعدة بيانات محلية مدمجة
+ main
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///academy_qa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -42,6 +46,7 @@ class PlatformUpdate(db.Model):
     description = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     def to_dict(self):
+ 
         return {"id": self.id, "title": self.title, "tag": self.tag, "description": self.description, "date": self.created_at.strftime("%Y-%m-%d")}
 
 class CustomLesson(db.Model):
@@ -59,9 +64,52 @@ class CustomLesson(db.Model):
     def to_dict(self):
         return {"id": self.id, "year": self.year, "term": self.term, "subject_name": self.subject_name, "chapter_name": self.chapter_name, "content_type": self.content_type, "title": self.title, "url": self.url or "", "download_url": self.download_url or "", "notes": self.notes or "", "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")}
 
+
+        return {
+            "id": self.id,
+            "subject_id": self.subject_id,
+            "chapter_name": self.chapter_name,
+            "student_name": self.student_name,
+            "question_text": self.question_text,
+            "answer_text": self.answer_text,
+            "is_answered": self.is_answered,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+        }
+
+# جدول تحديثات المنصة (ما الجديد)
+class PlatformUpdate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    tag = db.Column(db.String(50), default="ميزة جديدة")
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "tag": self.tag,
+            "description": self.description,
+            "date": self.created_at.strftime("%Y-%m-%d")
+        }
+
+# إنشاء قاعدة البيانات تلقائياً مع إضافة تحديث أولي إذا كانت فارغة
+ main
 with app.app_context():
     db.create_all()
+    if PlatformUpdate.query.count() == 0:
+        initial_update = PlatformUpdate(
+            title="إطلاق نظام الأسئلة والشريك الرسمي",
+            tag="تحديث رئيسي 🚀",
+            description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة، كما نرحب بانضمام مكتبة ميكا درايف كشريك رسمي للأكاديمية!"
+        )
+        db.session.add(initial_update)
+        db.session.commit()
 
+ Dev
+
+# حماية مسارات المشرف
+ main
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -289,6 +337,7 @@ def home():
     except Exception as e:
         return f"Error: {str(e)}"
 
+ Dev
 # مسارات الإضافة والتعديل المباشر
 @app.route('/admin/add-content', methods=['POST'])
 @admin_required
@@ -310,6 +359,57 @@ def add_custom_content():
             
         if not url and not download_url:
             return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل واحد على الأقل"}), 400
+
+# ==========================================
+# مسارات التحديثات والإشعارات (What's New API)
+# ==========================================
+@app.route('/api/updates', methods=['GET'])
+def get_updates():
+    updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+    return jsonify([u.to_dict() for u in updates])
+
+@app.route('/admin/add-update', methods=['POST'])
+@admin_required
+def add_update():
+    try:
+        data = request.json or request.form
+        title = data.get('title', '').strip()
+        tag = data.get('tag', 'ميزة جديدة').strip()
+        description = data.get('description', '').strip()
+
+        if not title or not description:
+            return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
+
+        new_update = PlatformUpdate(title=title, tag=tag, description=description)
+        db.session.add(new_update)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم نشر التحديث الجديد بنجاح!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/delete-update/<int:update_id>', methods=['POST', 'DELETE'])
+@admin_required
+def delete_update(update_id):
+    try:
+        up = PlatformUpdate.query.get_or_404(update_id)
+        db.session.delete(up)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف التحديث"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# مصادقة وإدارة المعلم (Admin Auth & Q&A)
+# ==========================================
+@app.route('/admin/login', methods=['POST'])
+def admin_login():
+    data = request.json or {}
+    password = data.get('password', '').strip()
+    if password == ADMIN_PASSWORD:
+        session['is_admin'] = True
+        return jsonify({"status": "success", "message": "تم تسجيل دخول المعلم بنجاح"})
+    return jsonify({"status": "error", "message": "كلمة المرور غير صحيحة"}), 401
+main
 
         new_lesson = CustomLesson(
             year=year, term=term, subject_name=subject_name, chapter_name=chapter_name,

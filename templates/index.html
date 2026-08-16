@@ -802,10 +802,18 @@
             const res = await fetch('/admin/status'); const data = await res.json();
             if (data.is_admin) { togglePopup('adminBox'); loadAdminQuestions(); } 
             else {
+                // MODIFIED: Changed the expected password to "Ahmed"
                 const pass = prompt("رمز الدخول السري للوحة الإدارة:", "");
                 if (pass) {
-                    const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
-                    if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                    if (pass === "Ahmed") {
+                         // Proceed with login using the newly expected password
+                         const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+                         if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                    } else {
+                         // Simulate incorrect password attempt locally if it doesn't match
+                         const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+                         if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                    }
                 }
             }
         } catch (e) { alert("حدث خطأ في الاتصال بالخادم."); }

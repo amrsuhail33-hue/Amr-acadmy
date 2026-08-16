@@ -78,17 +78,20 @@
         .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; z-index: 100; transition: background 0.4s ease; }
         .navbar-brand { font-size: 1.6rem; font-weight: 900; color: var(--text-main); text-decoration: none; letter-spacing: 0.5px; }
         
-        .theme-toggle { cursor: pointer; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: var(--card-shadow); }
-        .theme-toggle:active { transform: scale(0.9); }
-        .theme-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-btn-round { cursor: pointer; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: var(--card-shadow); position: relative; }
+        .icon-btn-round:active { transform: scale(0.9); }
+        .icon-btn-round svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         
+        /* مؤشر النقطة الحمراء للإشعارات */
+        .badge-dot { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; border: 2px solid var(--bg-card); }
+
         .navbar-contact {
             background: linear-gradient(135deg, var(--primary), #1d4ed8);
             color: #ffffff !important;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 50px;
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -96,10 +99,7 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
-        .navbar-contact:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
-        }
+        .navbar-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45); }
 
         .main-content { flex: 1; width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .search-box { margin-bottom: 30px; }
@@ -163,7 +163,7 @@
         }
         .popup-box.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
 
-        #calcBox, #socialBox, #adminBox { width: 92%; max-width: 500px; max-height: 85vh; }
+        #calcBox, #socialBox, #adminBox, #whatsNewBox { width: 92%; max-width: 520px; max-height: 85vh; }
         #aiChatBox { width: 95%; max-width: 1000px; height: 92vh; max-height: 92vh; border-radius: 24px; }
         
         .popup-header { color: white; padding: 18px 25px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1.15rem; }
@@ -175,6 +175,7 @@
         #calcBox .popup-header { background: linear-gradient(135deg, var(--accent), #047857); }
         #socialBox .popup-header { background: linear-gradient(135deg, #ec4899, #be185d); }
         #adminBox .popup-header { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        #whatsNewBox .popup-header { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
 
         /* رسائل المحادثة للذكاء الاصطناعي */
         .ai-msg-wrapper { display: flex; gap: 15px; width: 100%; align-items: flex-start; }
@@ -238,15 +239,19 @@
         .qa-reply-box { background: rgba(16, 185, 129, 0.08); border-right: 4px solid var(--accent); padding: 12px 16px; border-radius: 8px; }
         .qa-reply-header { font-weight: 800; color: var(--accent); font-size: 0.9rem; margin-bottom: 4px; }
         .qa-reply-text { color: var(--text-main); line-height: 1.6; margin: 0; font-size: 0.95rem; }
-        
         .qa-alert-success { background: rgba(16, 185, 129, 0.12); border: 1px solid var(--accent); color: #059669; padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; display: none; line-height: 1.5; }
 
-        /* شارة المعلم */
+        /* بطاقات ما الجديد */
+        .update-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 15px; box-shadow: var(--card-shadow); transition: transform 0.2s; }
+        .update-badge { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; display: inline-block; margin-bottom: 8px; }
+        .update-title { font-weight: 900; font-size: 1.15rem; color: var(--text-main); margin-bottom: 8px; }
+        .update-desc { color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; margin: 0; }
+        .update-date { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; text-align: left; }
+
         .admin-badge { background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; }
 
         .footer { background-color: transparent; color: var(--text-muted); text-align: center; padding: 30px 20px; font-weight: 700; font-size: 0.9rem; margin-top: auto; }
 
-        /* زر الشريك الرسمي في التذييل */
         .partner-link {
             background: rgba(37, 99, 235, 0.1);
             color: var(--primary);
@@ -309,6 +314,10 @@
         <div class="fab-item" onclick="togglePopup('calcBox')" title="الحاسبة التراكمية">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line></svg>
         </div>
+
+        <div class="fab-item" onclick="openWhatsNewModal()" title="ما الجديد؟">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </div>
         
         <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path></svg>
@@ -319,7 +328,7 @@
         </div>
     </div>
     
-    <!-- نافذة السوشيال ميديا المنبثقة -->
+    <!-- نافذة السوشيال ميديا -->
     <div class="popup-box" id="socialBox">
         <div class="popup-header">
             <span>منصاتنا وحساباتنا</span>
@@ -334,6 +343,17 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 قناة اليوتيوب
             </a>
+        </div>
+    </div>
+
+    <!-- نافذة ما الجديد؟ (What's New Modal) -->
+    <div class="popup-box" id="whatsNewBox">
+        <div class="popup-header">
+            <span>✨ ما الجديد في المنصة؟</span>
+            <span class="popup-close" onclick="closeAllPopups()">✕</span>
+        </div>
+        <div class="popup-body" id="whatsNewList">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">جاري تحميل آخر التحديثات...</div>
         </div>
     </div>
 
@@ -365,17 +385,29 @@
         </div>
     </div>
 
-    <!-- نافذة لوحة المعلم المخصصة لإدارة الأسئلة -->
+    <!-- نافذة لوحة المعلم -->
     <div class="popup-box" id="adminBox">
         <div class="popup-header">
-            <span>لوحة المعلم - إدارة الأسئلة</span>
+            <span>لوحة تحكم المعلم</span>
             <span class="popup-close" onclick="closeAllPopups()">✕</span>
         </div>
         <div class="popup-body">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">الأسئلة المعلقة بالانتظار:</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                <span style="font-weight: 800; color: var(--text-main);">لوحة الإدارة</span>
                 <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-size: 0.85rem; font-weight: 800;">تسجيل الخروج ✕</a>
             </div>
+
+            <!-- نموذج إضافة تحديث جديد (ما الجديد) -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;">
+                <div style="font-weight: 800; color: var(--primary); margin-bottom: 10px; font-size: 1rem;">📢 نشر تحديث جديد للمنصة (ما الجديد):</div>
+                <input type="text" id="new_update_title" placeholder="عنوان التحديث (مثال: إضافة ملخصات جديدة)" class="qa-input-field">
+                <input type="text" id="new_update_tag" placeholder="الوسم (مثال: محتوى جديد، ميزة جديدة)" class="qa-input-field" value="ميزة جديدة">
+                <textarea id="new_update_desc" rows="2" placeholder="تفاصيل وشرح ما الجديد..." class="qa-input-field"></textarea>
+                <button onclick="publishNewUpdate()" class="btn-calc-action" style="background: #8b5cf6; padding: 10px; font-size: 0.95rem; border-radius: 8px;">نشر وإشعار الطلاب 🚀</button>
+            </div>
+
+            <!-- قائمة الأسئلة المعلقة -->
+            <div style="font-weight: 800; color: var(--text-main); margin-top: 10px;">الأسئلة المعلقة بالانتظار:</div>
             <div id="adminQuestionsList">
                 <div style="text-align: center; color: var(--text-muted); padding: 20px;">جاري جلب الأسئلة...</div>
             </div>
@@ -433,15 +465,22 @@
             {% endif %}
         </div>
         
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="تبديل المظهر">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- زر ما الجديد والإشعارات -->
+            <button class="icon-btn-round" onclick="openWhatsNewModal()" title="ما الجديد؟ والإشعارات" id="notifBellBtn">
+                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="badge-dot" id="unreadUpdateBadge" style="display:none;"></span>
+            </button>
+
+            <!-- تبديل المظهر -->
+            <button class="icon-btn-round" onclick="toggleTheme()" id="themeBtn" aria-label="تبديل المظهر">
                 <svg id="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 <svg id="sun-icon" style="display: none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             </button>
             
             <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.086 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                تواصل معنا
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.086 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                تواصل
             </a>
         </div>
     </nav>
@@ -512,7 +551,6 @@
         
         {% if content_type == 'quiz' %}
         <div class="card" style="padding: 30px; text-align: right; border: 1px solid var(--border); box-shadow: var(--card-shadow);">
-            
             <div id="quiz-start">
                 <h3 style="margin-bottom:15px; font-weight:900; color: var(--text-main); font-size:1.4rem;">🎓 تقييم فهمك للفصل</h3>
                 <p style="color: var(--text-muted); margin-bottom:25px; line-height:1.6;">أجب على الأسئلة التالية لاختبار مستواك. يمكنك تخطي الأسئلة والعودة لها لاحقاً.</p>
@@ -698,7 +736,6 @@
                                     <p class="qa-reply-text">{{ q.answer_text }}</p>
                                 </div>
                             {% elif is_admin %}
-                                <!-- نموذج رد سريع خاص بالمعلم مباشرة من الصفحة -->
                                 <div style="margin-top: 10px; background: rgba(37,99,235,0.05); padding: 12px; border-radius: 8px; border: 1px dashed var(--primary);">
                                     <textarea id="inline_reply_{{ q.id }}" rows="2" placeholder="اكتب ردك هنا لنشره للطلاب..." class="qa-input-field" style="margin-bottom: 8px;"></textarea>
                                     <button onclick="submitInlineReply({{ q.id }})" class="btn-calc-action" style="background: var(--accent); padding: 8px; font-size: 0.9rem; border-radius: 8px;">اعتماد ونشر الرد ✓</button>
@@ -760,6 +797,7 @@
             if (splash) splash.classList.remove('hidden');
         }
         updateProgressUI();
+        checkForNewPlatformUpdates();
     });
 
     function enterAcademy() {
@@ -794,7 +832,7 @@
     }
 
     function togglePopup(boxId) {
-        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox'];
+        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox', 'whatsNewBox'];
         let isAnyOpen = false;
         
         boxes.forEach(id => {
@@ -820,13 +858,108 @@
     }
 
     function closeAllPopups() {
-        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox'];
+        const boxes = ['aiChatBox', 'calcBox', 'socialBox', 'adminBox', 'whatsNewBox'];
         boxes.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('active');
         });
         const overlay = document.getElementById('chatOverlay');
         if (overlay) overlay.classList.remove('active');
+    }
+
+    /* --- إدارة نظام "ما الجديد" والإشعارات --- */
+    async function checkForNewPlatformUpdates() {
+        try {
+            const res = await fetch('/api/updates');
+            const updates = await res.json();
+            if (updates && updates.length > 0) {
+                const latestId = updates[0].id;
+                const lastSeenId = localStorage.getItem('last_seen_update_id');
+                
+                // إذا وجد تحديث جديد لم يره المستخدم
+                if (!lastSeenId || parseInt(lastSeenId) < latestId) {
+                    const badge = document.getElementById('unreadUpdateBadge');
+                    if (badge) badge.style.display = 'block';
+                    
+                    // فتح نافذة ما الجديد تلقائياً في أول زيارة بعد التحديث
+                    if (sessionStorage.getItem('visited') && !sessionStorage.getItem('auto_opened_update')) {
+                        setTimeout(() => {
+                            openWhatsNewModal();
+                            sessionStorage.setItem('auto_opened_update', 'true');
+                        }, 1200);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Error checking updates:', e);
+        }
+    }
+
+    async function openWhatsNewModal() {
+        togglePopup('whatsNewBox');
+        const container = document.getElementById('whatsNewList');
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">جاري جلب أحدث الميزات والتحديثات...</div>`;
+        
+        // إخفاء النقطة الحمراء وتحديث آخر معرف تمت رؤيته
+        const badge = document.getElementById('unreadUpdateBadge');
+        if (badge) badge.style.display = 'none';
+
+        try {
+            const res = await fetch('/api/updates');
+            const updates = await res.json();
+            
+            if (updates && updates.length > 0) {
+                localStorage.setItem('last_seen_update_id', updates[0].id);
+                
+                container.innerHTML = updates.map(u => `
+                    <div class="update-card">
+                        <span class="update-badge">${u.tag}</span>
+                        <div class="update-title">${u.title}</div>
+                        <p class="update-desc">${u.description}</p>
+                        <div class="update-date">📅 ${u.date}</div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد تحديثات جديدة حالياً.</div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<div style="color:#ef4444; text-align:center;">تعذر جلب التحديثات.</div>`;
+        }
+
+        // طلب إذن إشعارات المتصفح إذا لم يُمنح بعد
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }
+
+    async function publishNewUpdate() {
+        const title = document.getElementById('new_update_title').value.trim();
+        const tag = document.getElementById('new_update_tag').value.trim();
+        const description = document.getElementById('new_update_desc').value.trim();
+
+        if (!title || !description) {
+            alert("يرجى كتابة عنوان التحديث وشرحه بالتفصيل.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/admin/add-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, tag, description })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم نشر التحديث بنجاح وسيظهر لجميع الطلاب فوراً!");
+                document.getElementById('new_update_title').value = '';
+                document.getElementById('new_update_desc').value = '';
+                closeAllPopups();
+            } else {
+                alert("حدث خطأ: " + data.message);
+            }
+        } catch (err) {
+            alert("تعذر الاتصال بالخادم.");
+        }
     }
 
     /* --- إدارة المعلم (Admin Server Authentication) --- */
@@ -848,7 +981,7 @@
                     });
                     const loginData = await loginRes.json();
                     if (loginData.status === 'success') {
-                        location.reload(); // إعادة التحميل لتفعيل جلسة المعلم
+                        location.reload();
                     } else {
                         alert("كلمة المرور غير صحيحة!");
                     }
@@ -862,7 +995,7 @@
     async function loadAdminQuestions() {
         const container = document.getElementById('adminQuestionsList');
         if (!container) return;
-        container.innerHTML = `<div style="text-align:center; color:var(--text-muted);">جاري فحص الأسئلة المعلقة...</div>`;
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">جاري فحص الأسئلة المعلقة...</div>`;
         
         try {
             const res = await fetch('/admin/questions');
@@ -873,16 +1006,16 @@
             const questions = await res.json();
             
             if (!questions || questions.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:var(--accent); font-weight:bold; padding:20px;">✓ لا توجد أسئلة معلقة حالياً، كل الأسئلة تم الرد عليها!</div>`;
+                container.innerHTML = `<div style="text-align:center; color:var(--accent); font-weight:bold; padding:15px;">✓ كل الأسئلة تم الرد عليها!</div>`;
                 return;
             }
 
             container.innerHTML = questions.map(q => `
-                <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:15px; margin-bottom:15px;">
+                <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:12px;">
                     <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">المادة: <b>${q.subject_id}</b> | الفصل: <b>${q.chapter_name}</b></div>
                     <div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">👤 ${q.student_name}:</div>
                     <div style="margin-bottom:10px; line-height:1.5;">${q.question_text}</div>
-                    <textarea id="reply_input_${q.id}" rows="2" placeholder="اكتب ردك هنا لنشره..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); margin-bottom:8px;"></textarea>
+                    <textarea id="reply_input_${q.id}" rows="2" placeholder="اكتب ردك هنا لنشره..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); margin-bottom:8px;"></textarea>
                     <div style="display:flex; gap:8px;">
                         <button onclick="submitAdminReply(${q.id})" style="background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; flex:2;">نشر الرد ✓</button>
                         <button onclick="deleteQuestionDirect(${q.id})" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer; flex:1;">حذف ✕</button>
@@ -1344,7 +1477,6 @@
 
         qData.selectedOpt = idx;
         qData.status = 'answered';
-        
         loadQuestion();
     }
 
@@ -1362,7 +1494,6 @@
 
     function nextQuestion() {
         const qData = quizState.questions[quizState.currentQ];
-        
         if (qData.status !== 'answered') {
             qData.status = 'skipped';
         }

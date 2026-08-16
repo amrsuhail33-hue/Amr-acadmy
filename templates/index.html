@@ -195,7 +195,7 @@
         
         /* رسالة المساعد (نص حر وبدون خلفية ملونة لتبدو مثل Gemini) */
         .ai-msg.bot { padding: 5px 0; }
-        .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; } /* تلوين العناوين العريضة */
+        .ai-msg.bot b, .ai-msg.bot strong { color: var(--primary); font-weight: 800; } 
         
         /* رسالة المستخدم (فقاعة رمادية/بيضاء) */
         .ai-msg.user { 
@@ -281,6 +281,33 @@
         .btn-complete.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
 
         .footer { background-color: transparent; color: var(--text-muted); text-align: center; padding: 30px 20px; font-weight: 700; font-size: 0.9rem; margin-top: auto; }
+
+        /* تنسيقات زر الشريك الرسمي في التذييل */
+        .partner-link {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            font-weight: 900;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .partner-link:hover {
+            background: var(--primary);
+            color: #ffffff !important;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            border-color: var(--primary);
+        }
+        html.dark-mode .partner-link {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
     </style>
 </head>
 <body class="notranslate">
@@ -640,8 +667,16 @@
 
     </div>
 
+    <!-- تذييل الصفحة المعدل (Footer) -->
     <footer class="footer">
-        Amr Suhail Academy &copy; 2026
+        <div style="margin-bottom: 15px;">
+            Amr Suhail Academy &copy; 2026
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; flex-wrap: wrap;">
+            <span style="color: var(--text-muted); font-weight: 700;">الشريك الرسمي</span>
+            <!-- قم بتعديل الرابط (#) برابط مكتبة ميكا درايف الخاص بك -->
+            <a href="#" target="_blank" class="partner-link">مكتبة ميكا درايف</a>
+        </div>
     </footer>
 
     <script>

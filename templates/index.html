@@ -63,20 +63,19 @@
         
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none !important; }
 
-        /* --- Navbar --- */
+        /* --- Navbar (تم تعديل الاسم وإزالة المقولة) --- */
         .navbar { 
             position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border); 
-            display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; z-index: 100; gap: 10px;
+            display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; z-index: 100; gap: 10px;
         }
-        .navbar-brand-container { display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; user-select: none; position: relative; min-width: 0; flex: 1;}
-        .nav-title { font-size: 1rem; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; line-height: 1.1; font-family: 'Outfit', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
-        .nav-subtitle { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 1px; font-family: 'Outfit', sans-serif; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
-        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 6px; box-shadow: 0 0 8px var(--accent); }
+        .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative;}
+        .nav-title { font-size: 1.35rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 8px; box-shadow: 0 0 8px var(--accent); }
 
         .nav-actions { display: flex; align-items: center; flex-shrink: 0; }
-        .navbar-contact { background: var(--bg-card); color: var(--text-main); padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); transition: 0.3s; box-shadow: var(--card-shadow); white-space: nowrap;}
-        .navbar-contact i { color: var(--primary); font-size: 1rem; }
+        .navbar-contact { background: var(--bg-card); color: var(--text-main); padding: 10px 20px; border-radius: 50px; text-decoration: none; font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); transition: 0.3s; box-shadow: var(--card-shadow); white-space: nowrap;}
+        .navbar-contact i { color: var(--primary); font-size: 1.1rem; }
         .navbar-contact:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
 
         /* --- Main Layout --- */
@@ -95,7 +94,7 @@
         .hero-btn-primary { background: var(--primary); color: white; padding: 14px 30px; border-radius: 50px; font-weight: 800; font-size: 1.05rem; border: none; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
         .hero-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4); background: var(--primary-hover); }
 
-        /* --- Features Grid --- */
+        /* --- Features Grid (تعريف المنصة) --- */
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .feature-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 25px 20px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--border); cursor: default; }
         .f-icon { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 15px; }
@@ -112,9 +111,9 @@
         #searchInput { width: 100%; padding: 18px 55px 18px 20px; border-radius: 50px; border: 1px solid var(--border); font-size: 1.05rem; background: var(--bg-card); color: var(--text-main); transition: all 0.3s; box-shadow: var(--card-shadow); outline: none; }
         #searchInput:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
 
-        /* --- Navigation Buttons (Home & Back) --- */
+        /* --- Navigation Buttons (إعادة أزرار العودة والرئيسية الأنيقة) --- */
         .nav-buttons-container { display: flex; gap: 12px; margin-bottom: 30px; }
-        .nav-btn { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border); color: var(--text-main); font-size: 1.2rem; box-shadow: var(--card-shadow); transition: 0.3s; text-decoration: none; }
+        .nav-btn { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border); color: var(--text-main); text-decoration: none; transition: 0.3s; box-shadow: var(--card-shadow); font-size: 1.2rem; }
         .nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--hover-shadow); }
 
         .section-header { text-align: center; margin-bottom: 25px; }
@@ -129,6 +128,7 @@
         .card:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--hover-shadow); }
         .card:hover::before { background: var(--primary); }
         
+        /* Watermark Background */
         .card[data-badge]::after {
             content: attr(data-badge); position: absolute; bottom: -10px; left: 10px; font-size: 5.5rem; font-weight: 900; color: var(--primary);
             opacity: 0.05; pointer-events: none; font-family: 'Outfit', sans-serif; z-index: -1; transition: 0.3s;
@@ -246,7 +246,6 @@
     <nav class="navbar">
         <div class="navbar-brand-container" onclick="handleSecretAdminClick()" title="لوحة الإدارة المخفية">
             <div class="nav-title">Amr Suhail Academy</div>
-            <div class="nav-subtitle">From nothing to be something</div>
             {% if is_admin %}<span class="admin-indicator-dot"></span>{% endif %}
         </div>
         
@@ -391,11 +390,12 @@
 
 
     <div class="main-content">
-        <!-- Navigation Buttons (Home & Back) instead of breadcrumbs -->
+        
+        <!-- Navigation Buttons (العودة والرئيسية - التصميم العصري المُعاد تفعيله) -->
         {% if view != 'years' %}
         <div class="nav-buttons-container">
             <a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>
-            {% if view in ['subjects', 'chapters', 'select_type', 'content'] %}
+            {% if view in ['subjects', 'chapters', 'select_type', 'content', 'terms'] %}
             <a href="javascript:history.back()" class="nav-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i></a>
             {% endif %}
         </div>
@@ -414,7 +414,7 @@
             </div>
         </section>
 
-        <!-- بطاقات التعريف بالمنصة (ثابتة وغير قابلة للنقر) -->
+        <!-- بطاقات التعريف بالمنصة (ثابتة وغير قابلة للنقر - وفوق شريط البحث كما طلبت) -->
         <section class="features-grid">
             <div class="feature-card">
                 <div class="f-icon blue"><i class="fa-solid fa-shield-halved"></i></div>
@@ -682,7 +682,7 @@
         </div>
     </footer>
 
-    <!-- ===== دوال الجافاسكربت الكاملة (لم يتم اختصار أي شيء) ===== -->
+    <!-- ===== دوال الجافاسكربت الكاملة ===== -->
     <script>
     // --- UI & Basic Setup ---
     function updateThemeIcon() {
@@ -697,12 +697,13 @@
         updateThemeIcon();
     }
     
-    // اضافة علامة السنة الاحترافية (1st, 2nd)
+    // اضافة علامة السنة الاحترافية (1st, 2nd) معالجة كل التوقعات الإملائية
     function applyYearBadges() {
         document.querySelectorAll('.year-card-title').forEach(el => {
             let text = el.innerText;
             let badge = '';
-            if(text.match(/أولى|اولى|الاولى|الأولى/)) badge = '1st';
+            // البحث عن الكلمة بجميع أشكالها (اولى، الأولى، الاولئ، الخ)
+            if(text.match(/أولى|اولى|الاولى|الأولى|الاولئ|الأولئ/)) badge = '1st';
             else if(text.match(/ثانية|ثانيه/)) badge = '2nd';
             else if(text.match(/ثالثة|ثالثه/)) badge = '3rd';
             else if(text.match(/رابعة|رابعه/)) badge = '4th';
@@ -760,7 +761,7 @@
         applyYearBadges(); 
         loadStudentProgress();
         if (!sessionStorage.getItem('visited')) document.getElementById('splash-screen').classList.remove('hidden');
-        checkForNewPlatformUpdates(); // تشغيل فحص الإشعارات
+        checkForNewPlatformUpdates();
     });
 
     function scrollToYears() {

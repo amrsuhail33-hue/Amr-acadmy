@@ -70,8 +70,8 @@
             display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; z-index: 100; gap: 10px;
         }
         .navbar-brand-container { display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; user-select: none; position: relative; min-width: 0; flex: 1;}
-        .nav-title { font-size: 1.15rem; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; line-height: 1.1; font-family: 'Outfit', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
-        .nav-subtitle { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; font-family: 'Outfit', sans-serif; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
+        .nav-title { font-size: 1rem; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; line-height: 1.1; font-family: 'Outfit', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
+        .nav-subtitle { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 1px; font-family: 'Outfit', sans-serif; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
         .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 6px; box-shadow: 0 0 8px var(--accent); }
 
         .nav-actions { display: flex; align-items: center; flex-shrink: 0; }
@@ -95,7 +95,7 @@
         .hero-btn-primary { background: var(--primary); color: white; padding: 14px 30px; border-radius: 50px; font-weight: 800; font-size: 1.05rem; border: none; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
         .hero-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(37, 99, 235, 0.4); background: var(--primary-hover); }
 
-        /* --- Features Grid (Static Info Cards) --- */
+        /* --- Features Grid --- */
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .feature-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 25px 20px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--border); cursor: default; }
         .f-icon { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 15px; }
@@ -112,13 +112,10 @@
         #searchInput { width: 100%; padding: 18px 55px 18px 20px; border-radius: 50px; border: 1px solid var(--border); font-size: 1.05rem; background: var(--bg-card); color: var(--text-main); transition: all 0.3s; box-shadow: var(--card-shadow); outline: none; }
         #searchInput:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
 
-        /* --- Modern Breadcrumb / Progress Navigation --- */
-        .breadcrumb-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; background: var(--bg-card); padding: 12px 20px; border-radius: 50px; border: 1px solid var(--border); box-shadow: var(--card-shadow); overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
-        .breadcrumb-progress::-webkit-scrollbar { display: none; }
-        .breadcrumb-progress .step { display: flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-weight: 700; font-size: 0.9rem; transition: 0.3s; }
-        .breadcrumb-progress .step:hover { color: var(--primary); }
-        .breadcrumb-progress .step.active { color: var(--primary); background: var(--primary-light); padding: 6px 12px; border-radius: 20px; }
-        .breadcrumb-progress .divider { color: var(--border); font-size: 0.8rem; }
+        /* --- Navigation Buttons (Home & Back) --- */
+        .nav-buttons-container { display: flex; gap: 12px; margin-bottom: 30px; }
+        .nav-btn { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border); color: var(--text-main); font-size: 1.2rem; box-shadow: var(--card-shadow); transition: 0.3s; text-decoration: none; }
+        .nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--hover-shadow); }
 
         .section-header { text-align: center; margin-bottom: 25px; }
         .section-header h2 { font-size: 1.6rem; font-weight: 900; color: var(--text-main); margin: 0 0 8px; }
@@ -132,7 +129,6 @@
         .card:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--hover-shadow); }
         .card:hover::before { background: var(--primary); }
         
-        /* Watermark Background */
         .card[data-badge]::after {
             content: attr(data-badge); position: absolute; bottom: -10px; left: 10px; font-size: 5.5rem; font-weight: 900; color: var(--primary);
             opacity: 0.05; pointer-events: none; font-family: 'Outfit', sans-serif; z-index: -1; transition: 0.3s;
@@ -270,7 +266,6 @@
             <i id="fabCloseIcon" class="fa-solid fa-xmark" style="display:none; font-size:1.4rem;"></i>
             <span class="fab-badge-dot" id="unreadUpdateFabDot" style="display:none;"></span>
         </div>
-        <!-- Theme Toggle inside FAB -->
         <div class="fab-item" onclick="toggleTheme()" title="تغيير المظهر">
             <i class="fa-solid fa-moon" id="moon-icon"></i><i class="fa-solid fa-sun" id="sun-icon" style="display:none; color:var(--warning);"></i>
         </div>
@@ -281,15 +276,131 @@
     </div>
     {% endif %}
 
-    <!-- Popups -->
+    <!-- 1. popup: WhatsNew -->
     <div class="popup-box" id="whatsNewBox">
         <div class="popup-header"><div><i class="fa-solid fa-sparkles header-icon"></i> التحديثات وما الجديد</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
         <div class="popup-body" id="whatsNewList"><div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div></div>
     </div>
 
-    <!-- .. بقية نوافذ الـ Popups (الحاسبة والمساعد) محتفظ بها ضمن الكود كما في النسخة السابقة لديك .. -->
+    <!-- 2. popup: Calculator -->
+    <div class="popup-box" id="calcBox">
+        <div class="popup-header"><div><i class="fa-solid fa-calculator header-icon"></i> حاسبة المعدل التراكمي</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
+        <div class="popup-body">
+            <div id="subjectsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة" class="qa-input-field s-grade" style="margin:0;"></div>
+                <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة" class="qa-input-field s-grade" style="margin:0;"></div>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn-calc-outline" onclick="addRow()"><i class="fa-solid fa-plus"></i> مادة أخرى</button>
+                <button class="btn-calc-action" style="background:var(--primary);" onclick="calcFinalGPA()">احسب الآن <i class="fa-solid fa-check"></i></button>
+            </div>
+            <div id="calcResultBox" style="text-align:center; display:none; background:var(--bg-body); border:1px solid var(--border); padding:20px; border-radius:var(--radius-md); margin-top:20px; box-shadow:var(--card-shadow);">
+                <div id="resGrade" style="font-size:2rem; font-weight:900; margin-bottom:10px;"></div>
+                <div id="resDetails" style="font-size:1.1rem; color:var(--text-main);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. popup: Admin Box -->
+    <div class="popup-box" id="adminBox">
+        <div class="popup-header" style="background: var(--bg-card); border-bottom: 2px solid var(--warning);">
+            <div><i class="fa-solid fa-gear header-icon" style="color:var(--warning);"></i> لوحة التحكم الشاملة</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
+        </div>
+        <div class="popup-body">
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <button onclick="switchAdminTab('qa')" class="btn-calc-outline" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
+                <button onclick="switchAdminTab('content')" class="btn-calc-outline"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
+                <button onclick="switchAdminTab('updates')" class="btn-calc-outline"><i class="fa-solid fa-bullhorn"></i> تحديث</button>
+            </div>
+
+            <div id="adminTab_qa">
+                <div id="adminQuestionsList" style="display:flex; flex-direction:column; gap:12px;">جاري جلب الأسئلة...</div>
+            </div>
+
+            <div id="adminTab_content" style="display: none;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; box-shadow:var(--card-shadow);">
+                    <div id="content_form_header" style="font-weight: 900; color: var(--primary); margin-bottom: 15px; font-size:1.1rem;"><i class="fa-solid fa-file-circle-plus"></i> إضافة درس أو مذكرة جديدة:</div>
+                    <input type="hidden" id="edit_content_id" value="">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <input list="years_list" id="add_year" placeholder="السنة الدراسية" class="qa-input-field" style="margin-bottom:0;">
+                            <datalist id="years_list"><option value="السنة الأولى"><option value="السنة الثانية"><option value="السنة الثالثة"><option value="السنة الرابعة"><option value="السنة الخامسة"></datalist>
+                        </div>
+                        <div>
+                            <input list="terms_list" id="add_term" placeholder="الترم" class="qa-input-field" style="margin-bottom:0;">
+                            <datalist id="terms_list"><option value="الترم الأول"><option value="الترم الثاني"></datalist>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top:12px;">
+                        <input type="text" id="add_subject" placeholder="اسم المادة" class="qa-input-field" style="margin-bottom:0;">
+                        <input type="text" id="add_chapter" placeholder="الشابتر (اختياري)" class="qa-input-field" style="margin-bottom:0;">
+                    </div>
+
+                    <select id="add_type" class="qa-input-field" style="margin-top:12px;">
+                        <option value="videos">مقطع فيديو 🎥</option>
+                        <option value="files">ملف PDF / مذكرة 📑</option>
+                    </select>
+
+                    <input type="text" id="add_title" placeholder="عنوان الدرس أو الملف (مطلوب)" class="qa-input-field" required>
+                    <input type="url" id="add_url" placeholder="رابط المشاهدة / التليجرام (اختياري)" class="qa-input-field">
+                    <input type="url" id="add_download" placeholder="رابط تحميل إضافي (اختياري)" class="qa-input-field">
+                    <textarea id="add_notes" rows="2" placeholder="ملاحظات توضيحية للطالب (اختياري)" class="qa-input-field"></textarea>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button id="btn_save_content" onclick="submitNewContent()" class="btn-calc-action" style="background: var(--accent); flex: 2;"><i class="fa-solid fa-cloud-arrow-up"></i> حفظ ونشر</button>
+                        <button id="btn_cancel_edit" onclick="resetContentForm()" class="btn-calc-outline" style="display: none; flex: 1; border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-ban"></i> إلغاء</button>
+                    </div>
+                </div>
+                <div id="adminCustomContentList" style="display:flex; flex-direction:column; gap:12px;"></div>
+            </div>
+
+            <div id="adminTab_updates" style="display: none;">
+                <input type="text" id="new_update_title" placeholder="عنوان التحديث" class="qa-input-field">
+                <input type="text" id="new_update_tag" placeholder="الوسم (ميزة، ملفات، تنبيه)" value="إضافة جديدة" class="qa-input-field">
+                <textarea id="new_update_desc" rows="4" placeholder="التفاصيل..." class="qa-input-field"></textarea>
+                <button onclick="publishNewUpdate()" class="btn-calc-action" style="background: #8b5cf6;"><i class="fa-solid fa-paper-plane"></i> نشر الإشعار</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. popup: AI Chat Box -->
+    <div class="popup-box" id="aiChatBox">
+        <div class="popup-header">
+            <div><i class="fa-solid fa-robot header-icon"></i> المساعد الذكي</div>
+            <span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
+        </div>
+        <div class="popup-body" id="aiChatBody" style="display:flex; flex-direction:column; gap:15px; padding:20px;">
+            <div style="display:flex; gap:15px; align-items:flex-end;">
+                <div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="fa-solid fa-robot"></i></div>
+                <div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; border-bottom-right-radius:4px; box-shadow:var(--card-shadow); line-height:1.6; max-width:85%;">أهلاً بك! اطرح سؤالك أو أرفق صورة وسأقوم بشرحها لك بدقة.</div>
+            </div>
+        </div>
+        <div style="padding:15px 20px; background:var(--bg-card); border-top:1px solid var(--border); display:flex; gap:10px; align-items:center;">
+            <input type="file" id="aiImageUpload" accept="image/*" style="display:none;" onchange="previewAiImage()">
+            <label for="aiImageUpload" style="width:45px; height:45px; border-radius:12px; background:var(--bg-body); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:0.3s;"><i class="fa-solid fa-camera"></i></label>
+            <input type="text" id="aiUserInput" placeholder="اسأل المساعد..." style="flex:1; padding:14px 20px; border-radius:50px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); outline:none; font-size:1rem;" onkeypress="if(event.key==='Enter') sendAIMessage()">
+            <button onclick="sendAIMessage()" style="width:45px; height:45px; border-radius:50%; background:var(--primary); color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.3s; box-shadow:0 5px 15px rgba(37,99,235,0.3);"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div id="aiImgPreviewBox" style="position:absolute; bottom:90px; right:20px; display:none; background:var(--bg-card); padding:8px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--card-shadow);">
+            <span onclick="clearAiImage()" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; border:2px solid var(--bg-card);"><i class="fa-solid fa-xmark"></i></span>
+            <img id="aiImgPreview" style="height:70px; border-radius:8px; object-fit:cover;">
+        </div>
+    </div>
+
 
     <div class="main-content">
+        <!-- Navigation Buttons (Home & Back) instead of breadcrumbs -->
+        {% if view != 'years' %}
+        <div class="nav-buttons-container">
+            <a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>
+            {% if view in ['subjects', 'chapters', 'select_type', 'content'] %}
+            <a href="javascript:history.back()" class="nav-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i></a>
+            {% endif %}
+        </div>
+        {% endif %}
+
         {% if view == 'years' %}
         <!-- Hero Section -->
         <section class="hero-section">
@@ -303,7 +414,7 @@
             </div>
         </section>
 
-        <!-- بطاقات التعريف بالمنصة (تم إعادتها ووضعها فوق شريط البحث) -->
+        <!-- بطاقات التعريف بالمنصة (ثابتة وغير قابلة للنقر) -->
         <section class="features-grid">
             <div class="feature-card">
                 <div class="f-icon blue"><i class="fa-solid fa-shield-halved"></i></div>
@@ -337,39 +448,13 @@
         <div class="grid-container">
             {% for id, year in data.items() %}
                 <a href="/?year={{ id }}" class="card green year-card">
-                    <!-- الـ JavaScript ستقوم بإضافة رقم 1st, 2nd هنا داخل الأيقونة بدلاً من شعار الكتب -->
+                    <!-- سيتم حقن النص 1st, 2nd هنا داخل الأيقونة بدلاً من شعار الكتب -->
                     <div class="card-icon-wrapper"></div>
                     <h3 class="card-title year-card-title">{{ year.name }}</h3>
                     <div class="card-subtitle">جميع مواد ومحتوى السنة</div>
                     <div class="card-btn">استعرض المواد</div>
                 </a>
             {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Navigation Breadcrumbs Progress Bar (شريط المسار الشامل يربط جميع التبويبات) -->
-        {% if view != 'years' %}
-        <div class="breadcrumb-progress" dir="rtl">
-            <a href="/" class="step"><i class="fa-solid fa-house"></i> الرئيسية</a>
-            <i class="fa-solid fa-chevron-left divider"></i>
-            
-            {% if view == 'terms' %}
-                <span class="step active"><i class="fa-solid fa-calendar-days"></i> الفصل الدراسي</span>
-            {% elif view == 'subjects' %}
-                <span class="step active"><i class="fa-solid fa-layer-group"></i> المواد والمقررات</span>
-            {% elif view == 'select_type' %}
-                <a href="javascript:history.back()" class="step"><i class="fa-solid fa-layer-group"></i> {{ subject.name }}</a>
-                <i class="fa-solid fa-chevron-left divider"></i>
-                <span class="step active"><i class="fa-solid fa-filter"></i> نوع المحتوى</span>
-            {% elif view == 'chapters' %}
-                <a href="javascript:history.back()" class="step"><i class="fa-solid fa-layer-group"></i> {{ subject.name }}</a>
-                <i class="fa-solid fa-chevron-left divider"></i>
-                <span class="step active"><i class="fa-solid fa-bookmark"></i> الفصول والمواضيع</span>
-            {% elif view == 'content' %}
-                <a href="javascript:history.back()" class="step"><i class="fa-solid fa-layer-group"></i> {{ subject.name }}</a>
-                <i class="fa-solid fa-chevron-left divider"></i>
-                <span class="step active"><i class="fa-solid fa-folder-open"></i> {{ chapter.name }}</span>
-            {% endif %}
         </div>
         {% endif %}
 
@@ -394,7 +479,7 @@
         <div class="section-header"><h2>المقررات الدراسية</h2></div>
         <div class="grid-container">
             {% for subject in subjects %}
-                <!-- تصميم بطاقة المادة: توسيط كامل، خط كبير، بدون أيقونة اللابتوب المزعجة -->
+                <!-- تصميم بطاقة المادة: توسيط كامل، خط كبير، بدون أيقونة اللابتوب -->
                 <a href="/?subject={{ subject.id }}" class="card" style="justify-content: center; align-items: center; text-align: center; padding: 45px 20px;">
                     <h3 class="card-title" style="margin: 0 0 25px 0; font-size: 1.6rem; color: var(--text-main);">{{ subject.name }}</h3>
                     <div class="card-btn" style="max-width: 200px; margin: 0 auto;">دخول للمادة</div>
@@ -446,7 +531,7 @@
         </div>
         
         {% if content_type == 'quiz' %}
-            <!-- قسم الاختبار (Quiz) تم ضبط الحواف ليناسب الجوال ولا يخرج النص أو الأزرار عن الإطار -->
+            <!-- قسم الاختبار (Quiz) -->
             <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px 20px; box-shadow:var(--card-shadow); margin-top:25px; box-sizing: border-box; width: 100%; overflow:hidden;">
                 <div id="quiz-start" style="text-align:center;">
                     <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 15px;"><i class="fa-solid fa-award"></i></div>
@@ -467,14 +552,28 @@
                     <div id="qOptions" style="box-sizing: border-box; width: 100%;"></div>
                     <div id="quizExplanation" style="background:rgba(245,158,11,0.08); padding:16px; border-radius:12px; margin:16px 0; display:none; border-right:4px solid var(--warning); color:var(--text-main); font-size:0.95rem; line-height:1.6;"></div>
                     
-                    <!-- أزرار الاختبار: استخدام flex-wrap لتنزل للسطر التالي في الشاشات الصغيرة وتمنع الخروج عن الإطار -->
+                    <!-- أزرار الاختبار -->
                     <div style="display:flex; gap:10px; margin-top:25px; flex-wrap: wrap; box-sizing: border-box;">
                         <button id="btnPrev" class="btn-calc-outline" style="display:none; flex: 1 1 100px;" onclick="prevQuestion()"><i class="fa-solid fa-arrow-right"></i> السابق</button>
                         <button id="btnHint" class="btn-calc-outline" style="flex: 1 1 100px; border-color:var(--warning); color:var(--warning);" onclick="showHint()"><i class="fa-regular fa-lightbulb"></i> تلميح</button>
                         <button id="btnSkipNext" class="btn-calc-action" style="flex: 2 1 140px; background:var(--primary);" onclick="nextQuestion()">التالي <i class="fa-solid fa-arrow-left"></i></button>
                     </div>
                 </div>
-                <!-- جزء الشهادة كما هو -->
+
+                <div id="result-view" class="hidden" style="text-align:center;">
+                    <div id="certificateCard" style="background:linear-gradient(135deg, #0f172a, #1e293b); border:2px solid var(--warning); border-radius:24px; padding:40px; text-align:center; color:white; margin-bottom:30px; position:relative; overflow:hidden;">
+                        <div style="position:absolute; top:-20px; right:-20px; font-size:8rem; opacity:0.05;"><i class="fa-solid fa-award"></i></div>
+                        <div style="color:var(--warning); font-size:1.3rem; font-weight:900; margin-bottom:25px; font-family:'Outfit', sans-serif;">Amr Suhail Academy</div>
+                        <div id="certStudentName" style="font-size:2rem; font-weight:900; margin-bottom:15px; color:white;"></div>
+                        <div id="certChapterName" style="color:#cbd5e1; margin-bottom:25px; font-size:1.1rem;"></div>
+                        <div style="font-size:3.5rem; font-weight:900; color:var(--accent); margin-bottom:10px; text-shadow:0 0 20px rgba(16,185,129,0.4);" id="certPercent"></div>
+                        <div id="certGrade" style="font-weight:bold; font-size:1.2rem; color:var(--accent); background:rgba(16,185,129,0.1); padding:8px 24px; border-radius:50px; display:inline-block;"></div>
+                    </div>
+                    <div style="display:flex; gap:15px; justify-content:center; flex-wrap: wrap;">
+                        <button class="btn-calc-action" style="background:var(--accent); flex:1; min-width: 200px;" onclick="downloadCertificate()"><i class="fa-solid fa-download"></i> حفظ الشهادة</button>
+                        <button class="btn-calc-outline" style="flex:1; min-width: 200px;" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> إعادة الاختبار</button>
+                    </div>
+                </div>
             </div>
         {% else %}
         
@@ -525,6 +624,48 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- قسم الاستفسارات (Q&A) -->
+        <div style="margin-top:50px; background:var(--bg-card); border-radius:var(--radius-lg); padding:30px 25px; border:1px solid var(--border); box-shadow:var(--card-shadow);">
+            <div style="font-size:1.2rem; font-weight:900; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <div style="width:35px; height:35px; background:var(--primary-light); color:var(--primary); border-radius:10px; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-comments"></i></div>
+                استفسارات الطلاب
+            </div>
+            <div id="qaSuccessAlert" style="background:var(--accent-light); color:var(--accent); padding:12px; border-radius:10px; margin-bottom:15px; display:none; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> تم إرسال استفسارك بنجاح! سينشر فور الرد عليه.</div>
+            <form onsubmit="handleQuestionSubmit(event)" style="margin-bottom:30px;">
+                <input type="hidden" id="qa_subject_id" value="{{ subject.id }}">
+                <input type="hidden" id="qa_chapter_name" value="{{ chapter.name }}">
+                <input type="text" id="qa_student_name" placeholder="الاسم (اختياري)" class="qa-input-field">
+                <textarea id="qa_question_text" rows="2" placeholder="اكتب سؤالك بوضوح..." required class="qa-input-field"></textarea>
+                <button type="submit" id="qaSubmitBtn" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-paper-plane"></i> طرح السؤال</button>
+            </form>
+
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                {% if questions %}
+                    {% for q in questions %}
+                    <div style="background:var(--bg-body); border-radius:14px; padding:15px; border:1px solid var(--border);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <strong style="color:var(--text-main);"><i class="fa-solid fa-user-circle" style="color:var(--primary);"></i> {{ q.student_name }}</strong>
+                            {% if is_admin %}<button onclick="deleteQuestionDirect({{ q.id }})" style="color:var(--danger); background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>{% endif %}
+                        </div>
+                        <p style="margin:0 0 10px; line-height:1.5;">{{ q.question_text }}</p>
+                        {% if q.is_answered %}
+                            <div style="background:var(--accent-light); border-right:3px solid var(--accent); padding:10px; border-radius:8px;">
+                                <div style="font-weight:bold; color:var(--accent); font-size:0.85rem; margin-bottom:5px;"><i class="fa-solid fa-reply"></i> رد الأكاديمية:</div>
+                                <div style="margin:0; font-size:0.95rem;">{{ q.answer_text }}</div>
+                            </div>
+                        {% elif is_admin %}
+                            <textarea id="inline_reply_{{ q.id }}" rows="1" placeholder="اكتب الرد..." class="qa-input-field" style="margin-bottom:5px;"></textarea>
+                            <button onclick="submitInlineReply({{ q.id }})" class="btn-calc-outline" style="border-color:var(--accent); color:var(--accent); padding:8px;"><i class="fa-solid fa-check"></i> نشر الرد</button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align:center; color:var(--text-muted); font-size:0.9rem; padding: 15px; border: 1px dashed var(--border); border-radius: 12px;">لا توجد استفسارات منشورة بعد. كن أول من يسأل!</div>
+                {% endif %}
+            </div>
+        </div>
+
         {% endif %}
         {% endif %}
 
@@ -541,6 +682,7 @@
         </div>
     </footer>
 
+    <!-- ===== دوال الجافاسكربت الكاملة (لم يتم اختصار أي شيء) ===== -->
     <script>
     // --- UI & Basic Setup ---
     function updateThemeIcon() {
@@ -548,31 +690,29 @@
         document.getElementById('moon-icon').style.display = isDark ? 'none' : 'block';
         document.getElementById('sun-icon').style.display = isDark ? 'block' : 'none';
     }
+    
     function toggleTheme() {
         document.documentElement.classList.toggle('dark-mode');
         localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
         updateThemeIcon();
     }
     
-    // اضافة علامة السنة الاحترافية (1st, 2nd) بذكاء ووضعها داخل الأيقونة
+    // اضافة علامة السنة الاحترافية (1st, 2nd)
     function applyYearBadges() {
         document.querySelectorAll('.year-card-title').forEach(el => {
             let text = el.innerText;
             let badge = '';
-            // البحث عن الكلمة بجميع أشكالها لتجنب الأخطاء الإملائية
-            if(text.match(/أولى|اولى|الاولى/)) badge = '1st';
+            if(text.match(/أولى|اولى|الاولى|الأولى/)) badge = '1st';
             else if(text.match(/ثانية|ثانيه/)) badge = '2nd';
             else if(text.match(/ثالثة|ثالثه/)) badge = '3rd';
             else if(text.match(/رابعة|رابعه/)) badge = '4th';
             else if(text.match(/خامسة|خامسه/)) badge = '5th';
-            else badge = '★'; 
             
             if(badge) {
                 const card = el.closest('.card');
-                card.setAttribute('data-badge', badge); // للخلفية المائية
+                card.setAttribute('data-badge', badge); 
                 const iconWrapper = card.querySelector('.card-icon-wrapper');
                 if(iconWrapper) {
-                    // إدراج الرقم داخل الأيقونة بخط عريض
                     iconWrapper.innerHTML = `<span style="font-family:'Outfit', sans-serif; font-weight:900; font-size:1.6rem; letter-spacing:1px;">${badge}</span>`;
                 }
             }
@@ -587,7 +727,7 @@
         let completed = 0;
         checks.forEach(chk => {
             if(chk.checked) completed++;
-            localStorage.setItem(chk.dataset.id, chk.checked); // حفظ الحالة في المتصفح
+            localStorage.setItem(chk.dataset.id, chk.checked);
         });
         
         const pct = Math.round((completed / checks.length) * 100);
@@ -618,8 +758,9 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateThemeIcon();
         applyYearBadges(); 
-        loadStudentProgress(); // استدعاء شريط الإنجاز عند تحميل الصفحة
+        loadStudentProgress();
         if (!sessionStorage.getItem('visited')) document.getElementById('splash-screen').classList.remove('hidden');
+        checkForNewPlatformUpdates(); // تشغيل فحص الإشعارات
     });
 
     function scrollToYears() {
@@ -637,12 +778,14 @@
         cards.forEach(c => c.style.display = c.innerText.toUpperCase().indexOf(filter) > -1 ? "" : "none");
     }
 
+    // --- Popups & FAB ---
     function toggleFabMenu() {
         const menu = document.getElementById('fabMenu');
         menu.classList.toggle('open');
         document.getElementById('fabMainIcon').style.display = menu.classList.contains('open') ? 'none' : 'block';
         document.getElementById('fabCloseIcon').style.display = menu.classList.contains('open') ? 'block' : 'none';
     }
+    
     function togglePopup(boxId) {
         document.querySelectorAll('.popup-box').forEach(el => {
             if(el.id === boxId) el.classList.toggle('active');
@@ -651,12 +794,405 @@
         document.getElementById('chatOverlay').classList.toggle('active', document.getElementById(boxId).classList.contains('active'));
         if(document.getElementById('fabMenu') && document.getElementById('fabMenu').classList.contains('open')) toggleFabMenu();
     }
+    
     function closeAllPopups() {
         document.querySelectorAll('.popup-box').forEach(el => el.classList.remove('active'));
         document.getElementById('chatOverlay').classList.remove('active');
     }
+
+    // --- Admin Logic ---
+    async function handleSecretAdminClick() {
+        try {
+            const res = await fetch('/admin/status');
+            const data = await res.json();
+            if (data.is_admin) {
+                togglePopup('adminBox');
+                loadAdminQuestions();
+            } else {
+                const pass = prompt("رمز الدخول السري للوحة الإدارة:", "");
+                if (pass) {
+                    const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+                    if ((await loginRes.json()).status === 'success') location.reload();
+                    else alert("الرمز غير صحيح!");
+                }
+            }
+        } catch (e) { alert("حدث خطأ في الاتصال بالخادم."); }
+    }
     
-    // سكريبت الاختبار لم يُمَس وهو يعمل كما هو لديك تماماً
+    function switchAdminTab(tabName) {
+        document.querySelectorAll('#adminBox .btn-calc-outline').forEach(btn => {btn.style.color=''; btn.style.borderColor='';});
+        event.currentTarget.style.color='var(--primary)'; event.currentTarget.style.borderColor='var(--primary)';
+        document.getElementById('adminTab_qa').style.display = tabName==='qa' ? 'block' : 'none';
+        document.getElementById('adminTab_content').style.display = tabName==='content' ? 'block' : 'none';
+        document.getElementById('adminTab_updates').style.display = tabName==='updates' ? 'block' : 'none';
+        if(tabName==='qa') loadAdminQuestions();
+        if(tabName==='content') loadCustomContentList();
+    }
+
+    async function loadCustomContentList() {
+        const container = document.getElementById('adminCustomContentList');
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري الجلب...</div>`;
+        try {
+            const res = await fetch('/admin/custom-content');
+            const list = await res.json();
+            window.cachedCustomList = list || [];
+            if (list.length === 0) return container.innerHTML = `<div style="text-align:center; padding:20px; background:var(--bg-body); border-radius:12px;">لا يوجد محتوى مخصص حالياً.</div>`;
+            container.innerHTML = list.map(item => `
+                <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:bold; font-size:1.05rem; color:var(--text-main); margin-bottom:4px;">${item.title}</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${item.subject_name} (${item.chapter_name})</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="editCustomContentForm(${item.id})" style="background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteAdminContent(${item.id})" style="background:var(--danger); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) { container.innerHTML = "خطأ."; }
+    }
+    
+    function editCustomContentForm(id) {
+        const item = window.cachedCustomList.find(c => c.id === id);
+        if (!item) return;
+        document.getElementById('edit_content_id').value = item.id;
+        document.getElementById('add_year').value = item.year;
+        document.getElementById('add_term').value = item.term;
+        document.getElementById('add_subject').value = item.subject_name;
+        document.getElementById('add_chapter').value = item.chapter_name;
+        document.getElementById('add_type').value = item.content_type;
+        document.getElementById('add_title').value = item.title;
+        document.getElementById('add_url').value = item.url;
+        document.getElementById('add_download').value = item.download_url;
+        document.getElementById('add_notes').value = item.notes;
+        
+        document.getElementById('content_form_header').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الدرس / الملف:`;
+        document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> تحديث المحتوى`;
+        document.getElementById('btn_cancel_edit').style.display = "flex";
+    }
+    
+    function resetContentForm() {
+        document.getElementById('edit_content_id').value = '';
+        document.getElementById('add_subject').value = ''; document.getElementById('add_chapter').value = '';
+        document.getElementById('add_title').value = ''; document.getElementById('add_url').value = '';
+        document.getElementById('add_download').value = ''; document.getElementById('add_notes').value = '';
+        document.getElementById('content_form_header').innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> إضافة درس أو مذكرة جديدة:`;
+        document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> حفظ ونشر`;
+        document.getElementById('btn_cancel_edit').style.display = "none";
+    }
+    
+    async function submitNewContent() {
+        const editId = document.getElementById('edit_content_id').value;
+        const payload = {
+            year: document.getElementById('add_year').value.trim(),
+            term: document.getElementById('add_term').value.trim(),
+            subject_name: document.getElementById('add_subject').value.trim(),
+            chapter_name: document.getElementById('add_chapter').value.trim(),
+            content_type: document.getElementById('add_type').value,
+            title: document.getElementById('add_title').value.trim(),
+            url: document.getElementById('add_url').value.trim(),
+            download_url: document.getElementById('add_download').value.trim(),
+            notes: document.getElementById('add_notes').value.trim()
+        };
+        const endpoint = editId ? `/admin/edit-content/${editId}` : '/admin/add-content';
+        try {
+            const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("تم الحفظ بنجاح!");
+                resetContentForm(); loadCustomContentList();
+                if(!editId && location.href.includes('type=')) location.reload();
+            } else alert(data.message);
+        } catch (err) { alert("خطأ في الاتصال"); }
+    }
+    
+    async function deleteAdminContent(id) {
+        if (!confirm("هل أنت متأكد من الحذف؟")) return;
+        await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
+        loadCustomContentList();
+    }
+    
+    async function deleteCustomContentDirect(id) {
+        if (!confirm("حذف هذا العنصر بشكل نهائي؟")) return;
+        await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
+        location.reload();
+    }
+
+    // --- Admin & Student Q&A ---
+    async function loadAdminQuestions() {
+        const container = document.getElementById('adminQuestionsList');
+        try {
+            const res = await fetch('/admin/questions');
+            const qs = await res.json();
+            if (qs.length === 0) return container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--accent); background:var(--accent-light); border-radius:12px;"><i class="fa-solid fa-check-double"></i> لا توجد أسئلة معلقة.</div>`;
+            container.innerHTML = qs.map(q => `
+                <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border);">
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;"><i class="fa-solid fa-folder"></i> ${q.subject_id} | ${q.chapter_name}</div>
+                    <div style="font-weight:800; margin-bottom:5px; color:var(--primary);"><i class="fa-solid fa-user-circle"></i> ${q.student_name}:</div>
+                    <div style="margin-bottom:12px; line-height:1.5;">${q.question_text}</div>
+                    <textarea id="reply_input_${q.id}" rows="2" placeholder="اكتب ردك الأكاديمي..." style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); outline:none; font-family:inherit;"></textarea>
+                    <button onclick="submitAdminReply(${q.id})" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:10px; width:100%; margin-top:8px; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-reply-all"></i> نشر الرد</button>
+                </div>
+            `).join('');
+        } catch (e) { container.innerHTML = "خطأ في تحميل الأسئلة."; }
+    }
+    
+    async function submitAdminReply(qId) {
+        const replyText = document.getElementById(`reply_input_${qId}`).value;
+        if (!replyText.trim()) return alert("يرجى كتابة الرد أولاً.");
+        await fetch(`/admin/reply/${qId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_text: replyText }) });
+        loadAdminQuestions();
+    }
+    
+    async function submitInlineReply(qId) {
+        const replyText = document.getElementById(`inline_reply_${qId}`).value;
+        if (!replyText.trim()) return;
+        await fetch(`/admin/reply/${qId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_text: replyText }) });
+        location.reload();
+    }
+    
+    async function deleteQuestionDirect(qId) {
+        if(!confirm("هل أنت متأكد من حذف هذا السؤال؟")) return;
+        await fetch(`/admin/delete-question/${qId}`, { method: 'POST' });
+        location.reload();
+    }
+
+    async function handleQuestionSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('qaSubmitBtn'); btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الإرسال...';
+        const formData = new FormData();
+        formData.append('subject_id', document.getElementById('qa_subject_id').value);
+        formData.append('chapter_name', document.getElementById('qa_chapter_name').value);
+        formData.append('student_name', document.getElementById('qa_student_name').value);
+        formData.append('question_text', document.getElementById('qa_question_text').value);
+        await fetch('/ask-question', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> طرح السؤال';
+        document.getElementById('qa_question_text').value = '';
+        document.getElementById('qaSuccessAlert').style.display = 'block';
+    }
+
+    // --- What's New & Updates ---
+    async function checkForNewPlatformUpdates() {
+        try {
+            const res = await fetch('/api/updates'); const updates = await res.json();
+            if (updates.length > 0) {
+                const latestId = updates[0].id; const lastSeenId = localStorage.getItem('last_seen_update_id');
+                if (!lastSeenId || parseInt(lastSeenId) < latestId) {
+                    document.getElementById('unreadUpdateFabDot').style.display = 'block';
+                    document.getElementById('unreadStarDot').style.display = 'block';
+                }
+            }
+        } catch (e) {}
+    }
+    
+    async function openWhatsNewModal() {
+        togglePopup('whatsNewBox');
+        document.getElementById('unreadUpdateFabDot').style.display = 'none';
+        document.getElementById('unreadStarDot').style.display = 'none';
+        const container = document.getElementById('whatsNewList');
+        try {
+            const res = await fetch('/api/updates'); const updates = await res.json();
+            if (updates.length > 0) {
+                localStorage.setItem('last_seen_update_id', updates[0].id);
+                container.innerHTML = updates.map(u => `
+                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:15px; box-shadow:var(--card-shadow);">
+                        <span style="background:var(--primary-light); color:var(--primary); padding:4px 12px; border-radius:50px; font-size:0.8rem; font-weight:800;"><i class="fa-solid fa-tag"></i> ${u.tag}</span>
+                        <div style="font-weight:900; font-size:1.1rem; margin:12px 0 8px; color:var(--text-main);">${u.title}</div>
+                        <div style="font-size:0.95rem; color:var(--text-muted); line-height:1.6;">${u.description}</div>
+                    </div>`).join('');
+            } else container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;"><i class="fa-regular fa-bell-slash" style="font-size:2rem; margin-bottom:10px;"></i><br>لا توجد إشعارات أو تحديثات حالياً.</div>`;
+        } catch (e) { container.innerHTML = "خطأ في جلب التحديثات."; }
+    }
+    
+    async function publishNewUpdate() {
+        const title = document.getElementById('new_update_title').value;
+        const tag = document.getElementById('new_update_tag').value;
+        const desc = document.getElementById('new_update_desc').value;
+        if (!title || !desc) return alert("يرجى ملء كافة الحقول");
+        await fetch('/admin/add-update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, tag, description: desc }) });
+        alert("تم نشر الإشعار بنجاح!"); closeAllPopups();
+    }
+
+    // --- Calculator ---
+    function addRow() {
+        const div = document.createElement('div'); div.className = "calc-row";
+        div.style.display = "flex"; div.style.gap = "10px"; div.style.marginTop = "12px";
+        div.innerHTML = `<input type="number" placeholder="الساعات" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة" class="qa-input-field s-grade" style="margin:0;">`;
+        document.getElementById('subjectsList').appendChild(div);
+    }
+    
+    function calcFinalGPA() {
+        let tw = 0; let th = 0;
+        document.querySelectorAll('#subjectsList .calc-row').forEach(r => {
+            const h = parseFloat(r.querySelector('.s-hours').value); const g = parseFloat(r.querySelector('.s-grade').value);
+            if(!isNaN(h) && !isNaN(g)) { tw += h*g; th += h; }
+        });
+        const resGrade = document.getElementById('resGrade'); const resDet = document.getElementById('resDetails');
+        if(th === 0) { 
+            resGrade.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>'; 
+            resGrade.style.color = "var(--danger)"; 
+            resDet.innerText = "يرجى إدخال بيانات صحيحة أولاً."; 
+        } else {
+            const avg = tw/th; const gpa = avg/20;
+            let l='', c='';
+            if(avg>=90){l='A (ممتاز)';c='var(--accent)';}
+            else if(avg>=80){l='B (جيد جداً)';c='var(--primary)';}
+            else if(avg>=70){l='C (جيد)';c='var(--warning)';}
+            else if(avg>=60){l='D (مقبول)';c='#f97316';}
+            else{l='F (راسب)';c='var(--danger)';}
+            
+            resGrade.innerText = l; resGrade.style.color = c;
+            resDet.innerHTML = `النسبة المئوية: <b style="color:${c}">${avg.toFixed(2)}%</b><br><br>المعدل التراكمي: <b style="color:${c}; font-size:1.2rem;">${gpa.toFixed(2)} <span style="font-size:0.9rem; color:var(--text-muted);">من 5</span></b>`;
+        }
+        document.getElementById('calcResultBox').style.display = 'block';
+    }
+
+    // --- AI Chat ---
+    function previewAiImage() {
+        const f = document.getElementById('aiImageUpload').files[0];
+        if(f){ document.getElementById('aiImgPreview').src = URL.createObjectURL(f); document.getElementById('aiImgPreviewBox').style.display = 'block'; }
+    }
+    function clearAiImage() { document.getElementById('aiImageUpload').value=''; document.getElementById('aiImgPreviewBox').style.display='none'; }
+    
+    async function sendAIMessage() {
+        const txt = document.getElementById('aiUserInput').value.trim(); const file = document.getElementById('aiImageUpload').files[0];
+        if(!txt && !file) return;
+        const b = document.getElementById('aiChatBody');
+        
+        let html = `
+            <div style="display:flex; gap:15px; align-items:flex-end; flex-direction:row-reverse;">
+                <div style="width:35px; height:35px; border-radius:10px; background:var(--bg-body); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:var(--text-main);"><i class="fa-solid fa-user"></i></div>
+                <div style="background:var(--primary); color:white; padding:15px; border-radius:16px; border-bottom-left-radius:4px; box-shadow:var(--card-shadow); max-width:85%;">
+                    ${file?`<img src="${URL.createObjectURL(file)}" style="max-width:100%; border-radius:8px; margin-bottom:10px;">`:''}
+                    <div style="line-height:1.5;">${txt}</div>
+                </div>
+            </div>`;
+        b.innerHTML += html; document.getElementById('aiUserInput').value=''; clearAiImage(); b.scrollTop = b.scrollHeight;
+        
+        const loadId = 'ld_'+Date.now();
+        b.innerHTML += `
+            <div id="${loadId}" style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;">
+                <div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="fa-solid fa-robot"></i></div>
+                <div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; border-bottom-right-radius:4px; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحليل والإجابة...</div>
+            </div>`;
+        b.scrollTop = b.scrollHeight;
+        
+        const fd = new FormData(); if(txt) fd.append('message', txt); if(file) fd.append('file', file);
+        try {
+            const res = await fetch('/ask-ai', { method: 'POST', body: fd }); const data = await res.json();
+            document.getElementById(loadId).remove();
+            const rId = 'r_'+Date.now();
+            b.innerHTML += `
+                <div style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;">
+                    <div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="fa-solid fa-robot"></i></div>
+                    <div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; border-bottom-right-radius:4px; box-shadow:var(--card-shadow); line-height:1.6; max-width:85%; color:var(--text-main);" id="${rId}">${data.reply.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}</div>
+                </div>`;
+            if(window.MathJax) MathJax.typesetPromise([document.getElementById(rId)]);
+        } catch(e) { 
+            document.getElementById(loadId).remove(); 
+            b.innerHTML += `<div style="text-align:center; color:var(--danger); margin-top:10px;"><i class="fa-solid fa-triangle-exclamation"></i> عذراً، حدث خطأ في الاتصال بالمساعد.</div>`; 
+        }
+        b.scrollTop = b.scrollHeight;
+    }
+
+    // --- Quiz Logic ---
+    let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
+    async function startQuiz(chapter) {
+        const name = document.getElementById('studentNameInput').value.trim();
+        if(!name) return alert("أدخل اسمك الكريم للبدء.");
+        quizState.studentName = name; quizState.chapterName = chapter; quizState.currentQ = 0;
+        document.getElementById('startQuizBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعداد الأسئلة...';
+        try {
+            const res = await fetch(`https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429&t=${Date.now()}`);
+            const text = await res.text();
+            const rows = text.trim().split("\n").slice(1);
+            quizState.questions = rows.map(r => {
+                const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(x => x.replace(/^"|"$/g, '').trim());
+                return { chapter: c[3], q: c[5], opts: [c[6], c[7], c[8], c[9]].filter(x=>x), ans: parseInt(c[10]), explain: c[11]||"", status:'unanswered' };
+            }).filter(q => q.chapter === chapter && q.q);
+            
+            if(quizState.questions.length === 0) {
+                alert("لا توجد أسئلة متاحة حالياً لهذا الفصل.");
+                document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار الآن <i class="fa-solid fa-rocket"></i>';
+                return;
+            }
+            document.getElementById('quiz-start').classList.add('hidden'); document.getElementById('quiz-view').classList.remove('hidden');
+            loadQuestion();
+        } catch (e) { alert("حدث خطأ في جلب البيانات."); document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار الآن <i class="fa-solid fa-rocket"></i>'; }
+    }
+    
+    function loadQuestion() {
+        const q = quizState.questions[quizState.currentQ];
+        document.getElementById('qCount').innerHTML = `<i class="fa-solid fa-list-ol"></i> السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
+        document.getElementById('qText').innerText = q.q;
+        document.getElementById('quizProgressBar').style.width = ((quizState.currentQ)/quizState.questions.length)*100 + '%';
+        const optsDiv = document.getElementById('qOptions'); optsDiv.innerHTML = '';
+        q.opts.forEach((opt, idx) => {
+            const b = document.createElement('button'); b.className = 'quiz-opt'; 
+            b.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
+            if(q.status === 'answered'){
+                b.disabled = true;
+                if(idx === q.ans) { b.classList.add('correct'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`; }
+                else if(idx === q.selectedOpt) { b.classList.add('wrong'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`; }
+                else { b.innerHTML = `<span>${opt}</span>`; }
+            } else b.onclick = () => selectOption(idx);
+            optsDiv.appendChild(b);
+        });
+        const expBox = document.getElementById('quizExplanation');
+        expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain}`; expBox.style.display = q.status === 'answered' ? 'block' : 'none';
+        document.getElementById('btnPrev').style.display = quizState.currentQ > 0 ? 'flex' : 'none';
+        const nextBtn = document.getElementById('btnSkipNext');
+        nextBtn.innerHTML = q.status === 'answered' ? (quizState.currentQ === quizState.questions.length - 1 ? 'النتيجة <i class="fa-solid fa-flag-checkered"></i>' : 'السؤال التالي <i class="fa-solid fa-arrow-left"></i>') : 'تخطي السؤال <i class="fa-solid fa-forward"></i>';
+        nextBtn.style.background = q.status === 'answered' ? 'var(--primary)' : 'var(--text-muted)';
+    }
+    
+    function selectOption(idx) {
+        if(quizState.questions[quizState.currentQ].status === 'answered') return;
+        quizState.questions[quizState.currentQ].selectedOpt = idx;
+        quizState.questions[quizState.currentQ].status = 'answered';
+        loadQuestion();
+    }
+    
+    function showHint() { document.getElementById('quizExplanation').style.display = 'block'; }
+    function prevQuestion() { if(quizState.currentQ > 0) { quizState.currentQ--; loadQuestion(); } }
+    
+    function nextQuestion() {
+        if(quizState.questions[quizState.currentQ].status !== 'answered') quizState.questions[quizState.currentQ].status = 'skipped';
+        if(quizState.currentQ < quizState.questions.length - 1) { quizState.currentQ++; loadQuestion(); }
+        else showQuizResult();
+    }
+    
+    function confirmEndQuiz() { if(confirm("هل أنت متأكد من إنهاء الاختبار الآن؟")) showQuizResult(); }
+    
+    function showQuizResult() {
+        document.getElementById('quiz-view').classList.add('hidden'); document.getElementById('result-view').classList.remove('hidden');
+        const score = quizState.questions.filter(q => q.status === 'answered' && q.selectedOpt === q.ans).length;
+        const perc = (score / quizState.questions.length) * 100;
+        let grade='راسب'; let color='var(--danger)'; let icon = '<i class="fa-solid fa-xmark"></i>';
+        
+        if(perc>=90){grade='ممتاز'; color='var(--accent)'; icon='<i class="fa-solid fa-star"></i>';}
+        else if(perc>=80){grade='جيد جداً'; color='var(--primary)'; icon='<i class="fa-solid fa-check-double"></i>';}
+        else if(perc>=70){grade='جيد'; color='var(--warning)'; icon='<i class="fa-solid fa-check"></i>';}
+        else if(perc>=60){grade='مقبول'; color='#f97316'; icon='<i class="fa-solid fa-minus"></i>';}
+        
+        document.getElementById('certStudentName').innerText = quizState.studentName;
+        document.getElementById('certChapterName').innerText = quizState.chapterName;
+        document.getElementById('certPercent').innerText = perc.toFixed(0) + "%"; document.getElementById('certPercent').style.color = color;
+        document.getElementById('certGrade').innerHTML = `${icon} تقدير: ${grade}`; 
+        document.getElementById('certGrade').style.color = color;
+        document.getElementById('certGrade').style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : color === 'var(--danger)' ? '239,68,68' : '249,115,22'}, 0.15)`;
+        
+        if(perc>=80 && typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+    }
+    
+    function downloadCertificate() {
+        html2canvas(document.getElementById('certificateCard'), { scale: 3, useCORS: true, backgroundColor: null }).then(canvas => {
+            const link = document.createElement('a'); link.download = `شهادة_تقييم_${quizState.studentName}.png`;
+            link.href = canvas.toDataURL(); link.click();
+        });
+    }
     </script>
 </body>
 </html>

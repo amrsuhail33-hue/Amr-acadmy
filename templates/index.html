@@ -441,14 +441,28 @@
                 </div>
             </div>
 
-            <!-- تبويب 2: الإضافة المباشرة للدروس والملفات -->
+            <!-- تبويب 2: الإضافة والتعديل المباشر للدروس والملفات -->
             <div id="adminTab_content" style="display: none;">
                 <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 15px;">
-                    <div style="font-weight: 900; color: var(--primary); margin-bottom: 10px;">إضافة درس أو مذكرة جديدة للمنصة:</div>
+                    <div id="content_form_header" style="font-weight: 900; color: var(--primary); margin-bottom: 10px;">إضافة درس أو مذكرة جديدة للمنصة:</div>
                     
+                    <!-- حقل مخفي لمعرف التعديل -->
+                    <input type="hidden" id="edit_content_id" value="">
+
+                    <!-- القوائم المنسدلة الجاهزة للسنوات والأترام -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <input type="text" id="add_year" placeholder="السنة (مثال: السنة الأولى)" class="qa-input-field">
-                        <input type="text" id="add_term" placeholder="الترم (مثال: الترم الأول)" class="qa-input-field">
+                        <select id="add_year" class="qa-input-field" style="font-weight: 700;">
+                            <option value="السنة الأولى">السنة الأولى</option>
+                            <option value="السنة الثانية">السنة الثانية</option>
+                            <option value="السنة الثالثة">السنة الثالثة</option>
+                            <option value="السنة الرابعة">السنة الرابعة</option>
+                            <option value="السنة الخامسة">السنة الخامسة</option>
+                        </select>
+
+                        <select id="add_term" class="qa-input-field" style="font-weight: 700;">
+                            <option value="الترم الأول">الترم الأول</option>
+                            <option value="الترم الثاني">الترم الثاني</option>
+                        </select>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -466,9 +480,14 @@
                     <input type="url" id="add_download" placeholder="رابط التحميل المباشر (اختياري)" class="qa-input-field">
                     <input type="text" id="add_notes" placeholder="ملاحظة تظهر للطالب (اختياري)" class="qa-input-field">
 
-                    <button onclick="submitNewContent()" class="btn-calc-action" style="background: var(--accent); padding: 12px; font-size: 0.95rem; border-radius: 10px;">
-                        حفظ ونشر في المنصة فوراً 🚀
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn_save_content" onclick="submitNewContent()" class="btn-calc-action" style="background: var(--accent); padding: 12px; font-size: 0.95rem; border-radius: 10px; flex: 2;">
+                            حفظ ونشر في المنصة فوراً 🚀
+                        </button>
+                        <button id="btn_cancel_edit" onclick="resetContentForm()" class="btn-calc-outline" style="display: none; padding: 12px; font-size: 0.85rem; border-radius: 10px; flex: 1;">
+                            إلغاء ✕
+                        </button>
+                    </div>
                 </div>
 
                 <div style="font-weight: 800; color: var(--text-main); margin-bottom: 8px;">المحتوى المضاف من اللوحة:</div>
@@ -1067,8 +1086,11 @@
         }
     }
 
-    /* --- إدارة المحتوى المضاف من المعلم مباشرة --- */
+    /* --- إدارة المحتوى المضاف من المعلم (إضافة / تعديل / حذف) --- */
+    let cachedCustomList = [];
+
     async function submitNewContent() {
+        const editId = document.getElementById('edit_content_id').value;
         const year = document.getElementById('add_year').value.trim();
         const term = document.getElementById('add_term').value.trim();
         const subject_name = document.getElementById('add_subject').value.trim();
@@ -1080,23 +1102,22 @@
         const notes = document.getElementById('add_notes').value.trim();
 
         if (!year || !term || !subject_name || !title || !url) {
-            alert("يرجى إدخال السنة والترم واسم المادة وعنوان الدرس والرابط.");
+            alert("يرجى إدخال اسم المادة وعنوان الدرس والرابط.");
             return;
         }
 
+        const endpoint = editId ? `/admin/edit-content/${editId}` : '/admin/add-content';
+
         try {
-            const res = await fetch('/admin/add-content', {
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ year, term, subject_name, chapter_name, content_type, title, url, download_url, notes })
             });
             const data = await res.json();
             if (data.status === 'success') {
-                alert("تم إضافة المحتوى بنجاح! سيظهر في الموقع فوراً.");
-                document.getElementById('add_title').value = '';
-                document.getElementById('add_url').value = '';
-                document.getElementById('add_download').value = '';
-                document.getElementById('add_notes').value = '';
+                alert(editId ? "تم تحديث وتعديل المحتوى بنجاح!" : "تم إضافة المحتوى بنجاح! سيظهر في الموقع فوراً.");
+                resetContentForm();
                 loadCustomContentList();
             } else {
                 alert("تعذر الحفظ: " + data.message);
@@ -1106,6 +1127,44 @@
         }
     }
 
+    function editCustomContentForm(id) {
+        const item = cachedCustomList.find(c => c.id === id);
+        if (!item) return;
+
+        document.getElementById('edit_content_id').value = item.id;
+        document.getElementById('add_year').value = item.year;
+        document.getElementById('add_term').value = item.term;
+        document.getElementById('add_subject').value = item.subject_name;
+        document.getElementById('add_chapter').value = item.chapter_name;
+        document.getElementById('add_type').value = item.content_type;
+        document.getElementById('add_title').value = item.title;
+        document.getElementById('add_url').value = item.url;
+        document.getElementById('add_download').value = item.download_url;
+        document.getElementById('add_notes').value = item.notes;
+
+        document.getElementById('content_form_header').innerText = "✏️ تعديل بيانات الدرس / الملف:";
+        document.getElementById('btn_save_content').innerText = "تحديث المحتوى 💾";
+        document.getElementById('btn_save_content').style.background = "#3b82f6";
+        document.getElementById('btn_cancel_edit').style.display = "block";
+
+        document.getElementById('adminBox').querySelector('.popup-body').scrollTop = 0;
+    }
+
+    function resetContentForm() {
+        document.getElementById('edit_content_id').value = '';
+        document.getElementById('add_subject').value = '';
+        document.getElementById('add_chapter').value = '';
+        document.getElementById('add_title').value = '';
+        document.getElementById('add_url').value = '';
+        document.getElementById('add_download').value = '';
+        document.getElementById('add_notes').value = '';
+
+        document.getElementById('content_form_header').innerText = "إضافة درس أو مذكرة جديدة للمنصة:";
+        document.getElementById('btn_save_content').innerText = "حفظ ونشر في المنصة فوراً 🚀";
+        document.getElementById('btn_save_content').style.background = "var(--accent)";
+        document.getElementById('btn_cancel_edit').style.display = "none";
+    }
+
     async function loadCustomContentList() {
         const container = document.getElementById('adminCustomContentList');
         if (!container) return;
@@ -1113,17 +1172,22 @@
         try {
             const res = await fetch('/admin/custom-content');
             const list = await res.json();
+            cachedCustomList = list || [];
+
             if (!list || list.length === 0) {
                 container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:10px;">لم تقم بإضافة أي محتوى مخصص بعد.</div>`;
                 return;
             }
             container.innerHTML = list.map(item => `
-                <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-weight:bold; font-size:0.95rem; color:var(--text-main);">${item.content_type === 'videos' ? '🎥' : '📄'} ${item.title}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">${item.year} | ${item.term} | ${item.subject_name} (${item.chapter_name})</div>
                     </div>
-                    <button onclick="deleteCustomContentDirect(${item.id})" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:6px; font-size:0.75rem; cursor:pointer;">حذف ✕</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="editCustomContentForm(${item.id})" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:6px; font-size:0.78rem; font-weight:bold; cursor:pointer;">تعديل ✏️</button>
+                        <button onclick="deleteCustomContentDirect(${item.id})" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; font-size:0.78rem; font-weight:bold; cursor:pointer;">حذف ✕</button>
+                    </div>
                 </div>
             `).join('');
         } catch (e) {
@@ -1132,7 +1196,7 @@
     }
 
     async function deleteCustomContentDirect(id) {
-        if (!confirm("هل أنت متأكد من حذف هذا العنصر؟")) return;
+        if (!confirm("هل أنت متأكد من حذف هذا العنصر نهائياً؟")) return;
         try {
             const res = await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
             const data = await res.json();

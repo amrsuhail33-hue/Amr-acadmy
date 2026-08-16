@@ -247,7 +247,7 @@ def get_data_from_sheet():
             c_type = item.content_type.strip()
 
             if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
+            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
             if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
                 data[c_year]["terms"][c_term]["subjects"][c_subject] = {
                     "id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),
@@ -357,7 +357,7 @@ def home():
         return f"Error: {str(e)}"
 
 # ==========================================
-# مسارات الإضافة المباشرة للدروس والملفات
+# مسارات الإضافة والتعديل للمحتوى
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @admin_required
@@ -391,6 +391,28 @@ def add_custom_content():
         db.session.add(new_lesson)
         db.session.commit()
         return jsonify({"status": "success", "message": "تم إضافة المحتوى بنجاح وظهوره في المنصة فوراً!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
+@admin_required
+def edit_custom_content(content_id):
+    try:
+        lesson = CustomLesson.query.get_or_404(content_id)
+        data = request.json or request.form
+        
+        lesson.year = data.get('year', lesson.year).strip()
+        lesson.term = data.get('term', lesson.term).strip()
+        lesson.subject_name = data.get('subject_name', lesson.subject_name).strip()
+        lesson.chapter_name = data.get('chapter_name', lesson.chapter_name).strip() or 'عام'
+        lesson.content_type = data.get('content_type', lesson.content_type).strip()
+        lesson.title = data.get('title', lesson.title).strip()
+        lesson.url = data.get('url', lesson.url).strip()
+        lesson.download_url = data.get('download_url', lesson.download_url or '').strip()
+        lesson.notes = data.get('notes', lesson.notes or '').strip()
+
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث وتعديل المحتوى بنجاح!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

@@ -305,9 +305,9 @@
         </div>
         <div class="popup-body">
             <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button onclick="switchAdminTab('qa')" class="btn-calc-outline" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
-                <button onclick="switchAdminTab('content')" class="btn-calc-outline"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
-                <button onclick="switchAdminTab('updates')" class="btn-calc-outline"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
+                <button onclick="switchAdminTab('qa')" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
+                <button onclick="switchAdminTab('content')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
+                <button onclick="switchAdminTab('updates')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
             </div>
 
             <div id="adminTab_qa">
@@ -800,19 +800,23 @@
     async function handleSecretAdminClick() {
         try {
             const res = await fetch('/admin/status'); const data = await res.json();
-            if (data.is_admin) { togglePopup('adminBox'); loadAdminQuestions(); } 
+            if (data.is_admin || data.is_assistant) { 
+                togglePopup('adminBox'); 
+                if(data.is_assistant && !data.is_admin) {
+                    const buttons = document.querySelectorAll('#adminBox .admin-tab-btn');
+                    if(buttons.length >= 3) { buttons[0].style.display = 'none'; buttons[2].style.display = 'none'; }
+                    switchAdminTab('content');
+                } else {
+                    switchAdminTab('qa');
+                }
+            } 
             else {
-                // MODIFIED: Changed the expected password to "Ahmed"
-                const pass = prompt("رمز الدخول السري للوحة الإدارة:", "");
-                if (pass) {
-                    if (pass === "Ahmed") {
-                         // Proceed with login using the newly expected password
-                         const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
-                         if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
-                    } else {
-                         // Simulate incorrect password attempt locally if it doesn't match
-                         const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
-                         if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
+                const choice = prompt("اختر نوع الدخول:\n1- مسؤول المنصة (Admin)\n2- مساعد (Assistant)", "1");
+                if (choice === "1" || choice === "2") {
+                    const pass = prompt("أدخل الرمز السري:", "");
+                    if (pass) {
+                        const loginRes = await fetch('/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+                        if ((await loginRes.json()).status === 'success') location.reload(); else alert("الرمز غير صحيح!");
                     }
                 }
             }

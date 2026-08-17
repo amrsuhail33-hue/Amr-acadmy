@@ -1025,7 +1025,7 @@
         if(th === 0) { resGrade.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>'; resGrade.style.color = "var(--danger)"; resDet.innerText = "يرجى إدخال بيانات صحيحة أولاً."; } 
         else {
             const avg = tw/th; const gpa = avg/20; let l='', c='';
-            if(avg>=90){l='A (ممتاز)';c='var(--accent)';} else if(avg>=80){l='B (جيد جداً)';c='var(--primary)';} else if(avg>=70){l='C (جيد)';c='var(--warning)';} else if(avg>=60){l='D (مقبول)';c='#f97316';} else{l='F (راسب)';c='var(--danger)';}
+            if(avg>=90){l='A (ممتاز)';c='var(--accent)';} else if(avg>=80){l='B (جيد جداً)';c='var(--primary)';} else if(avg>=65){l='C (جيد)';c='var(--warning)';} else if(avg>=50){l='D (مقبول)';c='#f97316';} else{l='F (راسب)';c='var(--danger)';}
             resGrade.innerText = l; resGrade.style.color = c;
             resDet.innerHTML = `النسبة المئوية: <b style="color:${c}">${avg.toFixed(2)}%</b><br><br>المعدل التراكمي: <b style="color:${c}; font-size:1.2rem;">${gpa.toFixed(2)} <span style="font-size:0.9rem; color:var(--text-muted);">من 5</span></b>`;
         }

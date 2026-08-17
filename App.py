@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
+from groq import Groq
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
@@ -135,8 +136,14 @@ def can_manage_content(f):
 # ==========================================
 # AI APIs & Sheets
 # ==========================================
+
+# إعداد مفتاح Groq والنموذج
+GROQ_API_KEY = "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"
+groq_client = Groq(api_key=GROQ_API_KEY)
+GROQ_MODEL = "openai/gpt-oss-120b"
+
+# إبقاء مفتاح Gemini للمخطط (Planner) لضمان عمل الجداول دون مشاكل
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={AI_API_KEY}"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 CSV_URLS = [
@@ -463,15 +470,34 @@ def delete_update(update_id):
 def ask_ai():
     try:
         user_message = (request.json.get('message', '') if request.is_json else request.form.get('message', '')).strip()
-        parts = []
+        messages = [
+            {"role": "system", "content": "أنت مساعد الأكاديمية الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح."}
+        ]
+
         if not request.is_json and 'file' in request.files and request.files['file'].filename != '':
             file = request.files['file']
-            parts.append({"inlineData": {"mimeType": file.mimetype or 'image/jpeg', "data": base64.b64encode(file.read()).decode('utf-8')}})
-        prompt = "أنت مساعد الأكاديمية الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح.\n" + (f"سؤال: {user_message}" if user_message else "اشرح الصورة.")
-        parts.insert(0, {"text": prompt})
-        reply, error = send_gemini_request(API_URL, {"contents": [{"parts": parts}]})
-        return jsonify({"reply": reply}) if reply else (jsonify({"reply": error}), 500)
-    except Exception as e: return jsonify({"reply": str(e)}), 500
+            base64_image = base64.b64encode(file.read()).decode('utf-8')
+            messages.append({
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_message if user_message else "اشرح الصورة."},
+                    {"type": "image_url", "image_url": {"url": f"data:{file.mimetype or 'image/jpeg'};base64,{base64_image}"}}
+                ]
+            })
+        else:
+            messages.append({"role": "user", "content": user_message})
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            temperature=0.7,
+        )
+        
+        reply = response.choices[0].message.content
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        return jsonify({"reply": str(e)}), 500
 
 @app.route('/planner')
 def planner(): return render_template('planner.html')

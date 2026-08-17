@@ -236,7 +236,7 @@ def get_data_from_sheet():
                 data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
             subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
             if c_type == "videos":
-                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": c_chapter, "lessons": []}
+                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
                 subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
             elif c_type == "files":
                 if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
@@ -506,9 +506,35 @@ def planner(): return render_template('planner.html')
 def generate_plan():
     try:
         data = request.json or {}
-        
+        discipline = data.get('discipline', 'متوازن').strip()
+
+        # قوالب مخصصة تفرض فرقاً حقيقياً في عدد الساعات وطبيعة المهام
+        discipline_profiles = {
+            "مرن": (
+                "PACE: FLEXIBLE & LIGHT\n"
+                "- Daily study workload: 1.5 to 2.5 hours total.\n"
+                "- Tasks count: 1 to 2 light tasks per active day.\n"
+                "- Task style: Conceptual reading, high-level summaries, and gentle reviews without academic stress."
+            ),
+            "متوازن": (
+                "PACE: BALANCED & STANDARD\n"
+                "- Daily study workload: 3.5 to 5 hours total.\n"
+                "- Tasks count: 2 to 3 structured tasks per active day.\n"
+                "- Task style: Standard lecture study, chapter breakdowns, and moderate practice exercise solving."
+            ),
+            "مكثف": (
+                "PACE: INTENSIVE EXAM BOOTCAMP\n"
+                "- Daily study workload: 6 to 8.5+ hours total (maximize study time around sleep & busy hours).\n"
+                "- Tasks count: 3 to 5 deep-focus tasks per active day.\n"
+                "- Task style: Comprehensive chapter mastery, intense problem-solving sessions, past exam papers, and rigorous timed drills."
+            )
+        }
+
+        selected_profile = discipline_profiles.get(discipline, discipline_profiles["متوازن"])
+
         system_instruction = (
-            "You are an expert academic planner. Generate a structured study schedule in pure JSON format.\n"
+            "You are an expert academic planner. Generate a highly realistic, customized daily study schedule in pure JSON format.\n\n"
+            f"SELECTED DISCIPLINE MODE & CONSTRAINTS:\n{selected_profile}\n\n"
             "STRICT RULES:\n"
             "1. Output ONLY a valid JSON object matching this exact schema:\n"
             "{\n"
@@ -518,23 +544,24 @@ def generate_plan():
             '      "date": "YYYY-MM-DD",\n'
             '      "is_off_day": false,\n'
             '      "tasks": [\n'
-            '        {"title": "اسم المادة أو المهمة والموضوع", "allocated_hours": 2}\n'
+            '        {"title": "اسم المادة أو المهمة والموضوع بتفصيل واضح ومحفز", "allocated_hours": 2}\n'
             '      ]\n'
             '    }\n'
             '  ]\n'
             "}\n"
-            "2. Distribute the requested subjects evenly across ALL active days between start date and target date.\n"
-            "3. Do NOT make every day an off day. Set 'is_off_day': true ONLY for the explicitly requested off-days.\n"
-            "4. For regular study days, provide 2 to 4 detailed study tasks.\n"
-            "5. If Quran reading (الورد) is enabled, include it as a 0.5-hour task.\n"
-            "6. All titles and day names must be in Arabic."
+            "2. Make sure the total daily hours and task depths strictly reflect the chosen discipline level.\n"
+            "3. Distribute the requested subjects logically across all active days from Start Date to Target Date.\n"
+            "4. For requested Weekly Off-Days, set 'is_off_day': true and 'tasks': [].\n"
+            "5. If Quran reading (الورد) is enabled, include it as an extra task (~0.5 hour).\n"
+            "6. If Quran memorization is enabled, allocate proper time for the requested page count.\n"
+            "7. All task titles, subjects, and day names must be written in clear, professional Arabic."
         )
 
         user_prompt = (
             f"Start Date: {data.get('current_date')}\n"
             f"Target Date: {data.get('target_date')}\n"
             f"Subjects/Courses: {data.get('subjects')}\n"
-            f"Pace/Discipline: {data.get('discipline', 'متوازن')}\n"
+            f"Requested Discipline Mode: {discipline}\n"
             f"Sleep Hours: {data.get('sleep_hours')}\n"
             f"Busy/Work Hours: {data.get('busy_hours')}\n"
             f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
@@ -549,7 +576,7 @@ def generate_plan():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.2
+            temperature=0.65
         )
 
         reply_text = response.choices[0].message.content
@@ -566,11 +593,11 @@ def reschedule_plan():
         remaining = data.get('remaining_plans', [])
 
         system_instruction = (
-            "You are an academic rescheduling assistant. Re-distribute uncompleted tasks into the remaining days.\n"
+            "You are an academic rescheduling assistant. Re-distribute uncompleted tasks smartly into the remaining study days.\n"
             "STRICT RULES:\n"
             "1. Output ONLY a valid JSON object with the key 'plans' containing the updated days array.\n"
             "2. Preserve the exact structure: [{'day_name': '...', 'date': '...', 'is_off_day': false, 'tasks': [{'title': '...', 'allocated_hours': 1.5}]}]\n"
-            "3. Do not drop any tasks; merge missed ones smartly into available study days."
+            "3. Do not drop any tasks; merge missed ones logically into active study days without overloading off-days."
         )
 
         user_prompt = (
@@ -585,7 +612,7 @@ def reschedule_plan():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.2
+            temperature=0.4
         )
 
         reply_text = response.choices[0].message.content

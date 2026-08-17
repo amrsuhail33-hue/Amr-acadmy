@@ -137,12 +137,12 @@ def can_manage_content(f):
 # AI APIs & Sheets
 # ==========================================
 
-# إعداد مفتاح Groq والنموذج
+# إعداد Groq بموديل الرؤية والنصوص السريع
 GROQ_API_KEY = "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"
 groq_client = Groq(api_key=GROQ_API_KEY)
-GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_VISION_MODEL = "llama-3.2-11b-vision-preview"
 
-# إبقاء مفتاح Gemini للمخطط (Planner) لضمان عمل الجداول دون مشاكل
+# إبقاء مفتاح Gemini لخدمة المخطط
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
@@ -480,7 +480,7 @@ def ask_ai():
             messages.append({
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": user_message if user_message else "اشرح الصورة."},
+                    {"type": "text", "text": user_message if user_message else "اشرح وحلل هذه الصورة بالتفصيل والخطوات:"},
                     {"type": "image_url", "image_url": {"url": f"data:{file.mimetype or 'image/jpeg'};base64,{base64_image}"}}
                 ]
             })
@@ -488,7 +488,7 @@ def ask_ai():
             messages.append({"role": "user", "content": user_message})
 
         response = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
+            model=GROQ_VISION_MODEL,
             messages=messages,
             temperature=0.7,
         )

@@ -5,4 +5,5 @@ google-generativeai
 Pillow
 Flask-SQLAlchemy
 psycopg2-binary
-pip install groq
+groq
+

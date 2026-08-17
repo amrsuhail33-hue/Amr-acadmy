@@ -33,6 +33,27 @@ ASSISTANT_PASSWORD = "AhmedAI"
 db = SQLAlchemy(app)
 
 # ==========================================
+# دالة حساب التقدير الأكاديمي للكلية
+# ==========================================
+def calculate_grade_estimation(score):
+    try:
+        score = float(score)
+        if score >= 90 and score <= 100:
+            return "ممتاز"
+        elif score >= 80 and score < 90:
+            return "جيد جداً"
+        elif score >= 65 and score < 80:
+            return "جيد"
+        elif score >= 50 and score < 65:
+            return "مقبول"
+        elif score >= 0 and score < 50:
+            return "راسب"
+        else:
+            return "درجة غير صالحة"
+    except (ValueError, TypeError):
+        return "خطأ في القيمة"
+
+# ==========================================
 # Database Models
 # ==========================================
 class LessonQuestion(db.Model):
@@ -137,12 +158,10 @@ def can_manage_content(f):
 # AI APIs & Sheets
 # ==========================================
 
-# إعداد Groq بموديل الرؤية والنصوص السريع
 GROQ_API_KEY = "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"
 groq_client = Groq(api_key=GROQ_API_KEY)
-GROQ_VISION_MODEL = "llama-3.2-11b-vision-preview"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
-# إبقاء مفتاح Gemini لخدمة المخطط
 AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
 PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
@@ -464,40 +483,51 @@ def delete_update(update_id):
     except Exception: return jsonify({"status": "error"}), 500
 
 # ==========================================
+# حساب التقديرات الأكاديمية
+# ==========================================
+@app.route('/calculate-grade', methods=['POST'])
+def calculate_grade():
+    try:
+        data = request.json or request.form or {}
+        score = data.get('score')
+        if score is None:
+            return jsonify({"status": "error", "message": "يرجى إدخال الدرجة"}), 400
+        
+        grade = calculate_grade_estimation(score)
+        return jsonify({"status": "success", "score": score, "grade": grade})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
 # خدمات الذكاء الاصطناعي والمخطط
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
         user_message = (request.json.get('message', '') if request.is_json else request.form.get('message', '')).strip()
+        
         messages = [
-            {"role": "system", "content": "أنت مساعد الأكاديمية الأكاديمي. اشرح للطالب بأسلوب هندسي وفيزيائي مبسط وواضح."}
+            {
+                "role": "system", 
+                "content": "أنت المساعد الأكاديمي الذكي للأكاديمية. وظيفتك الإجابة بوضوح وبأسلوب علمي وهندسي مبسط، وشرح خطوات الحل للطلاب خطوة بخطوة باللغة العربية."
+            },
+            {
+                "role": "user", 
+                "content": user_message if user_message else "مرحبا"
+            }
         ]
 
-        if not request.is_json and 'file' in request.files and request.files['file'].filename != '':
-            file = request.files['file']
-            base64_image = base64.b64encode(file.read()).decode('utf-8')
-            messages.append({
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_message if user_message else "اشرح وحلل هذه الصورة بالتفصيل والخطوات:"},
-                    {"type": "image_url", "image_url": {"url": f"data:{file.mimetype or 'image/jpeg'};base64,{base64_image}"}}
-                ]
-            })
-        else:
-            messages.append({"role": "user", "content": user_message})
-
         response = groq_client.chat.completions.create(
-            model=GROQ_VISION_MODEL,
+            model=GROQ_MODEL,
             messages=messages,
-            temperature=0.7,
+            temperature=0.6,
         )
         
         reply = response.choices[0].message.content
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({"reply": str(e)}), 500
+        return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
 @app.route('/planner')
 def planner(): return render_template('planner.html')

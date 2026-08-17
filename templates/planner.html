@@ -5,26 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amr Suhail Academy | المخطط الذكي</title>
     
-    <!-- سكربت قراءة وضع الموقع الأساسي فوراً لمنع الوميض الأبيض -->
     <script>
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark-mode');
         }
     </script>
 
-    <!-- الخطوط العصرية (Tajawal للنصوص و Outfit للعلامة التجارية) -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- مكتبة الأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* =========================================
-           1. الوضع النهاري (Light Mode)
-           ========================================= */
         :root {
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
@@ -39,14 +32,10 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --brand-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
             --modal-bg: rgba(15, 23, 42, 0.6);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
         }
 
-        /* =========================================
-           2. الوضع الليلي (Dark Mode)
-           ========================================= */
         html.dark-mode {
             --bg-body: #0b1120;
             --bg-card: #162032;
@@ -61,7 +50,6 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #1e293b;
-            --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
             --modal-bg: rgba(11, 17, 32, 0.85);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
         }
@@ -96,7 +84,6 @@
         .checkbox-pill:hover { border-color: var(--primary); background: var(--primary-glow); }
         .checkbox-pill input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;}
 
-        /* الأزرار العصرية */
         .btn { 
             width: 100%; padding: 16px; border-radius: 14px; font-size: 1.05rem; font-weight: 800; 
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; border: none;
@@ -104,7 +91,7 @@
         .btn:active { transform: scale(0.98); }
         
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
         
         .btn-action { background: var(--success); color: #fff; box-shadow: 0 8px 20px var(--success-glow); }
         .btn-action:hover { filter: brightness(1.1); transform: translateY(-2px); }
@@ -118,12 +105,10 @@
         .btn-secondary { background: transparent; border: 2px solid var(--border); color: var(--text-muted); }
         .btn-secondary:hover { background: var(--bg-card-inner); border-color: var(--text-main); color: var(--text-main); }
 
-        /* شريط التقدم */
         .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; margin-bottom: 25px; box-shadow: var(--card-shadow); transition: 0.3s;}
         .progress-track { height: 14px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
 
-        /* بطاقة اليوم */
         .daily-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 25px; border-top: 5px solid var(--primary); box-shadow: var(--card-shadow); transition: 0.3s; }
         .daily-date-badge { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
         
@@ -141,12 +126,10 @@
         .spinner { width: 60px; height: 60px; border: 5px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* نافذة الاحتفال */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(8px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; transition: 0.3s; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px 30px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* حاوية التصدير */
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 50px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
     </style>
 </head>
@@ -173,7 +156,7 @@
                     <input type="date" id="target_date" required>
                 </div>
                 <div>
-                    <label><i class="fa-solid fa-bolt" style="color:var(--warning); margin-left:6px;"></i> مستوى الانضباط والوتيرة:</label>
+                    <label><i class="fa-solid fa-bolt" style="color:#eab308; margin-left:6px;"></i> مستوى الانضباط والوتيرة:</label>
                     <select id="discipline">
                         <option value="متوازن">متوازن (طبيعي ومريح)</option>
                         <option value="مرن">مرن (دراسة خفيفة)</option>
@@ -284,13 +267,12 @@
     </div>
 </div>
 
-<!-- حاوية تصدير الخطة الشاملة (مخفية) -->
 <div id="hidden-export-container"></div>
 
 <script>
 let draftPlans = null;
 
-// تعيين الحد الأدنى للتاريخ ليكون اليوم
+// ضبط الحد الأدنى للتاريخ ليكون اليوم
 document.getElementById('target_date').min = new Date().toISOString().split('T')[0];
 
 window.addEventListener('storage', (e) => {
@@ -307,27 +289,19 @@ window.onload = () => {
     }
 };
 
-/* =========================================================
-   المُحلل الذكي (Smart Parser) للبيانات القادمة من الـ AI
-   ========================================================= */
-
-// استخراج اسم المهمة بغض النظر عن اسم المفتاح (Key) الذي أرجعه الـ AI
 function getTaskTitle(t) {
     if (!t) return 'مهمة دراسية';
-    if (typeof t === 'string') return t; // إذا أرجعها كنص مباشر
-    // البحث في أشهر المفاتيح المحتملة
+    if (typeof t === 'string') return t;
     return t.title || t.subject || t.task || t.name || t.topic || t.description || t.activity || 'مهمة دراسية';
 }
 
-// استخراج الوقت المخصص للمهمة بغض النظر عن اسم المفتاح أو نوعه
 function getTaskHours(t) {
     if (!t) return 1;
     if (typeof t === 'number') return t;
     if (typeof t === 'string') {
-        const match = t.match(/(\d+(?:\.\d+)?)/); // استخراج الأرقام من النصوص مثل "2 ساعة"
+        const match = t.match(/(\d+(?:\.\d+)?)/);
         return match ? parseFloat(match[0]) : 1;
     }
-    // البحث في المفاتيح المحتملة
     let val = t.allocated_hours ?? t.hours ?? t.duration ?? t.time ?? t.estimated_time ?? 1;
     if (typeof val === 'string') {
         const m = val.match(/(\d+(?:\.\d+)?)/);
@@ -336,7 +310,6 @@ function getTaskHours(t) {
     return parseFloat(val) || 1;
 }
 
-// تنسيق الساعات بشكل جميل للقراءة
 function formatHours(h) {
     const num = parseFloat(h);
     if (isNaN(num) || num === 0) return 'مهمة';
@@ -380,22 +353,50 @@ document.getElementById('planForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const res = await fetch('/generate_plan', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const res = await fetch('/generate_plan', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(payload) 
+        });
+        
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Server error");
+        }
+
         const data = await res.json();
         
-        const rawPlans = data.plans || (Array.isArray(data) ? data : null);
-        if (!rawPlans) throw new Error("Format error");
+        // استخراج المصفوفة مهما كان شكل التغليف القادم من الـ AI
+        let rawPlans = null;
+        if (Array.isArray(data)) {
+            rawPlans = data;
+        } else if (data.plans && Array.isArray(data.plans)) {
+            rawPlans = data.plans;
+        } else if (data.schedule && Array.isArray(data.schedule)) {
+            rawPlans = data.schedule;
+        } else if (data.days && Array.isArray(data.days)) {
+            rawPlans = data.days;
+        } else {
+            for (let k in data) {
+                if (Array.isArray(data[k])) {
+                    rawPlans = data[k];
+                    break;
+                }
+            }
+        }
 
-        // تطبيق المُحلل الذكي على المصفوفة القادمة لتوحيد الهيكل
+        if (!rawPlans || rawPlans.length === 0) throw new Error("Format error");
+
         draftPlans = rawPlans.map(p => {
             let tasksArr = p.tasks || p.plan || p.schedule || [];
-            if (!Array.isArray(tasksArr)) { tasksArr = Object.values(tasksArr); } // تحويل لأي كائن غير متوقع
+            if (!Array.isArray(tasksArr)) tasksArr = Object.values(tasksArr);
             
+            const off = isOffDay(p) || (tasksArr.length === 0);
             return {
                 date: p.date || p.day_date || '',
                 day_name: getDayName(p),
-                is_off_day: isOffDay(p) || tasksArr.length === 0,
-                tasks: tasksArr.map(t => ({
+                is_off_day: off,
+                tasks: off ? [] : tasksArr.map(t => ({
                     title: getTaskTitle(t),
                     allocated_hours: getTaskHours(t),
                     done: false
@@ -406,6 +407,7 @@ document.getElementById('planForm').addEventListener('submit', async (e) => {
         renderPreview(draftPlans);
         switchView('preview-view');
     } catch(err) {
+        console.error(err);
         alert("حدث خطأ في استلام الخطة من الخادم، يرجى المحاولة مرة أخرى.");
         switchView('setup-view');
     }
@@ -469,7 +471,7 @@ function renderTodayCard() {
         </div>`;
 
     if (today.is_off_day || !today.tasks || today.tasks.length === 0) {
-        html += `<div style="text-align:center; padding: 30px; color: var(--text-muted); font-size: 1.1rem; font-weight:700;"><i class="fa-solid fa-mug-hot" style="font-size:2rem; margin-bottom:15px; color:var(--warning);"></i><br>يوم مخصص للراحة وتجديد النشاط</div>`;
+        html += `<div style="text-align:center; padding: 30px; color: var(--text-muted); font-size: 1.1rem; font-weight:700;"><i class="fa-solid fa-mug-hot" style="font-size:2rem; margin-bottom:15px; color:#eab308;"></i><br>يوم مخصص للراحة وتجديد النشاط</div>`;
     } else {
         today.tasks.forEach((task, idx) => {
             const completedClass = task.done ? 'completed' : '';
@@ -536,15 +538,15 @@ async function completeDayAction() {
             const result = await res.json();
             const resPlans = result.plans || (Array.isArray(result) ? result : null);
             if (resPlans) {
-                // استخدام المحلل الذكي لتحديث الأيام المتبقية
                 const formattedPlans = resPlans.map(p => {
                     let tasksArr = p.tasks || p.plan || p.schedule || [];
                     if (!Array.isArray(tasksArr)) tasksArr = Object.values(tasksArr);
+                    const off = isOffDay(p) || (tasksArr.length === 0);
                     return {
                         date: p.date || p.day_date || '',
                         day_name: getDayName(p),
-                        is_off_day: isOffDay(p) || tasksArr.length === 0,
-                        tasks: tasksArr.map(t => ({
+                        is_off_day: off,
+                        tasks: off ? [] : tasksArr.map(t => ({
                             title: getTaskTitle(t),
                             allocated_hours: getTaskHours(t),
                             done: false
@@ -553,7 +555,10 @@ async function completeDayAction() {
                 });
                 store.plans.splice(store.currentIndex + 1, remainingDays.length, ...formattedPlans);
             }
-        } catch (e) { alert("حدث خطأ في تحديث الخطة، سيتم الانتقال لليوم التالي كما هو."); }
+        } catch (e) { 
+            console.error(e);
+            alert("حدث خطأ في تحديث الخطة، سيتم الانتقال لليوم التالي كما هو."); 
+        }
         
         store.currentIndex++;
         localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));

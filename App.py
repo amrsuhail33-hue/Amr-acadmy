@@ -16,7 +16,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# إعداد قاعدة البيانات التلقائي ومعالجة الرابط لـ Supabase/Render
+# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase/Render
 db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
@@ -38,15 +38,15 @@ db = SQLAlchemy(app)
 def calculate_grade_estimation(score):
     try:
         score = float(score)
-        if score >= 90 and score <= 100:
+        if 90 <= score <= 100:
             return "ممتاز"
-        elif score >= 80 and score < 90:
+        elif 80 <= score < 90:
             return "جيد جداً"
-        elif score >= 65 and score < 80:
+        elif 65 <= score < 80:
             return "جيد"
-        elif score >= 50 and score < 65:
+        elif 50 <= score < 65:
             return "مقبول"
-        elif score >= 0 and score < 50:
+        elif 0 <= score < 50:
             return "راسب"
         else:
             return "درجة غير صالحة"
@@ -157,44 +157,14 @@ def can_manage_content(f):
 # ==========================================
 # AI APIs & Sheets
 # ==========================================
-
-GROQ_API_KEY = "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"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "openai/gpt-oss-120b"
-
-AI_API_KEY = "AQ.Ab8RN6JVJWxcADzJkxYA2To2c6k4yFw8FN9LS5zw7yeuS42Ghw"
-PLANNER_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={AI_API_KEY}"
 
 CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
-
-def send_gemini_request(url, payload, max_retries=3, timeout=40):
-    headers = {'Content-Type': 'application/json'}
-    last_error = "المساعد مشغول حالياً."
-    for attempt in range(max_retries):
-        try:
-            response = requests.post(url, headers=headers, json=payload, timeout=timeout)
-            if response.status_code == 200:
-                res_json = response.json()
-                candidates = res_json.get('candidates', [])
-                if candidates and 'content' in candidates[0]:
-                    parts = candidates[0]['content'].get('parts', [])
-                    if parts and 'text' in parts[0]:
-                        return parts[0]['text'], None
-                return None, "استجابة غير مكتملة."
-            if response.status_code in [429, 500, 503, 504]:
-                time.sleep(1.5 * (attempt + 1))
-                continue
-            else:
-                last_error = f"خطأ من الخادم: {response.status_code}"
-                break
-        except Exception as e:
-            time.sleep(1)
-            last_error = str(e)
-            continue
-    return None, last_error
 
 @app.route('/sw.js')
 def serve_sw():
@@ -499,7 +469,7 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي والمخطط
+# خدمات الذكاء الاصطناعي والمخطط عبر Groq
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -534,17 +504,79 @@ def planner(): return render_template('planner.html')
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
-    data = request.json or {}
-    prompt = f"ولد خطة من {data.get('current_date')} لـ {data.get('target_date')}. المواد: {data.get('subjects')}. أيام الراحة: {', '.join(data.get('off_days', []))}. الورد: {'نعم' if data.get('wird') else 'لا'}. أرجع JSON فقط."
-    reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
-    return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
+    try:
+        data = request.json or {}
+        
+        system_instruction = (
+            "أنت مخطط أكاديمي ذكي ودقيق جداً. وظيفتك إنشاء جدول دراسي متوازن ومنطقي للطلاب. "
+            "قواعد صارمة: "
+            "1. وزّع المواد بانتظام على كل الأيام بين تاريخ البداية والنهاية. "
+            "2. لا تجعل كل الأيام إجازات؛ ضع مهام دراسية حقيقية ومفصلة. "
+            "3. التزم فقط بأيام الراحة المحددة من الطالب. "
+            "4. يجب أن تكون الإجابة بصيغة JSON حصراً تتوافق تماماً مع بنية واجهة المخطط."
+        )
+
+        user_prompt = (
+            f"قم بإنشاء خطة دراسية متكاملة بالمعايير التالية:\n"
+            f"- تاريخ البدء: {data.get('current_date')}\n"
+            f"- تاريخ الانتهاء (الهدف): {data.get('target_date')}\n"
+            f"- المواد والمسارات الدراسية: {data.get('subjects')}\n"
+            f"- مستوى الوتيرة: {data.get('pace', 'متوسط')}\n"
+            f"- ساعات الانشغال: من {data.get('busy_from', 'غير محدد')} إلى {data.get('busy_to', 'غير محدد')}\n"
+            f"- أيام الراحة الأسبوعية: {', '.join(data.get('off_days', []))}\n"
+            f"- الورد اليومي: {'نعم' if data.get('wird') else 'لا'}\n\n"
+            f"أرجع النتيجة بصيغة JSON فقط دون أي نصوص إضافية."
+        )
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3
+        )
+
+        reply_content = response.choices[0].message.content
+        return jsonify(json.loads(reply_content))
+
+    except Exception as e:
+        return jsonify({"error": f"فشل في إنشاء الخطة: {str(e)}"}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
-    data = request.json or {}
-    prompt = f"أعد دمج المهام التي لم تنجز: {json.dumps(data.get('missed_tasks',[]))} ضمن الأيام: {json.dumps(data.get('remaining_plans',[]))} أرجع JSON."
-    reply, err = send_gemini_request(PLANNER_API_URL, {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"response_mime_type": "application/json"}})
-    return jsonify(json.loads(reply.replace('```json','').replace('```','').strip())) if reply else (jsonify({"error": err}), 500)
+    try:
+        data = request.json or {}
+        missed = data.get('missed_tasks', [])
+        remaining = data.get('remaining_plans', [])
+
+        system_instruction = (
+            "أنت خبير إعادة جدولة أكاديمي. أعد توزيع المهام التي تأخر الطالب عن إنجازها على الأيام المتبقية "
+            "بشكل عادل ومنطقي دون إرهاق الطالب ودون إلغاء الدروس. أرجع الناتج بصيغة JSON فقط."
+        )
+
+        user_prompt = (
+            f"المهام الفائتة: {json.dumps(missed, ensure_ascii=False)}\n"
+            f"الأيام والخطط المتبقية: {json.dumps(remaining, ensure_ascii=False)}\n"
+            f"أعد توزيع المهام ضمن الأيام المتبقية وأرجع النتيجة كـ JSON."
+        )
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3
+        )
+
+        reply_content = response.choices[0].message.content
+        return jsonify(json.loads(reply_content))
+
+    except Exception as e:
+        return jsonify({"error": f"فشل في إعادة الجدولة: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

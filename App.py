@@ -236,7 +236,7 @@ def get_data_from_sheet():
                 data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
             subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
             if c_type == "videos":
-                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": c_chapter, "lessons": []}
                 subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
             elif c_type == "files":
                 if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
@@ -508,24 +508,38 @@ def generate_plan():
         data = request.json or {}
         
         system_instruction = (
-            "أنت مخطط أكاديمي ذكي ودقيق جداً. وظيفتك إنشاء جدول دراسي متوازن ومنطقي للطلاب. "
-            "قواعد صارمة: "
-            "1. وزّع المواد بانتظام على كل الأيام بين تاريخ البداية والنهاية. "
-            "2. لا تجعل كل الأيام إجازات؛ ضع مهام دراسية حقيقية ومفصلة. "
-            "3. التزم فقط بأيام الراحة المحددة من الطالب. "
-            "4. يجب أن تكون الإجابة بصيغة JSON حصراً تتوافق تماماً مع بنية واجهة المخطط."
+            "You are an expert academic planner. Generate a structured study schedule in pure JSON format.\n"
+            "STRICT RULES:\n"
+            "1. Output ONLY a valid JSON object matching this exact schema:\n"
+            "{\n"
+            '  "plans": [\n'
+            '    {\n'
+            '      "day_name": "السبت",\n'
+            '      "date": "YYYY-MM-DD",\n'
+            '      "is_off_day": false,\n'
+            '      "tasks": [\n'
+            '        {"title": "اسم المادة أو المهمة والموضوع", "allocated_hours": 2}\n'
+            '      ]\n'
+            '    }\n'
+            '  ]\n'
+            "}\n"
+            "2. Distribute the requested subjects evenly across ALL active days between start date and target date.\n"
+            "3. Do NOT make every day an off day. Set 'is_off_day': true ONLY for the explicitly requested off-days.\n"
+            "4. For regular study days, provide 2 to 4 detailed study tasks.\n"
+            "5. If Quran reading (الورد) is enabled, include it as a 0.5-hour task.\n"
+            "6. All titles and day names must be in Arabic."
         )
 
         user_prompt = (
-            f"قم بإنشاء خطة دراسية متكاملة بالمعايير التالية:\n"
-            f"- تاريخ البدء: {data.get('current_date')}\n"
-            f"- تاريخ الانتهاء (الهدف): {data.get('target_date')}\n"
-            f"- المواد والمسارات الدراسية: {data.get('subjects')}\n"
-            f"- مستوى الوتيرة: {data.get('pace', 'متوسط')}\n"
-            f"- ساعات الانشغال: من {data.get('busy_from', 'غير محدد')} إلى {data.get('busy_to', 'غير محدد')}\n"
-            f"- أيام الراحة الأسبوعية: {', '.join(data.get('off_days', []))}\n"
-            f"- الورد اليومي: {'نعم' if data.get('wird') else 'لا'}\n\n"
-            f"أرجع النتيجة بصيغة JSON فقط دون أي نصوص إضافية."
+            f"Start Date: {data.get('current_date')}\n"
+            f"Target Date: {data.get('target_date')}\n"
+            f"Subjects/Courses: {data.get('subjects')}\n"
+            f"Pace/Discipline: {data.get('discipline', 'متوازن')}\n"
+            f"Sleep Hours: {data.get('sleep_hours')}\n"
+            f"Busy/Work Hours: {data.get('busy_hours')}\n"
+            f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
+            f"Include Daily Wird: {'Yes' if data.get('wird') else 'No'}\n"
+            f"Quran Memorization: {'Yes, ' + str(data.get('quran_pages', 1)) + ' pages' if data.get('quran_enabled') else 'No'}"
         )
 
         response = groq_client.chat.completions.create(
@@ -535,14 +549,14 @@ def generate_plan():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.3
+            temperature=0.2
         )
 
-        reply_content = response.choices[0].message.content
-        return jsonify(json.loads(reply_content))
+        reply_text = response.choices[0].message.content
+        return jsonify(json.loads(reply_text))
 
     except Exception as e:
-        return jsonify({"error": f"فشل في إنشاء الخطة: {str(e)}"}), 500
+        return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
@@ -552,14 +566,16 @@ def reschedule_plan():
         remaining = data.get('remaining_plans', [])
 
         system_instruction = (
-            "أنت خبير إعادة جدولة أكاديمي. أعد توزيع المهام التي تأخر الطالب عن إنجازها على الأيام المتبقية "
-            "بشكل عادل ومنطقي دون إرهاق الطالب ودون إلغاء الدروس. أرجع الناتج بصيغة JSON فقط."
+            "You are an academic rescheduling assistant. Re-distribute uncompleted tasks into the remaining days.\n"
+            "STRICT RULES:\n"
+            "1. Output ONLY a valid JSON object with the key 'plans' containing the updated days array.\n"
+            "2. Preserve the exact structure: [{'day_name': '...', 'date': '...', 'is_off_day': false, 'tasks': [{'title': '...', 'allocated_hours': 1.5}]}]\n"
+            "3. Do not drop any tasks; merge missed ones smartly into available study days."
         )
 
         user_prompt = (
-            f"المهام الفائتة: {json.dumps(missed, ensure_ascii=False)}\n"
-            f"الأيام والخطط المتبقية: {json.dumps(remaining, ensure_ascii=False)}\n"
-            f"أعد توزيع المهام ضمن الأيام المتبقية وأرجع النتيجة كـ JSON."
+            f"Missed Tasks: {json.dumps(missed, ensure_ascii=False)}\n"
+            f"Remaining Schedule: {json.dumps(remaining, ensure_ascii=False)}"
         )
 
         response = groq_client.chat.completions.create(
@@ -569,14 +585,14 @@ def reschedule_plan():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.3
+            temperature=0.2
         )
 
-        reply_content = response.choices[0].message.content
-        return jsonify(json.loads(reply_content))
+        reply_text = response.choices[0].message.content
+        return jsonify(json.loads(reply_text))
 
     except Exception as e:
-        return jsonify({"error": f"فشل في إعادة الجدولة: {str(e)}"}), 500
+        return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

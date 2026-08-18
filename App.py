@@ -32,14 +32,13 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات (تم الإصلاح)
+# إعداد قاعدة البيانات
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif raw_db_url.startswith("postgresql://"):
-    # تم إصلاح الخطأ الحرج هنا: المعامل الثاني هو النص البديل
     db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 else:
     db_url = raw_db_url
@@ -260,7 +259,8 @@ class WebAuthnCredential(db.Model):
     public_key = db.Column(db.Text, nullable=False)
     sign_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    student = db.relationship('Student')
+    
+    # ❌ تم حذف الـ student relationship من هنا لمنع التعارض مع الـ backref في كلاس Student
 
     def to_dict(self):
         return {
@@ -743,7 +743,7 @@ def check_quiz_answer():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# إدارة المفضلة (تمت الإضافة وإصلاح الخطأ)
+# إدارة المفضلة
 # ==========================================
 @app.route('/api/favorites', methods=['GET', 'POST', 'DELETE'])
 @student_required
@@ -1159,7 +1159,7 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي (مع دعم الملفات شكلياً)
+# خدمات الذكاء الاصطناعي
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -1469,7 +1469,7 @@ def complete_task(task_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات المهام الموحدة (تم دمج احتساب النقاط هنا أيضاً)
+# واجهات المهام الموحدة
 # ==========================================
 @app.route('/api/tasks', methods=['GET'])
 @student_required

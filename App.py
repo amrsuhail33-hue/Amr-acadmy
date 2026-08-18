@@ -24,6 +24,7 @@ from webauthn.helpers.structs import (
 )
 from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
 import uuid
+import math
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
@@ -99,6 +100,10 @@ class Student(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # علاقات للملف الشخصي
+    profile = db.relationship('UserProfile', backref='student', uselist=False)
+    credentials = db.relationship('WebAuthnCredential', backref='student', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -114,6 +119,170 @@ class Student(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
+# ==========================================
+# 🆕 نموذج الملف الشخصي (المستويات، النقاط، الترتيب)
+# ==========================================
+class UserProfile(db.Model):
+    __tablename__ = 'user_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), unique=True, nullable=False)
+    level = db.Column(db.Integer, default=1)
+    points = db.Column(db.Integer, default=0)
+    total_points = db.Column(db.Integer, default=0)  # النقاط التراكمية (لا تنقص)
+    show_in_leaderboard = db.Column(db.Boolean, default=True)
+    streak_days = db.Column(db.Integer, default=0)  # الأيام المتتالية
+    last_active = db.Column(db.Date, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def calculate_level(self):
+        """حساب المستوى بناءً على النقاط (مستويات لا نهائية)"""
+        if self.points < 0:
+            self.points = 0
+        # كل 100 نقطة = مستوى واحد (يمكن تعديلها)
+        new_level = math.floor(self.points / 100) + 1
+        if new_level < 1:
+            new_level = 1
+        return new_level
+
+    def add_points(self, points, reason="نشاط عام"):
+        """إضافة نقاط مع تسجيل المعاملة"""
+        self.points += points
+        self.total_points += points if points > 0 else 0
+        old_level = self.level
+        self.level = self.calculate_level()
+        self.updated_at = datetime.utcnow()
+        # تسجيل المعاملة
+        transaction = PointTransaction(
+            student_id=self.student_id,
+            points=points,
+            reason=reason,
+            level_before=old_level,
+            level_after=self.level
+        )
+        db.session.add(transaction)
+        # تحديث streak
+        today = datetime.utcnow().date()
+        if self.last_active == today - timedelta(days=1):
+            self.streak_days += 1
+        elif self.last_active != today:
+            self.streak_days = 1
+        self.last_active = today
+        db.session.commit()
+        return {"level_up": self.level > old_level, "new_level": self.level, "new_points": self.points}
+
+    def deduct_points(self, points, reason="خصم"):
+        """خصم نقاط مع تسجيل المعاملة (مع منع النقاط السالبة)"""
+        if points <= 0:
+            return
+        self.points -= points
+        if self.points < 0:
+            self.points = 0
+        old_level = self.level
+        self.level = self.calculate_level()
+        self.updated_at = datetime.utcnow()
+        transaction = PointTransaction(
+            student_id=self.student_id,
+            points=-points,
+            reason=reason,
+            level_before=old_level,
+            level_after=self.level
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        return {"level_down": self.level < old_level, "new_level": self.level, "new_points": self.points}
+
+    def to_dict(self):
+        return {
+            "student_id": self.student_id,
+            "level": self.level,
+            "points": self.points,
+            "total_points": self.total_points,
+            "streak_days": self.streak_days,
+            "show_in_leaderboard": self.show_in_leaderboard,
+            "level_progress": (self.points % 100) / 100 * 100 if self.points > 0 else 0,  # التقدم للمستوى التالي
+            "next_level_points": (math.floor(self.points / 100) + 1) * 100
+        }
+
+# ==========================================
+# 🆕 نموذج معاملات النقاط
+# ==========================================
+class PointTransaction(db.Model):
+    __tablename__ = 'point_transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    points = db.Column(db.Integer, nullable=False)  # موجب للإضافة، سالب للخصم
+    reason = db.Column(db.String(255), nullable=False)
+    level_before = db.Column(db.Integer)
+    level_after = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "points": self.points,
+            "reason": self.reason,
+            "level_before": self.level_before,
+            "level_after": self.level_after,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+# ==========================================
+# نموذج المهام الموحدة (معدل لإضافة is_wird)
+# ==========================================
+class UnifiedTask(db.Model):
+    __tablename__ = 'unified_tasks'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    planned_date = db.Column(db.Date, nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.Integer, default=2)
+    source = db.Column(db.String(20), default='manual')
+    allocated_hours = db.Column(db.Float, default=1.0)
+    is_wird = db.Column(db.Boolean, default=False)  # ✅ جديد: تحديد مهام الورد
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    student = db.relationship('Student', backref='unified_tasks')
+    lesson = db.relationship('CustomLesson')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "lesson_id": self.lesson_id,
+            "title": self.title,
+            "description": self.description or "",
+            "planned_date": self.planned_date.strftime("%Y-%m-%d") if self.planned_date else "",
+            "completed": self.completed,
+            "priority": self.priority,
+            "source": self.source,
+            "allocated_hours": self.allocated_hours or 1.0,
+            "is_wird": self.is_wird,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
+        }
+
+# ==========================================
+# نموذج بيانات البصمة (WebAuthn)
+# ==========================================
+class WebAuthnCredential(db.Model):
+    __tablename__ = 'webauthn_credentials'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    credential_id = db.Column(db.String(255), unique=True, nullable=False)
+    public_key = db.Column(db.Text, nullable=False)
+    sign_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student', backref='webauthn_credentials')
+
+# --- باقي النماذج (بدون تغيير) ---
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -222,58 +391,6 @@ class ExamPlanItem(db.Model):
             "priority": self.priority
         }
 
-# ==========================================
-# 🆕 نموذج المهام الموحدة (مع allocated_hours)
-# ==========================================
-class UnifiedTask(db.Model):
-    __tablename__ = 'unified_tasks'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    planned_date = db.Column(db.Date, nullable=False)
-    completed = db.Column(db.Boolean, default=False)
-    priority = db.Column(db.Integer, default=2)
-    source = db.Column(db.String(20), default='manual')
-    allocated_hours = db.Column(db.Float, default=1.0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    student = db.relationship('Student', backref='unified_tasks')
-    lesson = db.relationship('CustomLesson')
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "student_id": self.student_id,
-            "lesson_id": self.lesson_id,
-            "title": self.title,
-            "description": self.description or "",
-            "planned_date": self.planned_date.strftime("%Y-%m-%d") if self.planned_date else "",
-            "completed": self.completed,
-            "priority": self.priority,
-            "source": self.source,
-            "allocated_hours": self.allocated_hours or 1.0,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
-            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
-        }
-
-# ==========================================
-# 🆕 نموذج بيانات البصمة (WebAuthn)
-# ==========================================
-class WebAuthnCredential(db.Model):
-    __tablename__ = 'webauthn_credentials'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    credential_id = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.Text, nullable=False)
-    sign_count = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    student = db.relationship('Student', backref='webauthn_credentials')
-
-# --- النماذج القديمة ---
 class LessonQuestion(db.Model):
     __tablename__ = 'lesson_questions'
     id = db.Column(db.Integer, primary_key=True)
@@ -391,6 +508,13 @@ with app.app_context():
                 description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة."
             ))
             db.session.commit()
+        # إنشاء ملفات تعريف للمستخدمين الحاليين (إذا لم تكن موجودة)
+        students = Student.query.all()
+        for s in students:
+            if not UserProfile.query.filter_by(student_id=s.id).first():
+                profile = UserProfile(student_id=s.id)
+                db.session.add(profile)
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
         print(f"Startup DB Status: {e}")
@@ -505,22 +629,16 @@ def get_platform_data():
 @app.after_request
 def add_header(response):
     """إضافة رؤوس HTTP لتحسين التوافق مع iPhone/Safari"""
-    # منع التخزين المؤقت للصفحات الديناميكية (يمنع مشاكل Safari)
     if request.path.startswith('/') and not request.path.startswith('/static'):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
-    
-    # دعم CORS للـ WebAuthn (في حال الحاجة)
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    
-    # دعم Safari على iPhone (منع مشاكل الـ viewport)
     if 'Safari' in request.headers.get('User-Agent', ''):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    
     return response
 
 # ==========================================
@@ -605,6 +723,134 @@ def get_quiz():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
+# 🆕 التحقق من إجابة الاختبار (مع النقاط)
+# ==========================================
+@app.route('/api/quiz/check', methods=['POST'])
+@student_required
+def check_quiz_answer():
+    try:
+        data = request.get_json()
+        question_id = data.get('question_id')
+        selected_answer = data.get('selected_answer')
+        
+        question = QuizQuestion.query.get(question_id)
+        if not question:
+            return jsonify({"status": "error", "message": "السؤال غير موجود"}), 404
+        
+        is_correct = (selected_answer == question.correct_answer)
+        student_id = session['student_id']
+        profile = UserProfile.query.filter_by(student_id=student_id).first()
+        
+        result = {"is_correct": is_correct}
+        
+        if is_correct:
+            # +5 نقاط لكل إجابة صحيحة
+            if profile:
+                update_result = profile.add_points(5, f"إجابة صحيحة: {question.question_text[:30]}...")
+                result["points_added"] = 5
+                result["level_up"] = update_result.get("level_up", False)
+                result["new_level"] = update_result.get("new_level", profile.level)
+                result["new_points"] = update_result.get("new_points", profile.points)
+        else:
+            # -3 نقاط للإجابة الخاطئة (مع منع النقاط السالبة)
+            if profile:
+                update_result = profile.deduct_points(3, f"إجابة خاطئة: {question.question_text[:30]}...")
+                result["points_deducted"] = 3
+                result["level_down"] = update_result.get("level_down", False)
+                result["new_level"] = update_result.get("new_level", profile.level)
+                result["new_points"] = update_result.get("new_points", profile.points)
+        
+        return jsonify({"status": "success", "result": result})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕 API الملف الشخصي
+# ==========================================
+@app.route('/api/profile', methods=['GET'])
+@student_required
+def get_profile():
+    try:
+        student_id = session['student_id']
+        student = Student.query.get(student_id)
+        profile = UserProfile.query.filter_by(student_id=student_id).first()
+        
+        if not profile:
+            # إنشاء ملف تعريف إذا لم يكن موجوداً
+            profile = UserProfile(student_id=student_id)
+            db.session.add(profile)
+            db.session.commit()
+        
+        # جلب عدد المهام المكتملة
+        completed_tasks = UnifiedTask.query.filter_by(student_id=student_id, completed=True).count()
+        total_tasks = UnifiedTask.query.filter_by(student_id=student_id).count()
+        
+        # جلب آخر المعاملات
+        recent_transactions = PointTransaction.query.filter_by(student_id=student_id).order_by(PointTransaction.created_at.desc()).limit(10).all()
+        
+        return jsonify({
+            "status": "success",
+            "profile": profile.to_dict(),
+            "student": student.to_dict(),
+            "stats": {
+                "completed_tasks": completed_tasks,
+                "total_tasks": total_tasks,
+                "completion_rate": round((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0, 1)
+            },
+            "recent_transactions": [t.to_dict() for t in recent_transactions]
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕 تحديث ظهور المستخدم في الترتيب
+# ==========================================
+@app.route('/api/profile/visibility', methods=['POST'])
+@student_required
+def update_profile_visibility():
+    try:
+        data = request.get_json()
+        show = data.get('show', True)
+        student_id = session['student_id']
+        profile = UserProfile.query.filter_by(student_id=student_id).first()
+        if not profile:
+            return jsonify({"status": "error", "message": "الملف الشخصي غير موجود"}), 404
+        profile.show_in_leaderboard = bool(show)
+        db.session.commit()
+        return jsonify({"status": "success", "show_in_leaderboard": profile.show_in_leaderboard})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕 قائمة المتصدرين (Leaderboard)
+# ==========================================
+@app.route('/api/leaderboard', methods=['GET'])
+def get_leaderboard():
+    try:
+        # جلب المستخدمين الذين وافقوا على الظهور
+        profiles = UserProfile.query.filter_by(show_in_leaderboard=True).order_by(UserProfile.points.desc()).limit(50).all()
+        result = []
+        rank = 1
+        for p in profiles:
+            student = Student.query.get(p.student_id)
+            if student:
+                result.append({
+                    "rank": rank,
+                    "student_id": p.student_id,
+                    "name": student.name,
+                    "username": student.username,
+                    "level": p.level,
+                    "points": p.points,
+                    "streak_days": p.streak_days
+                })
+                rank += 1
+        return jsonify({"status": "success", "leaderboard": result})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
 # مصادقة الإدارة والمساعد
 # ==========================================
 @app.route('/admin/login', methods=['POST', 'GET'])
@@ -641,7 +887,7 @@ def admin_status():
     })
 
 # ==========================================
-# 🆕 Routes الطالب (المفقودة)
+# 🆕 Routes الطالب (مع دعم البصمة)
 # ==========================================
 @app.route('/student/register', methods=['POST'])
 def student_register():
@@ -660,6 +906,11 @@ def student_register():
         student = Student(username=username, name=name)
         student.set_password(password)
         db.session.add(student)
+        db.session.commit()
+        
+        # إنشاء ملف شخصي للمستخدم الجديد
+        profile = UserProfile(student_id=student.id)
+        db.session.add(profile)
         db.session.commit()
 
         return jsonify({"status": "success", "message": "تم تسجيل الطالب بنجاح"})
@@ -948,15 +1199,19 @@ def planner():
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
 # ==========================================
-# 🆕 توليد الخطة العامة (مع الورد اليومي)
+# 🆕 توليد الخطة العامة (مع الورد اليومي وإصلاح الحفظ)
 # ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
         data = request.get_json(silent=True) or {}
         student_id = session.get('student_id')
-        discipline = (data.get('discipline') or 'متوازن').strip()
         
+        # ✅ التأكد من وجود student_id
+        if not student_id:
+            return jsonify({"error": "يرجى تسجيل الدخول أولاً"}), 401
+        
+        discipline = (data.get('discipline') or 'متوازن').strip()
         wird_pages = data.get('wird_pages', 1)
         wird_enabled = data.get('wird', True)
         
@@ -1045,8 +1300,13 @@ def generate_plan():
         reply_text = response.choices[0].message.content
         plan_data = json.loads(reply_text)
 
+        # ✅ حفظ المهام في قاعدة البيانات
         if student_id and plan_data.get('plans'):
             try:
+                # حذف المهام القديمة (اختياري: يمكنك الاحتفاظ بها)
+                # UnifiedTask.query.filter_by(student_id=student_id, source='planner').delete()
+                # db.session.commit()
+                
                 for day in plan_data['plans']:
                     day_date = day.get('date')
                     if not day_date:
@@ -1060,6 +1320,9 @@ def generate_plan():
                         if not task_title:
                             continue
                         allocated_hours = task.get('allocated_hours', 1.5)
+                        is_wird = 'الورد' in task_title or 'قراءة' in task_title
+                        
+                        # البحث عن درس مطابق
                         lesson = CustomLesson.query.filter(
                             CustomLesson.title.ilike(f'%{task_title}%')
                         ).first()
@@ -1072,13 +1335,16 @@ def generate_plan():
                             source='planner',
                             priority=2,
                             allocated_hours=allocated_hours,
+                            is_wird=is_wird,
                             completed=False
                         )
                         db.session.add(unified_task)
                 db.session.commit()
+                return jsonify({"status": "success", "plan": plan_data})
             except Exception as e:
                 db.session.rollback()
                 print(f"Error saving planner tasks: {e}")
+                return jsonify({"error": f"Error saving tasks: {str(e)}"}), 500
 
         return jsonify({"status": "success", "plan": plan_data})
 
@@ -1093,6 +1359,9 @@ def reschedule_plan():
     try:
         data = request.get_json(silent=True) or {}
         student_id = session.get('student_id')
+        if not student_id:
+            return jsonify({"error": "يرجى تسجيل الدخول أولاً"}), 401
+            
         missed = data.get('missed_tasks', [])
         remaining = data.get('remaining_plans', [])
 
@@ -1138,6 +1407,8 @@ def reschedule_plan():
                         if not task_title:
                             continue
                         allocated_hours = task.get('allocated_hours', 1.5)
+                        is_wird = 'الورد' in task_title or 'قراءة' in task_title
+                        
                         existing_task = UnifiedTask.query.filter(
                             UnifiedTask.student_id == student_id,
                             UnifiedTask.title == task_title,
@@ -1146,6 +1417,7 @@ def reschedule_plan():
                         if existing_task:
                             existing_task.planned_date = planned_date
                             existing_task.allocated_hours = allocated_hours
+                            existing_task.is_wird = is_wird
                         else:
                             unified_task = UnifiedTask(
                                 student_id=student_id,
@@ -1154,6 +1426,7 @@ def reschedule_plan():
                                 source='planner',
                                 priority=2,
                                 allocated_hours=allocated_hours,
+                                is_wird=is_wird,
                                 completed=False
                             )
                             db.session.add(unified_task)
@@ -1168,13 +1441,53 @@ def reschedule_plan():
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 # ==========================================
-# واجهات المهام الموحدة
+# 🆕 إكمال مهمة (مع منح نقاط)
+# ==========================================
+@app.route('/api/tasks/complete/<int:task_id>', methods=['POST'])
+@student_required
+def complete_task(task_id):
+    try:
+        student_id = session['student_id']
+        task = UnifiedTask.query.get(task_id)
+        if not task:
+            return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
+        if task.student_id != student_id:
+            return jsonify({"status": "error", "message": "غير مصرح لك"}), 403
+        
+        if task.completed:
+            return jsonify({"status": "error", "message": "المهمة مكتملة بالفعل"}), 400
+        
+        task.completed = True
+        db.session.commit()
+        
+        # منح نقاط
+        profile = UserProfile.query.filter_by(student_id=student_id).first()
+        points_earned = 10
+        reason = f"إكمال مهمة: {task.title}"
+        if task.is_wird:
+            points_earned = 5
+            reason = f"إنجاز الورد القرآني: {task.title}"
+        
+        result = profile.add_points(points_earned, reason) if profile else None
+        
+        return jsonify({
+            "status": "success",
+            "message": "تم إكمال المهمة بنجاح!",
+            "points_earned": points_earned,
+            "profile": profile.to_dict() if profile else None
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# واجهات المهام الموحدة (معدلة)
 # ==========================================
 @app.route('/api/tasks', methods=['GET'])
 @student_required
 def get_unified_tasks():
     try:
-        student_id = session['student_id']
+        student_id = session.get('student_id')
         source = request.args.get('source')
         query = UnifiedTask.query.filter_by(student_id=student_id)
         if source:
@@ -1198,6 +1511,7 @@ def add_unified_task():
         lesson_id = data.get('lesson_id')
         description = data.get('description', '')
         allocated_hours = data.get('allocated_hours', 1.0)
+        is_wird = data.get('is_wird', False)
 
         if not title or not planned_date:
             return jsonify({"status": "error", "message": "العنوان والتاريخ مطلوبان"}), 400
@@ -1221,6 +1535,7 @@ def add_unified_task():
             source=source,
             priority=priority,
             allocated_hours=allocated_hours,
+            is_wird=is_wird,
             completed=False
         )
         db.session.add(task)
@@ -1258,6 +1573,8 @@ def update_unified_task(task_id):
             task.priority = int(data['priority'])
         if 'allocated_hours' in data:
             task.allocated_hours = float(data['allocated_hours'])
+        if 'is_wird' in data:
+            task.is_wird = bool(data['is_wird'])
         
         task.updated_at = datetime.utcnow()
         db.session.commit()
@@ -1306,6 +1623,8 @@ def sync_unified_tasks():
                             continue
                     if 'allocated_hours' in task_data:
                         task.allocated_hours = float(task_data['allocated_hours'])
+                    if 'is_wird' in task_data:
+                        task.is_wird = bool(task_data['is_wird'])
                     task.updated_at = datetime.utcnow()
                     continue
             
@@ -1327,6 +1646,7 @@ def sync_unified_tasks():
                 source=task_data.get('source', 'manual'),
                 priority=task_data.get('priority', 2),
                 allocated_hours=task_data.get('allocated_hours', 1.0),
+                is_wird=task_data.get('is_wird', False),
                 completed=task_data.get('completed', False)
             )
             db.session.add(new_task)
@@ -1471,6 +1791,7 @@ def generate_exam_plan():
                     source='exam',
                     priority=priority_map.get(task.get('priority', 'متوسط'), 2),
                     allocated_hours=allocated_hours,
+                    is_wird=False,
                     completed=False
                 )
                 db.session.add(unified_task)
@@ -1616,6 +1937,7 @@ def add_schedule():
             source='manual',
             priority=2,
             allocated_hours=1.0,
+            is_wird=False,
             completed=False
         )
         db.session.add(task)
@@ -1704,33 +2026,44 @@ def add_or_update_progress():
             progress = Progress(student_id=student_id, lesson_id=lesson_id)
             db.session.add(progress)
 
+        old_progress = progress.progress_percent
         if status in ['not_started', 'in_progress', 'completed']:
             progress.status = status
         if isinstance(progress_percent, int) and 0 <= progress_percent <= 100:
             progress.progress_percent = progress_percent
         progress.last_accessed = datetime.utcnow()
-
         db.session.commit()
+
+        # منح نقاط عند إكمال 100%
+        if progress_progress_percent == 100 and old_progress < 100:
+            profile = UserProfile.query.filter_by(student_id=student_id).first()
+            if profile:
+                profile.add_points(10, f"إكمال الدرس: {lesson.title}")
+                db.session.commit()
+
         return jsonify({"status": "success", "progress": progress.to_dict()})
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕🆕 WebAuthn (تسجيل الدخول بالبصمة)
+# 🆕🆕 WebAuthn (تسجيل الدخول بالبصمة) - معدل
 # ==========================================
 RP_ID = os.environ.get('RP_ID', 'localhost')
 RP_NAME = "Amr Suhail Academy"
 ORIGIN = os.environ.get('ORIGIN', 'http://localhost:5000')
 
 @app.route('/webauthn/register/begin', methods=['POST'])
-@student_required
 def webauthn_register_begin():
     try:
-        student_id = session['student_id']
-        student = Student.query.get(student_id)
+        data = request.get_json()
+        username = data.get('username')
+        if not username:
+            return jsonify({"status": "error", "message": "اسم المستخدم مطلوب"}), 400
+
+        student = Student.query.filter_by(username=username).first()
         if not student:
-            return jsonify({"status": "error", "message": "الطالب غير موجود"}), 404
+            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
         registration_options = generate_registration_options(
             rp_id=RP_ID,
@@ -1777,16 +2110,19 @@ def webauthn_register_begin():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/webauthn/register/complete', methods=['POST'])
-@student_required
 def webauthn_register_complete():
     try:
-        student_id = session['student_id']
         data = request.get_json()
         credential = data.get('credential')
-
+        user_id = session.get('webauthn_user_id')
         challenge = session.get('webauthn_challenge')
-        if not challenge:
+
+        if not user_id or not challenge:
             return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
+
+        student = Student.query.get(int(user_id))
+        if not student:
+            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
         credential_id = base64url_to_bytes(credential['id'])
         client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
@@ -1808,7 +2144,7 @@ def webauthn_register_complete():
         )
 
         new_cred = WebAuthnCredential(
-            student_id=student_id,
+            student_id=student.id,
             credential_id=bytes_to_base64url(verification.credential_id),
             public_key=verification.credential_public_key,
             sign_count=verification.sign_count,

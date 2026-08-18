@@ -24,7 +24,6 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
-# تحويل الرابط إلى محرك pg8000 المتوافق
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif raw_db_url.startswith("postgresql://"):
@@ -34,7 +33,6 @@ else:
 
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
-# إزالة معاملات sslmode تماماً لحل خطأ connect() got an unexpected keyword argument 'sslmode'
 if "?sslmode=" in db_url:
     db_url = db_url.split("?sslmode=")[0]
 elif "&sslmode=" in db_url:
@@ -43,14 +41,12 @@ elif "&sslmode=" in db_url:
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# تحسين اتصال الـ Connection Pooling مع Supabase
 if "sqlite" not in db_url:
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
     }
 
-# كلمات المرور للصلاحيات
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "123")
 ASSISTANT_PASSWORD = os.environ.get("ASSISTANT_PASSWORD", "AhmedAI")
 
@@ -92,6 +88,7 @@ class LessonQuestion(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         return {
             "id": self.id,
             "subject_id": self.subject_id,
@@ -100,7 +97,7 @@ class LessonQuestion(db.Model):
             "question_text": self.question_text,
             "answer_text": self.answer_text,
             "is_answered": self.is_answered,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+            "created_at": date_str
         }
 
 class PlatformUpdate(db.Model):
@@ -112,12 +109,13 @@ class PlatformUpdate(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d")
         return {
             "id": self.id,
             "title": self.title,
             "tag": self.tag,
             "description": self.description,
-            "date": self.created_at.strftime("%Y-%m-%d")
+            "date": date_str
         }
 
 class CustomLesson(db.Model):
@@ -135,6 +133,7 @@ class CustomLesson(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         return {
             "id": self.id,
             "year": self.year,
@@ -146,7 +145,7 @@ class CustomLesson(db.Model):
             "url": self.url or "",
             "download_url": self.download_url or "",
             "notes": self.notes or "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+            "created_at": date_str
         }
 
 with app.app_context():
@@ -255,7 +254,6 @@ def get_data_from_sheet():
                 subj_data = data[year]["terms"][term]["subjects"][subject]
                 if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
 
-        # دمج الدروس المضافة يدوياً بأمان من قاعدة البيانات
         try:
             custom_items = CustomLesson.query.all()
             for item in custom_items:

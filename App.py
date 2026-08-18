@@ -27,7 +27,7 @@ raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif raw_db_url.startswith("postgresql://"):
-    db_url = raw_db_url.replace("postgresql+pg8000://", 1)
+    db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 else:
     db_url = raw_db_url
 
@@ -264,93 +264,116 @@ def get_platform_data():
     return data
 
 # ==========================================
-# مسار مزامنة Google Sheets إلى Supabase لمرة واحدة
+# مسار مزامنة Google Sheets إلى Supabase (نسخة محمية وقوية)
 # ==========================================
 @app.route('/admin/sync-sheets-to-db', methods=['GET', 'POST'])
-@admin_required
 def sync_sheets_to_db():
+    if not session.get('is_admin'):
+        pwd = request.args.get('pwd')
+        if pwd != ADMIN_PASSWORD:
+            return jsonify({"status": "error", "message": "غير مصرح لك بالوصول. يرجى تسجيل الدخول أو تمرير ?pwd=123"}), 403
+
     added_count = 0
     skipped_count = 0
+    errors = []
     headers = {'User-Agent': 'Mozilla/5.0'}
     session_req = requests.Session()
     
+    # 1. سحب الفيديوهات والملفات من الشيت الأول
     try:
-        # 1. سحب الفيديوهات والملفات من الشيت الأول
-        res1 = session_req.get(CSV_URLS[0], headers=headers, timeout=30)
+        res1 = session_req.get(CSV_URLS[0], headers=headers, timeout=35)
         if res1.status_code == 200:
-            reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
+            csv_text = res1.content.decode('utf-8-sig', errors='ignore')
+            reader1 = csv.DictReader(io.StringIO(csv_text))
             for row in reader1:
-                year, term, subject, chapter, content_type, title, video_url, download_url, file_url, notes = "", "", "", "", "", "", "", "", "", ""
-                for k, v in row.items():
-                    if not k or v is None: continue
-                    k = str(k).strip().lower()
-                    v = str(v).strip()
-                    if "سنة" in k: year = v
-                    elif "ترم" in k: term = v
-                    elif "مادة" in k: subject = v
-                    elif "شبتر" in k or "فصل" in k: chapter = v
-                    elif "نوع" in k: content_type = v
-                    elif "عنوان" in k or "درس" in k: title = v
-                    elif "رابط المقطع" in k: video_url = v
-                    elif "تحميل" in k: download_url = v
-                    elif "رابط الملف" in k: file_url = v
-                    elif "ملاحظ" in k: notes = v
+                try:
+                    year, term, subject, chapter, content_type, title, video_url, download_url, file_url, notes = "", "", "", "", "", "", "", "", "", ""
+                    for k, v in row.items():
+                        if not k or v is None: continue
+                        k = str(k).strip().lower()
+                        v = str(v).strip()
+                        if "سنة" in k: year = v
+                        elif "ترم" in k: term = v
+                        elif "مادة" in k: subject = v
+                        elif "شبتر" in k or "فصل" in k: chapter = v
+                        elif "نوع" in k: content_type = v
+                        elif "عنوان" in k or "درس" in k: title = v
+                        elif "رابط المقطع" in k: video_url = v
+                        elif "تحميل" in k: download_url = v
+                        elif "رابط الملف" in k: file_url = v
+                        elif "ملاحظ" in k: notes = v
 
-                if not year or not term or not subject or not title: 
-                    continue
-                if not chapter: chapter = "عام"
+                    if not year or not term or not subject or not title: 
+                        continue
+                    if not chapter: chapter = "عام"
 
-                db_c_type = "videos" if "فيديو" in content_type else "files"
-                target_url = video_url if db_c_type == "videos" else (file_url or download_url)
+                    db_c_type = "videos" if "فيديو" in content_type else "files"
+                    target_url = video_url if db_c_type == "videos" else (file_url or download_url)
 
-                exists = CustomLesson.query.filter_by(
-                    year=year, term=term, subject_name=subject,
-                    chapter_name=chapter, content_type=db_c_type, title=title
-                ).first()
-
-                if not exists:
-                    db.session.add(CustomLesson(
+                    exists = CustomLesson.query.filter_by(
                         year=year, term=term, subject_name=subject,
-                        chapter_name=chapter, content_type=db_c_type,
-                        title=title, url=target_url, download_url=download_url, notes=notes
-                    ))
-                    added_count += 1
-                else:
-                    skipped_count += 1
+                        chapter_name=chapter, content_type=db_c_type, title=title
+                    ).first()
 
-        # 2. سحب الاختبارات من الشيت الثاني
-        res2 = session_req.get(CSV_URLS[1], headers=headers, timeout=30)
+                    if not exists:
+                        db.session.add(CustomLesson(
+                            year=year, term=term, subject_name=subject,
+                            chapter_name=chapter, content_type=db_c_type,
+                            title=title, url=target_url, download_url=download_url, notes=notes
+                        ))
+                        added_count += 1
+                    else:
+                        skipped_count += 1
+                except Exception as row_err:
+                    errors.append(f"Row error: {str(row_err)}")
+                    continue
+    except Exception as e1:
+        errors.append(f"Sheet 1 error: {str(e1)}")
+
+    # 2. سحب الاختبارات من الشيت الثاني
+    try:
+        res2 = session_req.get(CSV_URLS[1], headers=headers, timeout=35)
         if res2.status_code == 200:
-            reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
+            csv_text2 = res2.content.decode('utf-8-sig', errors='ignore')
+            reader2 = csv.reader(io.StringIO(csv_text2))
             next(reader2, None)
             for row in reader2:
-                if len(row) < 4: continue
-                year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
-                if not year or not term or not subject or not chapter: continue
+                try:
+                    if len(row) < 4: continue
+                    year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
+                    if not year or not term or not subject or not chapter: continue
 
-                exists = CustomLesson.query.filter_by(
-                    year=year, term=term, subject_name=subject,
-                    chapter_name=chapter, content_type="quiz"
-                ).first()
-
-                if not exists:
-                    db.session.add(CustomLesson(
+                    exists = CustomLesson.query.filter_by(
                         year=year, term=term, subject_name=subject,
-                        chapter_name=chapter, content_type="quiz",
-                        title="بدء الاختبار", url="", download_url="", notes=""
-                    ))
-                    added_count += 1
-                else:
-                    skipped_count += 1
+                        chapter_name=chapter, content_type="quiz"
+                    ).first()
 
+                    if not exists:
+                        db.session.add(CustomLesson(
+                            year=year, term=term, subject_name=subject,
+                            chapter_name=chapter, content_type="quiz",
+                            title="بدء الاختبار", url="", download_url="", notes=""
+                        ))
+                        added_count += 1
+                    else:
+                        skipped_count += 1
+                except Exception as row_err2:
+                    errors.append(f"Quiz row error: {str(row_err2)}")
+                    continue
+    except Exception as e2:
+        errors.append(f"Sheet 2 error: {str(e2)}")
+
+    try:
         db.session.commit()
-        return jsonify({
-            "status": "success",
-            "message": f"تمت المزامنة بنجاح! تم نقل {added_count} عنصر جديد إلى Supabase (تم تخطي {skipped_count} مكرر)."
-        })
-    except Exception as e:
+    except Exception as commit_err:
         db.session.rollback()
-        return jsonify({"status": "error", "message": f"فشلت المزامنة: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"Database commit failed: {str(commit_err)}"}), 500
+
+    return jsonify({
+        "status": "success",
+        "message": f"تمت المزامنة بنجاح! تم نقل {added_count} عنصر جديد، وتخطي {skipped_count} مكرر.",
+        "warnings": errors[:5]
+    })
 
 # ==========================================
 # Routes الرئيسية

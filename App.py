@@ -20,15 +20,19 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase/Render
+# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000
 # ==========================================
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
+raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
-# معالجة بادئات الروابط للتوافق مع SQLAlchemy و Psycopg2
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
-elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+psycopg2://"):
-    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+if raw_db_url.startswith("postgres://"):
+    db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
+elif raw_db_url.startswith("postgresql://") and not raw_db_url.startswith("postgresql+pg8000://"):
+    db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+else:
+    db_url = raw_db_url
+
+# تنظيف أي بادئة psycopg2 سابقة للتحويل إلى pg8000
+db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -728,3 +732,4 @@ def reschedule_plan():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+

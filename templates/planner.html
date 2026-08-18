@@ -6,11 +6,9 @@
     <title>Amr Suhail Academy | خطتي الدراسية الموحدة</title>
     
     <script>
-        // قراءة الثيم من localStorage
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark-mode');
         }
-        // قراءة بيانات المستخدم من Flask (تُحقن من الخادم)
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {% if student_name %}"{{ student_name }}"{% else %}null{% endif %};
     </script>
@@ -72,31 +70,23 @@
         body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .app-container { width: 100%; max-width: 850px; }
 
-        /* Header */
-        .brand-header { text-align: center; margin-bottom: 25px; position: relative; }
-        .brand-title { font-size: 2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0; display: inline-block; letter-spacing: 1px; }
-        .brand-sub { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
-        .brand-user { font-size: 0.9rem; color: var(--primary); font-weight: 800; margin-top: 4px; }
-        .brand-user i { margin-left: 6px; }
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        .brand-title { font-size: 2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0; }
+        .brand-sub { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+        .brand-user { font-size: 0.9rem; color: var(--primary); font-weight: 800; }
 
-        /* Tabs */
         .tabs-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
         .tab-btn { padding: 12px 24px; border-radius: 50px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
         .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
         .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
-        .tab-btn .badge { background: var(--danger); color: white; border-radius: 50%; padding: 2px 8px; font-size: 0.7rem; font-weight: 900; }
 
-        /* Cards */
-        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); transition: background 0.3s, border 0.3s; margin-bottom: 25px; }
-        .section-title { font-size: 1.3rem; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; }
+        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); margin-bottom: 25px; }
+        .section-title { font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
         .section-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
 
-        /* Forms */
-        .form-group { margin-bottom: 18px; width: 100%; }
-        label { display: block; margin-bottom: 6px; font-weight: 800; color: var(--text-main); font-size: 14px; }
-        input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
-            width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; transition: all 0.3s ease; outline: none;
-        }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; outline: none; transition: 0.3s; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
         textarea { resize: vertical; min-height: 70px; }
 
@@ -104,11 +94,10 @@
         @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .main-card { padding: 20px; } }
 
         .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
-        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.3s; color: var(--text-main); user-select: none; }
+        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.3s; user-select: none; }
         .checkbox-pill:hover { border-color: var(--primary); background: var(--primary-glow); }
         .checkbox-pill input { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
 
-        /* Buttons */
         .btn { width: 100%; padding: 14px; border-radius: var(--radius); font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; border: none; }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
@@ -120,64 +109,48 @@
         .btn-purple { background: var(--purple); color: #fff; box-shadow: 0 8px 20px var(--purple-glow); }
         .btn-purple:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
-        .btn-outline:hover { background: var(--bg-card-inner); border-color: var(--text-muted); }
-        .btn-outline-primary { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-        .btn-outline-primary:hover { background: var(--primary); color: white; }
-        .btn-sm { padding: 10px 16px; font-size: 0.85rem; width: auto; }
+        .btn-outline:hover { background: var(--bg-card-inner); }
 
-        /* Tasks */
-        .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s; gap: 10px; flex-wrap: wrap; }
-        .task-card:hover { border-color: var(--primary); transform: translateX(-4px); }
-        .task-card.completed { background: var(--bg-completed); border-color: transparent; opacity: 0.7; }
+        .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .task-card.completed { background: var(--bg-completed); opacity: 0.7; }
         .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
         .task-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-        .task-info input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; flex-shrink: 0; }
-        .task-title { font-weight: 700; font-size: 0.95rem; color: var(--text-main); word-break: break-word; }
-        .task-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .task-info input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; }
+        .task-title { font-weight: 700; font-size: 0.95rem; }
         .task-pill { font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 50px; white-space: nowrap; }
         .pill-primary { background: var(--primary-glow); color: var(--primary); }
-        .pill-success { background: var(--success-glow); color: var(--success); }
         .pill-warning { background: var(--warning-glow); color: var(--warning); }
-        .pill-purple { background: var(--purple-glow); color: var(--purple); }
         .pill-danger { background: var(--danger-glow); color: var(--danger); }
-        .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
-        .task-actions button { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 8px; border-radius: 8px; transition: 0.3s; color: var(--text-muted); }
-        .task-actions button:hover { background: var(--bg-card); }
-        .task-actions .del-btn:hover { color: var(--danger); background: var(--danger-glow); }
-
         .source-badge { font-size: 0.7rem; font-weight: 800; padding: 2px 10px; border-radius: 50px; }
         .source-manual { background: var(--primary-glow); color: var(--primary); }
         .source-planner { background: var(--purple-glow); color: var(--purple); }
         .source-exam { background: var(--warning-glow); color: var(--warning); }
+        .task-actions button { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 8px; border-radius: 8px; color: var(--text-muted); transition: 0.3s; }
+        .task-actions .del-btn:hover { color: var(--danger); background: var(--danger-glow); }
 
         .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
         .filter-btn { padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
         .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Progress */
-        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 25px; box-shadow: var(--card-shadow); }
+        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 25px; }
         .progress-track { height: 12px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 12px; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s; border-radius: 20px; }
 
-        /* Loading */
         .loading-state { text-align: center; padding: 50px 20px; }
         .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 35px 30px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-content { background: var(--bg-card); border-radius: var(--radius-lg); padding: 35px 30px; text-align: center; max-width: 450px; width: 100%; animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-icon { width: 75px; height: 75px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 18px; }
 
-        /* Toast */
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
         .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 24px; border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; transition: 0.3s; opacity: 0; transform: translateY(10px); pointer-events: auto; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { border-color: var(--success); color: var(--success); }
         .toast.error { border-color: var(--danger); color: var(--danger); }
-        .toast.info { border-color: var(--primary); color: var(--primary); }
 
         .view-section { display: none; }
         .active-view { display: block; animation: viewIn 0.35s ease; }
@@ -186,18 +159,68 @@
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
 
-        /* Hidden export container */
+        /* قائمة الدروس المختارة */
+        .lesson-checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-card-inner);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+        .lesson-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .lesson-checkbox-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-glow);
+        }
+        .lesson-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .lesson-checkbox-item .lesson-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-right: auto;
+        }
+        .selected-count {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 600px) {
+            .lesson-checkbox-grid { grid-template-columns: 1fr; }
+        }
+
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 40px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
     </style>
 </head>
 <body>
 
-<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <div class="app-container">
 
-    <!-- Brand Header -->
     <div class="brand-header">
         <h1 class="brand-title">Amr Suhail Academy</h1>
         <div class="brand-sub">نظام التخطيط الدراسي الموحّد</div>
@@ -220,19 +243,17 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- TAB 1: خططي (My Plans) -->
+    <!-- TAB 1: خططي -->
     <!-- ========================================================== -->
     <div id="tab-my-plans" class="view-section active-view">
-        <!-- Progress Bar -->
         <div class="progress-box">
             <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800;">
-                <span style="font-size: 1rem;"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-left:8px;"></i> التقدم العام</span>
+                <span><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-left:8px;"></i> التقدم العام</span>
                 <span id="progress-percent-label" style="color: var(--primary); font-size: 1.3rem; font-family: 'Outfit', sans-serif; font-weight: 900;">0%</span>
             </div>
             <div class="progress-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
         </div>
 
-        <!-- Filter Bar -->
         <div class="filter-bar">
             <button class="filter-btn active" data-filter="all">الكل</button>
             <button class="filter-btn" data-filter="manual">📝 يدوي</button>
@@ -242,21 +263,17 @@
             <button class="filter-btn" data-filter="pending">⏳ غير مكتمل</button>
         </div>
 
-        <!-- Tasks Container -->
-        <div id="tasks-container" class="main-card" style="padding: 20px;">
-            <!-- سيتم ملؤها بواسطة JavaScript -->
-        </div>
+        <div id="tasks-container" class="main-card" style="padding: 20px;"></div>
 
-        <!-- Action Buttons -->
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px;">
-            <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks()"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة</button>
-            <button class="btn btn-outline" style="flex:1;" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير الخطة كصورة</button>
-            <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll()"><i class="fa-solid fa-trash-can"></i> مسح كل المهام</button>
+            <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks()"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع غير المكتملة</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير كصورة</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll()"><i class="fa-solid fa-trash-can"></i> مسح الكل</button>
         </div>
     </div>
 
     <!-- ========================================================== -->
-    <!-- TAB 2: خطة جديدة (New Plan) -->
+    <!-- TAB 2: خطة جديدة -->
     <!-- ========================================================== -->
     <div id="tab-new-plan" class="view-section">
         <div class="main-card">
@@ -345,7 +362,9 @@
                 <button class="btn btn-purple" onclick="generatePlannerPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
-            <!-- Exam Form -->
+            <!-- ========================================================== -->
+            <!-- 🆕 Exam Form (مع قائمة الدروس بدلاً من المعرفات) -->
+            <!-- ========================================================== -->
             <div id="exam-form" style="display:none;">
                 <div class="form-group">
                     <label>اسم الاختبار:</label>
@@ -356,13 +375,22 @@
                     <input type="date" id="exam_date">
                 </div>
                 <div class="form-group">
-                    <label>معرفات الدروس (افصل بينها بفاصلة):</label>
-                    <input type="text" id="exam_lesson_ids" placeholder="مثال: 1, 2, 3, 4">
+                    <label>اختر الدروس التي تريد مراجعتها:</label>
+                    <div id="exam-lessons-container" style="margin-top: 8px;">
+                        <!-- سيتم ملؤها بواسطة JavaScript بقائمة الدروس -->
+                        <div class="loading-state" style="padding: 20px;">
+                            <div class="spinner" style="width:30px; height:30px;"></div>
+                            <p style="font-size:0.9rem; color:var(--text-muted);">جاري تحميل الدروس...</p>
+                        </div>
+                    </div>
+                    <div class="selected-count" id="selected-count">تم اختيار 0 درس</div>
                 </div>
                 <div style="background:var(--bg-card-inner); padding:12px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--text-muted);">
-                    <i class="fa-regular fa-lightbulb"></i> يمكنك الحصول على معرف الدرس من رابط الدرس في المنصة، أو من صفحة المحتوى.
+                    <i class="fa-regular fa-lightbulb"></i> اختر الدروس التي تريد مراجعتها للاختبار، وسيقوم الذكاء الاصطناعي بتوزيعها على الأيام المتبقية.
                 </div>
-                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات</button>
+                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات
+                </button>
             </div>
 
             <!-- Manual Form -->
@@ -393,7 +421,7 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- TAB 3: إحصائياتي (Stats) -->
+    <!-- TAB 3: إحصائياتي -->
     <!-- ========================================================== -->
     <div id="tab-stats" class="view-section">
         <div class="main-card">
@@ -427,9 +455,7 @@
 
 </div>
 
-<!-- ========================================================== -->
 <!-- Success Modal -->
-<!-- ========================================================== -->
 <div class="modal-overlay" id="success-modal">
     <div class="modal-content">
         <div class="modal-icon" style="background:var(--success-glow); color:var(--success);"><i class="fa-solid fa-trophy"></i></div>
@@ -439,9 +465,6 @@
     </div>
 </div>
 
-<!-- ========================================================== -->
-<!-- Hidden Export Container -->
-<!-- ========================================================== -->
 <div id="hidden-export-container"></div>
 
 <!-- ========================================================== -->
@@ -449,21 +472,15 @@
 <!-- ========================================================== -->
 <script>
 // ==========================================
-// UTILITY FUNCTIONS
+// UTILITIES
 // ==========================================
-function getToday() {
-    return new Date().toISOString().split('T')[0];
-}
-
+function getToday() { return new Date().toISOString().split('T')[0]; }
 function formatDate(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('ar-EG', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
-
-function isStudentLoggedIn() {
-    return STUDENT_ID !== null;
-}
+function isStudentLoggedIn() { return STUDENT_ID !== null; }
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
@@ -479,7 +496,7 @@ function showToast(message, type = 'info') {
 }
 
 // ==========================================
-// TAB SWITCHING
+// TABS & FILTERS
 // ==========================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -493,11 +510,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// ==========================================
-// FILTER
-// ==========================================
 let currentFilter = 'all';
-
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -507,17 +520,15 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
-// ==========================================
-// PLAN TYPE SELECTOR
-// ==========================================
 function showPlanType(type) {
     document.getElementById('planner-form').style.display = type === 'planner' ? 'block' : 'none';
     document.getElementById('exam-form').style.display = type === 'exam' ? 'block' : 'none';
     document.getElementById('manual-form').style.display = type === 'manual' ? 'block' : 'none';
+    if (type === 'exam') loadLessonsForExam();
 }
 
 // ==========================================
-// AUTO-SAVE SYSTEM (مزدوج)
+// AUTO-SAVE (مزدوج)
 // ==========================================
 async function autoSaveTask(taskData) {
     if (!isStudentLoggedIn()) {
@@ -573,7 +584,6 @@ function getUnsyncedTasks() {
     return tasks.filter(t => !t.synced);
 }
 
-// مزامنة دورية كل 30 ثانية
 setInterval(async () => {
     const unsynced = getUnsyncedTasks();
     if (unsynced.length === 0) return;
@@ -585,45 +595,34 @@ setInterval(async () => {
                 body: JSON.stringify(task)
             });
             const data = await res.json();
-            if (data.status === 'success') {
-                updateSyncStatus(task.id, true);
-            }
+            if (data.status === 'success') updateSyncStatus(task.id, true);
         } catch(e) { /* تجاهل */ }
     }
 }, 30000);
 
-// حفظ عند إغلاق الصفحة
 window.addEventListener('beforeunload', async () => {
     const unsynced = getUnsyncedTasks();
     for (const task of unsynced) {
-        try {
-            await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
-            });
-        } catch(e) { /* تجاهل */ }
+        try { await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); } catch(e) {}
     }
 });
 
 // ==========================================
-// LOAD TASKS (من API + LocalStorage)
+// LOAD TASKS
 // ==========================================
 async function loadTasks() {
     const container = document.getElementById('tasks-container');
     container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--text-muted);">جاري التحميل...</p></div>';
 
     let tasks = [];
-    // جلب من API
     if (isStudentLoggedIn()) {
         try {
             const res = await fetch('/api/tasks');
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
-        } catch(e) { /* فشل */ }
+        } catch(e) {}
     }
-    // دمج مع localStorage
     let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const apiIds = tasks.map(t => t.id);
     for (const local of localTasks) {
@@ -631,16 +630,12 @@ async function loadTasks() {
             tasks.push(local);
         }
     }
-    // حفظ الدمج في localStorage
     localStorage.setItem('unified_tasks', JSON.stringify(tasks));
 
-    // تطبيق الفلتر
     let filtered = tasks;
     if (currentFilter === 'completed') filtered = tasks.filter(t => t.completed);
     else if (currentFilter === 'pending') filtered = tasks.filter(t => !t.completed);
     else if (currentFilter !== 'all') filtered = tasks.filter(t => t.source === currentFilter);
-
-    // ترتيب حسب التاريخ
     filtered.sort((a, b) => (a.planned_date || '').localeCompare(b.planned_date || ''));
 
     if (filtered.length === 0) {
@@ -671,7 +666,7 @@ async function loadTasks() {
                     <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskComplete(${task.id}, this.checked)">
                     <span class="task-title">${task.title}</span>
                 </div>
-                <div class="task-meta">
+                <div class="task-meta" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                     <span class="task-pill ${priorityPill}">${priorityLabel}</span>
                     <span class="source-badge ${sourceClass}">${sourceLabel}</span>
                     ${task.lesson_id ? `<span class="task-pill pill-primary" style="font-size:0.7rem;">📖 درس</span>` : ''}
@@ -691,7 +686,6 @@ async function loadTasks() {
 // TASK OPERATIONS
 // ==========================================
 async function toggleTaskComplete(taskId, isChecked) {
-    // تحديث في localStorage
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const index = tasks.findIndex(t => t.id === taskId);
     if (index > -1) {
@@ -699,7 +693,6 @@ async function toggleTaskComplete(taskId, isChecked) {
         tasks[index].synced = false;
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
     }
-    // تحديث في API
     if (isStudentLoggedIn()) {
         try {
             await fetch(`/api/tasks/${taskId}`, {
@@ -708,9 +701,8 @@ async function toggleTaskComplete(taskId, isChecked) {
                 body: JSON.stringify({ completed: isChecked })
             });
             updateSyncStatus(taskId, true);
-        } catch(e) { /* فشل */ }
+        } catch(e) {}
     }
-    // إذا تم الإكمال، نحتفل
     if (isChecked) {
         confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
         document.getElementById('success-modal').style.display = 'flex';
@@ -724,15 +716,11 @@ function closeSuccessModal() {
 
 async function deleteTask(taskId) {
     if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
-    // حذف من localStorage
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     tasks = tasks.filter(t => t.id !== taskId);
     localStorage.setItem('unified_tasks', JSON.stringify(tasks));
-    // حذف من API
     if (isStudentLoggedIn()) {
-        try {
-            await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-        } catch(e) { /* فشل */ }
+        try { await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' }); } catch(e) {}
     }
     showToast('تم حذف المهمة', 'info');
     loadTasks();
@@ -745,7 +733,6 @@ async function editTaskDate(taskId) {
         alert('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD');
         return;
     }
-    // تحديث في localStorage
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const index = tasks.findIndex(t => t.id === taskId);
     if (index > -1) {
@@ -753,7 +740,6 @@ async function editTaskDate(taskId) {
         tasks[index].synced = false;
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
     }
-    // تحديث في API
     if (isStudentLoggedIn()) {
         try {
             await fetch(`/api/tasks/${taskId}`, {
@@ -762,7 +748,7 @@ async function editTaskDate(taskId) {
                 body: JSON.stringify({ planned_date: newDate })
             });
             updateSyncStatus(taskId, true);
-        } catch(e) { /* فشل */ }
+        } catch(e) {}
     }
     showToast('تم تحديث التاريخ', 'success');
     loadTasks();
@@ -776,20 +762,9 @@ async function addManualTask() {
     const date = document.getElementById('manual_date').value;
     const desc = document.getElementById('manual_desc').value.trim();
     const priority = parseInt(document.getElementById('manual_priority').value);
-
     if (!title) return alert('يرجى إدخال عنوان المهمة.');
     if (!date) return alert('يرجى تحديد التاريخ.');
-
-    const taskData = {
-        title: title,
-        planned_date: date,
-        description: desc,
-        source: 'manual',
-        priority: priority,
-        completed: false,
-        lesson_id: null
-    };
-
+    const taskData = { title, planned_date: date, description: desc, source: 'manual', priority, completed: false, lesson_id: null };
     const result = await autoSaveTask(taskData);
     if (result) {
         document.getElementById('manual_title').value = '';
@@ -797,13 +772,12 @@ async function addManualTask() {
         document.getElementById('manual_date').value = '';
         showToast('✅ تم إضافة المهمة', 'success');
         loadTasks();
-        // التبديل إلى تبويب خططي
         document.querySelector('[data-tab="my-plans"]').click();
     }
 }
 
 // ==========================================
-// GENERATE PLANNER PLAN (AI)
+// GENERATE PLANNER PLAN
 // ==========================================
 async function generatePlannerPlan() {
     const subjects = document.getElementById('subjects').value.trim();
@@ -832,13 +806,13 @@ async function generatePlannerPlan() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 current_date: getToday(),
-                subjects: subjects,
+                subjects,
                 target_date: targetDate,
-                discipline: discipline,
+                discipline,
                 sleep_hours: `${sleepStart}-${sleepEnd}`,
                 busy_hours: `${busyStart}-${busyEnd}`,
                 off_days: offDays,
-                wird: wird,
+                wird,
                 quran_enabled: quran,
                 quran_pages: quranPages
             })
@@ -859,19 +833,66 @@ async function generatePlannerPlan() {
 }
 
 // ==========================================
-// GENERATE EXAM PLAN (AI)
+// 🆕 GENERATE EXAM PLAN (مع قائمة الدروس المختارة)
 // ==========================================
+let selectedLessonIds = [];
+
+async function loadLessonsForExam() {
+    const container = document.getElementById('exam-lessons-container');
+    const countEl = document.getElementById('selected-count');
+    
+    if (!isStudentLoggedIn()) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لعرض الدروس.</div>`;
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/lessons');
+        const lessons = await res.json();
+        if (!Array.isArray(lessons) || lessons.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد دروس متاحة حالياً.</div>`;
+            return;
+        }
+        let html = `<div class="lesson-checkbox-grid">`;
+        lessons.forEach(l => {
+            const checked = selectedLessonIds.includes(l.id) ? 'checked' : '';
+            html += `
+                <label class="lesson-checkbox-item">
+                    <input type="checkbox" value="${l.id}" ${checked} onchange="updateSelectedLessons()">
+                    <span>${l.title}</span>
+                    <span class="lesson-meta">${l.subject_name} - ${l.chapter_name}</span>
+                </label>
+            `;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+        updateSelectedCount();
+    } catch(e) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">خطأ في تحميل الدروس</div>`;
+    }
+}
+
+function updateSelectedLessons() {
+    const checkboxes = document.querySelectorAll('#exam-lessons-container input[type="checkbox"]');
+    selectedLessonIds = [];
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedLessonIds.push(parseInt(cb.value));
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    document.getElementById('selected-count').innerText = `تم اختيار ${selectedLessonIds.length} درس`;
+}
+
 async function generateExamPlan() {
     const planName = document.getElementById('exam_name').value.trim();
     const examDate = document.getElementById('exam_date').value;
-    const lessonIdsRaw = document.getElementById('exam_lesson_ids').value.trim();
+    const lessonIds = selectedLessonIds;
 
     if (!planName) return alert('يرجى إدخال اسم الاختبار.');
     if (!examDate) return alert('يرجى تحديد تاريخ الاختبار.');
-    if (!lessonIdsRaw) return alert('يرجى إدخال معرفات الدروس (مفصولة بفاصلة).');
-
-    const lessonIds = lessonIdsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
-    if (lessonIds.length === 0) return alert('يرجى إدخال معرفات صحيحة (أرقام).');
+    if (lessonIds.length === 0) return alert('يرجى اختيار درس واحد على الأقل.');
 
     const btn = event?.target;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
@@ -891,7 +912,8 @@ async function generateExamPlan() {
             showToast('✅ تم توليد خطة الاختبارات وحفظها!', 'success');
             document.getElementById('exam_name').value = '';
             document.getElementById('exam_date').value = '';
-            document.getElementById('exam_lesson_ids').value = '';
+            selectedLessonIds = [];
+            loadLessonsForExam(); // إعادة تحميل القائمة لإلغاء التحديد
             loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
@@ -912,7 +934,6 @@ async function rescheduleTasks() {
         alert('يرجى تسجيل الدخول لإعادة التوزيع.');
         return;
     }
-    // جلب المهام غير المكتملة
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const incomplete = tasks.filter(t => !t.completed);
     if (incomplete.length === 0) {
@@ -925,30 +946,25 @@ async function rescheduleTasks() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعادة التوزيع...'; }
 
     try {
-        // إرسال المهام غير المكتملة إلى API لإعادة التوزيع
         const res = await fetch('/reschedule_plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 missed_tasks: incomplete.map(t => ({ title: t.title, allocated_hours: 1.5 })),
-                remaining_plans: [] // سنستخدم المهام الحالية
+                remaining_plans: []
             })
         });
         const data = await res.json();
         if (data.status === 'success') {
-            // تحديث تواريخ المهام غير المكتملة
             const newPlans = data.plan?.plans || [];
             if (newPlans.length > 0) {
-                // نوزع المهام على الأيام الجديدة
                 let taskIndex = 0;
                 for (const day of newPlans) {
                     for (const task of day.tasks || []) {
                         if (taskIndex < incomplete.length) {
                             const oldTask = incomplete[taskIndex];
-                            // تحديث تاريخ المهمة
                             const taskId = oldTask.id;
                             const newDate = day.date || getToday();
-                            // تحديث في localStorage
                             let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
                             const idx = tasks.findIndex(t => t.id === taskId);
                             if (idx > -1) {
@@ -956,14 +972,13 @@ async function rescheduleTasks() {
                                 tasks[idx].synced = false;
                                 localStorage.setItem('unified_tasks', JSON.stringify(tasks));
                             }
-                            // تحديث في API
                             try {
                                 await fetch(`/api/tasks/${taskId}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ planned_date: newDate })
                                 });
-                            } catch(e) { /* فشل */ }
+                            } catch(e) {}
                             taskIndex++;
                         }
                     }
@@ -984,14 +999,12 @@ async function rescheduleTasks() {
 }
 
 // ==========================================
-// CLEAR ALL TASKS
+// CLEAR ALL
 // ==========================================
 function confirmClearAll() {
     if (!confirm('⚠️ هل أنت متأكد من مسح جميع المهام نهائياً؟ لا يمكن التراجع.')) return;
     if (!confirm('تأكيد نهائي: مسح كل المهام؟')) return;
-    // مسح localStorage
     localStorage.removeItem('unified_tasks');
-    // مسح API (جلب كل المهام وحذفها)
     if (isStudentLoggedIn()) {
         (async () => {
             try {
@@ -1000,7 +1013,7 @@ function confirmClearAll() {
                 for (const task of tasks) {
                     await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
                 }
-            } catch(e) { /* فشل */ }
+            } catch(e) {}
         })();
     }
     showToast('تم مسح جميع المهام', 'info');
@@ -1009,12 +1022,10 @@ function confirmClearAll() {
 }
 
 // ==========================================
-// UPDATE PROGRESS
+// UPDATE PROGRESS & STATS
 // ==========================================
 function updateProgress(tasks) {
-    if (!tasks) {
-        tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-    }
+    if (!tasks) tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
     const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
@@ -1022,9 +1033,6 @@ function updateProgress(tasks) {
     document.getElementById('progress-percent-label').innerText = percentage + '%';
 }
 
-// ==========================================
-// UPDATE STATS
-// ==========================================
 function updateStats() {
     const tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const total = tasks.length;
@@ -1037,7 +1045,6 @@ function updateStats() {
     document.getElementById('stat-pending').innerText = pending;
     document.getElementById('stat-progress').innerText = percentage + '%';
 
-    // توزيع المصادر
     const sources = {};
     tasks.forEach(t => {
         const s = t.source || 'manual';
@@ -1053,7 +1060,7 @@ function updateStats() {
 }
 
 // ==========================================
-// EXPORT FULL PLAN
+// EXPORT
 // ==========================================
 function exportFullPlan() {
     const tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
@@ -1061,7 +1068,6 @@ function exportFullPlan() {
         showToast('لا توجد مهام للتصدير', 'error');
         return;
     }
-    // تجميع حسب التاريخ
     const grouped = {};
     tasks.forEach(t => {
         const date = t.planned_date || 'بدون تاريخ';
@@ -1123,22 +1129,21 @@ function exportFullPlan() {
 // INIT
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // تعيين التاريخ الافتراضي للحقول
     const today = getToday();
     document.querySelectorAll('input[type="date"]').forEach(el => {
         if (!el.value) el.value = today;
     });
-    // تحميل المهام
     loadTasks();
-    // تحديث الإحصائيات
     updateStats();
-    // إذا كان المستخدم غير مسجل دخول، نعرض رسالة
+    // تحميل الدروس إذا كانت خطة الاختبارات ظاهرة
+    if (document.getElementById('exam-form').style.display !== 'none') {
+        loadLessonsForExam();
+    }
     if (!isStudentLoggedIn()) {
         showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
     }
 });
 
-// جلب تحديثات عند العودة للصفحة
 window.addEventListener('focus', () => {
     loadTasks();
     updateStats();

@@ -7,7 +7,10 @@ import base64
 import requests
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for, session
+from flask import (
+    Flask, render_template, request, jsonify,
+    send_from_directory, redirect, url_for, session
+)
 from flask_sqlalchemy import SQLAlchemy
 from groq import Groq
 
@@ -16,19 +19,36 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase/Render
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
-elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+psycopg2://"):
-    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+# ==========================================
+# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000
+# ==========================================
+raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
+
+if raw_db_url.startswith("postgres://"):
+    db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
+elif raw_db_url.startswith("postgresql://"):
+    db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+else:
+    db_url = raw_db_url
+
+db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
+
+if "?sslmode=" in db_url:
+    db_url = db_url.split("?sslmode=")[0]
+elif "&sslmode=" in db_url:
+    db_url = db_url.split("&sslmode=")[0]
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# كلمات المرور للصلاحيات
-ADMIN_PASSWORD = "123"
-ASSISTANT_PASSWORD = "AhmedAI"  
+if "sqlite" not in db_url:
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "123")
+ASSISTANT_PASSWORD = os.environ.get("ASSISTANT_PASSWORD", "AhmedAI")
 
 db = SQLAlchemy(app)
 
@@ -68,6 +88,7 @@ class LessonQuestion(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         return {
             "id": self.id,
             "subject_id": self.subject_id,
@@ -76,7 +97,7 @@ class LessonQuestion(db.Model):
             "question_text": self.question_text,
             "answer_text": self.answer_text,
             "is_answered": self.is_answered,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+            "created_at": date_str
         }
 
 class PlatformUpdate(db.Model):
@@ -88,12 +109,13 @@ class PlatformUpdate(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d")
         return {
             "id": self.id,
             "title": self.title,
             "tag": self.tag,
             "description": self.description,
-            "date": self.created_at.strftime("%Y-%m-%d")
+            "date": date_str
         }
 
 class CustomLesson(db.Model):
@@ -111,6 +133,7 @@ class CustomLesson(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        date_str = self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         return {
             "id": self.id,
             "year": self.year,
@@ -122,18 +145,22 @@ class CustomLesson(db.Model):
             "url": self.url or "",
             "download_url": self.download_url or "",
             "notes": self.notes or "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M")
+            "created_at": date_str
         }
 
 with app.app_context():
-    db.create_all()
-    if PlatformUpdate.query.count() == 0:
-        db.session.add(PlatformUpdate(
-            title="إطلاق نظام الأسئلة والشريك الرسمي",
-            tag="تحديث رئيسي 🚀",
-            description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة."
-        ))
-        db.session.commit()
+    try:
+        db.create_all()
+        if PlatformUpdate.query.count() == 0:
+            db.session.add(PlatformUpdate(
+                title="إطلاق نظام الأسئلة والشريك الرسمي",
+                tag="تحديث رئيسي 🚀",
+                description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة."
+            ))
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Startup DB Status: {e}")
 
 # ==========================================
 # Auth Decorators
@@ -159,7 +186,7 @@ def can_manage_content(f):
 # ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
-GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
@@ -227,20 +254,24 @@ def get_data_from_sheet():
                 subj_data = data[year]["terms"][term]["subjects"][subject]
                 if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
 
-        # دمج الدروس المضافة يدوياً من قاعدة البيانات
-        for item in CustomLesson.query.all():
-            c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
-            if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
-            if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
-                data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
-            subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
-            if c_type == "videos":
-                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
-            elif c_type == "files":
-                if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+        try:
+            custom_items = CustomLesson.query.all()
+            for item in custom_items:
+                c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
+                if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
+                if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
+                if c_subject not in data[c_year]["terms"][term]["subjects"]:
+                    data[c_year]["terms"][term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
+                subj_data = data[c_year]["terms"][term]["subjects"][c_subject]
+                if c_type == "videos":
+                    if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                    subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+                elif c_type == "files":
+                    if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                    subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+        except Exception as db_err:
+            db.session.rollback()
+            print(f"Custom lessons load fallback: {db_err}")
 
         for y in data.values():
             for t in y["terms"].values():
@@ -249,7 +280,8 @@ def get_data_from_sheet():
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
-    except Exception as e: print(f"Error fetching data: {e}")
+    except Exception as e: 
+        print(f"Error fetching data: {e}")
     return data
 
 @app.route('/')
@@ -264,6 +296,12 @@ def home():
         is_admin = session.get('is_admin', False)
         is_assistant = session.get('is_assistant', False)
 
+        try:
+            updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+        except Exception:
+            db.session.rollback()
+            updates = []
+
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
                 for t in y["terms"].values():
@@ -271,35 +309,48 @@ def home():
                         if s["id"] == subject_id and content_type in s["types"]:
                             for c in s["types"][content_type]["chapters"]:
                                 if c["name"] == chapter_name:
-                                    if is_admin: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
-                                    else: questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
-                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, is_admin=is_admin, is_assistant=is_assistant)
+                                    try:
+                                        if is_admin: 
+                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
+                                        else: 
+                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
+                                    except Exception:
+                                        db.session.rollback()
+                                        questions = []
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id and content_type in s["types"]:
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], is_admin=is_admin, is_assistant=is_assistant)
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], updates=updates, is_admin=is_admin, is_assistant=is_assistant)
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
-                        if s["id"] == subject_id: return render_template('index.html', view='select_type', subject=s, is_admin=is_admin, is_assistant=is_assistant)
+                        if s["id"] == subject_id: 
+                            return render_template('index.html', view='select_type', subject=s, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
         if year and term:
-            if year in DATA and term in DATA[year]["terms"]: return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, is_admin=is_admin, is_assistant=is_assistant)
+            if year in DATA and term in DATA[year]["terms"]: 
+                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
         if year:
-            if year in DATA: return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, is_admin=is_admin, is_assistant=is_assistant)
+            if year in DATA: 
+                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
 
-        return render_template('index.html', view='years', data=DATA, is_admin=is_admin, is_assistant=is_assistant)
-    except Exception as e: return f"Error: {str(e)}"
+        return render_template('index.html', view='years', data=DATA, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+    except Exception as e: 
+        return f"Error: {str(e)}"
 
 # ==========================================
 # مصادقة الإدارة والمساعد
 # ==========================================
-@app.route('/admin/login', methods=['POST'])
+@app.route('/admin/login', methods=['POST', 'GET'])
 def admin_login():
-    data = request.json or request.form or {}
-    pwd = data.get('password', '').strip()
+    if request.method == 'GET':
+        return render_template('index.html', view='login')
+        
+    data = request.get_json(silent=True) or request.form or {}
+    pwd = (data.get('password') or '').strip()
     session.permanent = True
 
     if pwd == ADMIN_PASSWORD:
@@ -333,18 +384,32 @@ def admin_status():
 @can_manage_content
 def add_custom_content():
     try:
-        data = request.json or request.form
-        year, term, subject_name = data.get('year', '').strip(), data.get('term', '').strip(), data.get('subject_name', '').strip()
-        chapter_name, content_type, title = data.get('chapter_name', '').strip() or 'عام', data.get('content_type', 'videos').strip(), data.get('title', '').strip()
-        url, download_url, notes = data.get('url', '').strip(), data.get('download_url', '').strip(), data.get('notes', '').strip()
+        data = request.get_json(silent=True) or request.form or {}
+        year = (data.get('year') or '').strip()
+        term = (data.get('term') or '').strip()
+        subject_name = (data.get('subject_name') or '').strip()
+        chapter_name = (data.get('chapter_name') or 'عام').strip() or 'عام'
+        content_type = (data.get('content_type') or 'videos').strip()
+        title = (data.get('title') or '').strip()
+        url = (data.get('url') or '').strip()
+        download_url = (data.get('download_url') or '').strip()
+        notes = (data.get('notes') or '').strip()
 
-        if not year or not term or not subject_name or not title: return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
-        if not url and not download_url: return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل"}), 400
+        if not year or not term or not subject_name or not title: 
+            return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
+        if not url and not download_url: 
+            return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل"}), 400
 
-        db.session.add(CustomLesson(year=year, term=term, subject_name=subject_name, chapter_name=chapter_name, content_type=content_type, title=title, url=url, download_url=download_url, notes=notes))
+        db.session.add(CustomLesson(
+            year=year, term=term, subject_name=subject_name,
+            chapter_name=chapter_name, content_type=content_type,
+            title=title, url=url, download_url=download_url, notes=notes
+        ))
         db.session.commit()
         return jsonify({"status": "success", "message": "تمت الإضافة بنجاح وتحديث الموقع فورياً!"})
-    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/edit-content/<int:content_id>', methods=['POST'])
 @can_manage_content
@@ -354,16 +419,16 @@ def edit_custom_content(content_id):
         if not item:
             return jsonify({"status": "error", "message": "الدرس أو الملف غير موجود بقاعدة البيانات"}), 404
             
-        data = request.json or request.form
-        item.year = data.get('year', '').strip()
-        item.term = data.get('term', '').strip()
-        item.subject_name = data.get('subject_name', '').strip()
-        item.chapter_name = data.get('chapter_name', '').strip() or 'عام'
-        item.content_type = data.get('content_type', 'videos').strip()
-        item.title = data.get('title', '').strip()
-        item.url = data.get('url', '').strip()
-        item.download_url = data.get('download_url', '').strip()
-        item.notes = data.get('notes', '').strip()
+        data = request.get_json(silent=True) or request.form or {}
+        item.year = (data.get('year') or '').strip()
+        item.term = (data.get('term') or '').strip()
+        item.subject_name = (data.get('subject_name') or '').strip()
+        item.chapter_name = (data.get('chapter_name') or 'عام').strip() or 'عام'
+        item.content_type = (data.get('content_type') or 'videos').strip()
+        item.title = (data.get('title') or '').strip()
+        item.url = (data.get('url') or '').strip()
+        item.download_url = (data.get('download_url') or '').strip()
+        item.notes = (data.get('notes') or '').strip()
         
         if not item.year or not item.term or not item.subject_name or not item.title:
             return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
@@ -371,11 +436,17 @@ def edit_custom_content(content_id):
         db.session.commit()
         return jsonify({"status": "success", "message": "تم التعديل بنجاح!"})
     except Exception as e: 
+        db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/custom-content', methods=['GET'])
 @can_manage_content
-def get_custom_content(): return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
+def get_custom_content(): 
+    try:
+        return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify([])
 
 @app.route('/admin/delete-content/<int:content_id>', methods=['POST'])
 @can_manage_content
@@ -384,7 +455,9 @@ def delete_custom_content(content_id):
         db.session.delete(CustomLesson.query.get_or_404(content_id))
         db.session.commit()
         return jsonify({"status": "success"})
-    except Exception: return jsonify({"status": "error"}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # الأسئلة والتحديثات (للمسؤول فقط)
@@ -392,32 +465,50 @@ def delete_custom_content(content_id):
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
-        data = request.form if request.form else request.json
-        subject_id, chapter_name = data.get('subject_id'), data.get('chapter_name')
+        data = request.get_json(silent=True) or request.form or {}
+        subject_id = data.get('subject_id')
+        chapter_name = data.get('chapter_name')
         student_name = (data.get('student_name') or 'طالب').strip() or 'طالب'
         question_text = (data.get('question_text') or '').strip()
 
-        if not question_text or not subject_id or not chapter_name: return jsonify({"status": "error", "message": "بيانات غير مكتملة"}), 400
-        db.session.add(LessonQuestion(subject_id=subject_id, chapter_name=chapter_name, student_name=student_name, question_text=question_text))
+        if not question_text or not subject_id or not chapter_name: 
+            return jsonify({"status": "error", "message": "بيانات غير مكتملة"}), 400
+            
+        db.session.add(LessonQuestion(
+            subject_id=subject_id, chapter_name=chapter_name,
+            student_name=student_name, question_text=question_text
+        ))
         db.session.commit()
         return jsonify({"status": "success", "message": "تم إرسال السؤال بنجاح"})
-    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/questions', methods=['GET'])
 @admin_required
-def get_pending_questions(): return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
+def get_pending_questions(): 
+    try:
+        return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify([])
 
 @app.route('/admin/reply/<int:question_id>', methods=['POST'])
 @admin_required
 def reply_question(question_id):
     try:
         q = LessonQuestion.query.get_or_404(question_id)
-        ans = (request.json or request.form).get('answer_text', '').strip()
-        if not ans: return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
-        q.answer_text = ans; q.is_answered = True
+        data = request.get_json(silent=True) or request.form or {}
+        ans = (data.get('answer_text') or '').strip()
+        if not ans: 
+            return jsonify({"status": "error", "message": "الرد مطلوب"}), 400
+        q.answer_text = ans
+        q.is_answered = True
         db.session.commit()
         return jsonify({"status": "success", "message": "تم نشر الرد بنجاح"})
-    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/delete-question/<int:question_id>', methods=['POST'])
 @admin_required
@@ -426,22 +517,40 @@ def delete_question(question_id):
         db.session.delete(LessonQuestion.query.get_or_404(question_id))
         db.session.commit()
         return jsonify({"status": "success"})
-    except Exception: return jsonify({"status": "error"}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/updates', methods=['GET'])
-def get_updates(): return jsonify([u.to_dict() for u in PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()])
+def get_updates(): 
+    try:
+        updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+        return jsonify([u.to_dict() for u in updates])
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error fetching updates: {e}")
+        try:
+            db.create_all()
+        except Exception:
+            pass
+        return jsonify([])
 
 @app.route('/admin/add-update', methods=['POST'])
 @admin_required
 def add_update():
     try:
-        data = request.json or request.form
-        title, tag, description = data.get('title', '').strip(), data.get('tag', 'ميزة جديدة').strip(), data.get('description', '').strip()
-        if not title or not description: return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
+        data = request.get_json(silent=True) or request.form or {}
+        title = (data.get('title') or '').strip()
+        tag = (data.get('tag') or 'ميزة جديدة').strip()
+        description = (data.get('description') or '').strip()
+        if not title or not description: 
+            return jsonify({"status": "error", "message": "العنوان والتفاصيل مطلوبة"}), 400
         db.session.add(PlatformUpdate(title=title, tag=tag, description=description))
         db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "success", "message": "تم نشر التحديث بنجاح"})
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/delete-update/<int:update_id>', methods=['POST'])
 @admin_required
@@ -450,7 +559,9 @@ def delete_update(update_id):
         db.session.delete(PlatformUpdate.query.get_or_404(update_id))
         db.session.commit()
         return jsonify({"status": "success"})
-    except Exception: return jsonify({"status": "error"}), 500
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # حساب التقديرات الأكاديمية
@@ -458,7 +569,7 @@ def delete_update(update_id):
 @app.route('/calculate-grade', methods=['POST'])
 def calculate_grade():
     try:
-        data = request.json or request.form or {}
+        data = request.get_json(silent=True) or request.form or {}
         score = data.get('score')
         if score is None:
             return jsonify({"status": "error", "message": "يرجى إدخال الدرجة"}), 400
@@ -474,7 +585,8 @@ def calculate_grade():
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
-        user_message = (request.json.get('message', '') if request.is_json else request.form.get('message', '')).strip()
+        data = request.get_json(silent=True) or request.form or {}
+        user_message = (data.get('message') or '').strip()
         
         messages = [
             {
@@ -500,15 +612,15 @@ def ask_ai():
         return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
 @app.route('/planner')
-def planner(): return render_template('planner.html')
+def planner(): 
+    return render_template('planner.html')
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
-        data = request.json or {}
-        discipline = data.get('discipline', 'متوازن').strip()
+        data = request.get_json(silent=True) or {}
+        discipline = (data.get('discipline') or 'متوازن').strip()
 
-        # قوالب مخصصة تفرض فرقاً حقيقياً في عدد الساعات وطبيعة المهام
         discipline_profiles = {
             "مرن": (
                 "PACE: FLEXIBLE & LIGHT\n"
@@ -588,7 +700,7 @@ def generate_plan():
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     try:
-        data = request.json or {}
+        data = request.get_json(silent=True) or {}
         missed = data.get('missed_tasks', [])
         remaining = data.get('remaining_plans', [])
 
@@ -622,4 +734,5 @@ def reschedule_plan():
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

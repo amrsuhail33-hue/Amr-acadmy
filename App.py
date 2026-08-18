@@ -34,7 +34,6 @@ else:
 
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
-# تنظيف معلمات الرابط
 if "?" in db_url:
     db_url = db_url.split("?")[0]
 
@@ -45,7 +44,6 @@ if "sqlite" not in db_url:
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
-
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
@@ -84,7 +82,7 @@ def calculate_grade_estimation(score):
 # Database Models
 # ==========================================
 
-# --- نموذج الطالب (جديد) ---
+# --- نموذج الطالب ---
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
@@ -107,7 +105,7 @@ class Student(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# --- نموذج المفضلة (جديد) ---
+# --- نموذج المفضلة ---
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -123,11 +121,11 @@ class Favorite(db.Model):
             "id": self.id,
             "student_id": self.student_id,
             "lesson_id": self.lesson_id,
-            "lesson_title": self.lesson.title if self.lesson else "",
+            "lesson": self.lesson.to_dict() if self.lesson else None,
             "added_at": self.added_at.strftime("%Y-%m-%d %H:%M") if self.added_at else ""
         }
 
-# --- نموذج الخطة المجدولة (جديد) ---
+# --- نموذج الخطة اليومية (Schedule) ---
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -153,13 +151,13 @@ class Schedule(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# --- نموذج تقدم الدروس (جديد) ---
+# --- نموذج تقدم الدروس ---
 class Progress(db.Model):
     __tablename__ = 'progress'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
-    status = db.Column(db.String(20), default='not_started')  # not_started, in_progress, completed
+    status = db.Column(db.String(20), default='not_started')
     progress_percent = db.Column(db.Integer, default=0)
     last_accessed = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -177,7 +175,49 @@ class Progress(db.Model):
             "last_accessed": self.last_accessed.strftime("%Y-%m-%d %H:%M") if self.last_accessed else ""
         }
 
-# --- النماذج الموجودة سابقاً ---
+# --- نموذج خطة الاختبارات (جديد) ---
+class ExamPlan(db.Model):
+    __tablename__ = 'exam_plans'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    plan_name = db.Column(db.String(200), nullable=False)
+    exam_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    student = db.relationship('Student', backref='exam_plans')
+    items = db.relationship('ExamPlanItem', backref='exam_plan', cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "plan_name": self.plan_name,
+            "exam_date": self.exam_date.strftime("%Y-%m-%d") if self.exam_date else "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "items": [item.to_dict() for item in self.items]
+        }
+
+class ExamPlanItem(db.Model):
+    __tablename__ = 'exam_plan_items'
+    id = db.Column(db.Integer, primary_key=True)
+    exam_plan_id = db.Column(db.Integer, db.ForeignKey('exam_plans.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
+    scheduled_date = db.Column(db.Date, nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.Integer, default=2)  # 1 عالي, 2 متوسط, 3 منخفض
+    
+    lesson = db.relationship('CustomLesson')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "lesson_id": self.lesson_id,
+            "lesson_title": self.lesson.title if self.lesson else "",
+            "scheduled_date": self.scheduled_date.strftime("%Y-%m-%d") if self.scheduled_date else "",
+            "completed": self.completed,
+            "priority": self.priority
+        }
+
+# --- النماذج القديمة ---
 class LessonQuestion(db.Model):
     __tablename__ = 'lesson_questions'
     id = db.Column(db.Integer, primary_key=True)
@@ -227,7 +267,7 @@ class CustomLesson(db.Model):
     term = db.Column(db.String(100), nullable=False)
     subject_name = db.Column(db.String(150), nullable=False)
     chapter_name = db.Column(db.String(150), nullable=False)
-    content_type = db.Column(db.String(20), nullable=False)  # 'videos', 'files', 'quiz'
+    content_type = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     url = db.Column(db.Text, nullable=True)
     download_url = db.Column(db.Text, nullable=True)
@@ -337,9 +377,6 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 def serve_sw():
     return send_from_directory('static', 'sw.js')
 
-# ==========================================
-# دالة بناء بيانات المنصة (معدلة لتمرير معلومات الطالب)
-# ==========================================
 def get_platform_data():
     data = {}
     try:
@@ -378,7 +415,7 @@ def get_platform_data():
                 subj_data["types"][c_type]["chapters"][chapter] = {"name": chapter, "lessons": []}
 
             lesson_dict = {
-                "id": item.id,  # مهم لربط المفضلة والتقدم
+                "id": item.id,
                 "title": item.title,
                 "notes": item.notes or "",
                 "custom_id": item.id
@@ -408,7 +445,7 @@ def get_platform_data():
     return data
 
 # ==========================================
-# Routes الرئيسية (معدلة لدعم الطلاب)
+# Routes الرئيسية
 # ==========================================
 @app.route('/')
 def home():
@@ -489,7 +526,7 @@ def get_quiz():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# مصادقة الإدارة والمساعد (كما هي)
+# مصادقة الإدارة والمساعد
 # ==========================================
 @app.route('/admin/login', methods=['POST', 'GET'])
 def admin_login():
@@ -525,7 +562,7 @@ def admin_status():
     })
 
 # ==========================================
-# إدارة ورفع وتعديل المحتوى (للمسؤول والمساعد) - بدون تغيير
+# إدارة ورفع وتعديل المحتوى
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
@@ -607,7 +644,7 @@ def delete_custom_content(content_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# الأسئلة والتحديثات (للمسؤول فقط) - بدون تغيير
+# الأسئلة والتحديثات
 # ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
@@ -723,7 +760,7 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي والمخطط عبر Groq (بدون تغيير)
+# خدمات الذكاء الاصطناعي والمخطط عبر Groq
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -877,7 +914,7 @@ def reschedule_plan():
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 # ==========================================
-# 🆕 واجهات برمجية جديدة للطلاب
+# 🆕 واجهات برمجية للطلاب
 # ==========================================
 
 # --- تسجيل طالب جديد ---
@@ -920,7 +957,6 @@ def student_login():
         session.permanent = True
         session['student_id'] = student.id
         session['student_name'] = student.name
-        # التأكد من عدم تداخل مع صلاحيات admin
         session.pop('is_admin', None)
         session.pop('is_assistant', None)
 
@@ -935,7 +971,7 @@ def student_logout():
     session.pop('student_name', None)
     return jsonify({"status": "success"})
 
-# --- حالة الطالب الحالية ---
+# --- حالة الطالب ---
 @app.route('/student/status', methods=['GET'])
 def student_status():
     if session.get('student_id'):
@@ -967,12 +1003,10 @@ def add_favorite():
             return jsonify({"status": "error", "message": "معرف الدرس مطلوب"}), 400
 
         student_id = session['student_id']
-        # التأكد من أن الدرس موجود
         lesson = CustomLesson.query.get(lesson_id)
         if not lesson:
             return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
 
-        # منع التكرار
         existing = Favorite.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
         if existing:
             return jsonify({"status": "error", "message": "الدرس موجود بالفعل في المفضلة"}), 400
@@ -1002,7 +1036,7 @@ def delete_favorite(favorite_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# إدارة الخطة المجدولة (Schedule)
+# إدارة الخطة اليومية (Schedule)
 # ==========================================
 @app.route('/api/schedule', methods=['GET'])
 @student_required
@@ -1020,7 +1054,7 @@ def add_schedule():
     try:
         data = request.get_json(silent=True) or {}
         lesson_id = data.get('lesson_id')
-        planned_date = data.get('planned_date')  # expected 'YYYY-MM-DD'
+        planned_date = data.get('planned_date')
         notes = data.get('notes', '')
 
         if not lesson_id or not planned_date:
@@ -1135,6 +1169,182 @@ def add_or_update_progress():
 
         db.session.commit()
         return jsonify({"status": "success", "progress": progress.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕🆕 خطة الاختبارات (Exam Plan) الجديدة
+# ==========================================
+@app.route('/api/exam-plans', methods=['GET'])
+@student_required
+def get_exam_plans():
+    try:
+        student_id = session['student_id']
+        plans = ExamPlan.query.filter_by(student_id=student_id).order_by(ExamPlan.created_at.desc()).all()
+        return jsonify([p.to_dict() for p in plans])
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/exam-plans/<int:plan_id>', methods=['DELETE'])
+@student_required
+def delete_exam_plan(plan_id):
+    try:
+        plan = ExamPlan.query.get(plan_id)
+        if not plan:
+            return jsonify({"status": "error", "message": "الخطة غير موجودة"}), 404
+        if plan.student_id != session['student_id']:
+            return jsonify({"status": "error", "message": "غير مصرح لك"}), 403
+        db.session.delete(plan)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/exam-plan-item/<int:item_id>', methods=['PUT'])
+@student_required
+def toggle_exam_item_complete(item_id):
+    try:
+        item = ExamPlanItem.query.get(item_id)
+        if not item:
+            return jsonify({"status": "error", "message": "العنصر غير موجود"}), 404
+        # التحقق من ملكية الخطة
+        plan = ExamPlan.query.get(item.exam_plan_id)
+        if plan.student_id != session['student_id']:
+            return jsonify({"status": "error", "message": "غير مصرح"}), 403
+        data = request.get_json(silent=True) or {}
+        item.completed = bool(data.get('completed', True))
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/generate-exam-plan', methods=['POST'])
+@student_required
+def generate_exam_plan():
+    try:
+        data = request.get_json(silent=True) or {}
+        student_id = session['student_id']
+        plan_name = (data.get('plan_name') or '').strip()
+        exam_date = data.get('exam_date')
+        lesson_ids = data.get('lesson_ids', [])
+
+        if not plan_name or not exam_date or not lesson_ids:
+            return jsonify({"status": "error", "message": "اسم الاختبار والتاريخ والدروس مطلوبة"}), 400
+
+        try:
+            exam_date_obj = datetime.strptime(exam_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
+
+        # جلب الدروس المختارة مع معلوماتها
+        lessons = CustomLesson.query.filter(CustomLesson.id.in_(lesson_ids)).all()
+        if not lessons:
+            return jsonify({"status": "error", "message": "لم يتم العثور على الدروس المحددة"}), 404
+
+        lessons_info = []
+        for l in lessons:
+            # تقدير الوقت بناءً على النوع (فيديو افتراضي 30 دقيقة، ملف 20 دقيقة)
+            est_minutes = 30 if l.content_type == 'videos' else 20
+            if 'محاضرة' in l.title or 'شرح' in l.title:
+                est_minutes = 45
+            lessons_info.append({
+                "id": l.id,
+                "title": l.title,
+                "type": l.content_type,
+                "estimated_minutes": est_minutes
+            })
+
+        # حساب الأيام المتاحة
+        today = datetime.now().date()
+        delta = (exam_date_obj - today).days
+        if delta < 1:
+            return jsonify({"status": "error", "message": "تاريخ الاختبار يجب أن يكون في المستقبل"}), 400
+
+        # بناء البرومبت للذكاء الاصطناعي
+        prompt = f"""
+        أنت مخطط أكاديمي ذكي متخصص في إعداد خطط مكثفة للاختبارات.
+        
+        اسم الاختبار: {plan_name}
+        تاريخ الاختبار: {exam_date} (عدد الأيام المتاحة: {delta} يوماً)
+        
+        قائمة الدروس المطلوب مراجعتها:
+        {json.dumps(lessons_info, ensure_ascii=False, indent=2)}
+        
+        المطلوب:
+        1. توزيع الدروس على الأيام المتاحة بشكل متوازن.
+        2. تحديد أولوية كل درس (عالٍ، متوسط، منخفض) بناءً على صعوبة المادة ووقتها المقدر.
+        3. اقتراح وقت لكل درس بالدقائق.
+        4. إذا كان عدد الأيام أكبر من عدد الدروس، وزع الدروس مع فترات مراجعة إضافية.
+        5. إذا كان عدد الدروس أكبر من الأيام، ضغط الجدول مع تحديد أولويات.
+        
+        أخرج النتيجة بصيغة JSON بهذا الهيكل الدقيق:
+        {{
+            "plan": [
+                {{
+                    "day": "2026-08-20",
+                    "tasks": [
+                        {{"lesson_id": 1, "title": "مقدمة في الدايدود", "priority": "عال", "minutes": 45}}
+                    ]
+                }}
+            ]
+        }}
+        تأكد من أن اليوم الأول هو أقرب يوم (اليوم أو غداً) وأن جميع الدروس مغطاة.
+        """
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": "أنت مخطط أكاديمي ذكي. أخرج فقط JSON صالح."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.5
+        )
+
+        plan_data = json.loads(response.choices[0].message.content)
+
+        # حفظ الخطة في قاعدة البيانات
+        exam_plan = ExamPlan(
+            student_id=student_id,
+            plan_name=plan_name,
+            exam_date=exam_date_obj
+        )
+        db.session.add(exam_plan)
+        db.session.commit()
+
+        # حفظ العناصر
+        priority_map = {"عال": 1, "متوسط": 2, "منخفض": 3}
+        for day_obj in plan_data.get('plan', []):
+            day_date_str = day_obj.get('day')
+            if not day_date_str:
+                continue
+            try:
+                day_date = datetime.strptime(day_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                continue
+            for task in day_obj.get('tasks', []):
+                lesson_id = task.get('lesson_id')
+                if not lesson_id:
+                    continue
+                item = ExamPlanItem(
+                    exam_plan_id=exam_plan.id,
+                    lesson_id=lesson_id,
+                    scheduled_date=day_date,
+                    priority=priority_map.get(task.get('priority', 'متوسط'), 2)
+                )
+                db.session.add(item)
+        db.session.commit()
+
+        # إعادة الخطة مع معرف الخطة
+        return jsonify({
+            "status": "success",
+            "plan_id": exam_plan.id,
+            "plan": plan_data
+        })
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500

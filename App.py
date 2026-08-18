@@ -1,5 +1,4 @@
 import os
-import csv
 import io
 import time
 import json
@@ -155,6 +154,38 @@ class CustomLesson(db.Model):
             "created_at": date_str
         }
 
+class QuizQuestion(db.Model):
+    __tablename__ = 'quiz_questions'
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(100), nullable=False)
+    subject_name = db.Column(db.String(150), nullable=False)
+    chapter_name = db.Column(db.String(150), nullable=False)
+    question_text = db.Column(db.Text, nullable=False)
+    option_a = db.Column(db.Text, nullable=True)
+    option_b = db.Column(db.Text, nullable=True)
+    option_c = db.Column(db.Text, nullable=True)
+    option_d = db.Column(db.Text, nullable=True)
+    correct_answer = db.Column(db.String(50), nullable=True)
+    explanation = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "year": self.year,
+            "term": self.term,
+            "subject_name": self.subject_name,
+            "chapter_name": self.chapter_name,
+            "question_text": self.question_text,
+            "option_a": self.option_a or "",
+            "option_b": self.option_b or "",
+            "option_c": self.option_c or "",
+            "option_d": self.option_d or "",
+            "correct_answer": self.correct_answer or "",
+            "explanation": self.explanation or ""
+        }
+
 with app.app_context():
     try:
         db.create_all()
@@ -189,16 +220,11 @@ def can_manage_content(f):
     return decorated_function
 
 # ==========================================
-# قراءة وبناء هيكل المواد مباشرة من Supabase
+# قراءة وبناء هيكل المواد مباشرة من Supabase (خفيف وفائق السرعة)
 # ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "llama-3.3-70b-versatile"
-
-CSV_URLS = [
-    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
-    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
-]
 
 @app.route('/sw.js')
 def serve_sw():
@@ -271,118 +297,6 @@ def get_platform_data():
     return data
 
 # ==========================================
-# مسار مزامنة Google Sheets إلى Supabase (نسخة محمية وقوية)
-# ==========================================
-@app.route('/admin/sync-sheets-to-db', methods=['GET', 'POST'])
-def sync_sheets_to_db():
-    if not session.get('is_admin'):
-        pwd = request.args.get('pwd')
-        if pwd != ADMIN_PASSWORD:
-            return jsonify({"status": "error", "message": "غير مصرح لك بالوصول. يرجى تسجيل الدخول أو تمرير ?pwd=123"}), 403
-
-    added_count = 0
-    skipped_count = 0
-    errors = []
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    session_req = requests.Session()
-    
-    # 1. سحب الفيديوهات والملفات من الشيت الأول
-    try:
-        res1 = session_req.get(CSV_URLS[0], headers=headers, timeout=35)
-        if res1.status_code == 200:
-            csv_text = res1.content.decode('utf-8-sig', errors='ignore')
-            reader1 = csv.DictReader(io.StringIO(csv_text))
-            for row in reader1:
-                try:
-                    year, term, subject, chapter, content_type, title, video_url, download_url, file_url, notes = "", "", "", "", "", "", "", "", "", ""
-                    for k, v in row.items():
-                        if not k or v is None: continue
-                        k = str(k).strip().lower()
-                        v = str(v).strip()
-                        if "سنة" in k: year = v
-                        elif "ترم" in k: term = v
-                        elif "مادة" in k: subject = v
-                        elif "شبتر" in k or "فصل" in k: chapter = v
-                        elif "نوع" in k: content_type = v
-                        elif "عنوان" in k or "درس" in k: title = v
-                        elif "رابط المقطع" in k: video_url = v
-                        elif "تحميل" in k: download_url = v
-                        elif "رابط الملف" in k: file_url = v
-                        elif "ملاحظ" in k: notes = v
-
-                    if not year or not term or not subject or not title: 
-                        continue
-                    if not chapter: chapter = "عام"
-
-                    db_c_type = "videos" if "فيديو" in content_type else "files"
-                    target_url = video_url if db_c_type == "videos" else (file_url or download_url)
-
-                    exists = CustomLesson.query.filter_by(
-                        year=year, term=term, subject_name=subject,
-                        chapter_name=chapter, content_type=db_c_type, title=title
-                    ).first()
-
-                    if not exists:
-                        db.session.add(CustomLesson(
-                            year=year, term=term, subject_name=subject,
-                            chapter_name=chapter, content_type=db_c_type,
-                            title=title, url=target_url, download_url=download_url, notes=notes
-                        ))
-                        added_count += 1
-                    else:
-                        skipped_count += 1
-                except Exception as row_err:
-                    errors.append(f"Row error: {str(row_err)}")
-                    continue
-    except Exception as e1:
-        errors.append(f"Sheet 1 error: {str(e1)}")
-
-    # 2. سحب الاختبارات من الشيت الثاني
-    try:
-        res2 = session_req.get(CSV_URLS[1], headers=headers, timeout=35)
-        if res2.status_code == 200:
-            csv_text2 = res2.content.decode('utf-8-sig', errors='ignore')
-            reader2 = csv.reader(io.StringIO(csv_text2))
-            next(reader2, None)
-            for row in reader2:
-                try:
-                    if len(row) < 4: continue
-                    year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
-                    if not year or not term or not subject or not chapter: continue
-
-                    exists = CustomLesson.query.filter_by(
-                        year=year, term=term, subject_name=subject,
-                        chapter_name=chapter, content_type="quiz"
-                    ).first()
-
-                    if not exists:
-                        db.session.add(CustomLesson(
-                            year=year, term=term, subject_name=subject,
-                            chapter_name=chapter, content_type="quiz",
-                            title="بدء الاختبار", url="", download_url="", notes=""
-                        ))
-                        added_count += 1
-                    else:
-                        skipped_count += 1
-                except Exception as row_err2:
-                    errors.append(f"Quiz row error: {str(row_err2)}")
-                    continue
-    except Exception as e2:
-        errors.append(f"Sheet 2 error: {str(e2)}")
-
-    try:
-        db.session.commit()
-    except Exception as commit_err:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": f"Database commit failed: {str(commit_err)}"}), 500
-
-    return jsonify({
-        "status": "success",
-        "message": f"تمت المزامنة بنجاح! تم نقل {added_count} عنصر جديد، وتخطي {skipped_count} مكرر.",
-        "warnings": errors[:5]
-    })
-
-# ==========================================
 # Routes الرئيسية
 # ==========================================
 @app.route('/')
@@ -441,6 +355,25 @@ def home():
         return render_template('index.html', view='years', data=DATA, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
     except Exception as e: 
         return f"Error: {str(e)}"
+
+# ==========================================
+# استرجاع بنك الأسئلة الخاص بالاختبارات
+# ==========================================
+@app.route('/api/quiz', methods=['GET'])
+def get_quiz():
+    subject_name = request.args.get('subject')
+    chapter_name = request.args.get('chapter')
+    try:
+        query = QuizQuestion.query
+        if subject_name:
+            query = query.filter_by(subject_name=subject_name)
+        if chapter_name:
+            query = query.filter_by(chapter_name=chapter_name)
+        questions = query.all()
+        return jsonify([q.to_dict() for q in questions])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # مصادقة الإدارة والمساعد

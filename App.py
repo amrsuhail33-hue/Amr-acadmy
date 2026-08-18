@@ -14,6 +14,14 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
+from webauthn import generate_registration_options, verify_registration_response
+from webauthn import generate_authentication_options, verify_authentication_response
+from webauthn.helpers.structs import (
+    RegistrationCredential, AuthenticationCredential,
+    AuthenticatorSelectionCriteria, UserVerificationRequirement,
+    ResidentKeyRequirement
+)
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
@@ -21,7 +29,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000 مع SSL
+# إعداد قاعدة البيانات
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
@@ -58,7 +66,7 @@ ASSISTANT_PASSWORD = os.environ.get("ASSISTANT_PASSWORD", "AhmedAI")
 db = SQLAlchemy(app)
 
 # ==========================================
-# دالة حساب التقدير الأكاديمي للكلية
+# دالة حساب التقدير الأكاديمي
 # ==========================================
 def calculate_grade_estimation(score):
     try:
@@ -82,7 +90,6 @@ def calculate_grade_estimation(score):
 # Database Models
 # ==========================================
 
-# --- نموذج الطالب ---
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
@@ -105,7 +112,6 @@ class Student(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# --- نموذج المفضلة ---
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -125,7 +131,6 @@ class Favorite(db.Model):
             "added_at": self.added_at.strftime("%Y-%m-%d %H:%M") if self.added_at else ""
         }
 
-# --- نموذج الخطة اليومية (Schedule) - سيتم استبداله تدريجياً بـ UnifiedTask ---
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -151,7 +156,6 @@ class Schedule(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# --- نموذج تقدم الدروس ---
 class Progress(db.Model):
     __tablename__ = 'progress'
     id = db.Column(db.Integer, primary_key=True)
@@ -175,7 +179,6 @@ class Progress(db.Model):
             "last_accessed": self.last_accessed.strftime("%Y-%m-%d %H:%M") if self.last_accessed else ""
         }
 
-# --- نموذج خطة الاختبارات (Exam Plan) - سيتم استبداله تدريجياً بـ UnifiedTask ---
 class ExamPlan(db.Model):
     __tablename__ = 'exam_plans'
     id = db.Column(db.Integer, primary_key=True)
@@ -203,7 +206,7 @@ class ExamPlanItem(db.Model):
     lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
     scheduled_date = db.Column(db.Date, nullable=False)
     completed = db.Column(db.Boolean, default=False)
-    priority = db.Column(db.Integer, default=2)  # 1 عالي, 2 متوسط, 3 منخفض
+    priority = db.Column(db.Integer, default=2)
     
     lesson = db.relationship('CustomLesson')
 
@@ -218,19 +221,20 @@ class ExamPlanItem(db.Model):
         }
 
 # ==========================================
-# 🆕🆕🆕 نموذج المهام الموحدة (Unified Task) - الجديد
+# 🆕 نموذج المهام الموحدة (مع allocated_hours)
 # ==========================================
 class UnifiedTask(db.Model):
     __tablename__ = 'unified_tasks'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=True)  # يمكن أن يكون NULL للمهام المخصصة
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     planned_date = db.Column(db.Date, nullable=False)
     completed = db.Column(db.Boolean, default=False)
-    priority = db.Column(db.Integer, default=2)  # 1: عالي, 2: متوسط, 3: منخفض
-    source = db.Column(db.String(20), default='manual')  # 'manual', 'planner', 'exam'
+    priority = db.Column(db.Integer, default=2)
+    source = db.Column(db.String(20), default='manual')
+    allocated_hours = db.Column(db.Float, default=1.0)  # ✅ جديد
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -248,9 +252,24 @@ class UnifiedTask(db.Model):
             "completed": self.completed,
             "priority": self.priority,
             "source": self.source,
+            "allocated_hours": self.allocated_hours or 1.0,  # ✅ جديد
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
         }
+
+# ==========================================
+# 🆕 نموذج بيانات البصمة (WebAuthn)
+# ==========================================
+class WebAuthnCredential(db.Model):
+    __tablename__ = 'webauthn_credentials'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    credential_id = db.Column(db.String(255), unique=True, nullable=False)
+    public_key = db.Column(db.Text, nullable=False)
+    sign_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student', backref='webauthn_credentials')
 
 # --- النماذج القديمة ---
 class LessonQuestion(db.Model):
@@ -358,7 +377,7 @@ class QuizQuestion(db.Model):
         }
 
 # ==========================================
-# إنشاء الجداول وبيانات أولية
+# إنشاء الجداول
 # ==========================================
 with app.app_context():
     try:
@@ -408,10 +427,9 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "gsk_iKkCqiDATg2SbWUXJjoQWGdyb3FYq
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "openai/gpt-oss-120b"
 
-@app.route('/sw.js')
-def serve_sw():
-    return send_from_directory('static', 'sw.js')
-
+# ==========================================
+# دالة بناء بيانات المنصة
+# ==========================================
 def get_platform_data():
     data = {}
     try:
@@ -542,7 +560,7 @@ def home():
         return f"Error: {str(e)}"
 
 # ==========================================
-# استرجاع بنك الأسئلة الخاص بالاختبارات
+# استرجاع بنك الأسئلة
 # ==========================================
 @app.route('/api/quiz', methods=['GET'])
 def get_quiz():
@@ -597,7 +615,7 @@ def admin_status():
     })
 
 # ==========================================
-# إدارة ورفع وتعديل المحتوى
+# إدارة المحتوى (بدون تغيير)
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
@@ -779,7 +797,7 @@ def delete_update(update_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# حساب التقديرات الأكاديمية
+# حساب التقديرات
 # ==========================================
 @app.route('/calculate-grade', methods=['POST'])
 def calculate_grade():
@@ -795,7 +813,7 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي والمخطط عبر Groq
+# خدمات الذكاء الاصطناعي
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -827,7 +845,7 @@ def ask_ai():
         return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
 # ==========================================
-# 🆕 Route Planner (معدل لتمرير بيانات الطالب)
+# Route Planner (معدل لتمرير بيانات الطالب)
 # ==========================================
 @app.route('/planner')
 def planner():
@@ -835,6 +853,9 @@ def planner():
     student_name = session.get('student_name')
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
+# ==========================================
+# توليد الخطة العامة (مع حفظ allocated_hours)
+# ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
@@ -915,9 +936,6 @@ def generate_plan():
         reply_text = response.choices[0].message.content
         plan_data = json.loads(reply_text)
 
-        # ==========================================
-        # 🆕 حفظ المهام في UnifiedTask تلقائياً
-        # ==========================================
         if student_id and plan_data.get('plans'):
             try:
                 for day in plan_data['plans']:
@@ -932,7 +950,7 @@ def generate_plan():
                         task_title = task.get('title', '').strip()
                         if not task_title:
                             continue
-                        # البحث عن درس مطابق في قاعدة البيانات (اختياري)
+                        allocated_hours = task.get('allocated_hours', 1.5)
                         lesson = CustomLesson.query.filter(
                             CustomLesson.title.ilike(f'%{task_title}%')
                         ).first()
@@ -944,6 +962,7 @@ def generate_plan():
                             planned_date=planned_date,
                             source='planner',
                             priority=2,
+                            allocated_hours=allocated_hours,
                             completed=False
                         )
                         db.session.add(unified_task)
@@ -957,6 +976,9 @@ def generate_plan():
     except Exception as e:
         return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
 
+# ==========================================
+# إعادة التوزيع
+# ==========================================
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     try:
@@ -991,9 +1013,6 @@ def reschedule_plan():
         reply_text = response.choices[0].message.content
         plan_data = json.loads(reply_text)
 
-        # ==========================================
-        # 🆕 تحديث المهام المعاد توزيعها في UnifiedTask
-        # ==========================================
         if student_id and plan_data.get('plans'):
             try:
                 for day in plan_data['plans']:
@@ -1008,7 +1027,7 @@ def reschedule_plan():
                         task_title = task.get('title', '').strip()
                         if not task_title:
                             continue
-                        # البحث عن المهمة القديمة وتحديث تاريخها
+                        allocated_hours = task.get('allocated_hours', 1.5)
                         existing_task = UnifiedTask.query.filter(
                             UnifiedTask.student_id == student_id,
                             UnifiedTask.title == task_title,
@@ -1016,14 +1035,15 @@ def reschedule_plan():
                         ).first()
                         if existing_task:
                             existing_task.planned_date = planned_date
+                            existing_task.allocated_hours = allocated_hours
                         else:
-                            # إنشاء مهمة جديدة إذا لم تكن موجودة
                             unified_task = UnifiedTask(
                                 student_id=student_id,
                                 title=task_title,
                                 planned_date=planned_date,
                                 source='planner',
                                 priority=2,
+                                allocated_hours=allocated_hours,
                                 completed=False
                             )
                             db.session.add(unified_task)
@@ -1038,13 +1058,11 @@ def reschedule_plan():
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 # ==========================================
-# 🆕🆕🆕 واجهات برمجية للمهام الموحدة (Unified Tasks)
+# واجهات المهام الموحدة (مع allocated_hours)
 # ==========================================
-
 @app.route('/api/tasks', methods=['GET'])
 @student_required
 def get_unified_tasks():
-    """جلب جميع مهام الطالب الموحدة"""
     try:
         student_id = session['student_id']
         source = request.args.get('source')
@@ -1059,7 +1077,6 @@ def get_unified_tasks():
 @app.route('/api/tasks', methods=['POST'])
 @student_required
 def add_unified_task():
-    """إضافة مهمة جديدة (يدوية أو من AI)"""
     try:
         data = request.get_json(silent=True) or {}
         student_id = session['student_id']
@@ -1070,6 +1087,7 @@ def add_unified_task():
         priority = data.get('priority', 2)
         lesson_id = data.get('lesson_id')
         description = data.get('description', '')
+        allocated_hours = data.get('allocated_hours', 1.0)
 
         if not title or not planned_date:
             return jsonify({"status": "error", "message": "العنوان والتاريخ مطلوبان"}), 400
@@ -1079,7 +1097,6 @@ def add_unified_task():
         except ValueError:
             return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
 
-        # التحقق من وجود الدرس إذا تم إرسال lesson_id
         if lesson_id:
             lesson = CustomLesson.query.get(lesson_id)
             if not lesson:
@@ -1093,6 +1110,7 @@ def add_unified_task():
             planned_date=planned_date_obj,
             source=source,
             priority=priority,
+            allocated_hours=allocated_hours,
             completed=False
         )
         db.session.add(task)
@@ -1106,7 +1124,6 @@ def add_unified_task():
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 @student_required
 def update_unified_task(task_id):
-    """تحديث مهمة (تحديد مكتمل، تعديل التاريخ، إلخ)"""
     try:
         task = UnifiedTask.query.get(task_id)
         if not task:
@@ -1129,6 +1146,8 @@ def update_unified_task(task_id):
             task.description = data['description'].strip()
         if 'priority' in data:
             task.priority = int(data['priority'])
+        if 'allocated_hours' in data:
+            task.allocated_hours = float(data['allocated_hours'])
         
         task.updated_at = datetime.utcnow()
         db.session.commit()
@@ -1141,7 +1160,6 @@ def update_unified_task(task_id):
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 @student_required
 def delete_unified_task(task_id):
-    """حذف مهمة"""
     try:
         task = UnifiedTask.query.get(task_id)
         if not task:
@@ -1159,7 +1177,6 @@ def delete_unified_task(task_id):
 @app.route('/api/tasks/sync', methods=['POST'])
 @student_required
 def sync_unified_tasks():
-    """مزامنة مجموعة من المهام (للاستخدام مع localStorage)"""
     try:
         student_id = session['student_id']
         data = request.get_json(silent=True) or {}
@@ -1177,6 +1194,8 @@ def sync_unified_tasks():
                             task.planned_date = datetime.strptime(task_data['planned_date'], '%Y-%m-%d').date()
                         except ValueError:
                             continue
+                    if 'allocated_hours' in task_data:
+                        task.allocated_hours = float(task_data['allocated_hours'])
                     task.updated_at = datetime.utcnow()
                     continue
             
@@ -1197,6 +1216,7 @@ def sync_unified_tasks():
                 planned_date=planned_date_obj,
                 source=task_data.get('source', 'manual'),
                 priority=task_data.get('priority', 2),
+                allocated_hours=task_data.get('allocated_hours', 1.0),
                 completed=task_data.get('completed', False)
             )
             db.session.add(new_task)
@@ -1208,12 +1228,11 @@ def sync_unified_tasks():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕 API لجلب جميع الدروس (لخطة الاختبارات)
+# API لجلب الدروس
 # ==========================================
 @app.route('/api/lessons', methods=['GET'])
 @student_required
 def get_all_lessons():
-    """جلب جميع الدروس المتاحة في المنصة (لاختيار الدروس في خطة الاختبارات)"""
     try:
         lessons = CustomLesson.query.order_by(CustomLesson.subject_name, CustomLesson.chapter_name).all()
         result = []
@@ -1232,7 +1251,7 @@ def get_all_lessons():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕🆕 واجهات خطة الاختبارات (تحديث للعمل مع UnifiedTask)
+# توليد خطة الاختبارات (مع allocated_hours)
 # ==========================================
 @app.route('/api/generate-exam-plan', methods=['POST'])
 @student_required
@@ -1295,7 +1314,7 @@ def generate_exam_plan():
                 {{
                     "day": "2026-08-20",
                     "tasks": [
-                        {{"lesson_id": 1, "title": "مقدمة في الدايدود", "priority": "عال", "minutes": 45}}
+                        {{"lesson_id": 1, "title": "مقدمة في الدايدود", "priority": "عال", "minutes": 45, "allocated_hours": 0.75}}
                     ]
                 }}
             ]
@@ -1315,9 +1334,6 @@ def generate_exam_plan():
 
         plan_data = json.loads(response.choices[0].message.content)
 
-        # ==========================================
-        # 🆕 حفظ في UnifiedTask بدلاً من ExamPlanItem
-        # ==========================================
         priority_map = {"عال": 1, "متوسط": 2, "منخفض": 3}
         for day_obj in plan_data.get('plan', []):
             day_date_str = day_obj.get('day')
@@ -1334,6 +1350,7 @@ def generate_exam_plan():
                 lesson = CustomLesson.query.get(lesson_id)
                 if not lesson:
                     continue
+                allocated_hours = task.get('allocated_hours', task.get('minutes', 30) / 60.0)  # تحويل الدقائق إلى ساعات
                 
                 unified_task = UnifiedTask(
                     student_id=student_id,
@@ -1343,6 +1360,7 @@ def generate_exam_plan():
                     planned_date=day_date,
                     source='exam',
                     priority=priority_map.get(task.get('priority', 'متوسط'), 2),
+                    allocated_hours=allocated_hours,
                     completed=False
                 )
                 db.session.add(unified_task)
@@ -1358,13 +1376,11 @@ def generate_exam_plan():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات قديمة (للتوافق مع الكود القديم)
+# واجهات قديمة (للتوافق)
 # ==========================================
-
 @app.route('/api/exam-plans', methods=['GET'])
 @student_required
 def get_exam_plans():
-    """جلب خطط الاختبارات (من UnifiedTask) مع فلتر source='exam'"""
     try:
         student_id = session['student_id']
         tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').order_by(UnifiedTask.planned_date).all()
@@ -1390,7 +1406,6 @@ def get_exam_plans():
 @app.route('/api/exam-plans/<int:plan_id>', methods=['DELETE'])
 @student_required
 def delete_exam_plan(plan_id):
-    """حذف خطة اختبار"""
     try:
         student_id = session['student_id']
         tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').all()
@@ -1424,7 +1439,6 @@ def delete_exam_plan(plan_id):
 @app.route('/api/exam-plan-item/<int:item_id>', methods=['PUT'])
 @student_required
 def toggle_exam_item_complete(item_id):
-    """تحديث حالة إكمال مهمة في خطة الاختبارات"""
     try:
         task = UnifiedTask.query.get(item_id)
         if not task:
@@ -1440,12 +1454,11 @@ def toggle_exam_item_complete(item_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات إدارة الخطة اليومية (للتوافق مع الكود القديم)
+# واجهات الخطة اليومية (للتوافق)
 # ==========================================
 @app.route('/api/schedule', methods=['GET'])
 @student_required
 def get_schedule():
-    """جلب المهام اليومية (من UnifiedTask مع source='manual')"""
     try:
         student_id = session['student_id']
         tasks = UnifiedTask.query.filter_by(student_id=student_id, source='manual').order_by(UnifiedTask.planned_date).all()
@@ -1456,7 +1469,6 @@ def get_schedule():
 @app.route('/api/schedule', methods=['POST'])
 @student_required
 def add_schedule():
-    """إضافة مهمة يومية (يدوية)"""
     try:
         data = request.get_json(silent=True) or {}
         student_id = session['student_id']
@@ -1493,6 +1505,7 @@ def add_schedule():
             planned_date=planned_date_obj,
             source='manual',
             priority=2,
+            allocated_hours=1.0,
             completed=False
         )
         db.session.add(task)
@@ -1505,7 +1518,6 @@ def add_schedule():
 @app.route('/api/schedule/<int:schedule_id>', methods=['PUT'])
 @student_required
 def update_schedule(schedule_id):
-    """تحديث مهمة يومية"""
     try:
         task = UnifiedTask.query.get(schedule_id)
         if not task:
@@ -1534,7 +1546,6 @@ def update_schedule(schedule_id):
 @app.route('/api/schedule/<int:schedule_id>', methods=['DELETE'])
 @student_required
 def delete_schedule(schedule_id):
-    """حذف مهمة يومية"""
     try:
         task = UnifiedTask.query.get(schedule_id)
         if not task:
@@ -1549,7 +1560,7 @@ def delete_schedule(schedule_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات إدارة تقدم الدروس (Progress)
+# واجهات تقدم الدروس
 # ==========================================
 @app.route('/api/progress', methods=['GET'])
 @student_required
@@ -1591,6 +1602,227 @@ def add_or_update_progress():
 
         db.session.commit()
         return jsonify({"status": "success", "progress": progress.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕🆕 WebAuthn (تسجيل الدخول بالبصمة)
+# ==========================================
+from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
+
+RP_ID = os.environ.get('RP_ID', 'localhost')  # يجب أن يكون اسم النطاق الخاص بك
+RP_NAME = "Amr Suhail Academy"
+ORIGIN = os.environ.get('ORIGIN', 'http://localhost:5000')
+
+@app.route('/webauthn/register/begin', methods=['POST'])
+@student_required
+def webauthn_register_begin():
+    try:
+        student_id = session['student_id']
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"status": "error", "message": "الطالب غير موجود"}), 404
+
+        # توليد خيارات التسجيل
+        registration_options = generate_registration_options(
+            rp_id=RP_ID,
+            rp_name=RP_NAME,
+            user_id=str(student.id).encode(),
+            user_name=student.username,
+            user_display_name=student.name,
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                user_verification=UserVerificationRequirement.PREFERRED,
+                resident_key=ResidentKeyRequirement.PREFERRED,
+            ),
+        )
+
+        # تخزين الجلسة المؤقتة (للاستخدام في complete)
+        session['webauthn_challenge'] = registration_options.challenge
+        session['webauthn_user_id'] = str(student.id)
+
+        return jsonify({
+            "status": "success",
+            "options": {
+                "challenge": registration_options.challenge,
+                "rp": {
+                    "name": registration_options.rp.name,
+                    "id": registration_options.rp.id,
+                },
+                "user": {
+                    "id": registration_options.user.id,
+                    "name": registration_options.user.name,
+                    "displayName": registration_options.user.display_name,
+                },
+                "pubKeyCredParams": [{"type": "public-key", "alg": -7}],
+                "authenticatorSelection": {
+                    "authenticatorAttachment": "platform",
+                    "residentKey": "preferred",
+                    "userVerification": "preferred",
+                },
+                "attestation": "none",
+                "excludeCredentials": [
+                    {"id": cred.credential_id, "type": "public-key"}
+                    for cred in WebAuthnCredential.query.filter_by(student_id=student.id).all()
+                ]
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/webauthn/register/complete', methods=['POST'])
+@student_required
+def webauthn_register_complete():
+    try:
+        student_id = session['student_id']
+        data = request.get_json()
+        credential = data.get('credential')
+
+        # التحقق من التحدي
+        challenge = session.get('webauthn_challenge')
+        if not challenge:
+            return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
+
+        # تحويل البيانات إلى bytes
+        credential_id = base64url_to_bytes(credential['id'])
+        client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
+        attestation_object = base64url_to_bytes(credential['response']['attestationObject'])
+
+        # التحقق من التسجيل
+        verification = verify_registration_response(
+            credential=RegistrationCredential(
+                id=credential_id,
+                response={
+                    "clientDataJSON": client_data_json,
+                    "attestationObject": attestation_object,
+                },
+                type="public-key",
+            ),
+            expected_challenge=challenge,
+            expected_rp_id=RP_ID,
+            expected_origin=ORIGIN,
+            require_user_verification=False,
+        )
+
+        # حفظ بيانات الاعتماد
+        new_cred = WebAuthnCredential(
+            student_id=student_id,
+            credential_id=bytes_to_base64url(verification.credential_id),
+            public_key=verification.credential_public_key,
+            sign_count=verification.sign_count,
+        )
+        db.session.add(new_cred)
+        db.session.commit()
+
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_user_id', None)
+
+        return jsonify({"status": "success", "message": "تم تسجيل البصمة بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/webauthn/login/begin', methods=['POST'])
+def webauthn_login_begin():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        if not username:
+            return jsonify({"status": "error", "message": "اسم المستخدم مطلوب"}), 400
+
+        student = Student.query.filter_by(username=username).first()
+        if not student:
+            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
+
+        # جلب بيانات البصمة المسجلة
+        credentials = WebAuthnCredential.query.filter_by(student_id=student.id).all()
+        if not credentials:
+            return jsonify({"status": "error", "message": "لا توجد بصمة مسجلة لهذا المستخدم"}), 400
+
+        # توليد خيارات المصادقة
+        authentication_options = generate_authentication_options(
+            rp_id=RP_ID,
+            allow_credentials=[
+                {"id": base64url_to_bytes(c.credential_id), "type": "public-key"}
+                for c in credentials
+            ],
+            user_verification=UserVerificationRequirement.PREFERRED,
+        )
+
+        session['webauthn_challenge'] = authentication_options.challenge
+        session['webauthn_username'] = username
+
+        return jsonify({
+            "status": "success",
+            "options": {
+                "challenge": authentication_options.challenge,
+                "rpId": authentication_options.rp_id,
+                "allowCredentials": [
+                    {"id": c.credential_id, "type": "public-key"}
+                    for c in credentials
+                ],
+                "userVerification": "preferred",
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/webauthn/login/complete', methods=['POST'])
+def webauthn_login_complete():
+    try:
+        data = request.get_json()
+        credential = data.get('credential')
+        username = session.get('webauthn_username')
+        challenge = session.get('webauthn_challenge')
+
+        if not username or not challenge:
+            return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
+
+        student = Student.query.filter_by(username=username).first()
+        if not student:
+            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
+
+        # جلب بيانات الاعتماد
+        cred_id = credential['id']
+        db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id).first()
+        if not db_cred:
+            return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
+
+        # التحقق من المصادقة
+        verification = verify_authentication_response(
+            credential=AuthenticationCredential(
+                id=base64url_to_bytes(cred_id),
+                response={
+                    "clientDataJSON": base64url_to_bytes(credential['response']['clientDataJSON']),
+                    "authenticatorData": base64url_to_bytes(credential['response']['authenticatorData']),
+                    "signature": base64url_to_bytes(credential['response']['signature']),
+                    "userHandle": None,
+                },
+                type="public-key",
+            ),
+            expected_challenge=challenge,
+            expected_rp_id=RP_ID,
+            expected_origin=ORIGIN,
+            credential_public_key=db_cred.public_key,
+            credential_current_sign_count=db_cred.sign_count,
+            require_user_verification=False,
+        )
+
+        # تحديث عدد التوقيعات
+        db_cred.sign_count = verification.new_sign_count
+        db.session.commit()
+
+        # تسجيل الدخول
+        session.permanent = True
+        session['student_id'] = student.id
+        session['student_name'] = student.name
+        session.pop('is_admin', None)
+        session.pop('is_assistant', None)
+
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_username', None)
+
+        return jsonify({"status": "success", "student": student.to_dict()})
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500

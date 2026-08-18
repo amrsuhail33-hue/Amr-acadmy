@@ -13,6 +13,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from groq import Groq
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
@@ -82,6 +83,101 @@ def calculate_grade_estimation(score):
 # ==========================================
 # Database Models
 # ==========================================
+
+# --- نموذج الطالب (جديد) ---
+class Student(db.Model):
+    __tablename__ = 'students'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "name": self.name,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+# --- نموذج المفضلة (جديد) ---
+class Favorite(db.Model):
+    __tablename__ = 'favorites'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student', backref='favorites')
+    lesson = db.relationship('CustomLesson', backref='favorited_by')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "lesson_id": self.lesson_id,
+            "lesson_title": self.lesson.title if self.lesson else "",
+            "added_at": self.added_at.strftime("%Y-%m-%d %H:%M") if self.added_at else ""
+        }
+
+# --- نموذج الخطة المجدولة (جديد) ---
+class Schedule(db.Model):
+    __tablename__ = 'schedules'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
+    planned_date = db.Column(db.Date, nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student', backref='schedules')
+    lesson = db.relationship('CustomLesson', backref='scheduled_by')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "lesson_id": self.lesson_id,
+            "lesson_title": self.lesson.title if self.lesson else "",
+            "planned_date": self.planned_date.strftime("%Y-%m-%d") if self.planned_date else "",
+            "completed": self.completed,
+            "notes": self.notes or "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+# --- نموذج تقدم الدروس (جديد) ---
+class Progress(db.Model):
+    __tablename__ = 'progress'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
+    status = db.Column(db.String(20), default='not_started')  # not_started, in_progress, completed
+    progress_percent = db.Column(db.Integer, default=0)
+    last_accessed = db.Column(db.DateTime, default=datetime.utcnow)
+
+    student = db.relationship('Student', backref='progress_records')
+    lesson = db.relationship('CustomLesson', backref='progress_records')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "lesson_id": self.lesson_id,
+            "lesson_title": self.lesson.title if self.lesson else "",
+            "status": self.status,
+            "progress_percent": self.progress_percent,
+            "last_accessed": self.last_accessed.strftime("%Y-%m-%d %H:%M") if self.last_accessed else ""
+        }
+
+# --- النماذج الموجودة سابقاً ---
 class LessonQuestion(db.Model):
     __tablename__ = 'lesson_questions'
     id = db.Column(db.Integer, primary_key=True)
@@ -186,6 +282,9 @@ class QuizQuestion(db.Model):
             "explanation": self.explanation or ""
         }
 
+# ==========================================
+# إنشاء الجداول وبيانات أولية
+# ==========================================
 with app.app_context():
     try:
         db.create_all()
@@ -219,6 +318,14 @@ def can_manage_content(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def student_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('student_id'):
+            return jsonify({"status": "error", "message": "يرجى تسجيل الدخول أولاً"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ==========================================
 # إعداد نموذج الذكاء الاصطناعي من Groq
 # ==========================================
@@ -230,6 +337,9 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 def serve_sw():
     return send_from_directory('static', 'sw.js')
 
+# ==========================================
+# دالة بناء بيانات المنصة (معدلة لتمرير معلومات الطالب)
+# ==========================================
 def get_platform_data():
     data = {}
     try:
@@ -268,6 +378,7 @@ def get_platform_data():
                 subj_data["types"][c_type]["chapters"][chapter] = {"name": chapter, "lessons": []}
 
             lesson_dict = {
+                "id": item.id,  # مهم لربط المفضلة والتقدم
                 "title": item.title,
                 "notes": item.notes or "",
                 "custom_id": item.id
@@ -297,7 +408,7 @@ def get_platform_data():
     return data
 
 # ==========================================
-# Routes الرئيسية
+# Routes الرئيسية (معدلة لدعم الطلاب)
 # ==========================================
 @app.route('/')
 def home():
@@ -310,6 +421,8 @@ def home():
         chapter_name = request.args.get('chapter')
         is_admin = session.get('is_admin', False)
         is_assistant = session.get('is_assistant', False)
+        student_id = session.get('student_id')
+        student_name = session.get('student_name')
 
         try:
             updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
@@ -332,27 +445,27 @@ def home():
                                     except Exception:
                                         db.session.rollback()
                                         questions = []
-                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+                                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
         if subject_id and content_type:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id and content_type in s["types"]:
-                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+                            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
         if subject_id:
             for y in DATA.values():
                 for t in y["terms"].values():
                     for s in t["subjects"]:
                         if s["id"] == subject_id: 
-                            return render_template('index.html', view='select_type', subject=s, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+                            return render_template('index.html', view='select_type', subject=s, updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
         if year and term:
             if year in DATA and term in DATA[year]["terms"]: 
-                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+                return render_template('index.html', view='subjects', subjects=DATA[year]["terms"][term]["subjects"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
         if year:
             if year in DATA: 
-                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+                return render_template('index.html', view='terms', terms=DATA[year]["terms"], y_id=year, updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
 
-        return render_template('index.html', view='years', data=DATA, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
+        return render_template('index.html', view='years', data=DATA, updates=updates, is_admin=is_admin, is_assistant=is_assistant, student_id=student_id, student_name=student_name)
     except Exception as e: 
         return f"Error: {str(e)}"
 
@@ -376,7 +489,7 @@ def get_quiz():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# مصادقة الإدارة والمساعد
+# مصادقة الإدارة والمساعد (كما هي)
 # ==========================================
 @app.route('/admin/login', methods=['POST', 'GET'])
 def admin_login():
@@ -412,7 +525,7 @@ def admin_status():
     })
 
 # ==========================================
-# إدارة ورفع وتعديل المحتوى (للمسؤول والمساعد)
+# إدارة ورفع وتعديل المحتوى (للمسؤول والمساعد) - بدون تغيير
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
@@ -494,7 +607,7 @@ def delete_custom_content(content_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# الأسئلة والتحديثات (للمسؤول فقط)
+# الأسئلة والتحديثات (للمسؤول فقط) - بدون تغيير
 # ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
@@ -610,7 +723,7 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي والمخطط عبر Groq
+# خدمات الذكاء الاصطناعي والمخطط عبر Groq (بدون تغيير)
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
@@ -763,6 +876,272 @@ def reschedule_plan():
     except Exception as e:
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
+# ==========================================
+# 🆕 واجهات برمجية جديدة للطلاب
+# ==========================================
+
+# --- تسجيل طالب جديد ---
+@app.route('/student/register', methods=['POST'])
+def student_register():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+        name = (data.get('name') or '').strip()
+
+        if not username or not password or not name:
+            return jsonify({"status": "error", "message": "جميع الحقول مطلوبة"}), 400
+
+        if Student.query.filter_by(username=username).first():
+            return jsonify({"status": "error", "message": "اسم المستخدم موجود بالفعل"}), 400
+
+        student = Student(username=username, name=name)
+        student.set_password(password)
+        db.session.add(student)
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "تم تسجيل الطالب بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- تسجيل دخول الطالب ---
+@app.route('/student/login', methods=['POST'])
+def student_login():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+
+        student = Student.query.filter_by(username=username).first()
+        if not student or not student.check_password(password):
+            return jsonify({"status": "error", "message": "اسم المستخدم أو كلمة المرور غير صحيحة"}), 401
+
+        session.permanent = True
+        session['student_id'] = student.id
+        session['student_name'] = student.name
+        # التأكد من عدم تداخل مع صلاحيات admin
+        session.pop('is_admin', None)
+        session.pop('is_assistant', None)
+
+        return jsonify({"status": "success", "student": student.to_dict()})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- خروج الطالب ---
+@app.route('/student/logout', methods=['POST'])
+def student_logout():
+    session.pop('student_id', None)
+    session.pop('student_name', None)
+    return jsonify({"status": "success"})
+
+# --- حالة الطالب الحالية ---
+@app.route('/student/status', methods=['GET'])
+def student_status():
+    if session.get('student_id'):
+        student = Student.query.get(session['student_id'])
+        if student:
+            return jsonify({"status": "logged_in", "student": student.to_dict()})
+    return jsonify({"status": "logged_out"})
+
+# ==========================================
+# إدارة المفضلة (Favorites)
+# ==========================================
+@app.route('/api/favorites', methods=['GET'])
+@student_required
+def get_favorites():
+    try:
+        student_id = session['student_id']
+        favorites = Favorite.query.filter_by(student_id=student_id).all()
+        return jsonify([f.to_dict() for f in favorites])
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/favorites', methods=['POST'])
+@student_required
+def add_favorite():
+    try:
+        data = request.get_json(silent=True) or {}
+        lesson_id = data.get('lesson_id')
+        if not lesson_id:
+            return jsonify({"status": "error", "message": "معرف الدرس مطلوب"}), 400
+
+        student_id = session['student_id']
+        # التأكد من أن الدرس موجود
+        lesson = CustomLesson.query.get(lesson_id)
+        if not lesson:
+            return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
+
+        # منع التكرار
+        existing = Favorite.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
+        if existing:
+            return jsonify({"status": "error", "message": "الدرس موجود بالفعل في المفضلة"}), 400
+
+        fav = Favorite(student_id=student_id, lesson_id=lesson_id)
+        db.session.add(fav)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت الإضافة إلى المفضلة"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/favorites/<int:favorite_id>', methods=['DELETE'])
+@student_required
+def delete_favorite(favorite_id):
+    try:
+        fav = Favorite.query.get(favorite_id)
+        if not fav:
+            return jsonify({"status": "error", "message": "العنصر غير موجود"}), 404
+        if fav.student_id != session['student_id']:
+            return jsonify({"status": "error", "message": "غير مصرح لك بحذف هذه المفضلة"}), 403
+        db.session.delete(fav)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم الحذف من المفضلة"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# إدارة الخطة المجدولة (Schedule)
+# ==========================================
+@app.route('/api/schedule', methods=['GET'])
+@student_required
+def get_schedule():
+    try:
+        student_id = session['student_id']
+        schedules = Schedule.query.filter_by(student_id=student_id).order_by(Schedule.planned_date).all()
+        return jsonify([s.to_dict() for s in schedules])
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/schedule', methods=['POST'])
+@student_required
+def add_schedule():
+    try:
+        data = request.get_json(silent=True) or {}
+        lesson_id = data.get('lesson_id')
+        planned_date = data.get('planned_date')  # expected 'YYYY-MM-DD'
+        notes = data.get('notes', '')
+
+        if not lesson_id or not planned_date:
+            return jsonify({"status": "error", "message": "معرف الدرس والتاريخ مطلوبان"}), 400
+
+        lesson = CustomLesson.query.get(lesson_id)
+        if not lesson:
+            return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
+
+        try:
+            planned_date_obj = datetime.strptime(planned_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة (YYYY-MM-DD)"}), 400
+
+        student_id = session['student_id']
+        schedule = Schedule(
+            student_id=student_id,
+            lesson_id=lesson_id,
+            planned_date=planned_date_obj,
+            notes=notes
+        )
+        db.session.add(schedule)
+        db.session.commit()
+        return jsonify({"status": "success", "schedule": schedule.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/schedule/<int:schedule_id>', methods=['PUT'])
+@student_required
+def update_schedule(schedule_id):
+    try:
+        schedule = Schedule.query.get(schedule_id)
+        if not schedule:
+            return jsonify({"status": "error", "message": "العنصر غير موجود"}), 404
+        if schedule.student_id != session['student_id']:
+            return jsonify({"status": "error", "message": "غير مصرح لك بتعديل هذه الخطة"}), 403
+
+        data = request.get_json(silent=True) or {}
+        if 'completed' in data:
+            schedule.completed = bool(data['completed'])
+        if 'planned_date' in data:
+            try:
+                schedule.planned_date = datetime.strptime(data['planned_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
+        if 'notes' in data:
+            schedule.notes = data['notes'].strip()
+
+        db.session.commit()
+        return jsonify({"status": "success", "schedule": schedule.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/schedule/<int:schedule_id>', methods=['DELETE'])
+@student_required
+def delete_schedule(schedule_id):
+    try:
+        schedule = Schedule.query.get(schedule_id)
+        if not schedule:
+            return jsonify({"status": "error", "message": "العنصر غير موجود"}), 404
+        if schedule.student_id != session['student_id']:
+            return jsonify({"status": "error", "message": "غير مصرح لك بحذف هذه الخطة"}), 403
+        db.session.delete(schedule)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف الخطة"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# إدارة تقدم الدروس (Progress)
+# ==========================================
+@app.route('/api/progress', methods=['GET'])
+@student_required
+def get_progress():
+    try:
+        student_id = session['student_id']
+        progress = Progress.query.filter_by(student_id=student_id).all()
+        return jsonify([p.to_dict() for p in progress])
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/progress', methods=['POST'])
+@student_required
+def add_or_update_progress():
+    try:
+        data = request.get_json(silent=True) or {}
+        lesson_id = data.get('lesson_id')
+        status = data.get('status', 'not_started')
+        progress_percent = data.get('progress_percent', 0)
+
+        if not lesson_id:
+            return jsonify({"status": "error", "message": "معرف الدرس مطلوب"}), 400
+
+        lesson = CustomLesson.query.get(lesson_id)
+        if not lesson:
+            return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
+
+        student_id = session['student_id']
+        progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
+        if not progress:
+            progress = Progress(student_id=student_id, lesson_id=lesson_id)
+            db.session.add(progress)
+
+        if status in ['not_started', 'in_progress', 'completed']:
+            progress.status = status
+        if isinstance(progress_percent, int) and 0 <= progress_percent <= 100:
+            progress.progress_percent = progress_percent
+        progress.last_accessed = datetime.utcnow()
+
+        db.session.commit()
+        return jsonify({"status": "success", "progress": progress.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# تشغيل التطبيق
+# ==========================================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

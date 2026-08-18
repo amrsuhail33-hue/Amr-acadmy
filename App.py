@@ -32,14 +32,15 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات
+# إعداد قاعدة البيانات (تم الإصلاح)
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif raw_db_url.startswith("postgresql://"):
-    db_url = raw_db_url.replace("postgresql+pg8000://", 1)
+    # تم إصلاح الخطأ الحرج هنا: المعامل الثاني هو النص البديل
+    db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 else:
     db_url = raw_db_url
 
@@ -101,7 +102,6 @@ class Student(db.Model):
     name = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # ✅ علاقات
     profile = db.relationship('UserProfile', backref='student', uselist=False)
     credentials = db.relationship('WebAuthnCredential', backref='student', lazy='dynamic')
 
@@ -119,9 +119,6 @@ class Student(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# ==========================================
-# 🆕 نموذج الملف الشخصي (المستويات، النقاط، الترتيب)
-# ==========================================
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
     id = db.Column(db.Integer, primary_key=True)
@@ -198,9 +195,6 @@ class UserProfile(db.Model):
             "next_level_points": (math.floor(self.points / 100) + 1) * 100
         }
 
-# ==========================================
-# 🆕 نموذج معاملات النقاط
-# ==========================================
 class PointTransaction(db.Model):
     __tablename__ = 'point_transactions'
     id = db.Column(db.Integer, primary_key=True)
@@ -210,7 +204,6 @@ class PointTransaction(db.Model):
     level_before = db.Column(db.Integer)
     level_after = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
     student = db.relationship('Student')
 
     def to_dict(self):
@@ -223,9 +216,6 @@ class PointTransaction(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# ==========================================
-# نموذج المهام الموحدة
-# ==========================================
 class UnifiedTask(db.Model):
     __tablename__ = 'unified_tasks'
     id = db.Column(db.Integer, primary_key=True)
@@ -262,9 +252,6 @@ class UnifiedTask(db.Model):
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
         }
 
-# ==========================================
-# 🆕 نموذج بيانات البصمة (WebAuthn) - معدل
-# ==========================================
 class WebAuthnCredential(db.Model):
     __tablename__ = 'webauthn_credentials'
     id = db.Column(db.Integer, primary_key=True)
@@ -273,8 +260,6 @@ class WebAuthnCredential(db.Model):
     public_key = db.Column(db.Text, nullable=False)
     sign_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # ✅ بدون backref لتجنب التعارض (الـ backref موجود في Student.credentials)
     student = db.relationship('Student')
 
     def to_dict(self):
@@ -285,7 +270,6 @@ class WebAuthnCredential(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
-# --- باقي النماذج (بدون تغيير) ---
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -511,7 +495,6 @@ with app.app_context():
                 description="أصبح بإمكانك الآن طرح استفساراتك مباشرة في صفحة كل درس والحصول على إجابة المعلم المعتمدة."
             ))
             db.session.commit()
-        # إنشاء ملفات تعريف للمستخدمين الحاليين (إذا لم تكن موجودة)
         students = Student.query.all()
         for s in students:
             if not UserProfile.query.filter_by(student_id=s.id).first():
@@ -626,9 +609,6 @@ def get_platform_data():
 
     return data
 
-# ==========================================
-# 🆕 تحسينات iPhone/Safari (headers and cache control)
-# ==========================================
 @app.after_request
 def add_header(response):
     if request.path.startswith('/') and not request.path.startswith('/static'):
@@ -724,9 +704,6 @@ def get_quiz():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# 🆕 التحقق من إجابة الاختبار (مع النقاط)
-# ==========================================
 @app.route('/api/quiz/check', methods=['POST'])
 @student_required
 def check_quiz_answer():
@@ -766,7 +743,43 @@ def check_quiz_answer():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕 API الملف الشخصي
+# إدارة المفضلة (تمت الإضافة وإصلاح الخطأ)
+# ==========================================
+@app.route('/api/favorites', methods=['GET', 'POST', 'DELETE'])
+@student_required
+def manage_favorites():
+    try:
+        student_id = session['student_id']
+        if request.method == 'GET':
+            favs = Favorite.query.filter_by(student_id=student_id).order_by(Favorite.added_at.desc()).all()
+            return jsonify([f.to_dict() for f in favs])
+
+        data = request.get_json(silent=True) or {}
+        lesson_id = data.get('lesson_id')
+        if not lesson_id:
+            return jsonify({"status": "error", "message": "معرف الدرس مطلوب"}), 400
+
+        fav = Favorite.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
+
+        if request.method == 'POST':
+            if not fav:
+                new_fav = Favorite(student_id=student_id, lesson_id=lesson_id)
+                db.session.add(new_fav)
+                db.session.commit()
+            return jsonify({"status": "success", "message": "تم الإضافة للمفضلة"})
+
+        elif request.method == 'DELETE':
+            if fav:
+                db.session.delete(fav)
+                db.session.commit()
+            return jsonify({"status": "success", "message": "تم الحذف من المفضلة"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# API الملف الشخصي
 # ==========================================
 @app.route('/api/profile', methods=['GET'])
 @student_required
@@ -800,9 +813,6 @@ def get_profile():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# 🆕 تحديث ظهور المستخدم في الترتيب
-# ==========================================
 @app.route('/api/profile/visibility', methods=['POST'])
 @student_required
 def update_profile_visibility():
@@ -820,9 +830,6 @@ def update_profile_visibility():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# 🆕 قائمة المتصدرين (Leaderboard)
-# ==========================================
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard():
     try:
@@ -883,7 +890,7 @@ def admin_status():
     })
 
 # ==========================================
-# 🆕 Routes الطالب (مع دعم البصمة)
+# Routes الطالب (مع دعم البصمة)
 # ==========================================
 @app.route('/student/register', methods=['POST'])
 def student_register():
@@ -1105,7 +1112,6 @@ def get_updates():
         return jsonify([u.to_dict() for u in updates])
     except Exception as e:
         db.session.rollback()
-        print(f"Error fetching updates: {e}")
         return jsonify([])
 
 @app.route('/admin/add-update', methods=['POST'])
@@ -1153,18 +1159,24 @@ def calculate_grade():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# خدمات الذكاء الاصطناعي
+# خدمات الذكاء الاصطناعي (مع دعم الملفات شكلياً)
 # ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
-        data = request.get_json(silent=True) or request.form or {}
-        user_message = (data.get('message') or '').strip()
-        
+        if request.is_json:
+            data = request.get_json(silent=True) or {}
+            user_message = (data.get('message') or '').strip()
+        else:
+            user_message = (request.form.get('message') or '').strip()
+            file = request.files.get('file')
+            if file and not user_message:
+                user_message = "يرجى شرح المرفقات"
+
         messages = [
             {
                 "role": "system", 
-                "content": "أنت المساعد الأكاديمي الذكي للأكاديمية. وظيفتك الإجابة بوضوح وبأسلوب علمي وهندسي مبسط، وشرح خطوات الحل للطلاب خطوة بخطوة باللغة العربية."
+                "content": "أنت المساعد الأكاديمي الذكي للأكاديمية. وظيفتك الإجابة بوضوح وبأسلوب علمي وهندسي مبسط، وشرح خطوات الحل للطلاب خطوة بخطوة باللغة العربية. (ملاحظة: إذا سألك المستخدم عن صورة، اعتذر بلطف لأنك نموذج لغوي فقط حالياً واطلب منه كتابة استفساره)."
             },
             {
                 "role": "user", 
@@ -1193,9 +1205,6 @@ def planner():
     student_name = session.get('student_name')
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
-# ==========================================
-# 🆕 توليد الخطة العامة (مع الورد اليومي وإصلاح الحفظ)
-# ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
@@ -1331,7 +1340,6 @@ def generate_plan():
                 return jsonify({"status": "success", "plan": plan_data})
             except Exception as e:
                 db.session.rollback()
-                print(f"Error saving planner tasks: {e}")
                 return jsonify({"error": f"Error saving tasks: {str(e)}"}), 500
 
         return jsonify({"status": "success", "plan": plan_data})
@@ -1339,9 +1347,6 @@ def generate_plan():
     except Exception as e:
         return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
 
-# ==========================================
-# 🆕 إعادة التوزيع (مع تضمين الورد المفقود)
-# ==========================================
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
     try:
@@ -1421,16 +1426,12 @@ def reschedule_plan():
                 db.session.commit()
             except Exception as e:
                 db.session.rollback()
-                print(f"Error rescheduling tasks: {e}")
 
         return jsonify({"status": "success", "plan": plan_data})
 
     except Exception as e:
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
-# ==========================================
-# 🆕 إكمال مهمة (مع منح نقاط)
-# ==========================================
 @app.route('/api/tasks/complete/<int:task_id>', methods=['POST'])
 @student_required
 def complete_task(task_id):
@@ -1468,7 +1469,7 @@ def complete_task(task_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات المهام الموحدة
+# واجهات المهام الموحدة (تم دمج احتساب النقاط هنا أيضاً)
 # ==========================================
 @app.route('/api/tasks', methods=['GET'])
 @student_required
@@ -1546,7 +1547,14 @@ def update_unified_task(task_id):
         data = request.get_json(silent=True) or {}
         
         if 'completed' in data:
-            task.completed = bool(data['completed'])
+            is_completed = bool(data['completed'])
+            if is_completed and not task.completed:
+                profile = UserProfile.query.filter_by(student_id=session['student_id']).first()
+                if profile:
+                    points = 5 if task.is_wird else 10
+                    profile.add_points(points, f"إكمال مهمة: {task.title}")
+            task.completed = is_completed
+            
         if 'planned_date' in data:
             try:
                 task.planned_date = datetime.strptime(data['planned_date'], '%Y-%m-%d').date()
@@ -1602,7 +1610,13 @@ def sync_unified_tasks():
                 task = UnifiedTask.query.get(task_id)
                 if task and task.student_id == student_id:
                     if 'completed' in task_data:
-                        task.completed = bool(task_data['completed'])
+                        is_completed = bool(task_data['completed'])
+                        if is_completed and not task.completed:
+                            profile = UserProfile.query.filter_by(student_id=student_id).first()
+                            if profile:
+                                points = 5 if task.is_wird else 10
+                                profile.add_points(points, f"إكمال مهمة: {task.title}")
+                        task.completed = is_completed
                     if 'planned_date' in task_data:
                         try:
                             task.planned_date = datetime.strptime(task_data['planned_date'], '%Y-%m-%d').date()
@@ -1644,9 +1658,6 @@ def sync_unified_tasks():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# API لجلب الدروس
-# ==========================================
 @app.route('/api/lessons', methods=['GET'])
 @student_required
 def get_all_lessons():
@@ -1667,9 +1678,6 @@ def get_all_lessons():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# توليد خطة الاختبارات
-# ==========================================
 @app.route('/api/generate-exam-plan', methods=['POST'])
 @student_required
 def generate_exam_plan():
@@ -1793,194 +1801,6 @@ def generate_exam_plan():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# واجهات قديمة (للتوافق مع الكود القديم)
-# ==========================================
-@app.route('/api/exam-plans', methods=['GET'])
-@student_required
-def get_exam_plans():
-    try:
-        student_id = session['student_id']
-        tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').order_by(UnifiedTask.planned_date).all()
-        plans = {}
-        for task in tasks:
-            plan_name = "خطة اختبار"
-            if task.description and 'خطة اختبار:' in task.description:
-                parts = task.description.split(' - ')
-                if parts:
-                    plan_name = parts[0].replace('خطة اختبار:', '').strip()
-            if plan_name not in plans:
-                plans[plan_name] = {
-                    "plan_name": plan_name,
-                    "exam_date": task.planned_date.strftime("%Y-%m-%d"),
-                    "items": []
-                }
-            plans[plan_name]["items"].append(task.to_dict())
-        
-        return jsonify(list(plans.values()))
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/exam-plans/<int:plan_id>', methods=['DELETE'])
-@student_required
-def delete_exam_plan(plan_id):
-    try:
-        student_id = session['student_id']
-        tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').all()
-        plans = {}
-        for task in tasks:
-            plan_name = "خطة اختبار"
-            if task.description and 'خطة اختبار:' in task.description:
-                parts = task.description.split(' - ')
-                if parts:
-                    plan_name = parts[0].replace('خطة اختبار:', '').strip()
-            if plan_name not in plans:
-                plans[plan_name] = []
-            plans[plan_name].append(task.id)
-        
-        plan_names = list(plans.keys())
-        if plan_id <= len(plan_names):
-            plan_name = plan_names[plan_id - 1]
-            task_ids = plans.get(plan_name, [])
-            for task_id in task_ids:
-                task = UnifiedTask.query.get(task_id)
-                if task and task.student_id == student_id:
-                    db.session.delete(task)
-            db.session.commit()
-            return jsonify({"status": "success"})
-        else:
-            return jsonify({"status": "error", "message": "الخطة غير موجودة"}), 404
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/exam-plan-item/<int:item_id>', methods=['PUT'])
-@student_required
-def toggle_exam_item_complete(item_id):
-    try:
-        task = UnifiedTask.query.get(item_id)
-        if not task:
-            return jsonify({"status": "error", "message": "العنصر غير موجود"}), 404
-        if task.student_id != session['student_id']:
-            return jsonify({"status": "error", "message": "غير مصرح"}), 403
-        data = request.get_json(silent=True) or {}
-        task.completed = bool(data.get('completed', True))
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# ==========================================
-# واجهات الخطة اليومية (للتوافق)
-# ==========================================
-@app.route('/api/schedule', methods=['GET'])
-@student_required
-def get_schedule():
-    try:
-        student_id = session['student_id']
-        tasks = UnifiedTask.query.filter_by(student_id=student_id, source='manual').order_by(UnifiedTask.planned_date).all()
-        return jsonify([t.to_dict() for t in tasks])
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/schedule', methods=['POST'])
-@student_required
-def add_schedule():
-    try:
-        data = request.get_json(silent=True) or {}
-        student_id = session['student_id']
-        lesson_id = data.get('lesson_id')
-        planned_date = data.get('planned_date')
-        notes = data.get('notes', '')
-
-        if not lesson_id or not planned_date:
-            return jsonify({"status": "error", "message": "معرف الدرس والتاريخ مطلوبان"}), 400
-
-        lesson = CustomLesson.query.get(lesson_id)
-        if not lesson:
-            return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
-
-        try:
-            planned_date_obj = datetime.strptime(planned_date, '%Y-%m-%d').date()
-        except ValueError:
-            return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
-
-        existing = UnifiedTask.query.filter_by(
-            student_id=student_id,
-            lesson_id=lesson_id,
-            planned_date=planned_date_obj,
-            source='manual'
-        ).first()
-        if existing:
-            return jsonify({"status": "error", "message": "هذه المهمة موجودة بالفعل"}), 400
-
-        task = UnifiedTask(
-            student_id=student_id,
-            lesson_id=lesson_id,
-            title=lesson.title,
-            description=notes,
-            planned_date=planned_date_obj,
-            source='manual',
-            priority=2,
-            allocated_hours=1.0,
-            is_wird=False,
-            completed=False
-        )
-        db.session.add(task)
-        db.session.commit()
-        return jsonify({"status": "success", "task": task.to_dict()})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/schedule/<int:schedule_id>', methods=['PUT'])
-@student_required
-def update_schedule(schedule_id):
-    try:
-        task = UnifiedTask.query.get(schedule_id)
-        if not task:
-            return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
-        if task.student_id != session['student_id']:
-            return jsonify({"status": "error", "message": "غير مصرح لك بتعديل هذه المهمة"}), 403
-
-        data = request.get_json(silent=True) or {}
-        if 'completed' in data:
-            task.completed = bool(data['completed'])
-        if 'planned_date' in data:
-            try:
-                task.planned_date = datetime.strptime(data['planned_date'], '%Y-%m-%d').date()
-            except ValueError:
-                return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
-        if 'notes' in data:
-            task.description = data['notes'].strip()
-
-        task.updated_at = datetime.utcnow()
-        db.session.commit()
-        return jsonify({"status": "success", "task": task.to_dict()})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/schedule/<int:schedule_id>', methods=['DELETE'])
-@student_required
-def delete_schedule(schedule_id):
-    try:
-        task = UnifiedTask.query.get(schedule_id)
-        if not task:
-            return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
-        if task.student_id != session['student_id']:
-            return jsonify({"status": "error", "message": "غير مصرح لك بحذف هذه المهمة"}), 403
-        db.session.delete(task)
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# ==========================================
-# واجهات تقدم الدروس
-# ==========================================
 @app.route('/api/progress', methods=['GET'])
 @student_required
 def get_progress():
@@ -2033,9 +1853,9 @@ def add_or_update_progress():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕🆕 WebAuthn (تسجيل الدخول بالبصمة) - معدل
+# WebAuthn (تسجيل الدخول بالبصمة)
 # ==========================================
-RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com')  # ✅ يجب أن يكون النطاق الفعلي
+RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com') 
 RP_NAME = "Amr Suhail Academy"
 ORIGIN = os.environ.get('ORIGIN', 'https://amr-test-w4qb.onrender.com')
 
@@ -2093,7 +1913,6 @@ def webauthn_register_begin():
             }
         })
     except Exception as e:
-        print(f"ERROR in webauthn_register_begin: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/webauthn/register/complete', methods=['POST'])
@@ -2145,7 +1964,6 @@ def webauthn_register_complete():
         return jsonify({"status": "success", "message": "تم تسجيل البصمة بنجاح"})
     except Exception as e:
         db.session.rollback()
-        print(f"ERROR in webauthn_register_complete: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/webauthn/login/begin', methods=['POST'])
@@ -2189,7 +2007,6 @@ def webauthn_login_begin():
             }
         })
     except Exception as e:
-        print(f"ERROR in webauthn_login_begin: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/webauthn/login/complete', methods=['POST'])
@@ -2246,12 +2063,8 @@ def webauthn_login_complete():
         return jsonify({"status": "success", "student": student.to_dict()})
     except Exception as e:
         db.session.rollback()
-        print(f"ERROR in webauthn_login_complete: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# 🆕 نقطة صحية (Health Check) لاختبار الخادم
-# ==========================================
 @app.route('/health')
 def health_check():
     return jsonify({
@@ -2260,9 +2073,6 @@ def health_check():
         "database": "connected" if db.engine else "disconnected"
     })
 
-# ==========================================
-# تشغيل التطبيق
-# ==========================================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

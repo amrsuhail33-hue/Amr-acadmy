@@ -1,5 +1,8 @@
 import os
 import re
+import requests
+import pandas as pd
+from io import StringIO
 from datetime import datetime
 from functools import wraps
 from flask import (
@@ -10,22 +13,19 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# مفتاح الجلسات (Session Secret)
-app.secret_key = os.environ.get('SECRET_KEY', 'default-engineering-secret-key-2026')
+# مفتاح الجلسات
+app.secret_key = os.environ.get('SECRET_KEY', 'amr-academy-secret-key-2026')
 
 # --- ضبط رابط قاعدة البيانات والتوافق مع Supabase PostgreSQL ---
 raw_database_url = os.environ.get('DATABASE_URL')
 
 if raw_database_url:
-    # إصلاح بادئة الرابط لتتوافق مع SQLAlchemy و Psycopg2
     if raw_database_url.startswith("postgres://"):
         raw_database_url = raw_database_url.replace("postgres://", "postgresql+psycopg2://", 1)
     elif raw_database_url.startswith("postgresql://") and not raw_database_url.startswith("postgresql+psycopg2://"):
         raw_database_url = raw_database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
-    
     app.config['SQLALCHEMY_DATABASE_URI'] = raw_database_url
 else:
-    # استخدام قاعدة بيانات محلية كاحتياط في حال عدم وجود متغير البيئة
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_backup.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -36,8 +36,15 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 db = SQLAlchemy(app)
 
-# كلمة مرور لوحة الإدارة
+# المتغيرات السرية
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+
+# رابط تصدير Google Sheets بصيغة CSV
+GOOGLE_SHEET_CSV_URL = os.environ.get(
+    'GOOGLE_SHEET_CSV_URL',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vReL7kXN44-WnI9wX4Wf1G0kQ_your_sheet_id/pub?output=csv'
+)
 
 # --- نماذج قاعدة البيانات (Database Models) ---
 
@@ -74,14 +81,65 @@ class PlatformUpdate(db.Model):
     description = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# إنشاء الجداول تلقائياً إن لم تكن منشأة
 with app.app_context():
     try:
         db.create_all()
     except Exception as e:
-        print(f"Database Init Note: {e}")
+        print(f"Database Init Error: {e}")
 
-# --- حماية المسارات (Admin Decorator) ---
+# --- دوال المساعدة وجلب البيانات ---
+
+def fetch_sheet_lessons():
+    """جلب وتنسيق الدروس من Google Sheets مباشرة"""
+    try:
+        if 'docs.google.com' not in GOOGLE_SHEET_CSV_URL:
+            return []
+        response = requests.get(GOOGLE_SHEET_CSV_URL, timeout=8)
+        if response.status_code == 200:
+            csv_data = StringIO(response.text)
+            df = pd.read_csv(csv_data)
+            df = df.fillna('')
+            return df.to_dict(orient='records')
+    except Exception as err:
+        print(f"Sheet Fetch Error: {err}")
+    return []
+
+def get_all_combined_lessons():
+    """دمج دروس Google Sheets مع الدروس المضافة في قاعدة البيانات"""
+    sheet_data = fetch_sheet_lessons()
+    db_lessons = CustomLesson.query.all()
+    
+    combined = []
+    for item in sheet_data:
+        combined.append({
+            'source': 'sheet',
+            'id': None,
+            'year': str(item.get('year', item.get('السنة', ''))).strip(),
+            'term': str(item.get('term', item.get('الترم', ''))).strip(),
+            'subject_name': str(item.get('subject_name', item.get('المادة', ''))).strip(),
+            'chapter_name': str(item.get('chapter_name', item.get('الفصل', ''))).strip(),
+            'content_type': str(item.get('content_type', item.get('النوع', 'video'))).strip(),
+            'title': str(item.get('title', item.get('العنوان', ''))).strip(),
+            'url': str(item.get('url', item.get('الرابط', ''))).strip(),
+            'download_url': str(item.get('download_url', item.get('رابط_التحميل', ''))).strip(),
+            'notes': str(item.get('notes', item.get('ملاحظات', ''))).strip(),
+        })
+
+    for d in db_lessons:
+        combined.append({
+            'source': 'db',
+            'id': d.id,
+            'year': d.year,
+            'term': d.term,
+            'subject_name': d.subject_name,
+            'chapter_name': d.chapter_name,
+            'content_type': d.content_type,
+            'title': d.title,
+            'url': d.url,
+            'download_url': d.download_url,
+            'notes': d.notes,
+        })
+    return combined
 
 def admin_required(f):
     @wraps(f)
@@ -92,12 +150,136 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- المسارات والوظائف (Routes) ---
+# --- المسارات الرئيسية للطلاب ---
 
 @app.route('/')
 def index():
-    updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
-    return render_template('index.html', updates=updates)
+    updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).limit(5).all()
+    all_lessons = get_all_combined_lessons()
+    
+    years = sorted(list(set(item['year'] for item in all_lessons if item['year'])))
+    subjects = sorted(list(set(item['subject_name'] for item in all_lessons if item['subject_name'])))
+    
+    return render_template(
+        'index.html',
+        updates=updates,
+        years=years,
+        subjects=subjects,
+        total_lessons=len(all_lessons)
+    )
+
+@app.route('/subject/<subject_name>')
+def view_subject(subject_name):
+    all_lessons = get_all_combined_lessons()
+    subject_lessons = [l for l in all_lessons if l['subject_name'] == subject_name]
+    
+    # جلب الأسئلة والمناقشات المجاب عليها لهذه المادة
+    answered_questions = LessonQuestion.query.filter_by(
+        subject_id=subject_name,
+        is_answered=True
+    ).order_by(LessonQuestion.created_at.desc()).all()
+    
+    return render_template(
+        'subject.html',
+        subject_name=subject_name,
+        lessons=subject_lessons,
+        questions=answered_questions
+    )
+
+@app.route('/ask-question', methods=['POST'])
+def ask_question():
+    subject_id = request.form.get('subject_id')
+    chapter_name = request.form.get('chapter_name', 'عام')
+    student_name = request.form.get('student_name', 'طالب')
+    question_text = request.form.get('question_text')
+    
+    if subject_id and question_text:
+        new_q = LessonQuestion(
+            subject_id=subject_id,
+            chapter_name=chapter_name,
+            student_name=student_name,
+            question_text=question_text
+        )
+        db.session.add(new_q)
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': 'تم إرسال استفسارك وسيتم الرد عليه قريباً!'})
+    return jsonify({'status': 'error', 'message': 'يرجى كتابة نص السؤال'}), 400
+
+# --- حاسبة المعدل التراكمي ومولد الخطط بالذكاء الاصطناعي ---
+
+@app.route('/gpa-calculator', methods=['GET', 'POST'])
+def gpa_calculator():
+    result = None
+    if request.method == 'POST':
+        try:
+            prev_gpa = float(request.form.get('prev_gpa', 0))
+            prev_hours = float(request.form.get('prev_hours', 0))
+            current_grades = request.form.getlist('grade[]')
+            current_hours = request.form.getlist('hours[]')
+            
+            total_current_points = 0
+            total_current_hours = 0
+            
+            for g, h in zip(current_grades, current_hours):
+                if g and h:
+                    total_current_points += float(g) * float(h)
+                    total_current_hours += float(h)
+                    
+            total_points = (prev_gpa * prev_hours) + total_current_points
+            total_all_hours = prev_hours + total_current_hours
+            
+            cumulative_gpa = (total_points / total_all_hours) if total_all_hours > 0 else 0
+            term_gpa = (total_current_points / total_current_hours) if total_current_hours > 0 else 0
+            
+            result = {
+                'cumulative_gpa': round(cumulative_gpa, 2),
+                'term_gpa': round(term_gpa, 2),
+                'total_hours': total_all_hours
+            }
+        except Exception as e:
+            flash('حدث خطأ أثناء حساب المعدل، تأكد من صحة الأرقام المدخلة.', 'danger')
+            
+    return render_template('gpa_calculator.html', result=result)
+
+@app.route('/generate-study-plan', methods=['POST'])
+def generate_study_plan():
+    if not GROQ_API_KEY:
+        return jsonify({'status': 'error', 'message': 'مفتاح الذكاء الاصطناعي غير متوفر حالياً'}), 500
+        
+    data = request.get_json() or {}
+    subjects_info = data.get('subjects', '')
+    daily_hours = data.get('daily_hours', '4')
+    target_goal = data.get('goal', 'الامتياز والتركيز على الجانب العملي والهندسي')
+    
+    prompt = f"""
+    أنت مستشار أكاديمي وهندسي خبير. قم بإنشاء خطة مذاكرة وتوزيع دراسي منظم أسبوعياً لطالب هندسة ميكاترونكس بناءً على المدخلات التالية:
+    - المواد الدراسية: {subjects_info}
+    - عدد ساعات المذاكرة اليومية المتاحة: {daily_hours} ساعات
+    - الهدف الدراسي: {target_goal}
+    
+    نسّق الإجابة بنقاط واضحة ومباشرة بالعربية تشمل جدولاً أسبوعياً ونصائح للاختبارات.
+    """
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.6
+        }
+        res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=25)
+        if res.status_code == 200:
+            plan_text = res.json()['choices'][0]['message']['content']
+            return jsonify({'status': 'success', 'plan': plan_text})
+        else:
+            return jsonify({'status': 'error', 'message': 'تعذر استخراج الخطة من السيرفر'}), 500
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# --- لوحة التحكم والإدارة (Admin Dashboard) ---
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -105,7 +287,7 @@ def admin_login():
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
             session['is_admin'] = True
-            flash('تم تسجيل الدخول بنجاح!', 'success')
+            flash('تم تسجيل الدخول إلى لوحة التحكم بنجاح!', 'success')
             return redirect(url_for('admin_dashboard'))
         flash('كلمة المرور غير صحيحة!', 'danger')
     return render_template('login.html')
@@ -120,7 +302,7 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
-    questions = LessonQuestion.query.order_by(LessonQuestion.created_at.desc()).all()
+    questions = LessonQuestion.query.order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
     lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
     return render_template('admin.html', updates=updates, questions=questions, lessons=lessons)
 
@@ -132,8 +314,8 @@ def add_update():
     description = request.form.get('description')
     
     if title and description:
-        new_update = PlatformUpdate(title=title, tag=tag, description=description)
-        db.session.add(new_update)
+        new_up = PlatformUpdate(title=title, tag=tag, description=description)
+        db.session.add(new_up)
         db.session.commit()
         flash('تم نشر التحديث بنجاح!', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -141,30 +323,11 @@ def add_update():
 @app.route('/admin/delete-update/<int:id>', methods=['POST'])
 @admin_required
 def delete_update(id):
-    update = PlatformUpdate.query.get_or_404(id)
-    db.session.delete(update)
+    item = PlatformUpdate.query.get_or_404(id)
+    db.session.delete(item)
     db.session.commit()
     flash('تم حذف التحديث.', 'info')
     return redirect(url_for('admin_dashboard'))
-
-@app.route('/ask-question', methods=['POST'])
-def ask_question():
-    subject_id = request.form.get('subject_id')
-    chapter_name = request.form.get('chapter_name')
-    student_name = request.form.get('student_name', 'طالب')
-    question_text = request.form.get('question_text')
-    
-    if subject_id and chapter_name and question_text:
-        question = LessonQuestion(
-            subject_id=subject_id,
-            chapter_name=chapter_name,
-            student_name=student_name,
-            question_text=question_text
-        )
-        db.session.add(question)
-        db.session.commit()
-        return jsonify({'status': 'success', 'message': 'تم إرسال سؤالك وسيتم الرد عليه قريباً!'})
-    return jsonify({'status': 'error', 'message': 'بيانات ناقصة'}), 400
 
 @app.route('/admin/answer-question/<int:id>', methods=['POST'])
 @admin_required
@@ -176,36 +339,44 @@ def answer_question(id):
         question.answer_text = answer_text
         question.is_answered = True
         db.session.commit()
-        flash('تم حفظ ونشر الإجابة للطالب!', 'success')
+        flash('تم نشر الرد على السؤال بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-question/<int:id>', methods=['POST'])
+@admin_required
+def delete_question(id):
+    question = LessonQuestion.query.get_or_404(id)
+    db.session.delete(question)
+    db.session.commit()
+    flash('تم حذف السؤال.', 'info')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/add-lesson', methods=['POST'])
 @admin_required
 def add_lesson():
-    year = request.form.get('year')
-    term = request.form.get('term')
-    subject_name = request.form.get('subject_name')
-    chapter_name = request.form.get('chapter_name')
-    content_type = request.form.get('content_type')
-    title = request.form.get('title')
-    url = request.form.get('url')
-    download_url = request.form.get('download_url')
-    notes = request.form.get('notes')
-
     new_lesson = CustomLesson(
-        year=year,
-        term=term,
-        subject_name=subject_name,
-        chapter_name=chapter_name,
-        content_type=content_type,
-        title=title,
-        url=url,
-        download_url=download_url,
-        notes=notes
+        year=request.form.get('year', ''),
+        term=request.form.get('term', ''),
+        subject_name=request.form.get('subject_name', ''),
+        chapter_name=request.form.get('chapter_name', ''),
+        content_type=request.form.get('content_type', 'video'),
+        title=request.form.get('title', ''),
+        url=request.form.get('url', ''),
+        download_url=request.form.get('download_url', ''),
+        notes=request.form.get('notes', '')
     )
     db.session.add(new_lesson)
     db.session.commit()
-    flash('تم إضافة الدرس بنجاح!', 'success')
+    flash('تم حفظ الدرس في قاعدة البيانات بنجاح!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete-lesson/<int:id>', methods=['POST'])
+@admin_required
+def delete_lesson(id):
+    lesson = CustomLesson.query.get_or_404(id)
+    db.session.delete(lesson)
+    db.session.commit()
+    flash('تم حذف الدرس بنجاح.', 'info')
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':

@@ -244,9 +244,6 @@
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
         .fav-item-link { display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); padding:12px 16px; border-radius:12px; margin-bottom:10px; text-decoration:none; color:var(--text-main); transition:0.3s; box-shadow:var(--card-shadow); }
         .fav-item-link:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 10px 20px rgba(37,99,235,0.15); }
-        .priority-high { border-right: 4px solid #ef4444; }
-        .priority-medium { border-right: 4px solid #f59e0b; }
-        .priority-low { border-right: 4px solid #3b82f6; }
         
         /* ===== BIOMETRIC BUTTONS ===== */
         .bio-btn { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; color: var(--text-main); }
@@ -336,7 +333,6 @@
     <div class="nav-actions">
         {% if student_id %}
             <span class="navbar-user"><i class="fa-regular fa-user"></i> {{ student_name }}</span>
-            <!-- زر الملف الشخصي (دائري) -->
             <button class="profile-btn" onclick="togglePopup('profileBox')" title="ملفي الشخصي">
                 <i class="fa-regular fa-user"></i>
                 <span class="level-badge" id="navLevelBadge">1</span>
@@ -345,13 +341,10 @@
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact primary-bg"><i class="fa-regular fa-user"></i> دخول الطالب</button>
         {% endif %}
-        <!-- زر التواصل انتقل إلى الـ FAB -->
     </div>
 </nav>
 
-<!-- ========================================================== -->
 <!-- POPUPS -->
-<!-- ========================================================== -->
 
 <!-- Login/Register with Biometric -->
 <div class="popup-box" id="loginBox">
@@ -385,9 +378,7 @@
     </div>
 </div>
 
-<!-- ========================================================== -->
-<!-- 🆕 PROFILE POPUP -->
-<!-- ========================================================== -->
+<!-- PROFILE POPUP -->
 <div class="popup-box" id="profileBox">
     <div class="popup-header">
         <div><i class="fa-regular fa-user header-icon" style="color:var(--primary);"></i> ملفي الشخصي</div>
@@ -430,7 +421,6 @@
     </div>
 </div>
 
-<!-- ========================================================== -->
 <!-- Favorites -->
 <div class="popup-box" id="favBox">
     <div class="popup-header"><div><i class="fa-solid fa-heart header-icon" style="color:var(--primary);"></i> مفضلتي</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
@@ -480,9 +470,10 @@
     </div>
     <div class="popup-body">
         <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-            <button onclick="switchAdminTab('qa')" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
-            <button onclick="switchAdminTab('content')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
-            <button onclick="switchAdminTab('updates')" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
+            <!-- تمرير الـ event في onclick -->
+            <button onclick="switchAdminTab('qa', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
+            <button onclick="switchAdminTab('content', event)" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
+            <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
         </div>
         <div id="adminTab_qa"><div id="adminQuestionsList">جاري جلب الأسئلة...</div></div>
         <div id="adminTab_content" style="display:none;">
@@ -502,6 +493,7 @@
                 <select id="add_type" class="qa-input-field" style="margin-top:12px;">
                     <option value="videos">فيديو 🎥</option>
                     <option value="files">ملف 📑</option>
+                    <option value="quiz">اختبار 🏆</option>
                 </select>
                 <input type="text" id="add_title" placeholder="العنوان (مطلوب)" class="qa-input-field" required>
                 <input type="url" id="add_url" placeholder="الرابط" class="qa-input-field">
@@ -665,12 +657,13 @@
     
     <input type="hidden" id="current_lesson_id" value="{{ chapter.lessons[0].id if chapter.lessons else '' }}">
     
+    <!-- واجهة الاختبار المتكاملة -->
     {% if content_type == 'quiz' %}
         <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px 20px; margin-top:25px;">
             <div id="quiz-start" style="text-align:center;">
                 <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 15px;"><i class="fa-solid fa-award"></i></div>
                 <h3 style="margin-bottom:12px; font-size:1.4rem; font-weight:900;">تقييم فهمك للفصل</h3>
-                <input type="text" id="studentNameInput" placeholder="الاسم الثلاثي..." class="qa-input-field" style="max-width:100%; margin:0 auto 20px;">
+                <input type="text" id="studentNameInput" placeholder="الاسم الثلاثي..." class="qa-input-field" style="max-width:100%; margin:0 auto 20px;" value="{{ student_name or '' }}">
                 <button id="startQuizBtn" class="btn-calc-action" style="background:var(--primary); max-width:100%; margin:0 auto;" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار <i class="fa-solid fa-rocket"></i></button>
             </div>
             <div id="quiz-view" class="hidden">
@@ -732,7 +725,6 @@
             </div>
             <div class="item-actions">
                 <button class="action-btn fav-btn" data-lesson-id="{{ item.id }}" onclick="toggleFavorite(this)" title="مفضلة"><i class="fa-regular fa-heart"></i></button>
-                <!-- زر واحد يفتح صفحة البلانر (تم إزالة schedule-btn و exam-btn) -->
                 <a href="/planner" target="_blank" class="action-btn plan-btn" title="خطتي الدراسية"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
                 
                 {% if item.video or item.file %}
@@ -795,9 +787,7 @@
 
 </div>
 
-<!-- ========================================================== -->
-<!-- FAB MENU (مع زر التواصل) -->
-<!-- ========================================================== -->
+<!-- FAB MENU -->
 {% if view == 'years' %}
 <div class="fab-container" id="fabMenu">
     <div class="fab-main" onclick="toggleFabMenu()" title="أدوات المنصة">
@@ -814,7 +804,6 @@
     <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي">
         <i class="fa-solid fa-heart" style="color:var(--primary);"></i>
     </div>
-    <!-- زر التواصل هنا -->
     <a href="https://wa.me/967774485611" target="_blank" class="fab-item" title="تواصل معنا">
         <i class="fa-solid fa-headset" style="color:var(--accent);"></i>
     </a>
@@ -844,9 +833,7 @@
 <!-- JAVASCRIPT -->
 <!-- ========================================================== -->
 <script>
-// ==========================================
 // TOAST SYSTEM
-// ==========================================
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -860,9 +847,7 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// ==========================================
-// STUDENT LOGOUT (FIXED)
-// ==========================================
+// STUDENT LOGOUT
 async function logoutStudent() {
     if (!confirm('تسجيل الخروج؟')) return;
     try {
@@ -879,30 +864,20 @@ async function logoutStudent() {
         }
     } catch(e) {
         showToast('خطأ في الاتصال بالخادم', 'error');
-        console.error(e);
     }
 }
 
-// ==========================================
 // BIOMETRIC (WebAuthn)
-// ==========================================
 async function registerBiometric() {
     const username = document.getElementById('login_username').value.trim();
-    if (!username) {
-        showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
-        return;
-    }
+    if (!username) return showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
     try {
         const res = await fetch('/webauthn/register/begin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username })
         });
         const data = await res.json();
-        if (data.status !== 'success') {
-            showToast(data.message || 'خطأ في بدء التسجيل', 'error');
-            return;
-        }
+        if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء التسجيل', 'error');
+        
         const options = data.options;
         const challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
         const user = {
@@ -911,21 +886,13 @@ async function registerBiometric() {
             displayName: options.user.displayName,
         };
         const publicKey = {
-            challenge: challenge,
-            rp: options.rp,
-            user: user,
-            pubKeyCredParams: options.pubKeyCredParams,
-            authenticatorSelection: options.authenticatorSelection,
-            attestation: options.attestation,
-            excludeCredentials: options.excludeCredentials.map(c => ({
-                id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)),
-                type: c.type,
-            })),
+            challenge: challenge, rp: options.rp, user: user, pubKeyCredParams: options.pubKeyCredParams,
+            authenticatorSelection: options.authenticatorSelection, attestation: options.attestation,
+            excludeCredentials: options.excludeCredentials.map(c => ({ id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)), type: c.type }))
         };
         const credential = await navigator.credentials.create({ publicKey });
         const response = await fetch('/webauthn/register/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 credential: {
                     id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
@@ -938,49 +905,29 @@ async function registerBiometric() {
             })
         });
         const result = await response.json();
-        if (result.status === 'success') {
-            showToast('✅ تم تسجيل البصمة بنجاح!', 'success');
-        } else {
-            showToast(result.message || 'خطأ في التسجيل', 'error');
-        }
-    } catch(e) {
-        showToast('حدث خطأ: ' + e.message, 'error');
-    }
+        if (result.status === 'success') showToast('✅ تم تسجيل البصمة بنجاح!', 'success');
+        else showToast(result.message || 'خطأ في التسجيل', 'error');
+    } catch(e) { showToast('حدث خطأ: ' + e.message, 'error'); }
 }
 
 async function loginWithBiometric() {
     const username = document.getElementById('login_username').value.trim();
-    if (!username) {
-        showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
-        return;
-    }
+    if (!username) return showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
     try {
         const res = await fetch('/webauthn/login/begin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username })
         });
         const data = await res.json();
-        if (data.status !== 'success') {
-            showToast(data.message || 'خطأ في بدء الدخول', 'error');
-            return;
-        }
+        if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء الدخول', 'error');
+        
         const options = data.options;
         const challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
-        const allowCredentials = options.allowCredentials.map(c => ({
-            id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)),
-            type: c.type,
-        }));
-        const publicKey = {
-            challenge: challenge,
-            rpId: options.rpId,
-            allowCredentials: allowCredentials,
-            userVerification: options.userVerification,
-        };
+        const allowCredentials = options.allowCredentials.map(c => ({ id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)), type: c.type }));
+        const publicKey = { challenge: challenge, rpId: options.rpId, allowCredentials: allowCredentials, userVerification: options.userVerification };
+        
         const credential = await navigator.credentials.get({ publicKey });
         const response = await fetch('/webauthn/login/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 credential: {
                     id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
@@ -996,23 +943,14 @@ async function loginWithBiometric() {
         const result = await response.json();
         if (result.status === 'success') {
             showToast('✅ تم الدخول بالبصمة بنجاح!', 'success');
-            // تحديث الصفحة لعرض بيانات المستخدم
             location.reload();
-        } else {
-            showToast(result.message || 'خطأ في الدخول', 'error');
-        }
-    } catch(e) {
-        showToast('حدث خطأ: ' + e.message, 'error');
-    }
+        } else showToast(result.message || 'خطأ في الدخول', 'error');
+    } catch(e) { showToast('حدث خطأ: ' + e.message, 'error'); }
 }
 
-function isStudentLoggedIn() {
-    return STUDENT_ID !== null;
-}
+function isStudentLoggedIn() { return STUDENT_ID !== null; }
 
-// ==========================================
 // PROFILE POPUP
-// ==========================================
 async function loadProfile() {
     if (!isStudentLoggedIn()) return;
     try {
@@ -1030,10 +968,8 @@ async function loadProfile() {
             document.getElementById('statTotal').innerText = data.stats.total_tasks;
             document.getElementById('statRate').innerText = data.stats.completion_rate + '%';
             
-            // تحديث الشارة في الـ Navbar
-            document.getElementById('navLevelBadge').innerText = p.level;
+            if(document.getElementById('navLevelBadge')) document.getElementById('navLevelBadge').innerText = p.level;
             
-            // معاملات
             const transactions = data.recent_transactions || [];
             const container = document.getElementById('recentTransactions');
             if (transactions.length === 0) {
@@ -1049,7 +985,6 @@ async function loadProfile() {
                 }).join('');
             }
             
-            // تحديث زر إظهار في الترتيب
             const toggleBtn = document.getElementById('leaderboardToggle');
             if (p.show_in_leaderboard) {
                 toggleBtn.innerHTML = '✅ الظهور في الترتيب';
@@ -1061,30 +996,23 @@ async function loadProfile() {
                 toggleBtn.style.color = 'var(--text-muted)';
             }
         }
-    } catch(e) {
-        console.error(e);
-    }
+    } catch(e) { console.error(e); }
 }
 
 async function toggleLeaderboardVisibility() {
     if (!isStudentLoggedIn()) return;
     const toggleBtn = document.getElementById('leaderboardToggle');
     const current = toggleBtn.innerText.includes('إظهار');
-    const show = !current;
     try {
         const res = await fetch('/api/profile/visibility', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ show })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: !current })
         });
         const data = await res.json();
         if (data.status === 'success') {
             showToast('تم تحديث الإعداد ✅', 'success');
             loadProfile();
         }
-    } catch(e) {
-        showToast('خطأ في التحديث', 'error');
-    }
+    } catch(e) { showToast('خطأ في التحديث', 'error'); }
 }
 
 async function viewLeaderboard() {
@@ -1093,21 +1021,13 @@ async function viewLeaderboard() {
         const data = await res.json();
         if (data.status === 'success' && data.leaderboard.length > 0) {
             let msg = '🏆 قائمة المتصدرين 🏆\n\n';
-            data.leaderboard.forEach((u, i) => {
-                msg += `${u.rank}. ${u.name} (مستوى ${u.level}) - ${u.points} نقطة 🔥\n`;
-            });
+            data.leaderboard.forEach(u => { msg += `${u.rank}. ${u.name} (مستوى ${u.level}) - ${u.points} نقطة 🔥\n`; });
             alert(msg);
-        } else {
-            showToast('لا يوجد متصدرين حالياً', 'info');
-        }
-    } catch(e) {
-        showToast('خطأ في جلب الترتيب', 'error');
-    }
+        } else showToast('لا يوجد متصدرين حالياً', 'info');
+    } catch(e) { showToast('خطأ في جلب الترتيب', 'error'); }
 }
 
-// ==========================================
 // THEME & UI
-// ==========================================
 function updateThemeIcon() {
     const isDark = document.documentElement.classList.contains('dark-mode');
     const m = document.getElementById('moon-icon'), s = document.getElementById('sun-icon');
@@ -1153,34 +1073,24 @@ function togglePopup(boxId) {
     document.querySelectorAll('.popup-box').forEach(el => el.id === boxId ? el.classList.toggle('active') : el.classList.remove('active'));
     document.getElementById('chatOverlay').classList.toggle('active', document.getElementById(boxId).classList.contains('active'));
     if(document.getElementById('fabMenu') && document.getElementById('fabMenu').classList.contains('open')) toggleFabMenu();
-    
-    // إذا فتح الملف الشخصي، حمّل البيانات
-    if (boxId === 'profileBox' && document.getElementById(boxId).classList.contains('active')) {
-        loadProfile();
-    }
+    if (boxId === 'profileBox' && document.getElementById(boxId).classList.contains('active')) loadProfile();
 }
 function closeAllPopups() {
     document.querySelectorAll('.popup-box').forEach(el => el.classList.remove('active'));
     document.getElementById('chatOverlay').classList.remove('active');
 }
 
-// ==========================================
 // STUDENT AUTH
-// ==========================================
 async function studentLogin() {
     const username = document.getElementById('login_username').value.trim();
     const password = document.getElementById('login_password').value.trim();
     if (!username || !password) return alert('املأ جميع الحقول.');
     try {
         const res = await fetch('/student/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-            location.reload();
-        } else alert(data.message);
+        if (data.status === 'success') location.reload(); else alert(data.message);
     } catch(e) { alert('خطأ في الاتصال.'); }
 }
 async function studentRegister() {
@@ -1190,15 +1100,11 @@ async function studentRegister() {
     if (!username || !password || !name) return alert('املأ جميع الحقول.');
     try {
         const res = await fetch('/student/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, name })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, name })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-            alert('تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.');
-            showLoginForm();
-        } else alert(data.message);
+        if (data.status === 'success') { alert('تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.'); showLoginForm(); }
+        else alert(data.message);
     } catch(e) { alert('خطأ في الاتصال.'); }
 }
 function showRegisterForm() {
@@ -1210,22 +1116,15 @@ function showLoginForm() {
     document.getElementById('registerForm').style.display = 'none';
 }
 
-// ==========================================
-// FAVORITES (API)
-// ==========================================
+// FAVORITES
 async function toggleFavorite(btn) {
     const lessonId = btn.getAttribute('data-lesson-id');
     if (!lessonId) return alert('معرف الدرس غير موجود!');
-    if (!isStudentLoggedIn()) {
-        alert('يرجى تسجيل الدخول أولاً لإضافة المفضلة.');
-        return;
-    }
+    if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول أولاً لإضافة المفضلة.');
     const isFav = btn.classList.contains('fav-active');
     try {
         const res = await fetch('/api/favorites', {
-            method: isFav ? 'DELETE' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lesson_id: lessonId })
+            method: isFav ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lesson_id: lessonId })
         });
         const data = await res.json();
         if (data.status === 'success') {
@@ -1244,27 +1143,20 @@ async function renderFavLists() {
         return;
     }
     try {
-        const res = await fetch('/api/favorites');
-        const favs = await res.json();
+        const res = await fetch('/api/favorites'); const favs = await res.json();
         const videos = favs.filter(f => f.lesson && f.lesson.content_type === 'videos');
         const files = favs.filter(f => f.lesson && f.lesson.content_type === 'files');
-        const buildHtml = (arr) => arr.length === 0 ?
-            '<div style="text-align:center; color:var(--text-muted); padding:20px;">القائمة فارغة.</div>' :
-            arr.map(f => `
+        const buildHtml = (arr) => arr.length === 0 ? '<div style="text-align:center; color:var(--text-muted); padding:20px;">القائمة فارغة.</div>' : arr.map(f => `
                 <a href="${f.lesson.url || '#'}" target="_blank" class="fav-item-link">
                     <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
                         <div style="background:var(--primary-light); color:var(--primary); padding:8px; border-radius:8px;"><i class="fa-solid fa-${f.lesson.content_type === 'videos' ? 'video' : 'file-pdf'}"></i></div>
                         <span style="font-weight:800; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.lesson.title}</span>
                     </div>
                     <i class="fa-solid fa-arrow-up-right-from-square" style="color:var(--primary);"></i>
-                </a>
-            `).join('');
+                </a>`).join('');
         if(vList) vList.innerHTML = buildHtml(videos);
         if(fList) fList.innerHTML = buildHtml(files);
-    } catch(e) {
-        console.error(e);
-        if(vList) vList.innerHTML = '<div style="color:var(--danger);">خطأ في تحميل المفضلة</div>';
-    }
+    } catch(e) { if(vList) vList.innerHTML = '<div style="color:var(--danger);">خطأ في تحميل المفضلة</div>'; }
 }
 function switchFavTab(tab) {
     document.querySelectorAll('.fav-tab-btn').forEach(b => { b.style.color=''; b.style.borderColor=''; });
@@ -1276,87 +1168,59 @@ function switchFavTab(tab) {
 async function initFavoriteButtons() {
     if (!isStudentLoggedIn()) return;
     try {
-        const res = await fetch('/api/favorites');
-        const favs = await res.json();
+        const res = await fetch('/api/favorites'); const favs = await res.json();
         const favIds = favs.map(f => f.lesson_id);
         document.querySelectorAll('.fav-btn').forEach(btn => {
-            const lid = parseInt(btn.getAttribute('data-lesson-id'));
-            if (favIds.includes(lid)) {
-                btn.classList.add('fav-active');
-                btn.innerHTML = '<i class="fa-solid fa-heart" style="color:var(--primary);"></i>';
+            if (favIds.includes(parseInt(btn.getAttribute('data-lesson-id')))) {
+                btn.classList.add('fav-active'); btn.innerHTML = '<i class="fa-solid fa-heart" style="color:var(--primary);"></i>';
             }
         });
-    } catch(e) { console.error(e); }
+    } catch(e) {}
 }
 
-// ==========================================
-// PROGRESS (API)
-// ==========================================
+// PROGRESS
 async function calculateStudentProgress() {
     const checks = document.querySelectorAll('.lesson-check');
     if (checks.length === 0) return;
-    let completed = 0;
-    checks.forEach(chk => { if (chk.checked) completed++; });
+    let completed = 0; checks.forEach(chk => { if (chk.checked) completed++; });
     const pct = Math.round((completed / checks.length) * 100);
-    const bar = document.getElementById('studentProgressBar');
-    const txt = document.getElementById('progressPercent');
-    if(bar) bar.style.width = pct + '%';
-    if(txt) txt.innerText = pct + '%';
+    const bar = document.getElementById('studentProgressBar'), txt = document.getElementById('progressPercent');
+    if(bar) bar.style.width = pct + '%'; if(txt) txt.innerText = pct + '%';
     if (!isStudentLoggedIn()) return;
     for (const chk of checks) {
         const lessonId = chk.getAttribute('data-lesson-id');
         if (!lessonId) continue;
-        const status = chk.checked ? 'completed' : 'not_started';
-        const progressPercent = chk.checked ? 100 : 0;
         try {
             await fetch('/api/progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lesson_id: lessonId, status, progress_percent: progressPercent })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lesson_id: lessonId, status: chk.checked ? 'completed' : 'not_started', progress_percent: chk.checked ? 100 : 0 })
             });
-        } catch(e) { console.error(e); }
+        } catch(e) {}
     }
 }
 async function loadStudentProgress() {
     if (!isStudentLoggedIn()) return;
     try {
-        const res = await fetch('/api/progress');
-        const progressData = await res.json();
+        const res = await fetch('/api/progress'); const progressData = await res.json();
         document.querySelectorAll('.lesson-check').forEach(chk => {
-            const lessonId = chk.getAttribute('data-lesson-id');
-            const prog = progressData.find(p => p.lesson_id == lessonId);
-            if (prog && prog.status === 'completed') {
-                chk.checked = true;
-            }
+            const prog = progressData.find(p => p.lesson_id == chk.getAttribute('data-lesson-id'));
+            if (prog && prog.status === 'completed') chk.checked = true;
         });
-        const checks = document.querySelectorAll('.lesson-check');
-        if (checks.length > 0) {
-            let completed = 0;
-            checks.forEach(chk => { if (chk.checked) completed++; });
-            const pct = Math.round((completed / checks.length) * 100);
-            const bar = document.getElementById('studentProgressBar');
-            const txt = document.getElementById('progressPercent');
-            if(bar) bar.style.width = pct + '%';
-            if(txt) txt.innerText = pct + '%';
-        }
-    } catch(e) { console.error(e); }
+        calculateStudentProgress();
+    } catch(e) {}
 }
 
-// ==========================================
 // ADMIN / ASSISTANT
-// ==========================================
 async function handleSecretAdminClick() {
     try {
         const res = await fetch('/admin/status'); const data = await res.json();
         if (data.is_admin || data.is_assistant) {
             togglePopup('adminBox');
             if(data.is_assistant && !data.is_admin) {
-                const buttons = document.querySelectorAll('#adminBox .admin-tab-btn');
-                if(buttons.length >= 3) { buttons[0].style.display = 'none'; buttons[2].style.display = 'none'; }
-                switchAdminTab('content');
-            } else {
-                switchAdminTab('qa');
-            }
+                const btns = document.querySelectorAll('#adminBox .admin-tab-btn');
+                if(btns.length >= 3) { btns[0].style.display = 'none'; btns[2].style.display = 'none'; }
+                switchAdminTab('content', null);
+            } else switchAdminTab('qa', null);
         } else {
             const choice = prompt("اختر نوع الدخول:\n1- مسؤول (Admin)\n2- مساعد (Assistant)", "1");
             if (choice === "1" || choice === "2") {
@@ -1371,18 +1235,12 @@ async function handleSecretAdminClick() {
 }
 async function logoutAdmin() {
     if(!confirm("هل تريد تسجيل الخروج حقاً؟")) return;
-    try {
-        await fetch('/admin/logout', { method: 'POST' });
-        location.reload();
-    } catch (e) { location.reload(); }
+    try { await fetch('/admin/logout', { method: 'POST' }); location.reload(); } catch (e) { location.reload(); }
 }
-function switchAdminTab(tabName) {
+function switchAdminTab(tabName, evt) {
     const btns = document.querySelectorAll('#adminBox .admin-tab-btn');
     btns.forEach(btn => {btn.style.color=''; btn.style.borderColor='';});
-    if(event && event.currentTarget) {
-        event.currentTarget.style.color='var(--primary)';
-        event.currentTarget.style.borderColor='var(--primary)';
-    }
+    if(evt && evt.currentTarget) { evt.currentTarget.style.color='var(--primary)'; evt.currentTarget.style.borderColor='var(--primary)'; }
     document.getElementById('adminTab_qa').style.display = tabName==='qa' ? 'block' : 'none';
     document.getElementById('adminTab_content').style.display = tabName==='content' ? 'block' : 'none';
     document.getElementById('adminTab_updates').style.display = tabName==='updates' ? 'block' : 'none';
@@ -1440,17 +1298,15 @@ async function submitNewContent() {
         const data = await res.json();
         if (data.status === 'success') {
             alert("تم الحفظ بنجاح!");
-            resetContentForm();
-            loadCustomContentList();
+            resetContentForm(); loadCustomContentList();
             if(!editId && location.href.includes('type=')) location.reload();
             if(editId) location.reload();
-        } else { alert(data.message); }
+        } else alert(data.message);
     } catch (err) { alert("حدث خطأ أثناء الاتصال بالخادم."); }
 }
 async function deleteAdminContent(id) {
     if (!confirm("هل أنت متأكد من الحذف؟")) return;
-    await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
-    location.reload();
+    await fetch(`/admin/delete-content/${id}`, { method: 'POST' }); location.reload();
 }
 async function loadAdminQuestions() {
     const container = document.getElementById('adminQuestionsList');
@@ -1495,9 +1351,7 @@ async function handleQuestionSubmit(e) {
     document.getElementById('qa_question_text').value = ''; document.getElementById('qaSuccessAlert').style.display = 'block';
 }
 
-// ==========================================
 // UPDATES
-// ==========================================
 async function checkForNewPlatformUpdates() {
     try {
         const res = await fetch('/api/updates'); const updates = await res.json();
@@ -1541,9 +1395,7 @@ async function publishNewUpdate() {
     alert("تم نشر الإعلان بنجاح!"); closeAllPopups();
 }
 
-// ==========================================
 // CALCULATOR
-// ==========================================
 function addRow() {
     const div = document.createElement('div'); div.className = "calc-row"; div.style.display = "flex"; div.style.gap = "10px"; div.style.marginTop = "12px";
     div.innerHTML = `<input type="number" placeholder="الساعات" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة" class="qa-input-field s-grade" style="margin:0;">`;
@@ -1566,9 +1418,7 @@ function calcFinalGPA() {
     document.getElementById('calcResultBox').style.display = 'block';
 }
 
-// ==========================================
 // AI CHAT
-// ==========================================
 function previewAiImage() {
     const f = document.getElementById('aiImageUpload').files[0];
     if(f){ document.getElementById('aiImgPreview').src = URL.createObjectURL(f); document.getElementById('aiImgPreviewBox').style.display = 'block'; }
@@ -1608,55 +1458,133 @@ async function sendAIMessage() {
     b.scrollTop = b.scrollHeight;
 }
 
-// ==========================================
-// QUIZ
-// ==========================================
+// 🏆 QUIZ SYSTEM (محدث ليعمل مع الباك إند ونظام النقاط)
 let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
+
 async function startQuiz(chapter) {
-    const name = document.getElementById('studentNameInput').value.trim(); if(!name) return alert("أدخل اسمك الكريم للبدء.");
-    quizState.studentName = name; quizState.chapterName = chapter; quizState.currentQ = 0;
+    const name = document.getElementById('studentNameInput').value.trim();
+    if(!name) return alert("أدخل اسمك الكريم للبدء.");
+    
+    quizState.studentName = name;
+    quizState.chapterName = chapter;
+    quizState.currentQ = 0;
+    
     document.getElementById('startQuizBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعداد الأسئلة...';
+    
     try {
-        const res = await fetch(`https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429&t=${Date.now()}`);
-        const rows = (await res.text()).trim().split("\n").slice(1);
-        quizState.questions = rows.map(r => {
-            const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(x => x.replace(/^"|"$/g, '').trim());
-            return { chapter: c[3], q: c[5], opts: [c[6], c[7], c[8], c[9]].filter(x=>x), ans: parseInt(c[10]), explain: c[11]||"", status:'unanswered' };
-        }).filter(q => q.chapter === chapter && q.q);
-        if(quizState.questions.length === 0) { alert("لا توجد أسئلة متاحة حالياً."); document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>'; return; }
-        document.getElementById('quiz-start').classList.add('hidden'); document.getElementById('quiz-view').classList.remove('hidden'); loadQuestion();
-    } catch (e) { alert("خطأ في جلب البيانات."); document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>'; }
+        const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}`);
+        const data = await res.json();
+        
+        if(!data || data.length === 0) {
+            alert("لا توجد أسئلة متاحة حالياً لهذا الفصل.");
+            document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>';
+            return;
+        }
+        
+        quizState.questions = data.map(q => ({
+            id: q.id,
+            q: q.question_text,
+            opts: [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x),
+            ans_text: q.correct_answer, // للإجابة السريعة في الواجهة
+            explain: q.explanation || "",
+            status: 'unanswered',
+            selectedOpt: null
+        }));
+        
+        document.getElementById('quiz-start').classList.add('hidden');
+        document.getElementById('quiz-view').classList.remove('hidden');
+        loadQuestion();
+    } catch (e) {
+        alert("خطأ في جلب البيانات من الخادم.");
+        document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>';
+    }
 }
+
 function loadQuestion() {
     const q = quizState.questions[quizState.currentQ];
     document.getElementById('qCount').innerHTML = `<i class="fa-solid fa-list-ol"></i> السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
     document.getElementById('qText').innerText = q.q;
     document.getElementById('quizProgressBar').style.width = ((quizState.currentQ)/quizState.questions.length)*100 + '%';
-    const optsDiv = document.getElementById('qOptions'); optsDiv.innerHTML = '';
+    
+    const optsDiv = document.getElementById('qOptions');
+    optsDiv.innerHTML = '';
+    
     q.opts.forEach((opt, idx) => {
-        const b = document.createElement('button'); b.className = 'quiz-opt'; b.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
-        if(q.status === 'answered'){
+        const b = document.createElement('button');
+        b.className = 'quiz-opt';
+        b.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
+        
+        if (q.status === 'answered') {
             b.disabled = true;
-            if(idx === q.ans) { b.classList.add('correct'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`; }
-            else if(idx === q.selectedOpt) { b.classList.add('wrong'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`; } else b.innerHTML = `<span>${opt}</span>`;
-        } else b.onclick = () => selectOption(idx);
+            if (opt === q.ans_text) {
+                b.classList.add('correct');
+                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`;
+            } else if (idx === q.selectedOpt) {
+                b.classList.add('wrong');
+                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`;
+            } else {
+                b.innerHTML = `<span>${opt}</span>`;
+            }
+        } else {
+            b.onclick = () => selectOption(idx);
+        }
         optsDiv.appendChild(b);
     });
+    
     const expBox = document.getElementById('quizExplanation');
-    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain}`; expBox.style.display = q.status === 'answered' ? 'block' : 'none';
+    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain}`;
+    expBox.style.display = q.status === 'answered' ? 'block' : 'none';
+    
     document.getElementById('btnPrev').style.display = quizState.currentQ > 0 ? 'flex' : 'none';
+    
     const nextBtn = document.getElementById('btnSkipNext');
     nextBtn.innerHTML = q.status === 'answered' ? (quizState.currentQ === quizState.questions.length - 1 ? 'النتيجة <i class="fa-solid fa-flag-checkered"></i>' : 'التالي <i class="fa-solid fa-arrow-left"></i>') : 'تخطي <i class="fa-solid fa-forward"></i>';
     nextBtn.style.background = q.status === 'answered' ? 'var(--primary)' : 'var(--text-muted)';
 }
-function selectOption(idx) { if(quizState.questions[quizState.currentQ].status === 'answered') return; quizState.questions[quizState.currentQ].selectedOpt = idx; quizState.questions[quizState.currentQ].status = 'answered'; loadQuestion(); }
+
+async function selectOption(idx) {
+    if(quizState.questions[quizState.currentQ].status === 'answered') return;
+    
+    const q = quizState.questions[quizState.currentQ];
+    const selectedText = q.opts[idx];
+    
+    q.selectedOpt = idx;
+    q.status = 'answered';
+    
+    loadQuestion();
+    
+    if (isStudentLoggedIn()) {
+        try {
+            const res = await fetch('/api/quiz/check', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question_id: q.id, selected_answer: selectedText })
+            });
+            const data = await res.json();
+            
+            if(data.status === 'success' && data.result) {
+                if(data.result.points_added) showToast(`+${data.result.points_added} نقطة! إجابة صحيحة`, 'success');
+                else if(data.result.points_deducted) showToast(`-${data.result.points_deducted} نقاط. إجابة خاطئة`, 'error');
+                loadProfile(); 
+            }
+        } catch(e) {
+            console.error("Error submitting answer:", e);
+        }
+    }
+}
+
 function showHint() { document.getElementById('quizExplanation').style.display = 'block'; }
 function prevQuestion() { if(quizState.currentQ > 0) { quizState.currentQ--; loadQuestion(); } }
-function nextQuestion() { if(quizState.questions[quizState.currentQ].status !== 'answered') quizState.questions[quizState.currentQ].status = 'skipped'; if(quizState.currentQ < quizState.questions.length - 1) { quizState.currentQ++; loadQuestion(); } else showQuizResult(); }
+function nextQuestion() { 
+    if(quizState.questions[quizState.currentQ].status !== 'answered') quizState.questions[quizState.currentQ].status = 'skipped'; 
+    if(quizState.currentQ < quizState.questions.length - 1) { quizState.currentQ++; loadQuestion(); } 
+    else showQuizResult(); 
+}
 function confirmEndQuiz() { if(confirm("إنهاء الاختبار الآن؟")) showQuizResult(); }
+
 function showQuizResult() {
     document.getElementById('quiz-view').classList.add('hidden'); document.getElementById('result-view').classList.remove('hidden');
-    const score = quizState.questions.filter(q => q.status === 'answered' && q.selectedOpt === q.ans).length;
+    const score = quizState.questions.filter(q => q.status === 'answered' && q.opts[q.selectedOpt] === q.ans_text).length;
     const perc = (score / quizState.questions.length) * 100;
     let grade='راسب', color='var(--danger)', icon = '<i class="fa-solid fa-xmark"></i>';
     if(perc>=90){grade='ممتاز'; color='var(--accent)'; icon='<i class="fa-solid fa-star"></i>';} else if(perc>=80){grade='جيد جداً'; color='var(--primary)'; icon='<i class="fa-solid fa-check-double"></i>';} else if(perc>=70){grade='جيد'; color='var(--warning)'; icon='<i class="fa-solid fa-check"></i>';} else if(perc>=60){grade='مقبول'; color='#f97316'; icon='<i class="fa-solid fa-minus"></i>';}
@@ -1666,15 +1594,14 @@ function showQuizResult() {
     document.getElementById('certGrade').style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : color === 'var(--danger)' ? '239,68,68' : '249,115,22'}, 0.15)`;
     if(perc>=80 && typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
 }
+
 function downloadCertificate() {
     html2canvas(document.getElementById('certificateCard'), { scale: 3, useCORS: true, backgroundColor: null }).then(canvas => {
         const link = document.createElement('a'); link.download = `شهادة_تقييم_${quizState.studentName}.png`; link.href = canvas.toDataURL(); link.click();
     });
 }
 
-// ==========================================
 // INIT
-// ==========================================
 window.addEventListener('DOMContentLoaded', () => {
     updateThemeIcon();
     applyYearBadges();

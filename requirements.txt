@@ -6,4 +6,4 @@ Pillow
 Flask-SQLAlchemy
 groq
 pg8000
-
+webauthn

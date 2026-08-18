@@ -1,8 +1,8 @@
 import os
-import csv
 import io
 import time
 import json
+import ssl
 import base64
 import requests
 from datetime import datetime, timedelta
@@ -20,7 +20,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000
+# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000 مع SSL
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
@@ -33,18 +33,24 @@ else:
 
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
-if "?sslmode=" in db_url:
-    db_url = db_url.split("?sslmode=")[0]
-elif "&sslmode=" in db_url:
-    db_url = db_url.split("&sslmode=")[0]
+# تنظيف معلمات الرابط
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if "sqlite" not in db_url:
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
+        "connect_args": {
+            "ssl_context": ssl_context
+        }
     }
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "123")
@@ -125,7 +131,7 @@ class CustomLesson(db.Model):
     term = db.Column(db.String(100), nullable=False)
     subject_name = db.Column(db.String(150), nullable=False)
     chapter_name = db.Column(db.String(150), nullable=False)
-    content_type = db.Column(db.String(20), nullable=False)
+    content_type = db.Column(db.String(20), nullable=False)  # 'videos', 'files', 'quiz'
     title = db.Column(db.String(200), nullable=False)
     url = db.Column(db.Text, nullable=True)
     download_url = db.Column(db.Text, nullable=True)
@@ -146,6 +152,38 @@ class CustomLesson(db.Model):
             "download_url": self.download_url or "",
             "notes": self.notes or "",
             "created_at": date_str
+        }
+
+class QuizQuestion(db.Model):
+    __tablename__ = 'quiz_questions'
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(100), nullable=False)
+    subject_name = db.Column(db.String(150), nullable=False)
+    chapter_name = db.Column(db.String(150), nullable=False)
+    question_text = db.Column(db.Text, nullable=False)
+    option_a = db.Column(db.Text, nullable=True)
+    option_b = db.Column(db.Text, nullable=True)
+    option_c = db.Column(db.Text, nullable=True)
+    option_d = db.Column(db.Text, nullable=True)
+    correct_answer = db.Column(db.String(50), nullable=True)
+    explanation = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "year": self.year,
+            "term": self.term,
+            "subject_name": self.subject_name,
+            "chapter_name": self.chapter_name,
+            "question_text": self.question_text,
+            "option_a": self.option_a or "",
+            "option_b": self.option_b or "",
+            "option_c": self.option_c or "",
+            "option_d": self.option_d or "",
+            "correct_answer": self.correct_answer or "",
+            "explanation": self.explanation or ""
         }
 
 with app.app_context():
@@ -182,110 +220,68 @@ def can_manage_content(f):
     return decorated_function
 
 # ==========================================
-# AI APIs & Sheets with In-Memory Fallback Cache
+# قراءة وبناء هيكل المواد مباشرة من Supabase (خفيف وفائق السرعة)
 # ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
-CSV_URLS = [
-    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=0",
-    "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
-]
-
-CACHED_DATA = {}
-LAST_FETCH_TIME = 0
-
 @app.route('/sw.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js')
 
-def get_data_from_sheet():
-    global CACHED_DATA, LAST_FETCH_TIME
-    
-    # تحديث الكاش كل دقيقتين كحد أدنى لتجنب ضغط الطلبات وبطء السيرفر
-    now = time.time()
-    if CACHED_DATA and (now - LAST_FETCH_TIME < 120):
-        return CACHED_DATA
-
+def get_platform_data():
     data = {}
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-    
     try:
-        res1 = requests.get(f"{CSV_URLS[0]}&t={int(now)}", headers=headers, timeout=25)
-        if res1.status_code == 200:
-            reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
-            for row in reader1:
-                year, term, subject, chapter, content_type, title, video_url, download_url, file_url, notes = "", "", "", "", "", "", "", "", "", ""
-                for k, v in row.items():
-                    if not k or v is None: continue
-                    k = str(k).strip().lower()
-                    v = str(v).strip()
-                    if "سنة" in k: year = v
-                    elif "ترم" in k: term = v
-                    elif "مادة" in k: subject = v
-                    elif "شبتر" in k or "فصل" in k: chapter = v
-                    elif "نوع" in k: content_type = v
-                    elif "عنوان" in k or "درس" in k: title = v
-                    elif "رابط المقطع" in k: video_url = v
-                    elif "تحميل" in k: download_url = v
-                    elif "رابط الملف" in k: file_url = v
-                    elif "ملاحظ" in k: notes = v
+        lessons = CustomLesson.query.order_by(CustomLesson.id.asc()).all()
+        for item in lessons:
+            year = (item.year or '').strip()
+            term = (item.term or '').strip()
+            subject = (item.subject_name or '').strip()
+            chapter = (item.chapter_name or 'عام').strip() or 'عام'
+            c_type = (item.content_type or 'videos').strip()
 
-                if not year or not term or not subject or not title: continue
-                if not chapter: chapter = "عام"
+            if not year or not term or not subject:
+                continue
 
-                if year not in data: data[year] = {"name": year, "terms": {}}
-                if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
-                if subject not in data[year]["terms"][term]["subjects"]:
-                    data[year]["terms"][term]["subjects"][subject] = {
-                        "id": f"{year}_{term}_{subject}".replace(" ", "_"),
-                        "name": subject,
-                        "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}
+            if year not in data:
+                data[year] = {"name": year, "terms": {}}
+            if term not in data[year]["terms"]:
+                data[year]["terms"][term] = {"name": term, "subjects": {}}
+            if subject not in data[year]["terms"][term]["subjects"]:
+                data[year]["terms"][term]["subjects"][subject] = {
+                    "id": f"{year}_{term}_{subject}".replace(" ", "_"),
+                    "name": subject,
+                    "types": {
+                        "videos": {"chapters": {}},
+                        "files": {"chapters": {}},
+                        "quiz": {"chapters": {}}
                     }
-                subj_data = data[year]["terms"][term]["subjects"][subject]
-                if "فيديو" in content_type:
-                    if chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                    subj_data["types"]["videos"]["chapters"][chapter]["lessons"].append({"title": title, "video": video_url, "download": download_url, "notes": notes})
-                elif "ملف" in content_type:
-                    if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
-                    subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": file_url or download_url, "notes": notes})
+                }
 
-        res2 = requests.get(f"{CSV_URLS[1]}&t={int(now)}", headers=headers, timeout=25)
-        if res2.status_code == 200:
-            reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
-            next(reader2, None)
-            for row in reader2:
-                if len(row) < 4: continue 
-                year, term, subject, chapter = str(row[0]).strip(), str(row[1]).strip(), str(row[2]).strip(), str(row[3]).strip()
-                if not year or not term or not subject or not chapter: continue
-                if year not in data: data[year] = {"name": year, "terms": {}}
-                if term not in data[year]["terms"]: data[year]["terms"][term] = {"name": term, "subjects": {}}
-                if subject not in data[year]["terms"][term]["subjects"]:
-                    data[year]["terms"][term]["subjects"][subject] = {"id": f"{year}_{term}_{subject}".replace(" ", "_"), "name": subject, "types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
-                subj_data = data[year]["terms"][term]["subjects"][subject]
-                if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
+            subj_data = data[year]["terms"][term]["subjects"][subject]
+            
+            if c_type not in subj_data["types"]:
+                subj_data["types"][c_type] = {"chapters": {}}
 
-        try:
-            custom_items = CustomLesson.query.all()
-            for item in custom_items:
-                c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
-                if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-                if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
-                if c_subject not in data[c_year]["terms"][term]["subjects"]:
-                    data[c_year]["terms"][term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
-                subj_data = data[c_year]["terms"][term]["subjects"][c_subject]
-                if c_type == "videos":
-                    if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                    subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
-                elif c_type == "files":
-                    if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": c_chapter, "lessons": []}
-                    subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
-        except Exception as db_err:
-            db.session.rollback()
-            print(f"Custom lessons load fallback: {db_err}")
+            if chapter not in subj_data["types"][c_type]["chapters"]:
+                subj_data["types"][c_type]["chapters"][chapter] = {"name": chapter, "lessons": []}
+
+            lesson_dict = {
+                "title": item.title,
+                "notes": item.notes or "",
+                "custom_id": item.id
+            }
+            if c_type == "videos":
+                lesson_dict["video"] = item.url or ""
+                lesson_dict["download"] = item.download_url or ""
+            elif c_type == "files":
+                lesson_dict["file"] = item.url or item.download_url or ""
+                lesson_dict["download"] = item.download_url or ""
+            elif c_type == "quiz":
+                lesson_dict["title"] = item.title or "بدء الاختبار"
+
+            subj_data["types"][c_type]["chapters"][chapter]["lessons"].append(lesson_dict)
 
         for y in data.values():
             for t in y["terms"].values():
@@ -294,22 +290,19 @@ def get_data_from_sheet():
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error building platform data from DB: {e}")
 
-        if data:
-            CACHED_DATA = data
-            LAST_FETCH_TIME = now
-            return data
+    return data
 
-    except Exception as e: 
-        print(f"Error fetching data: {e}")
-
-    # في حال حدوث timeout أو مشكلة اتصال، نرجع آخر بيانات ناجحة
-    return CACHED_DATA if CACHED_DATA else data
-
+# ==========================================
+# Routes الرئيسية
+# ==========================================
 @app.route('/')
 def home():
     try:
-        DATA = get_data_from_sheet()
+        DATA = get_platform_data()
         year = request.args.get('year')
         term = request.args.get('term')
         subject_id = request.args.get('subject')
@@ -362,6 +355,25 @@ def home():
         return render_template('index.html', view='years', data=DATA, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
     except Exception as e: 
         return f"Error: {str(e)}"
+
+# ==========================================
+# استرجاع بنك الأسئلة الخاص بالاختبارات
+# ==========================================
+@app.route('/api/quiz', methods=['GET'])
+def get_quiz():
+    subject_name = request.args.get('subject')
+    chapter_name = request.args.get('chapter')
+    try:
+        query = QuizQuestion.query
+        if subject_name:
+            query = query.filter_by(subject_name=subject_name)
+        if chapter_name:
+            query = query.filter_by(chapter_name=chapter_name)
+        questions = query.all()
+        return jsonify([q.to_dict() for q in questions])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
 # مصادقة الإدارة والمساعد
@@ -419,7 +431,7 @@ def add_custom_content():
 
         if not year or not term or not subject_name or not title: 
             return jsonify({"status": "error", "message": "البيانات الأساسية مطلوبة"}), 400
-        if not url and not download_url: 
+        if not url and not download_url and content_type != 'quiz': 
             return jsonify({"status": "error", "message": "يجب إرفاق رابط مشاهدة/ملف أو رابط تحميل"}), 400
 
         db.session.add(CustomLesson(
@@ -551,10 +563,6 @@ def get_updates():
     except Exception as e:
         db.session.rollback()
         print(f"Error fetching updates: {e}")
-        try:
-            db.create_all()
-        except Exception:
-            pass
         return jsonify([])
 
 @app.route('/admin/add-update', methods=['POST'])

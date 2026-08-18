@@ -150,6 +150,7 @@ with app.app_context():
             ))
             db.session.commit()
     except Exception as e:
+        db.session.rollback()
         print(f"Startup DB Status: {e}")
 
 # ==========================================
@@ -244,20 +245,25 @@ def get_data_from_sheet():
                 subj_data = data[year]["terms"][term]["subjects"][subject]
                 if chapter not in subj_data["types"]["quiz"]["chapters"]: subj_data["types"]["quiz"]["chapters"][chapter] = {"name": chapter, "lessons": [{"title": "بدء الاختبار"}]}
 
-        # دمج الدروس المضافة يدوياً من قاعدة البيانات
-        for item in CustomLesson.query.all():
-            c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
-            if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-            if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
-            if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
-                data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
-            subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
-            if c_type == "videos":
-                if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
-            elif c_type == "files":
-                if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
-                subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+        # دمج الدروس المضافة يدوياً بأمان من قاعدة البيانات
+        try:
+            custom_items = CustomLesson.query.all()
+            for item in custom_items:
+                c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
+                if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
+                if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
+                if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
+                    data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
+                subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
+                if c_type == "videos":
+                    if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                    subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+                elif c_type == "files":
+                    if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                    subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
+        except Exception as db_err:
+            db.session.rollback()
+            print(f"Custom lessons load fallback: {db_err}")
 
         for y in data.values():
             for t in y["terms"].values():
@@ -282,7 +288,11 @@ def home():
         is_admin = session.get('is_admin', False)
         is_assistant = session.get('is_assistant', False)
 
-        updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+        try:
+            updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+        except Exception:
+            db.session.rollback()
+            updates = []
 
         if subject_id and content_type and chapter_name:
             for y in DATA.values():
@@ -291,10 +301,14 @@ def home():
                         if s["id"] == subject_id and content_type in s["types"]:
                             for c in s["types"][content_type]["chapters"]:
                                 if c["name"] == chapter_name:
-                                    if is_admin: 
-                                        questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
-                                    else: 
-                                        questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
+                                    try:
+                                        if is_admin: 
+                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name).order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
+                                        else: 
+                                            questions = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name, is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
+                                    except Exception:
+                                        db.session.rollback()
+                                        questions = []
                                     return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, updates=updates, is_admin=is_admin, is_assistant=is_assistant)
         if subject_id and content_type:
             for y in DATA.values():
@@ -420,7 +434,11 @@ def edit_custom_content(content_id):
 @app.route('/admin/custom-content', methods=['GET'])
 @can_manage_content
 def get_custom_content(): 
-    return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
+    try:
+        return jsonify([l.to_dict() for l in CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify([])
 
 @app.route('/admin/delete-content/<int:content_id>', methods=['POST'])
 @can_manage_content
@@ -461,7 +479,11 @@ def submit_question():
 @app.route('/admin/questions', methods=['GET'])
 @admin_required
 def get_pending_questions(): 
-    return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
+    try:
+        return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
+    except Exception as e:
+        db.session.rollback()
+        return jsonify([])
 
 @app.route('/admin/reply/<int:question_id>', methods=['POST'])
 @admin_required
@@ -493,7 +515,17 @@ def delete_question(question_id):
 
 @app.route('/api/updates', methods=['GET'])
 def get_updates(): 
-    return jsonify([u.to_dict() for u in PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()])
+    try:
+        updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
+        return jsonify([u.to_dict() for u in updates])
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error fetching updates: {e}")
+        try:
+            db.create_all()
+        except Exception:
+            pass
+        return jsonify([])
 
 @app.route('/admin/add-update', methods=['POST'])
 @admin_required
@@ -696,4 +728,3 @@ def reschedule_plan():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-

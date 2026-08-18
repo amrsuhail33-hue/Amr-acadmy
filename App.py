@@ -13,6 +13,7 @@ from flask import (
     make_response
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import text  # 🆕 ضروري لتحديث قاعدة البيانات
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
 from webauthn import generate_registration_options, verify_registration_response
@@ -259,8 +260,6 @@ class WebAuthnCredential(db.Model):
     public_key = db.Column(db.Text, nullable=False)
     sign_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # ❌ تم حذف الـ student relationship من هنا لمنع التعارض مع الـ backref في كلاس Student
 
     def to_dict(self):
         return {
@@ -483,11 +482,26 @@ class QuizQuestion(db.Model):
         }
 
 # ==========================================
-# إنشاء الجداول
+# 🚀 إنشاء الجداول والترقيع التلقائي (هنا الحل لمشكلة البلانر)
 # ==========================================
 with app.app_context():
     try:
         db.create_all()
+        
+        # --- ترقيع لقاعدة البيانات لإضافة الأعمدة الناقصة بدون فقدان بيانات ---
+        try:
+            db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN allocated_hours FLOAT DEFAULT 1.0;'))
+            db.session.commit()
+        except Exception:
+            db.session.rollback() # العمود موجود مسبقاً
+            
+        try:
+            db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN is_wird BOOLEAN DEFAULT FALSE;'))
+            db.session.commit()
+        except Exception:
+            db.session.rollback() # العمود موجود مسبقاً
+        # ----------------------------------------------------------------------
+
         if PlatformUpdate.query.count() == 0:
             db.session.add(PlatformUpdate(
                 title="إطلاق نظام الأسئلة والشريك الرسمي",
@@ -890,7 +904,7 @@ def admin_status():
     })
 
 # ==========================================
-# Routes الطالب (مع دعم البصمة)
+# Routes الطالب
 # ==========================================
 @app.route('/student/register', methods=['POST'])
 def student_register():
@@ -1883,19 +1897,23 @@ def webauthn_register_begin():
             ),
         )
 
-        session['webauthn_challenge'] = registration_options.challenge
+        # 🆕 تحويل الـ Bytes إلى Base64 String ليتم قراءتها كـ JSON دون أخطاء
+        challenge_b64 = bytes_to_base64url(registration_options.challenge)
+        user_id_b64 = bytes_to_base64url(registration_options.user.id)
+
+        session['webauthn_challenge'] = challenge_b64
         session['webauthn_user_id'] = str(student.id)
 
         return jsonify({
             "status": "success",
             "options": {
-                "challenge": registration_options.challenge,
+                "challenge": challenge_b64,
                 "rp": {
                     "name": registration_options.rp.name,
                     "id": registration_options.rp.id,
                 },
                 "user": {
-                    "id": registration_options.user.id,
+                    "id": user_id_b64,
                     "name": registration_options.user.name,
                     "displayName": registration_options.user.display_name,
                 },
@@ -1907,8 +1925,8 @@ def webauthn_register_begin():
                 },
                 "attestation": "none",
                 "excludeCredentials": [
-                    {"id": cred.credential_id, "type": "public-key"}
-                    for cred in WebAuthnCredential.query.filter_by(student_id=student.id).all()
+                    {"id": c.credential_id, "type": "public-key"}
+                    for c in WebAuthnCredential.query.filter_by(student_id=student.id).all()
                 ]
             }
         })
@@ -1921,9 +1939,9 @@ def webauthn_register_complete():
         data = request.get_json()
         credential = data.get('credential')
         user_id = session.get('webauthn_user_id')
-        challenge = session.get('webauthn_challenge')
+        challenge_b64 = session.get('webauthn_challenge')
 
-        if not user_id or not challenge:
+        if not user_id or not challenge_b64:
             return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
 
         student = Student.query.get(int(user_id))
@@ -1933,6 +1951,7 @@ def webauthn_register_complete():
         credential_id = base64url_to_bytes(credential['id'])
         client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
         attestation_object = base64url_to_bytes(credential['response']['attestationObject'])
+        challenge_bytes = base64url_to_bytes(challenge_b64)
 
         verification = verify_registration_response(
             credential=RegistrationCredential(
@@ -1943,7 +1962,7 @@ def webauthn_register_complete():
                 },
                 type="public-key",
             ),
-            expected_challenge=challenge,
+            expected_challenge=challenge_bytes,
             expected_rp_id=RP_ID,
             expected_origin=ORIGIN,
             require_user_verification=False,
@@ -1991,13 +2010,16 @@ def webauthn_login_begin():
             user_verification=UserVerificationRequirement.PREFERRED,
         )
 
-        session['webauthn_challenge'] = authentication_options.challenge
+        # 🆕 تحويل الـ Bytes إلى Base64 String ليتم قراءتها كـ JSON دون أخطاء
+        challenge_b64 = bytes_to_base64url(authentication_options.challenge)
+        
+        session['webauthn_challenge'] = challenge_b64
         session['webauthn_username'] = username
 
         return jsonify({
             "status": "success",
             "options": {
-                "challenge": authentication_options.challenge,
+                "challenge": challenge_b64,
                 "rpId": authentication_options.rp_id,
                 "allowCredentials": [
                     {"id": c.credential_id, "type": "public-key"}
@@ -2015,9 +2037,9 @@ def webauthn_login_complete():
         data = request.get_json()
         credential = data.get('credential')
         username = session.get('webauthn_username')
-        challenge = session.get('webauthn_challenge')
+        challenge_b64 = session.get('webauthn_challenge')
 
-        if not username or not challenge:
+        if not username or not challenge_b64:
             return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
 
         student = Student.query.filter_by(username=username).first()
@@ -2028,6 +2050,8 @@ def webauthn_login_complete():
         db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id).first()
         if not db_cred:
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
+
+        challenge_bytes = base64url_to_bytes(challenge_b64)
 
         verification = verify_authentication_response(
             credential=AuthenticationCredential(
@@ -2040,7 +2064,7 @@ def webauthn_login_complete():
                 },
                 type="public-key",
             ),
-            expected_challenge=challenge,
+            expected_challenge=challenge_bytes,
             expected_rp_id=RP_ID,
             expected_origin=ORIGIN,
             credential_public_key=db_cred.public_key,

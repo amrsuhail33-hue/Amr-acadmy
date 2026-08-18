@@ -182,7 +182,7 @@ def can_manage_content(f):
     return decorated_function
 
 # ==========================================
-# AI APIs & Sheets
+# AI APIs & Sheets with In-Memory Fallback Cache
 # ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
@@ -193,14 +193,28 @@ CSV_URLS = [
     "https://docs.google.com/spreadsheets/d/14nAqGlyk4RZkKW7P_Vk_aEKmyZsbcWWP_BAS9WYWT80/export?format=csv&gid=1031832429"
 ]
 
+CACHED_DATA = {}
+LAST_FETCH_TIME = 0
+
 @app.route('/sw.js')
 def serve_sw():
     return send_from_directory('static', 'sw.js')
 
 def get_data_from_sheet():
+    global CACHED_DATA, LAST_FETCH_TIME
+    
+    # تحديث الكاش كل دقيقتين كحد أدنى لتجنب ضغط الطلبات وبطء السيرفر
+    now = time.time()
+    if CACHED_DATA and (now - LAST_FETCH_TIME < 120):
+        return CACHED_DATA
+
     data = {}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+    
     try:
-        res1 = requests.get(f"{CSV_URLS[0]}&t={int(time.time())}", timeout=10)
+        res1 = requests.get(f"{CSV_URLS[0]}&t={int(now)}", headers=headers, timeout=25)
         if res1.status_code == 200:
             reader1 = csv.DictReader(io.StringIO(res1.content.decode('utf-8')))
             for row in reader1:
@@ -239,7 +253,7 @@ def get_data_from_sheet():
                     if chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": chapter, "lessons": []}
                     subj_data["types"]["files"]["chapters"][chapter]["lessons"].append({"title": title, "file": file_url or download_url, "notes": notes})
 
-        res2 = requests.get(f"{CSV_URLS[1]}&t={int(time.time())}", timeout=10)
+        res2 = requests.get(f"{CSV_URLS[1]}&t={int(now)}", headers=headers, timeout=25)
         if res2.status_code == 200:
             reader2 = csv.reader(io.StringIO(res2.content.decode('utf-8')))
             next(reader2, None)
@@ -267,7 +281,7 @@ def get_data_from_sheet():
                     if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
                     subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
                 elif c_type == "files":
-                    if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
+                    if c_chapter not in subj_data["types"]["files"]["chapters"]: subj_data["types"]["files"]["chapters"][chapter] = {"name": c_chapter, "lessons": []}
                     subj_data["types"]["files"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "file": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})
         except Exception as db_err:
             db.session.rollback()
@@ -280,9 +294,17 @@ def get_data_from_sheet():
                     s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                     s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
+
+        if data:
+            CACHED_DATA = data
+            LAST_FETCH_TIME = now
+            return data
+
     except Exception as e: 
         print(f"Error fetching data: {e}")
-    return data
+
+    # في حال حدوث timeout أو مشكلة اتصال، نرجع آخر بيانات ناجحة
+    return CACHED_DATA if CACHED_DATA else data
 
 @app.route('/')
 def home():

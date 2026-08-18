@@ -153,6 +153,8 @@
         .btn-danger:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-purple { background: var(--purple); color: #fff; box-shadow: 0 8px 20px var(--purple-glow); }
         .btn-purple:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-warning { background: var(--warning); color: #fff; box-shadow: 0 8px 20px var(--warning-glow); }
+        .btn-warning:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
         .btn-outline:hover { background: var(--bg-card-inner); }
 
@@ -336,7 +338,6 @@
             <i class="fa-regular fa-user"></i> 
             {% if student_id %}
                 <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
-                <!-- شارة المستوى والنقاط (تفتح الملف الشخصي في index.html) -->
                 <span class="profile-badge" onclick="window.location.href='/'" title="اذهب للملف الشخصي">
                     <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
                     <span style="font-weight:400; font-size:0.75rem; margin-right:4px;">⭐ <span id="navPoints">0</span></span>
@@ -382,7 +383,7 @@
         <div id="tasks-container" class="main-card" style="padding: 20px;"></div>
 
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px;">
-            <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks()"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع غير المكتملة</button>
+            <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks(event)"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع غير المكتملة</button>
             <button class="btn btn-outline" style="flex:1;" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير كصورة</button>
             <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll()"><i class="fa-solid fa-trash-can"></i> مسح الكل</button>
         </div>
@@ -463,7 +464,6 @@
                     </div>
                 </div>
                 
-                <!-- ===== 🆕 حقل الورد اليومي (عدد الصفحات) ===== -->
                 <div class="form-group" style="background:var(--bg-card-inner); padding:15px; border-radius:var(--radius);">
                     <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
                         <input type="checkbox" id="wird" checked> تضمين الورد القرآني
@@ -486,7 +486,8 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-purple" onclick="generatePlannerPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
+                <!-- تمرير الـ event -->
+                <button class="btn btn-purple" onclick="generatePlannerPlan(event)"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
             <!-- Exam Form -->
@@ -512,7 +513,7 @@
                 <div style="background:var(--bg-card-inner); padding:12px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--text-muted);">
                     <i class="fa-regular fa-lightbulb"></i> اختر الدروس التي تريد مراجعتها للاختبار، وسيقوم الذكاء الاصطناعي بتوزيعها على الأيام المتبقية.
                 </div>
-                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan()">
+                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan(event)">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات
                 </button>
             </div>
@@ -620,7 +621,7 @@ function showToast(message, type = 'info') {
 }
 
 // ==========================================
-// LOGOUT (FIXED)
+// LOGOUT
 // ==========================================
 async function logoutStudent() {
     if (!confirm('تسجيل الخروج؟')) return;
@@ -636,10 +637,7 @@ async function logoutStudent() {
             const data = await res.json();
             showToast(data.message || 'حدث خطأ في تسجيل الخروج', 'error');
         }
-    } catch(e) {
-        showToast('خطأ في الاتصال بالخادم', 'error');
-        console.error(e);
-    }
+    } catch(e) { showToast('خطأ في الاتصال بالخادم', 'error'); }
 }
 
 // ==========================================
@@ -675,15 +673,18 @@ function showPlanType(type) {
 }
 
 // ==========================================
-// AUTO-SAVE (مزدوج)
+// AUTO-SAVE (تحديث المُعرّفات لمنع التعارض)
 // ==========================================
 async function autoSaveTask(taskData) {
     if (!isStudentLoggedIn()) {
         saveToLocal(taskData);
         showToast('حفظ محلي (غير مسجل دخول)', 'info');
-        return;
+        return true;
     }
+    
+    // حفظ مؤقت
     saveToLocal(taskData);
+    
     try {
         const res = await fetch('/api/tasks', {
             method: 'POST',
@@ -692,16 +693,23 @@ async function autoSaveTask(taskData) {
         });
         const data = await res.json();
         if (data.status === 'success') {
-            updateSyncStatus(taskData.id || data.task?.id, true);
+            // تحديث الـ ID بالـ ID القادم من قاعدة البيانات
+            let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+            const index = tasks.findIndex(t => t.id === taskData.id);
+            if (index > -1 && data.task && data.task.id) {
+                tasks[index].id = data.task.id;
+                tasks[index].synced = true;
+                localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+            }
             showToast('✅ تم الحفظ تلقائياً', 'success');
-            return data;
+            return true;
         } else {
             showToast('⚠️ حفظ محلي (خطأ في الخادم)', 'error');
-            return null;
+            return false;
         }
     } catch(e) {
         showToast('⚠️ حفظ محلي (لا يوجد اتصال)', 'error');
-        return null;
+        return false;
     }
 }
 
@@ -711,7 +719,7 @@ function saveToLocal(taskData) {
     if (index > -1) {
         tasks[index] = { ...tasks[index], ...taskData, synced: false };
     } else {
-        tasks.push({ ...taskData, synced: false, id: taskData.id || Date.now() });
+        tasks.push({ ...taskData, synced: false });
     }
     localStorage.setItem('unified_tasks', JSON.stringify(tasks));
 }
@@ -742,8 +750,16 @@ setInterval(async () => {
                 body: JSON.stringify(task)
             });
             const data = await res.json();
-            if (data.status === 'success') updateSyncStatus(task.id, true);
-        } catch(e) { /* تجاهل */ }
+            if (data.status === 'success' && data.task && data.task.id) {
+                let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+                const idx = tasks.findIndex(t => t.id === task.id);
+                if (idx > -1) {
+                    tasks[idx].id = data.task.id;
+                    tasks[idx].synced = true;
+                    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+                }
+            }
+        } catch(e) {}
     }
 }, 30000);
 
@@ -755,7 +771,7 @@ window.addEventListener('beforeunload', async () => {
 });
 
 // ==========================================
-// LOAD TASKS (مع عرض الساعات)
+// LOAD TASKS
 // ==========================================
 async function loadTasks() {
     const container = document.getElementById('tasks-container');
@@ -768,13 +784,9 @@ async function loadTasks() {
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
-            else if (data.error) {
-                showToast('خطأ في تحميل المهام: ' + data.error, 'error');
-            }
-        } catch(e) {
-            console.error('Error loading tasks:', e);
-        }
+        } catch(e) { console.error('Error loading tasks:', e); }
     }
+    
     let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const apiIds = tasks.map(t => t.id);
     for (const local of localTasks) {
@@ -812,7 +824,6 @@ async function loadTasks() {
         const priorityLabel = task.priority === 1 ? 'عالية' : task.priority === 2 ? 'متوسطة' : 'منخفضة';
         const priorityPill = task.priority === 1 ? 'pill-danger' : task.priority === 2 ? 'pill-warning' : 'pill-primary';
         const hours = task.allocated_hours || 1.0;
-        // شارة الورد
         const wirdBadge = task.is_wird ? '<span class="task-pill pill-gold"><i class="fa-solid fa-book-quran"></i> ورد</span>' : '';
         
         html += `
@@ -862,10 +873,10 @@ async function toggleTaskComplete(taskId, isChecked) {
             const data = await res.json();
             if (data.status === 'success') {
                 updateSyncStatus(taskId, true);
-                // إذا تم الإكمال، منح نقاط (سيتم التعامل معها في الخادم)
-                showToast('✅ تم إكمال المهمة', 'success');
-                // تحديث المستوى والنقاط في الـ navbar
-                await loadProfileBadge();
+                if(isChecked) {
+                    showToast('✅ تم إكمال المهمة وإضافة النقاط', 'success');
+                    await loadProfileBadge(); // تحديث شارة المستوى والنقاط
+                }
             }
         } catch(e) {}
     }
@@ -895,10 +906,7 @@ async function deleteTask(taskId) {
 async function editTaskDate(taskId) {
     const newDate = prompt('أدخل التاريخ الجديد (YYYY-MM-DD):', getToday());
     if (!newDate) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-        alert('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD');
-        return;
-    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return alert('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD');
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const index = tasks.findIndex(t => t.id === taskId);
     if (index > -1) {
@@ -909,9 +917,7 @@ async function editTaskDate(taskId) {
     if (isStudentLoggedIn()) {
         try {
             await fetch(`/api/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planned_date: newDate })
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planned_date: newDate })
             });
             updateSyncStatus(taskId, true);
         } catch(e) {}
@@ -931,6 +937,7 @@ async function addManualTask() {
     if (!title) return alert('يرجى إدخال عنوان المهمة.');
     if (!date) return alert('يرجى تحديد التاريخ.');
     const taskData = { 
+        id: Date.now(), // معرف مؤقت
         title, 
         planned_date: date, 
         description: desc, 
@@ -946,14 +953,13 @@ async function addManualTask() {
         document.getElementById('manual_title').value = '';
         document.getElementById('manual_desc').value = '';
         document.getElementById('manual_date').value = '';
-        showToast('✅ تم إضافة المهمة', 'success');
         loadTasks();
         document.querySelector('[data-tab="my-plans"]').click();
     }
 }
 
 // ==========================================
-// 🆕 LOAD PROFILE BADGE (Navbar)
+// LOAD PROFILE BADGE
 // ==========================================
 async function loadProfileBadge() {
     if (!isStudentLoggedIn()) return;
@@ -962,18 +968,16 @@ async function loadProfileBadge() {
         const data = await res.json();
         if (data.status === 'success') {
             const p = data.profile;
-            document.getElementById('navLevelBadge').innerText = p.level;
-            document.getElementById('navPoints').innerText = p.points;
+            if(document.getElementById('navLevelBadge')) document.getElementById('navLevelBadge').innerText = p.level;
+            if(document.getElementById('navPoints')) document.getElementById('navPoints').innerText = p.points;
         }
-    } catch(e) {
-        console.error(e);
-    }
+    } catch(e) {}
 }
 
 // ==========================================
-// GENERATE PLANNER PLAN (مع الورد اليومي وإصلاح الأخطاء)
+// GENERATE PLANNER PLAN
 // ==========================================
-async function generatePlannerPlan() {
+async function generatePlannerPlan(event) {
     const subjects = document.getElementById('subjects').value.trim();
     const targetDate = document.getElementById('target_date').value;
     const discipline = document.getElementById('discipline').value;
@@ -987,111 +991,66 @@ async function generatePlannerPlan() {
     const quran = document.getElementById('quran').checked;
     const quranPages = document.getElementById('quran_pages').value || 1;
 
-    if (!subjects || !targetDate) {
-        alert('يرجى ملء المواد وتاريخ الهدف.');
-        return;
-    }
+    if (!subjects || !targetDate) return alert('يرجى ملء المواد وتاريخ الهدف.');
 
-    const btn = event?.target;
+    const btn = event ? event.currentTarget : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
 
     try {
         const payload = {
-            current_date: getToday(),
-            subjects,
-            target_date: targetDate,
-            discipline,
-            sleep_hours: `${sleepStart}-${sleepEnd}`,
-            busy_hours: `${busyStart}-${busyEnd}`,
-            off_days: offDays,
-            wird: wird,
-            wird_pages: wirdPages,
-            quran_enabled: quran,
-            quran_pages: quranPages
+            current_date: getToday(), subjects, target_date: targetDate, discipline,
+            sleep_hours: `${sleepStart}-${sleepEnd}`, busy_hours: `${busyStart}-${busyEnd}`,
+            off_days: offDays, wird: wird, wird_pages: wirdPages, quran_enabled: quran, quran_pages: quranPages
         };
-        console.log('📤 إرسال طلب توليد الخطة:', payload);
-
         const res = await fetch('/generate_plan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
         const data = await res.json();
-        console.log('📥 رد الخادم:', data);
-
         if (data.status === 'success') {
-            showToast('✅ تم توليد الخطة وحفظها تلقائياً!', 'success');
+            showToast('✅ تم توليد الخطة بنجاح!', 'success');
             await loadTasks();
-            // تحديث شارة المستوى
-            await loadProfileBadge();
             document.querySelector('[data-tab="my-plans"]').click();
-        } else {
-            alert('حدث خطأ: ' + (data.error || 'غير معروف'));
-            console.error('خطأ في التوليد:', data);
-        }
-    } catch(e) {
-        console.error('خطأ في الاتصال:', e);
-        alert('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة'; }
-    }
+        } else alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+    } catch(e) { alert('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.'); } 
+    finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة'; } }
 }
 
 // ==========================================
-// EXAM PLAN (مع قائمة الدروس المختارة)
+// EXAM PLAN
 // ==========================================
 let selectedLessonIds = [];
 
 async function loadLessonsForExam() {
     const container = document.getElementById('exam-lessons-container');
-    const countEl = document.getElementById('selected-count');
-    
-    if (!isStudentLoggedIn()) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لعرض الدروس.</div>`;
-        return;
-    }
-
+    if (!isStudentLoggedIn()) return container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لعرض الدروس.</div>`;
     try {
-        const res = await fetch('/api/lessons');
-        const lessons = await res.json();
-        if (!Array.isArray(lessons) || lessons.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد دروس متاحة حالياً.</div>`;
-            return;
-        }
+        const res = await fetch('/api/lessons'); const lessons = await res.json();
+        if (!Array.isArray(lessons) || lessons.length === 0) return container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد دروس متاحة حالياً.</div>`;
         let html = `<div class="lesson-checkbox-grid">`;
         lessons.forEach(l => {
             const checked = selectedLessonIds.includes(l.id) ? 'checked' : '';
             html += `
                 <label class="lesson-checkbox-item">
                     <input type="checkbox" value="${l.id}" ${checked} onchange="updateSelectedLessons()">
-                    <span>${l.title}</span>
-                    <span class="lesson-meta">${l.subject_name} - ${l.chapter_name}</span>
-                </label>
-            `;
+                    <span>${l.title}</span><span class="lesson-meta">${l.subject_name} - ${l.chapter_name}</span>
+                </label>`;
         });
         html += `</div>`;
         container.innerHTML = html;
         updateSelectedCount();
-    } catch(e) {
-        console.error(e);
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">خطأ في تحميل الدروس</div>`;
-    }
+    } catch(e) { container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">خطأ في تحميل الدروس</div>`; }
 }
 
 function updateSelectedLessons() {
     const checkboxes = document.querySelectorAll('#exam-lessons-container input[type="checkbox"]');
     selectedLessonIds = [];
-    checkboxes.forEach(cb => {
-        if (cb.checked) selectedLessonIds.push(parseInt(cb.value));
-    });
+    checkboxes.forEach(cb => { if (cb.checked) selectedLessonIds.push(parseInt(cb.value)); });
     updateSelectedCount();
 }
 
-function updateSelectedCount() {
-    document.getElementById('selected-count').innerText = `تم اختيار ${selectedLessonIds.length} درس`;
-}
+function updateSelectedCount() { document.getElementById('selected-count').innerText = `تم اختيار ${selectedLessonIds.length} درس`; }
 
-async function generateExamPlan() {
+async function generateExamPlan(event) {
     const planName = document.getElementById('exam_name').value.trim();
     const examDate = document.getElementById('exam_date').value;
     const lessonIds = selectedLessonIds;
@@ -1100,18 +1059,13 @@ async function generateExamPlan() {
     if (!examDate) return alert('يرجى تحديد تاريخ الاختبار.');
     if (lessonIds.length === 0) return alert('يرجى اختيار درس واحد على الأقل.');
 
-    const btn = event?.target;
+    const btn = event ? event.currentTarget : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
 
     try {
         const res = await fetch('/api/generate-exam-plan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                plan_name: planName,
-                exam_date: examDate,
-                lesson_ids: lessonIds
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan_name: planName, exam_date: examDate, lesson_ids: lessonIds })
         });
         const data = await res.json();
         if (data.status === 'success') {
@@ -1121,45 +1075,29 @@ async function generateExamPlan() {
             selectedLessonIds = [];
             loadLessonsForExam();
             await loadTasks();
-            await loadProfileBadge();
             document.querySelector('[data-tab="my-plans"]').click();
-        } else {
-            alert('حدث خطأ: ' + (data.message || 'غير معروف'));
-        }
-    } catch(e) {
-        alert('خطأ في الاتصال بالخادم.');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات'; }
-    }
+        } else alert('حدث خطأ: ' + (data.message || 'غير معروف'));
+    } catch(e) { alert('خطأ في الاتصال بالخادم.'); } 
+    finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات'; } }
 }
 
 // ==========================================
 // RESCHEDULE TASKS
 // ==========================================
-async function rescheduleTasks() {
-    if (!isStudentLoggedIn()) {
-        alert('يرجى تسجيل الدخول لإعادة التوزيع.');
-        return;
-    }
+async function rescheduleTasks(event) {
+    if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول لإعادة التوزيع.');
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const incomplete = tasks.filter(t => !t.completed);
-    if (incomplete.length === 0) {
-        showToast('🎉 جميع المهام مكتملة!', 'success');
-        return;
-    }
+    if (incomplete.length === 0) return showToast('🎉 جميع المهام مكتملة!', 'success');
     if (!confirm(`لديك ${incomplete.length} مهام غير مكتملة. إعادة توزيعها على الأيام القادمة؟`)) return;
 
-    const btn = event?.target;
+    const btn = event ? event.currentTarget : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعادة التوزيع...'; }
 
     try {
         const res = await fetch('/reschedule_plan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                missed_tasks: incomplete.map(t => ({ title: t.title, allocated_hours: t.allocated_hours || 1.5 })),
-                remaining_plans: []
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ missed_tasks: incomplete.map(t => ({ title: t.title, allocated_hours: t.allocated_hours || 1.5 })), remaining_plans: [] })
         });
         const data = await res.json();
         if (data.status === 'success') {
@@ -1172,38 +1110,24 @@ async function rescheduleTasks() {
                             const oldTask = incomplete[taskIndex];
                             const taskId = oldTask.id;
                             const newDate = day.date || getToday();
-                            let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-                            const idx = tasks.findIndex(t => t.id === taskId);
+                            let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+                            const idx = localTasks.findIndex(t => t.id === taskId);
                             if (idx > -1) {
-                                tasks[idx].planned_date = newDate;
-                                tasks[idx].synced = false;
-                                localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+                                localTasks[idx].planned_date = newDate;
+                                localTasks[idx].synced = false;
+                                localStorage.setItem('unified_tasks', JSON.stringify(localTasks));
                             }
-                            try {
-                                await fetch(`/api/tasks/${taskId}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ planned_date: newDate })
-                                });
-                            } catch(e) {}
+                            try { await fetch(`/api/tasks/${taskId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planned_date: newDate }) }); } catch(e) {}
                             taskIndex++;
                         }
                     }
                 }
                 showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
                 await loadTasks();
-                await loadProfileBadge();
-            } else {
-                showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
-            }
-        } else {
-            alert('حدث خطأ في إعادة التوزيع.');
-        }
-    } catch(e) {
-        alert('خطأ في الاتصال بالخادم.');
-    } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة'; }
-    }
+            } else showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
+        } else alert('حدث خطأ في إعادة التوزيع.');
+    } catch(e) { alert('خطأ في الاتصال بالخادم.'); } 
+    finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة'; } }
 }
 
 // ==========================================
@@ -1216,14 +1140,10 @@ function confirmClearAll() {
     if (isStudentLoggedIn()) {
         (async () => {
             try {
-                const res = await fetch('/api/tasks');
-                const tasks = await res.json();
-                for (const task of tasks) {
-                    await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
-                }
+                const res = await fetch('/api/tasks'); const tasks = await res.json();
+                for (const task of tasks) { await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' }); }
                 showToast('تم مسح جميع المهام', 'info');
                 loadTasks();
-                loadProfileBadge();
             } catch(e) {}
         })();
     } else {
@@ -1257,10 +1177,7 @@ function updateStats() {
     document.getElementById('stat-progress').innerText = percentage + '%';
 
     const sources = {};
-    tasks.forEach(t => {
-        const s = t.source || 'manual';
-        sources[s] = (sources[s] || 0) + 1;
-    });
+    tasks.forEach(t => { const s = t.source || 'manual'; sources[s] = (sources[s] || 0) + 1; });
     const distContainer = document.getElementById('source-distribution');
     const labels = { manual: '📝 يدوي', planner: '📚 عام', exam: '🎯 اختبار' };
     distContainer.innerHTML = Object.entries(sources).map(([key, count]) => `
@@ -1275,10 +1192,8 @@ function updateStats() {
 // ==========================================
 function exportFullPlan() {
     const tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-    if (tasks.length === 0) {
-        showToast('لا توجد مهام للتصدير', 'error');
-        return;
-    }
+    if (tasks.length === 0) return showToast('لا توجد مهام للتصدير', 'error');
+    
     const grouped = {};
     tasks.forEach(t => {
         const date = t.planned_date || 'بدون تاريخ';
@@ -1345,19 +1260,12 @@ function exportFullPlan() {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const today = getToday();
-    document.querySelectorAll('input[type="date"]').forEach(el => {
-        if (!el.value) el.value = today;
-    });
+    document.querySelectorAll('input[type="date"]').forEach(el => { if (!el.value) el.value = today; });
     loadTasks();
     updateStats();
-    if (document.getElementById('exam-form').style.display !== 'none') {
-        loadLessonsForExam();
-    }
-    if (!isStudentLoggedIn()) {
-        showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
-    } else {
-        loadProfileBadge();
-    }
+    if (document.getElementById('exam-form').style.display !== 'none') loadLessonsForExam();
+    if (!isStudentLoggedIn()) showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
+    else loadProfileBadge();
 });
 
 window.addEventListener('focus', () => {

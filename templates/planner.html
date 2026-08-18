@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- ===== دعم iPhone / Safari ===== -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Amr Suhail Academy">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
+    
+    <!-- ===== Polyfills لدعم Safari (iPhone) ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/core-js-bundle@3.33.0/minified.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"></script>
+    
     <title>Amr Suhail Academy | خطتي الدراسية الموحدة</title>
     
     <script>
@@ -90,7 +101,7 @@
 
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
-        input, select, textarea { width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; outline: none; transition: 0.3s; }
+        input, select, textarea { width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; outline: none; transition: 0.3s; -webkit-appearance: none; appearance: none; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
         textarea { resize: vertical; min-height: 70px; }
 
@@ -151,7 +162,7 @@
             word-break: break-word;
             overflow-wrap: break-word;
             flex: 1;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .task-hours {
             font-weight: 800;
@@ -161,6 +172,7 @@
             background: var(--primary-glow);
             padding: 2px 12px;
             border-radius: 50px;
+            flex-shrink: 0;
         }
         .task-footer {
             display: flex;
@@ -201,7 +213,7 @@
         .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: var(--bg-card); border-radius: var(--radius-lg); padding: 35px 30px; text-align: center; max-width: 450px; width: 100%; animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-icon { width: 75px; height: 75px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 18px; }
@@ -211,6 +223,7 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { border-color: var(--success); color: var(--success); }
         .toast.error { border-color: var(--danger); color: var(--danger); }
+        .toast.info { border-color: var(--primary); color: var(--primary); }
 
         .view-section { display: none; }
         .active-view { display: block; animation: viewIn 0.35s ease; }
@@ -272,6 +285,11 @@
         }
 
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 40px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
+        
+        /* ===== تحسينات iPhone ===== */
+        input, select, textarea, button { -webkit-appearance: none; appearance: none; }
+        button, input, select, textarea { border-radius: 0; }
+        .task-title-text { -webkit-hyphens: auto; hyphens: auto; }
     </style>
 </head>
 <body>
@@ -408,19 +426,30 @@
                         <label class="checkbox-pill"><input type="checkbox" class="off-day" value="السبت"> السبت</label>
                     </div>
                 </div>
+                
+                <!-- ===== 🆕 حقل الورد اليومي (عدد الصفحات) ===== -->
                 <div class="form-group" style="background:var(--bg-card-inner); padding:15px; border-radius:var(--radius);">
                     <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
                         <input type="checkbox" id="wird" checked> تضمين الورد القرآني
                     </label>
                     <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+                        <label style="font-weight:700; font-size:0.9rem; display:block; margin-bottom:6px;">
+                            <i class="fa-solid fa-book-quran" style="color:var(--success); margin-left:6px;"></i>
+                            عدد صفحات الورد اليومي:
+                        </label>
+                        <input type="number" id="wird_pages" value="1" min="0" max="20" class="qa-input-field" style="width:100%; padding:12px 16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); font-size:0.95rem;">
+                        <small style="color:var(--text-muted); font-size:0.8rem;">ضع 0 لإلغاء الورد، سيتم إعادة توزيع الصفحات المفقودة تلقائياً</small>
+                    </div>
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
                         <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
                             <input type="checkbox" id="quran" onchange="document.getElementById('quran_field').style.display=this.checked?'block':'none'"> حفظ القرآن
                         </label>
                         <div id="quran_field" style="display:none; margin-top:10px;">
-                            <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية" min="1" max="20">
+                            <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية" min="1" max="20" class="qa-input-field">
                         </div>
                     </div>
                 </div>
+                
                 <button class="btn btn-purple" onclick="generatePlannerPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
@@ -560,11 +589,20 @@ function showToast(message, type = 'info') {
 async function logoutStudent() {
     if (!confirm('تسجيل الخروج؟')) return;
     try {
-        await fetch('/student/logout', { method: 'POST' });
-        localStorage.removeItem('unified_tasks');
-        window.location.href = '/';
+        const res = await fetch('/student/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        if (res.ok) {
+            localStorage.removeItem('unified_tasks');
+            localStorage.removeItem('unified_tasks_backup');
+            sessionStorage.clear();
+            showToast('✅ تم تسجيل الخروج بنجاح', 'success');
+            window.location.href = '/';
+        } else {
+            const data = await res.json();
+            showToast(data.message || 'حدث خطأ في تسجيل الخروج', 'error');
+        }
     } catch(e) {
-        window.location.href = '/';
+        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error(e);
     }
 }
 
@@ -863,7 +901,7 @@ async function addManualTask() {
 }
 
 // ==========================================
-// GENERATE PLANNER PLAN
+// GENERATE PLANNER PLAN (مع الورد اليومي)
 // ==========================================
 async function generatePlannerPlan() {
     const subjects = document.getElementById('subjects').value.trim();
@@ -875,6 +913,7 @@ async function generatePlannerPlan() {
     const busyEnd = document.getElementById('busy_end').value;
     const offDays = Array.from(document.querySelectorAll('.off-day:checked')).map(c => c.value);
     const wird = document.getElementById('wird').checked;
+    const wirdPages = parseInt(document.getElementById('wird_pages').value) || 1;  // ✅ جديد
     const quran = document.getElementById('quran').checked;
     const quranPages = document.getElementById('quran_pages').value || 1;
 
@@ -898,7 +937,8 @@ async function generatePlannerPlan() {
                 sleep_hours: `${sleepStart}-${sleepEnd}`,
                 busy_hours: `${busyStart}-${busyEnd}`,
                 off_days: offDays,
-                wird,
+                wird: wird,
+                wird_pages: wirdPages,  // ✅ جديد
                 quran_enabled: quran,
                 quran_pages: quranPages
             })

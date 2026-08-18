@@ -1209,6 +1209,30 @@ def sync_unified_tasks():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
+# 🆕 API لجلب جميع الدروس (لخطة الاختبارات)
+# ==========================================
+@app.route('/api/lessons', methods=['GET'])
+@student_required
+def get_all_lessons():
+    """جلب جميع الدروس المتاحة في المنصة (لاختيار الدروس في خطة الاختبارات)"""
+    try:
+        lessons = CustomLesson.query.order_by(CustomLesson.subject_name, CustomLesson.chapter_name).all()
+        result = []
+        for l in lessons:
+            result.append({
+                "id": l.id,
+                "title": l.title,
+                "subject_name": l.subject_name,
+                "chapter_name": l.chapter_name,
+                "content_type": l.content_type,
+                "year": l.year,
+                "term": l.term
+            })
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
 # 🆕🆕 واجهات خطة الاختبارات (تحديث للعمل مع UnifiedTask)
 # ==========================================
 @app.route('/api/generate-exam-plan', methods=['POST'])

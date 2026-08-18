@@ -21,6 +21,7 @@
     <meta name="theme-color" content="#2563eb">
     
     <link rel="icon" type="image/png" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
 
     <script>
         if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
@@ -38,7 +39,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        :root { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --primary: #2563eb; --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255,255,255,0.85); --border: #e2e8f0; --accent: #10b981; --accent-light: #ecfdf5; --warning: #f59e0b; --danger: #ef4444; --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); --hover-shadow: 0 20px 40px -10px rgba(37,99,235,0.15); --radius-lg: 24px; --radius-md: 16px; }
+        :root { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --primary: #2563eb; --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255,255,255,0.85); --border: #e2e8f0; --accent: #10b981; --accent-light: #ecfdf5; --warning: #f59e0b; --danger: #ef4444; --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); --hover-shadow: 0 20px 40px -10px rgba(37,99,235,0.15); --radius-lg: 24px; --radius-md: 16px; --gold: #f59e0b; }
         html.dark-mode { --bg-body: #0b1120; --bg-card: #162032; --text-main: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --primary-light: rgba(59,130,246,0.1); --primary-hover: #60a5fa; --nav-bg: rgba(11,17,32,0.85); --border: #1e293b; --accent-light: rgba(16,185,129,0.1); --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.4); --hover-shadow: 0 20px 40px -10px rgba(59,130,246,0.2); }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: var(--bg-body); margin: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; }
@@ -57,6 +58,59 @@
         .navbar-contact.primary-bg { background: var(--primary); color: white; border-color: var(--primary); }
         .navbar-contact.primary-bg:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: white; }
         .navbar-user { font-weight: 800; color: var(--primary); font-size: 0.9rem; white-space: nowrap; }
+        
+        /* ===== زر الملف الشخصي (دائري) ===== */
+        .profile-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+            position: relative;
+            text-decoration: none;
+        }
+        .profile-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+        }
+        .profile-btn .level-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: var(--gold);
+            color: #0f172a;
+            font-size: 0.6rem;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 50px;
+            border: 2px solid var(--bg-card);
+            min-width: 20px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .profile-btn .online-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--bg-card);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
         
         /* ===== MAIN ===== */
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
@@ -144,7 +198,7 @@
         
         .student-progress-box { background: var(--bg-card); padding: 16px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--card-shadow); margin-bottom: 25px; }
         
-        /* ===== FAB MENU ===== */
+        /* ===== FAB MENU (مع زر التواصل) ===== */
         .fab-container { position: fixed; left: 16px; bottom: 20px; z-index: 2005; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; pointer-events: none; }
         .fab-container > * { pointer-events: auto; }
         .fab-main { width: 52px; height: 52px; border-radius: 18px; background: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; box-shadow: 0 10px 25px rgba(37,99,235,0.4); transition: 0.3s; border: none; }
@@ -207,9 +261,55 @@
         .toast.error { border-color: var(--danger); color: var(--danger); }
         .toast.info { border-color: var(--primary); color: var(--primary); }
         
-        /* ===== تحسينات iPhone ===== */
+        /* ===== PROFILE POPUP ===== */
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 10px;
+            border: 3px solid var(--border);
+        }
+        .profile-level-badge {
+            background: var(--gold);
+            color: #0f172a;
+            padding: 4px 16px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            display: inline-block;
+        }
+        .profile-points {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+        .profile-stat {
+            background: var(--bg-card-inner);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+        }
+        .profile-stat .num {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+        .profile-stat .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
         input, select, textarea, button { -webkit-appearance: none; appearance: none; }
         button, input, select, textarea { border-radius: 0; }
+        .item-title, .task-title-text { -webkit-hyphens: auto; hyphens: auto; }
     </style>
 </head>
 <body>
@@ -236,16 +336,21 @@
     <div class="nav-actions">
         {% if student_id %}
             <span class="navbar-user"><i class="fa-regular fa-user"></i> {{ student_name }}</span>
-            <button onclick="logoutStudent()" class="navbar-contact danger" style="padding:6px 12px;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+            <!-- زر الملف الشخصي (دائري) -->
+            <button class="profile-btn" onclick="togglePopup('profileBox')" title="ملفي الشخصي">
+                <i class="fa-regular fa-user"></i>
+                <span class="level-badge" id="navLevelBadge">1</span>
+                <span class="online-dot"></span>
+            </button>
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact primary-bg"><i class="fa-regular fa-user"></i> دخول الطالب</button>
         {% endif %}
-        <a href="https://wa.me/967774485611" target="_blank" class="navbar-contact"><i class="fa-solid fa-headset"></i> تواصل</a>
+        <!-- زر التواصل انتقل إلى الـ FAB -->
     </div>
 </nav>
 
 <!-- ========================================================== -->
-<!-- POPUPS (تم إزالة scheduleBox و examPlanBox) -->
+<!-- POPUPS -->
 <!-- ========================================================== -->
 
 <!-- Login/Register with Biometric -->
@@ -259,8 +364,11 @@
             
             <hr style="border-color:var(--border); margin:15px 0;">
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button onclick="loginWithBiometric()" class="bio-btn" style="flex:1;"><i class="fa-solid fa-fingerprint" style="color:var(--primary);"></i> دخول بالبصمة</button>
                 <button onclick="registerBiometric()" class="bio-btn" style="flex:1;"><i class="fa-solid fa-fingerprint" style="color:var(--accent);"></i> تسجيل البصمة</button>
+                <button onclick="loginWithBiometric()" class="bio-btn" style="flex:1;"><i class="fa-solid fa-fingerprint" style="color:var(--primary);"></i> دخول بالبصمة</button>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin-top:8px;">
+                <i class="fa-regular fa-lightbulb"></i> أدخل اسم المستخدم ثم اضغط "تسجيل البصمة" لتسجيلها، أو "دخول بالبصمة" للدخول السريع.
             </div>
             
             <hr style="border-color:var(--border); margin:15px 0;">
@@ -277,6 +385,52 @@
     </div>
 </div>
 
+<!-- ========================================================== -->
+<!-- 🆕 PROFILE POPUP -->
+<!-- ========================================================== -->
+<div class="popup-box" id="profileBox">
+    <div class="popup-header">
+        <div><i class="fa-regular fa-user header-icon" style="color:var(--primary);"></i> ملفي الشخصي</div>
+        <div style="display:flex; gap:8px;">
+            <button onclick="logoutStudent()" class="navbar-contact danger" style="padding:4px 12px; font-size:0.8rem;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+            <span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
+        </div>
+    </div>
+    <div class="popup-body" id="profileBody">
+        <div style="text-align:center; padding:5px 0 15px;">
+            <div class="profile-avatar"><i class="fa-regular fa-user"></i></div>
+            <div id="profileName" style="font-weight:900; font-size:1.2rem; color:var(--text-main);"></div>
+            <div id="profileUsername" style="color:var(--text-muted); font-size:0.85rem;"></div>
+            <div style="margin-top:8px;">
+                <span class="profile-level-badge" id="profileLevel">المستوى 1</span>
+                <span style="margin-right:12px; font-weight:700; color:var(--text-muted);">⭐ <span id="profilePoints" class="profile-points">0</span> نقطة</span>
+            </div>
+            <div style="margin-top:6px; font-size:0.85rem; color:var(--text-muted);">
+                <i class="fa-regular fa-fire"></i> <span id="profileStreak">0</span> يوم متتالي
+            </div>
+        </div>
+        
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+            <div class="profile-stat"><div class="num" id="statCompleted">0</div><div class="label">مهام مكتملة</div></div>
+            <div class="profile-stat"><div class="num" id="statTotal">0</div><div class="label">إجمالي المهام</div></div>
+            <div class="profile-stat"><div class="num" id="statRate">0%</div><div class="label">نسبة الإنجاز</div></div>
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.85rem;" id="leaderboardToggle">إظهار في الترتيب</button>
+            <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.85rem;"><i class="fa-solid fa-ranking-star"></i> الترتيب</button>
+        </div>
+        
+        <div style="border-top:1px solid var(--border); padding-top:12px;">
+            <div style="font-weight:800; font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">آخر المعاملات</div>
+            <div id="recentTransactions" style="max-height:150px; overflow-y:auto;">
+                <div style="text-align:center; color:var(--text-muted); font-size:0.85rem;">لا توجد معاملات</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================== -->
 <!-- Favorites -->
 <div class="popup-box" id="favBox">
     <div class="popup-header"><div><i class="fa-solid fa-heart header-icon" style="color:var(--primary);"></i> مفضلتي</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
@@ -578,7 +732,6 @@
             </div>
             <div class="item-actions">
                 <button class="action-btn fav-btn" data-lesson-id="{{ item.id }}" onclick="toggleFavorite(this)" title="مفضلة"><i class="fa-regular fa-heart"></i></button>
-                
                 <!-- زر واحد يفتح صفحة البلانر (تم إزالة schedule-btn و exam-btn) -->
                 <a href="/planner" target="_blank" class="action-btn plan-btn" title="خطتي الدراسية"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
                 
@@ -643,7 +796,7 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- FAB MENU -->
+<!-- FAB MENU (مع زر التواصل) -->
 <!-- ========================================================== -->
 {% if view == 'years' %}
 <div class="fab-container" id="fabMenu">
@@ -661,7 +814,10 @@
     <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي">
         <i class="fa-solid fa-heart" style="color:var(--primary);"></i>
     </div>
-    <!-- تم إزالة أيقونات scheduleBox و examPlanBox واستبدالها بأيقونة planner -->
+    <!-- زر التواصل هنا -->
+    <a href="https://wa.me/967774485611" target="_blank" class="fab-item" title="تواصل معنا">
+        <i class="fa-solid fa-headset" style="color:var(--accent);"></i>
+    </a>
     <div class="fab-item" onclick="openWhatsNewModal()" title="التحديثات">
         <i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadStarDot" style="display:none; top:0; right:0;"></span>
     </div>
@@ -712,7 +868,6 @@ async function logoutStudent() {
     try {
         const res = await fetch('/student/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
         if (res.ok) {
-            // مسح البيانات المحلية
             localStorage.removeItem('unified_tasks');
             localStorage.removeItem('unified_tasks_backup');
             sessionStorage.clear();
@@ -732,12 +887,17 @@ async function logoutStudent() {
 // BIOMETRIC (WebAuthn)
 // ==========================================
 async function registerBiometric() {
-    if (!isStudentLoggedIn()) {
-        showToast('يرجى تسجيل الدخول أولاً', 'error');
+    const username = document.getElementById('login_username').value.trim();
+    if (!username) {
+        showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
         return;
     }
     try {
-        const res = await fetch('/webauthn/register/begin', { method: 'POST' });
+        const res = await fetch('/webauthn/register/begin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
         const data = await res.json();
         if (data.status !== 'success') {
             showToast(data.message || 'خطأ في بدء التسجيل', 'error');
@@ -836,6 +996,7 @@ async function loginWithBiometric() {
         const result = await response.json();
         if (result.status === 'success') {
             showToast('✅ تم الدخول بالبصمة بنجاح!', 'success');
+            // تحديث الصفحة لعرض بيانات المستخدم
             location.reload();
         } else {
             showToast(result.message || 'خطأ في الدخول', 'error');
@@ -847,6 +1008,101 @@ async function loginWithBiometric() {
 
 function isStudentLoggedIn() {
     return STUDENT_ID !== null;
+}
+
+// ==========================================
+// PROFILE POPUP
+// ==========================================
+async function loadProfile() {
+    if (!isStudentLoggedIn()) return;
+    try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+        if (data.status === 'success') {
+            const p = data.profile;
+            document.getElementById('profileName').innerText = data.student.name;
+            document.getElementById('profileUsername').innerText = '@' + data.student.username;
+            document.getElementById('profileLevel').innerText = 'المستوى ' + p.level;
+            document.getElementById('profilePoints').innerText = p.points;
+            document.getElementById('profileStreak').innerText = p.streak_days || 0;
+            
+            document.getElementById('statCompleted').innerText = data.stats.completed_tasks;
+            document.getElementById('statTotal').innerText = data.stats.total_tasks;
+            document.getElementById('statRate').innerText = data.stats.completion_rate + '%';
+            
+            // تحديث الشارة في الـ Navbar
+            document.getElementById('navLevelBadge').innerText = p.level;
+            
+            // معاملات
+            const transactions = data.recent_transactions || [];
+            const container = document.getElementById('recentTransactions');
+            if (transactions.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.85rem;">لا توجد معاملات</div>';
+            } else {
+                container.innerHTML = transactions.map(t => {
+                    const sign = t.points > 0 ? '+' : '';
+                    const color = t.points > 0 ? 'var(--accent)' : 'var(--danger)';
+                    return `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
+                        <span>${t.reason}</span>
+                        <span style="font-weight:800; color:${color};">${sign}${t.points}</span>
+                    </div>`;
+                }).join('');
+            }
+            
+            // تحديث زر إظهار في الترتيب
+            const toggleBtn = document.getElementById('leaderboardToggle');
+            if (p.show_in_leaderboard) {
+                toggleBtn.innerHTML = '✅ الظهور في الترتيب';
+                toggleBtn.style.borderColor = 'var(--accent)';
+                toggleBtn.style.color = 'var(--accent)';
+            } else {
+                toggleBtn.innerHTML = '⬜ إخفاء من الترتيب';
+                toggleBtn.style.borderColor = 'var(--text-muted)';
+                toggleBtn.style.color = 'var(--text-muted)';
+            }
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+async function toggleLeaderboardVisibility() {
+    if (!isStudentLoggedIn()) return;
+    const toggleBtn = document.getElementById('leaderboardToggle');
+    const current = toggleBtn.innerText.includes('إظهار');
+    const show = !current;
+    try {
+        const res = await fetch('/api/profile/visibility', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ show })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast('تم تحديث الإعداد ✅', 'success');
+            loadProfile();
+        }
+    } catch(e) {
+        showToast('خطأ في التحديث', 'error');
+    }
+}
+
+async function viewLeaderboard() {
+    try {
+        const res = await fetch('/api/leaderboard');
+        const data = await res.json();
+        if (data.status === 'success' && data.leaderboard.length > 0) {
+            let msg = '🏆 قائمة المتصدرين 🏆\n\n';
+            data.leaderboard.forEach((u, i) => {
+                msg += `${u.rank}. ${u.name} (مستوى ${u.level}) - ${u.points} نقطة 🔥\n`;
+            });
+            alert(msg);
+        } else {
+            showToast('لا يوجد متصدرين حالياً', 'info');
+        }
+    } catch(e) {
+        showToast('خطأ في جلب الترتيب', 'error');
+    }
 }
 
 // ==========================================
@@ -897,6 +1153,11 @@ function togglePopup(boxId) {
     document.querySelectorAll('.popup-box').forEach(el => el.id === boxId ? el.classList.toggle('active') : el.classList.remove('active'));
     document.getElementById('chatOverlay').classList.toggle('active', document.getElementById(boxId).classList.contains('active'));
     if(document.getElementById('fabMenu') && document.getElementById('fabMenu').classList.contains('open')) toggleFabMenu();
+    
+    // إذا فتح الملف الشخصي، حمّل البيانات
+    if (boxId === 'profileBox' && document.getElementById(boxId).classList.contains('active')) {
+        loadProfile();
+    }
 }
 function closeAllPopups() {
     document.querySelectorAll('.popup-box').forEach(el => el.classList.remove('active'));
@@ -1424,6 +1685,9 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('splash-screen').classList.remove('hidden');
     } else {
         checkForNewPlatformUpdates();
+    }
+    if (isStudentLoggedIn()) {
+        loadProfile();
     }
 });
 </script>

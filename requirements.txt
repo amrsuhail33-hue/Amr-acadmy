@@ -4,6 +4,6 @@ requests
 google-generativeai
 Pillow
 Flask-SQLAlchemy
-psycopg2-binary
 groq
+pg8000
 

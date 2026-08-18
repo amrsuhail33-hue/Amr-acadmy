@@ -826,9 +826,14 @@ def ask_ai():
     except Exception as e:
         return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
+# ==========================================
+# 🆕 Route Planner (معدل لتمرير بيانات الطالب)
+# ==========================================
 @app.route('/planner')
-def planner(): 
-    return render_template('planner.html')
+def planner():
+    student_id = session.get('student_id')
+    student_name = session.get('student_name')
+    return render_template('planner.html', student_id=student_id, student_name=student_name)
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
@@ -991,8 +996,6 @@ def reschedule_plan():
         # ==========================================
         if student_id and plan_data.get('plans'):
             try:
-                # حذف المهام القديمة غير المكتملة (اختياري)
-                # بدلاً من الحذف، نقوم بتحديث تواريخها
                 for day in plan_data['plans']:
                     day_date = day.get('date')
                     if not day_date:
@@ -1115,7 +1118,6 @@ def update_unified_task(task_id):
         
         if 'completed' in data:
             task.completed = bool(data['completed'])
-            # إذا تم إكمال المهمة، نضيف احتفالاً (سيتم التعامل معه في الواجهة)
         if 'planned_date' in data:
             try:
                 task.planned_date = datetime.strptime(data['planned_date'], '%Y-%m-%d').date()
@@ -1164,12 +1166,10 @@ def sync_unified_tasks():
         tasks_data = data.get('tasks', [])
         
         for task_data in tasks_data:
-            # التحقق مما إذا كانت المهمة موجودة بالفعل
             task_id = task_data.get('id')
             if task_id:
                 task = UnifiedTask.query.get(task_id)
                 if task and task.student_id == student_id:
-                    # تحديث المهمة الموجودة
                     if 'completed' in task_data:
                         task.completed = bool(task_data['completed'])
                     if 'planned_date' in task_data:
@@ -1180,7 +1180,6 @@ def sync_unified_tasks():
                     task.updated_at = datetime.utcnow()
                     continue
             
-            # إضافة مهمة جديدة
             title = task_data.get('title', '').strip()
             planned_date = task_data.get('planned_date')
             if not title or not planned_date:
@@ -1369,7 +1368,6 @@ def get_exam_plans():
     try:
         student_id = session['student_id']
         tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').order_by(UnifiedTask.planned_date).all()
-        # تجميع المهام حسب اسم الخطة (من description)
         plans = {}
         for task in tasks:
             plan_name = "خطة اختبار"
@@ -1392,12 +1390,10 @@ def get_exam_plans():
 @app.route('/api/exam-plans/<int:plan_id>', methods=['DELETE'])
 @student_required
 def delete_exam_plan(plan_id):
-    """حذف خطة اختبار (حذف جميع المهام ذات المصدر exam والمرتبطة بنفس الخطة)"""
+    """حذف خطة اختبار"""
     try:
         student_id = session['student_id']
-        # البحث عن المهام ذات المصدر exam
         tasks = UnifiedTask.query.filter_by(student_id=student_id, source='exam').all()
-        # تجميع حسب الاسم
         plans = {}
         for task in tasks:
             plan_name = "خطة اختبار"
@@ -1409,7 +1405,6 @@ def delete_exam_plan(plan_id):
                 plans[plan_name] = []
             plans[plan_name].append(task.id)
         
-        # حذف الخطة المطلوبة
         plan_names = list(plans.keys())
         if plan_id <= len(plan_names):
             plan_name = plan_names[plan_id - 1]
@@ -1481,7 +1476,6 @@ def add_schedule():
         except ValueError:
             return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
 
-        # التحقق من عدم وجود مهمة مكررة
         existing = UnifiedTask.query.filter_by(
             student_id=student_id,
             lesson_id=lesson_id,

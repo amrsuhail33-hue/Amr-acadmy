@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Amr Suhail Academy | المخطط الذكي</title>
+    <title>Amr Suhail Academy | خطتي الدراسية الموحدة</title>
     
     <script>
+        // قراءة الثيم من localStorage
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark-mode');
         }
+        // قراءة بيانات المستخدم من Flask (تُحقن من الخادم)
+        const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
+        const STUDENT_NAME = {% if student_name %}"{{ student_name }}"{% else %}null{% endif %};
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -29,11 +33,17 @@
             --success-glow: rgba(16, 185, 129, 0.15);
             --danger: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.15);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.15);
+            --purple: #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.15);
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
             --modal-bg: rgba(15, 23, 42, 0.6);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --radius-lg: 24px;
         }
 
         html.dark-mode {
@@ -47,6 +57,10 @@
             --success-glow: rgba(16, 185, 129, 0.15);
             --danger: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.15);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.15);
+            --purple: #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.15);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #1e293b;
@@ -56,582 +70,1079 @@
 
         * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
-        .app-container { width: 100%; max-width: 750px; }
+        .app-container { width: 100%; max-width: 850px; }
 
-        .brand-header { text-align: center; margin-bottom: 30px; position: relative; }
-        .brand-title { font-size: 2.2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0 0 5px 0; display: inline-block; letter-spacing: 1px;}
-        .brand-sub { font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
+        /* Header */
+        .brand-header { text-align: center; margin-bottom: 25px; position: relative; }
+        .brand-title { font-size: 2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0; display: inline-block; letter-spacing: 1px; }
+        .brand-sub { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+        .brand-user { font-size: 0.9rem; color: var(--primary); font-weight: 800; margin-top: 4px; }
+        .brand-user i { margin-left: 6px; }
 
-        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; box-shadow: var(--card-shadow); transition: background 0.3s, border 0.3s; }
+        /* Tabs */
+        .tabs-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
+        .tab-btn { padding: 12px 24px; border-radius: 50px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
+        .tab-btn .badge { background: var(--danger); color: white; border-radius: 50%; padding: 2px 8px; font-size: 0.7rem; font-weight: 900; }
 
-        .form-group { margin-bottom: 20px; width: 100%; }
-        label { display: block; margin-bottom: 8px; font-weight: 800; color: var(--text-main); font-size: 15px; }
-        input[type="text"], input[type="date"], input[type="time"], input[type="number"], select {
-            width: 100%; padding: 15px 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; transition: all 0.3s ease; outline: none;
+        /* Cards */
+        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); transition: background 0.3s, border 0.3s; margin-bottom: 25px; }
+        .section-title { font-size: 1.3rem; font-weight: 900; color: var(--text-main); margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; }
+        .section-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
+
+        /* Forms */
+        .form-group { margin-bottom: 18px; width: 100%; }
+        label { display: block; margin-bottom: 6px; font-weight: 800; color: var(--text-main); font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
+            width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; transition: all 0.3s ease; outline: none;
         }
-        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+        textarea { resize: vertical; min-height: 70px; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .time-inputs { display: flex; gap: 10px; }
-        @media (max-width: 600px) {
-            .grid-2 { grid-template-columns: 1fr; }
-            .time-inputs { flex-direction: column; gap: 10px; }
-            .main-card { padding: 25px 20px; }
-        }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .main-card { padding: 20px; } }
 
-        .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
-        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.3s; color: var(--text-main); user-select: none;}
+        .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
+        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.3s; color: var(--text-main); user-select: none; }
         .checkbox-pill:hover { border-color: var(--primary); background: var(--primary-glow); }
-        .checkbox-pill input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;}
+        .checkbox-pill input { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
 
-        .btn { 
-            width: 100%; padding: 16px; border-radius: 14px; font-size: 1.05rem; font-weight: 800; 
-            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; border: none;
-        }
-        .btn:active { transform: scale(0.98); }
-        
+        /* Buttons */
+        .btn { width: 100%; padding: 14px; border-radius: var(--radius); font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; border: none; }
+        .btn:active { transform: scale(0.97); }
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
-        .btn-action { background: var(--success); color: #fff; box-shadow: 0 8px 20px var(--success-glow); }
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
-        .btn-export { background: var(--bg-card-inner); border: 2px solid var(--primary); color: var(--primary); }
-        .btn-export:hover { background: var(--primary); color: #fff; }
-        
-        .btn-danger { background: var(--bg-card-inner); border: 2px solid var(--danger); color: var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 8px 20px var(--success-glow); }
+        .btn-success:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 8px 20px var(--danger-glow); }
+        .btn-danger:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-purple { background: var(--purple); color: #fff; box-shadow: 0 8px 20px var(--purple-glow); }
+        .btn-purple:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-card-inner); border-color: var(--text-muted); }
+        .btn-outline-primary { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline-primary:hover { background: var(--primary); color: white; }
+        .btn-sm { padding: 10px 16px; font-size: 0.85rem; width: auto; }
 
-        .btn-secondary { background: transparent; border: 2px solid var(--border); color: var(--text-muted); }
-        .btn-secondary:hover { background: var(--bg-card-inner); border-color: var(--text-main); color: var(--text-main); }
-
-        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; margin-bottom: 25px; box-shadow: var(--card-shadow); transition: 0.3s;}
-        .progress-track { height: 14px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
-
-        .daily-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 25px; border-top: 5px solid var(--primary); box-shadow: var(--card-shadow); transition: 0.3s; }
-        .daily-date-badge { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        
-        .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s; }
+        /* Tasks */
+        .task-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s; gap: 10px; flex-wrap: wrap; }
         .task-card:hover { border-color: var(--primary); transform: translateX(-4px); }
         .task-card.completed { background: var(--bg-completed); border-color: transparent; opacity: 0.7; }
-        .task-card.completed .task-title-text { text-decoration: line-through; color: var(--text-muted); }
-        .task-pill { background: var(--primary-glow); color: var(--primary); font-size: 13px; font-weight: 800; padding: 6px 14px; border-radius: 50px; white-space: nowrap; }
+        .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
+        .task-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .task-info input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; flex-shrink: 0; }
+        .task-title { font-weight: 700; font-size: 0.95rem; color: var(--text-main); word-break: break-word; }
+        .task-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .task-pill { font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 50px; white-space: nowrap; }
+        .pill-primary { background: var(--primary-glow); color: var(--primary); }
+        .pill-success { background: var(--success-glow); color: var(--success); }
+        .pill-warning { background: var(--warning-glow); color: var(--warning); }
+        .pill-purple { background: var(--purple-glow); color: var(--purple); }
+        .pill-danger { background: var(--danger-glow); color: var(--danger); }
+        .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .task-actions button { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 8px; border-radius: 8px; transition: 0.3s; color: var(--text-muted); }
+        .task-actions button:hover { background: var(--bg-card); }
+        .task-actions .del-btn:hover { color: var(--danger); background: var(--danger-glow); }
 
-        .view-section { display: none; }
-        .active-view { display: block; animation: viewIn 0.4s ease; }
-        @keyframes viewIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .source-badge { font-size: 0.7rem; font-weight: 800; padding: 2px 10px; border-radius: 50px; }
+        .source-manual { background: var(--primary-glow); color: var(--primary); }
+        .source-planner { background: var(--purple-glow); color: var(--purple); }
+        .source-exam { background: var(--warning-glow); color: var(--warning); }
 
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-btn { padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Progress */
+        .progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 25px; box-shadow: var(--card-shadow); }
+        .progress-track { height: 12px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 12px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
+
+        /* Loading */
         .loading-state { text-align: center; padding: 50px 20px; }
-        .spinner { width: 60px; height: 60px; border: 5px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 20px; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(8px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; transition: 0.3s; }
-        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px 30px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 35px 30px; text-align: center; max-width: 450px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-icon { width: 75px; height: 75px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 18px; }
 
-        #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 50px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
+        /* Toast */
+        .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 24px; border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; transition: 0.3s; opacity: 0; transform: translateY(10px); pointer-events: auto; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-color: var(--success); color: var(--success); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+        .toast.info { border-color: var(--primary); color: var(--primary); }
+
+        .view-section { display: none; }
+        .active-view { display: block; animation: viewIn 0.35s ease; }
+        @keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
+
+        /* Hidden export container */
+        #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 40px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
     </style>
 </head>
 <body>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
 <div class="app-container">
 
+    <!-- Brand Header -->
     <div class="brand-header">
         <h1 class="brand-title">Amr Suhail Academy</h1>
-        <div class="brand-sub">نظام التخطيط الدراسي الذكي والتتبع اليومي</div>
-    </div>
-
-    <!-- 1. شاشة الإعداد -->
-    <div id="setup-view" class="view-section active-view main-card">
-        <form id="planForm">
-            <div class="form-group">
-                <label><i class="fa-solid fa-layer-group" style="color:var(--primary); margin-left:6px;"></i> المسارات والمواد الدراسية:</label>
-                <input type="text" id="subjects" required placeholder="مثال: الدوائر الكهربائية، رسم هندسي، رياضيات">
-            </div>
-
-            <div class="grid-2 form-group">
-                <div>
-                    <label><i class="fa-solid fa-flag-checkered" style="color:var(--success); margin-left:6px;"></i> تاريخ الهدف (الانتهاء):</label>
-                    <input type="date" id="target_date" required>
-                </div>
-                <div>
-                    <label><i class="fa-solid fa-bolt" style="color:#eab308; margin-left:6px;"></i> مستوى الانضباط والوتيرة:</label>
-                    <select id="discipline">
-                        <option value="متوازن">متوازن (طبيعي ومريح)</option>
-                        <option value="مرن">مرن (دراسة خفيفة)</option>
-                        <option value="مكثف">مكثف (تحضير للاختبارات)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid-2 form-group">
-                <div>
-                    <label><i class="fa-solid fa-bed" style="color:#8b5cf6; margin-left:6px;"></i> فترة النوم المعتادة:</label>
-                    <div class="time-inputs">
-                        <input type="time" id="sleep_start" value="23:00">
-                        <input type="time" id="sleep_end" value="06:00">
-                    </div>
-                </div>
-                <div>
-                    <label><i class="fa-solid fa-briefcase" style="color:#f43f5e; margin-left:6px;"></i> ساعات الانشغال/الدوام:</label>
-                    <div class="time-inputs">
-                        <input type="time" id="busy_start" value="08:00">
-                        <input type="time" id="busy_end" value="14:00">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label><i class="fa-solid fa-mug-hot" style="color:var(--primary); margin-left:6px;"></i> أيام الراحة الأسبوعية:</label>
-                <div class="days-grid">
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأحد"> الأحد</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الاثنين"> الاثنين</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الثلاثاء"> الثلاثاء</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأربعاء"> الأربعاء</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الخميس"> الخميس</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الجمعة" checked> الجمعة</label>
-                    <label class="checkbox-pill"><input type="checkbox" class="off-day" value="السبت"> السبت</label>
-                </div>
-            </div>
-
-            <div class="form-group" style="background: var(--bg-card-inner); padding: 18px; border-radius: 16px; border: 1px solid var(--border);">
-                <label class="checkbox-pill" style="justify-content: flex-start; background: transparent; border: none; padding: 0;">
-                    <input type="checkbox" id="wird" checked> تضمين الورد القرآني اليومي
-                </label>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
-                    <label class="checkbox-pill" style="justify-content: flex-start; background: transparent; border: none; padding: 0;">
-                        <input type="checkbox" id="quran" onchange="document.getElementById('quran_field').style.display = this.checked ? 'block' : 'none'"> تفعيل برنامج حفظ القرآن الكريم
-                    </label>
-                    <div id="quran_field" style="display:none; margin-top:12px;">
-                        <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية المراد حفظها" min="1" max="20">
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة بالذكاء الاصطناعي</button>
-        </form>
-    </div>
-
-    <!-- 2. حالة التحميل -->
-    <div id="loading-view" class="view-section main-card loading-state">
-        <div class="spinner"></div>
-        <h2 style="color: var(--primary); font-weight: 900;">جاري إعداد خطتك الشاملة...</h2>
-        <p style="color: var(--text-muted); font-size: 1.05rem;">يقوم المساعد الذكي الآن بتحليل المواد وتوزيع الساعات بدقة على أيام الأسبوع لضمان تحقيق هدفك.</p>
-    </div>
-
-    <!-- 3. شاشة المعاينة -->
-    <div id="preview-view" class="view-section main-card">
-        <div style="text-align:center; margin-bottom: 20px;">
-            <div style="width: 70px; height: 70px; background: var(--success-glow); color: var(--success); font-size: 2rem; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;"><i class="fa-solid fa-check"></i></div>
-            <h2 style="color: var(--success); margin: 0 0 5px 0;">تم إعداد الخطة بنجاح</h2>
-            <p style="color: var(--text-muted); font-size: 15px; margin: 0;">هذه مسودة سريعة للخطة، راجعها ثم قم بالاعتماد.</p>
-        </div>
-        
-        <div id="preview-container" style="max-height: 400px; overflow-y: auto; padding-right: 5px; margin-bottom: 25px; scrollbar-width: thin;"></div>
-        
-        <div class="grid-2">
-            <button class="btn btn-secondary" onclick="switchView('setup-view')"><i class="fa-solid fa-pen"></i> تعديل المدخلات</button>
-            <button class="btn btn-action" onclick="acceptAndStart()"><i class="fa-solid fa-flag-checkered"></i> اعتماد الخطة والبدء</button>
+        <div class="brand-sub">نظام التخطيط الدراسي الموحّد</div>
+        <div class="brand-user" id="userDisplay">
+            <i class="fa-regular fa-user"></i> 
+            {% if student_name %}
+                {{ student_name }}
+            {% else %}
+                <span style="color:var(--danger);">غير مسجل الدخول</span>
+                <a href="/" style="color:var(--primary); font-weight:800; text-decoration:none;">→ تسجيل الدخول</a>
+            {% endif %}
         </div>
     </div>
 
-    <!-- 4. شاشة التتبع -->
-    <div id="tracking-view" class="view-section">
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-btn active" data-tab="my-plans"><i class="fa-regular fa-calendar-check"></i> خططي</button>
+        <button class="tab-btn" data-tab="new-plan"><i class="fa-solid fa-plus-circle"></i> خطة جديدة</button>
+        <button class="tab-btn" data-tab="stats"><i class="fa-solid fa-chart-simple"></i> إحصائياتي</button>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- TAB 1: خططي (My Plans) -->
+    <!-- ========================================================== -->
+    <div id="tab-my-plans" class="view-section active-view">
+        <!-- Progress Bar -->
         <div class="progress-box">
             <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800;">
-                <span style="font-size: 1.1rem; color: var(--text-main);"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-left:8px;"></i> التقدم العام للخطة</span>
-                <span id="progress-percent-label" style="color: var(--primary); font-size: 1.4rem; font-family: 'Outfit', sans-serif; font-weight: 900;">0%</span>
+                <span style="font-size: 1rem;"><i class="fa-solid fa-chart-line" style="color:var(--primary); margin-left:8px;"></i> التقدم العام</span>
+                <span id="progress-percent-label" style="color: var(--primary); font-size: 1.3rem; font-family: 'Outfit', sans-serif; font-weight: 900;">0%</span>
             </div>
             <div class="progress-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
         </div>
 
-        <div id="daily-card-container"></div>
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">الكل</button>
+            <button class="filter-btn" data-filter="manual">📝 يدوي</button>
+            <button class="filter-btn" data-filter="planner">📚 عام</button>
+            <button class="filter-btn" data-filter="exam">🎯 اختبارات</button>
+            <button class="filter-btn" data-filter="completed">✅ مكتمل</button>
+            <button class="filter-btn" data-filter="pending">⏳ غير مكتمل</button>
+        </div>
 
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="btn btn-action" onclick="completeDayAction()"><i class="fa-solid fa-forward-step"></i> إنهاء اليوم والانتقال لليوم التالي</button>
-            <button class="btn btn-export" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير الخطة الشاملة كصورة</button>
-            <button class="btn btn-danger" onclick="confirmReset()"><i class="fa-solid fa-trash-can"></i> حذف الخطة نهائياً وبدء جديد</button>
+        <!-- Tasks Container -->
+        <div id="tasks-container" class="main-card" style="padding: 20px;">
+            <!-- سيتم ملؤها بواسطة JavaScript -->
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px;">
+            <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks()"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير الخطة كصورة</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll()"><i class="fa-solid fa-trash-can"></i> مسح كل المهام</button>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- TAB 2: خطة جديدة (New Plan) -->
+    <!-- ========================================================== -->
+    <div id="tab-new-plan" class="view-section">
+        <div class="main-card">
+            <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--purple);"></i> اختر نوع الخطة</div>
+            <div class="section-desc">يمكنك إنشاء خطة جديدة باستخدام الذكاء الاصطناعي، أو إضافة مهام يدوية.</div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('planner')">
+                    <i class="fa-solid fa-calendar-plus" style="font-size:1.8rem; color:var(--purple);"></i>
+                    <span style="font-weight:900;">خطة عامة (AI)</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لجدولك اليومي</span>
+                </div>
+                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('exam')">
+                    <i class="fa-solid fa-file-pen" style="font-size:1.8rem; color:var(--warning);"></i>
+                    <span style="font-weight:900;">خطة اختبارات (AI)</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لدروس محددة</span>
+                </div>
+                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('manual')">
+                    <i class="fa-solid fa-pen" style="font-size:1.8rem; color:var(--primary);"></i>
+                    <span style="font-weight:900;">مهمة مخصصة</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">أضف مهمة يدوياً</span>
+                </div>
+            </div>
+
+            <!-- Planner Form -->
+            <div id="planner-form" style="display:none;">
+                <div class="form-group">
+                    <label>المسارات والمواد الدراسية:</label>
+                    <input type="text" id="subjects" placeholder="مثال: الدوائر الكهربائية، رسم هندسي، رياضيات">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>تاريخ الهدف:</label>
+                        <input type="date" id="target_date">
+                    </div>
+                    <div class="form-group">
+                        <label>مستوى الانضباط:</label>
+                        <select id="discipline">
+                            <option value="متوازن">متوازن</option>
+                            <option value="مرن">مرن</option>
+                            <option value="مكثف">مكثف</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>النوم:</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="time" id="sleep_start" value="23:00" style="flex:1;">
+                            <input type="time" id="sleep_end" value="06:00" style="flex:1;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>الانشغال:</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="time" id="busy_start" value="08:00" style="flex:1;">
+                            <input type="time" id="busy_end" value="14:00" style="flex:1;">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>أيام الراحة:</label>
+                    <div class="days-grid">
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأحد"> الأحد</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الاثنين"> الاثنين</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الثلاثاء"> الثلاثاء</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأربعاء"> الأربعاء</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الخميس"> الخميس</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الجمعة" checked> الجمعة</label>
+                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="السبت"> السبت</label>
+                    </div>
+                </div>
+                <div class="form-group" style="background:var(--bg-card-inner); padding:15px; border-radius:var(--radius);">
+                    <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
+                        <input type="checkbox" id="wird" checked> تضمين الورد القرآني
+                    </label>
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+                        <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
+                            <input type="checkbox" id="quran" onchange="document.getElementById('quran_field').style.display=this.checked?'block':'none'"> حفظ القرآن
+                        </label>
+                        <div id="quran_field" style="display:none; margin-top:10px;">
+                            <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية" min="1" max="20">
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-purple" onclick="generatePlannerPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
+            </div>
+
+            <!-- Exam Form -->
+            <div id="exam-form" style="display:none;">
+                <div class="form-group">
+                    <label>اسم الاختبار:</label>
+                    <input type="text" id="exam_name" placeholder="مثال: إلكترونيات - منتصف الفصل">
+                </div>
+                <div class="form-group">
+                    <label>تاريخ الاختبار:</label>
+                    <input type="date" id="exam_date">
+                </div>
+                <div class="form-group">
+                    <label>معرفات الدروس (افصل بينها بفاصلة):</label>
+                    <input type="text" id="exam_lesson_ids" placeholder="مثال: 1, 2, 3, 4">
+                </div>
+                <div style="background:var(--bg-card-inner); padding:12px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--text-muted);">
+                    <i class="fa-regular fa-lightbulb"></i> يمكنك الحصول على معرف الدرس من رابط الدرس في المنصة، أو من صفحة المحتوى.
+                </div>
+                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات</button>
+            </div>
+
+            <!-- Manual Form -->
+            <div id="manual-form" style="display:none;">
+                <div class="form-group">
+                    <label>عنوان المهمة:</label>
+                    <input type="text" id="manual_title" placeholder="مثال: مراجعة الفصل الأول">
+                </div>
+                <div class="form-group">
+                    <label>التاريخ:</label>
+                    <input type="date" id="manual_date">
+                </div>
+                <div class="form-group">
+                    <label>الوصف (اختياري):</label>
+                    <textarea id="manual_desc" placeholder="تفاصيل إضافية..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>الأولوية:</label>
+                    <select id="manual_priority">
+                        <option value="1">عالية</option>
+                        <option value="2" selected>متوسطة</option>
+                        <option value="3">منخفضة</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="addManualTask()"><i class="fa-solid fa-plus-circle"></i> إضافة المهمة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- TAB 3: إحصائياتي (Stats) -->
+    <!-- ========================================================== -->
+    <div id="tab-stats" class="view-section">
+        <div class="main-card">
+            <div class="section-title"><i class="fa-solid fa-chart-simple" style="color:var(--warning);"></i> إحصائياتي الدراسية</div>
+            <div id="stats-container">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-top:15px;">
+                    <div style="background:var(--bg-card-inner); border-radius:var(--radius); padding:20px; text-align:center;">
+                        <div style="font-size:2rem; font-weight:900; color:var(--primary);" id="stat-total">0</div>
+                        <div style="color:var(--text-muted); font-weight:700;">إجمالي المهام</div>
+                    </div>
+                    <div style="background:var(--bg-card-inner); border-radius:var(--radius); padding:20px; text-align:center;">
+                        <div style="font-size:2rem; font-weight:900; color:var(--success);" id="stat-completed">0</div>
+                        <div style="color:var(--text-muted); font-weight:700;">مكتملة</div>
+                    </div>
+                    <div style="background:var(--bg-card-inner); border-radius:var(--radius); padding:20px; text-align:center;">
+                        <div style="font-size:2rem; font-weight:900; color:var(--danger);" id="stat-pending">0</div>
+                        <div style="color:var(--text-muted); font-weight:700;">غير مكتملة</div>
+                    </div>
+                    <div style="background:var(--bg-card-inner); border-radius:var(--radius); padding:20px; text-align:center;">
+                        <div style="font-size:2rem; font-weight:900; color:var(--purple);" id="stat-progress">0%</div>
+                        <div style="color:var(--text-muted); font-weight:700;">نسبة الإنجاز</div>
+                    </div>
+                </div>
+                <div style="margin-top:25px; background:var(--bg-card-inner); border-radius:var(--radius); padding:20px;">
+                    <div style="font-weight:800; margin-bottom:10px;">توزيع المهام حسب المصدر</div>
+                    <div id="source-distribution" style="display:flex; gap:15px; flex-wrap:wrap;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
 </div>
 
-<!-- نافذة الاحتفال بالإنجاز -->
+<!-- ========================================================== -->
+<!-- Success Modal -->
+<!-- ========================================================== -->
 <div class="modal-overlay" id="success-modal">
     <div class="modal-content">
-        <div style="width: 80px; height: 80px; background: var(--success-glow); color: var(--success); font-size: 2.5rem; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><i class="fa-solid fa-award"></i></div>
-        <h2 style="color: var(--text-main); margin: 0 0 12px 0; font-weight: 900;">إنجاز ممتاز جداً!</h2>
-        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6;">لقد أتممت كافة المهام المجدولة لهذا اليوم بكفاءة وانضباط عالي. استمر بهذا العزم نحو هدفك.</p>
-        <button class="btn btn-primary" onclick="closeSuccessModal()">متابعة لليوم التالي <i class="fa-solid fa-arrow-left"></i></button>
+        <div class="modal-icon" style="background:var(--success-glow); color:var(--success);"><i class="fa-solid fa-trophy"></i></div>
+        <h2 style="color:var(--text-main); margin:0 0 10px 0; font-weight:900;">🎉 إنجاز رائع!</h2>
+        <p style="color:var(--text-muted); font-size:1rem; line-height:1.6; margin-bottom:20px;">لقد أكملت مهمة بنجاح! استمر بهذا العزم نحو هدفك.</p>
+        <button class="btn btn-primary" onclick="closeSuccessModal()">متابعة <i class="fa-solid fa-arrow-left"></i></button>
     </div>
 </div>
 
+<!-- ========================================================== -->
+<!-- Hidden Export Container -->
+<!-- ========================================================== -->
 <div id="hidden-export-container"></div>
 
+<!-- ========================================================== -->
+<!-- JavaScript -->
+<!-- ========================================================== -->
 <script>
-let draftPlans = null;
-
-// ضبط الحد الأدنى للتاريخ ليكون اليوم
-document.getElementById('target_date').min = new Date().toISOString().split('T')[0];
-
-window.addEventListener('storage', (e) => {
-    if (e.key === 'theme') {
-        if (e.newValue === 'dark') document.documentElement.classList.add('dark-mode');
-        else document.documentElement.classList.remove('dark-mode');
-    }
-});
-
-window.onload = () => {
-    if (localStorage.getItem('acadmay_schedule_data')) {
-        switchView('tracking-view');
-        renderTodayCard();
-    }
-};
-
-function getTaskTitle(t) {
-    if (!t) return 'مهمة دراسية';
-    if (typeof t === 'string') return t;
-    return t.title || t.subject || t.task || t.name || t.topic || t.description || t.activity || 'مهمة دراسية';
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+function getToday() {
+    return new Date().toISOString().split('T')[0];
 }
 
-function getTaskHours(t) {
-    if (!t) return 1;
-    if (typeof t === 'number') return t;
-    if (typeof t === 'string') {
-        const match = t.match(/(\d+(?:\.\d+)?)/);
-        return match ? parseFloat(match[0]) : 1;
-    }
-    let val = t.allocated_hours ?? t.hours ?? t.duration ?? t.time ?? t.estimated_time ?? 1;
-    if (typeof val === 'string') {
-        const m = val.match(/(\d+(?:\.\d+)?)/);
-        return m ? parseFloat(m[0]) : 1;
-    }
-    return parseFloat(val) || 1;
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('ar-EG', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function formatHours(h) {
-    const num = parseFloat(h);
-    if (isNaN(num) || num === 0) return 'مهمة';
-    if (num < 1) return Math.round(num * 60) + ' دقيقة';
-    if (num === 1) return 'ساعة واحدة';
-    if (num === 1.5) return 'ساعة ونصف';
-    if (num === 2) return 'ساعتان';
-    if (num > 2 && num <= 10) return num + ' ساعات';
-    return num + ' ساعة';
+function isStudentLoggedIn() {
+    return STUDENT_ID !== null;
 }
 
-function getDayName(p) {
-    return p.day_name || p.day || p.date_name || 'اليوم';
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
 }
 
-function isOffDay(p) {
-    return p.is_off_day === true || p.is_off === true || p.type === 'راحة' || p.day_type === 'off';
-}
-
-function switchView(id) {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
-    document.getElementById(id).classList.add('active-view');
-}
-
-// إرسال الطلب للخادم وتوليد الخطة
-document.getElementById('planForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    switchView('loading-view');
-
-    const payload = {
-        current_date: new Date().toISOString().split('T')[0],
-        subjects: document.getElementById('subjects').value,
-        target_date: document.getElementById('target_date').value,
-        discipline: document.getElementById('discipline').value,
-        sleep_hours: `${document.getElementById('sleep_start').value}-${document.getElementById('sleep_end').value}`,
-        busy_hours: `${document.getElementById('busy_start').value}-${document.getElementById('busy_end').value}`,
-        off_days: Array.from(document.querySelectorAll('.off-day:checked')).map(c => c.value),
-        wird: document.getElementById('wird').checked,
-        quran_enabled: document.getElementById('quran').checked,
-        quran_pages: document.getElementById('quran_pages').value || 1
-    };
-
-    try {
-        const res = await fetch('/generate_plan', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify(payload) 
-        });
-        
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || "Server error");
-        }
-
-        const data = await res.json();
-        
-        // استخراج المصفوفة مهما كان شكل التغليف القادم من الـ AI
-        let rawPlans = null;
-        if (Array.isArray(data)) {
-            rawPlans = data;
-        } else if (data.plans && Array.isArray(data.plans)) {
-            rawPlans = data.plans;
-        } else if (data.schedule && Array.isArray(data.schedule)) {
-            rawPlans = data.schedule;
-        } else if (data.days && Array.isArray(data.days)) {
-            rawPlans = data.days;
-        } else {
-            for (let k in data) {
-                if (Array.isArray(data[k])) {
-                    rawPlans = data[k];
-                    break;
-                }
-            }
-        }
-
-        if (!rawPlans || rawPlans.length === 0) throw new Error("Format error");
-
-        draftPlans = rawPlans.map(p => {
-            let tasksArr = p.tasks || p.plan || p.schedule || [];
-            if (!Array.isArray(tasksArr)) tasksArr = Object.values(tasksArr);
-            
-            const off = isOffDay(p) || (tasksArr.length === 0);
-            return {
-                date: p.date || p.day_date || '',
-                day_name: getDayName(p),
-                is_off_day: off,
-                tasks: off ? [] : tasksArr.map(t => ({
-                    title: getTaskTitle(t),
-                    allocated_hours: getTaskHours(t),
-                    done: false
-                }))
-            };
-        });
-
-        renderPreview(draftPlans);
-        switchView('preview-view');
-    } catch(err) {
-        console.error(err);
-        alert("حدث خطأ في استلام الخطة من الخادم، يرجى المحاولة مرة أخرى.");
-        switchView('setup-view');
-    }
-});
-
-function renderPreview(plans) {
-    let html = '';
-    plans.forEach(p => {
-        const dayLabel = getDayName(p);
-        const dateLabel = p.date ? `<span style="font-family:'Outfit', sans-serif;">(${p.date})</span>` : '';
-        html += `<div style="background: var(--bg-card-inner); border: 1px solid var(--border); padding: 18px; border-radius: 16px; margin-bottom: 12px; color: var(--text-main);">
-                    <div style="font-weight:800; color:var(--primary); margin-bottom:10px; font-size: 1.1rem; display:flex; justify-content:space-between;">
-                        <span>${dayLabel}</span> <span style="color:var(--text-muted); font-size:0.9rem;">${dateLabel}</span>
-                    </div>`;
-        
-        if (p.is_off_day || p.tasks.length === 0) {
-            html += `<span style="color:var(--text-muted); font-size:0.95rem; font-weight:700;"><i class="fa-solid fa-mug-hot"></i> يوم مخصص للراحة وتجديد النشاط</span>`;
-        } else {
-            p.tasks.forEach(t => {
-                html += `<div style="font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:600;">
-                            <span><i class="fa-solid fa-check" style="color:var(--primary); margin-left:6px; font-size:0.8rem;"></i> ${t.title}</span>
-                            <span style="background:var(--primary-glow); color:var(--primary); padding:4px 12px; border-radius:50px; font-size:0.85rem; font-weight:800; white-space:nowrap;">${formatHours(t.allocated_hours)}</span>
-                         </div>`;
-            });
-        }
-        html += `</div>`;
+// ==========================================
+// TAB SWITCHING
+// ==========================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const tabId = this.dataset.tab;
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+        document.getElementById('tab-' + tabId).classList.add('active-view');
+        if (tabId === 'my-plans') loadTasks();
+        if (tabId === 'stats') updateStats();
     });
-    document.getElementById('preview-container').innerHTML = html;
+});
+
+// ==========================================
+// FILTER
+// ==========================================
+let currentFilter = 'all';
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        loadTasks();
+    });
+});
+
+// ==========================================
+// PLAN TYPE SELECTOR
+// ==========================================
+function showPlanType(type) {
+    document.getElementById('planner-form').style.display = type === 'planner' ? 'block' : 'none';
+    document.getElementById('exam-form').style.display = type === 'exam' ? 'block' : 'none';
+    document.getElementById('manual-form').style.display = type === 'manual' ? 'block' : 'none';
 }
 
-function acceptAndStart() {
-    draftPlans.forEach(d => { if(d.tasks) d.tasks.forEach(t => t.done = false); });
-    localStorage.setItem('acadmay_schedule_data', JSON.stringify({ plans: draftPlans, currentIndex: 0 }));
-    switchView('tracking-view');
-    renderTodayCard();
+// ==========================================
+// AUTO-SAVE SYSTEM (مزدوج)
+// ==========================================
+async function autoSaveTask(taskData) {
+    if (!isStudentLoggedIn()) {
+        saveToLocal(taskData);
+        showToast('حفظ محلي (غير مسجل دخول)', 'info');
+        return;
+    }
+    saveToLocal(taskData);
+    try {
+        const res = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskData)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            updateSyncStatus(taskData.id || data.task?.id, true);
+            showToast('✅ تم الحفظ تلقائياً', 'success');
+            return data;
+        } else {
+            showToast('⚠️ حفظ محلي (خطأ في الخادم)', 'error');
+            return null;
+        }
+    } catch(e) {
+        showToast('⚠️ حفظ محلي (لا يوجد اتصال)', 'error');
+        return null;
+    }
 }
 
-function renderTodayCard() {
-    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
-    if (!store) return;
+function saveToLocal(taskData) {
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const index = tasks.findIndex(t => t.id === taskData.id);
+    if (index > -1) {
+        tasks[index] = { ...tasks[index], ...taskData, synced: false };
+    } else {
+        tasks.push({ ...taskData, synced: false, id: taskData.id || Date.now() });
+    }
+    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+}
 
-    if (store.currentIndex >= store.plans.length) {
-        document.getElementById('daily-card-container').innerHTML = `
-            <div class="daily-schedule-card" style="text-align:center; padding: 50px 20px;">
-                <div style="width: 80px; height: 80px; background: var(--success-glow); color: var(--success); font-size: 2.5rem; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><i class="fa-solid fa-trophy"></i></div>
-                <h2 style="color:var(--text-main); margin:0 0 10px 0; font-weight:900;">أتممت الخطة بالكامل!</h2>
-                <p style="color:var(--text-muted); font-size:1.1rem; line-height:1.6;">أنت شخص عظيم ومثابر، لقد حققت هدفك بنجاح، أكاديمية عمرو سهيل فخورة جداً بك.</p>
-            </div>`;
-        updateProgress(store);
+function updateSyncStatus(taskId, synced) {
+    if (!taskId) return;
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const index = tasks.findIndex(t => t.id === taskId);
+    if (index > -1) {
+        tasks[index].synced = synced;
+        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+    }
+}
+
+function getUnsyncedTasks() {
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    return tasks.filter(t => !t.synced);
+}
+
+// مزامنة دورية كل 30 ثانية
+setInterval(async () => {
+    const unsynced = getUnsyncedTasks();
+    if (unsynced.length === 0) return;
+    for (const task of unsynced) {
+        try {
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                updateSyncStatus(task.id, true);
+            }
+        } catch(e) { /* تجاهل */ }
+    }
+}, 30000);
+
+// حفظ عند إغلاق الصفحة
+window.addEventListener('beforeunload', async () => {
+    const unsynced = getUnsyncedTasks();
+    for (const task of unsynced) {
+        try {
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task)
+            });
+        } catch(e) { /* تجاهل */ }
+    }
+});
+
+// ==========================================
+// LOAD TASKS (من API + LocalStorage)
+// ==========================================
+async function loadTasks() {
+    const container = document.getElementById('tasks-container');
+    container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--text-muted);">جاري التحميل...</p></div>';
+
+    let tasks = [];
+    // جلب من API
+    if (isStudentLoggedIn()) {
+        try {
+            const res = await fetch('/api/tasks');
+            const data = await res.json();
+            if (Array.isArray(data)) tasks = data;
+            else if (data.status === 'success' && data.tasks) tasks = data.tasks;
+        } catch(e) { /* فشل */ }
+    }
+    // دمج مع localStorage
+    let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const apiIds = tasks.map(t => t.id);
+    for (const local of localTasks) {
+        if (!apiIds.includes(local.id) && !local.synced) {
+            tasks.push(local);
+        }
+    }
+    // حفظ الدمج في localStorage
+    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+
+    // تطبيق الفلتر
+    let filtered = tasks;
+    if (currentFilter === 'completed') filtered = tasks.filter(t => t.completed);
+    else if (currentFilter === 'pending') filtered = tasks.filter(t => !t.completed);
+    else if (currentFilter !== 'all') filtered = tasks.filter(t => t.source === currentFilter);
+
+    // ترتيب حسب التاريخ
+    filtered.sort((a, b) => (a.planned_date || '').localeCompare(b.planned_date || ''));
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fa-regular fa-circle-check"></i><div style="font-weight:700;font-size:1.1rem;">لا توجد مهام</div><div style="font-size:0.9rem;color:var(--text-muted);">أضف مهام جديدة من تبويب "خطة جديدة"</div></div>`;
+        updateProgress(tasks);
         return;
     }
 
-    const today = store.plans[store.currentIndex];
-    const dayLabel = getDayName(today);
-    const dateLabel = today.date ? `<span style="font-family:'Outfit', sans-serif;">${today.date}</span>` : '';
-
-    let html = `<div class="daily-schedule-card">
-        <div class="daily-date-badge">
-            <span style="font-size: 1.3rem; font-weight: 900; color: var(--primary);"><i class="fa-regular fa-calendar-check" style="margin-left:5px;"></i> مهام ${dayLabel}</span>
-            <span style="font-size: 0.95rem; font-weight:700; color: var(--text-muted);">${dateLabel}</span>
-        </div>`;
-
-    if (today.is_off_day || !today.tasks || today.tasks.length === 0) {
-        html += `<div style="text-align:center; padding: 30px; color: var(--text-muted); font-size: 1.1rem; font-weight:700;"><i class="fa-solid fa-mug-hot" style="font-size:2rem; margin-bottom:15px; color:#eab308;"></i><br>يوم مخصص للراحة وتجديد النشاط</div>`;
-    } else {
-        today.tasks.forEach((task, idx) => {
-            const completedClass = task.done ? 'completed' : '';
-            const checkedAttr = task.done ? 'checked' : '';
-            html += `<div class="task-card ${completedClass}">
-                <div style="display:flex; align-items:center; gap:15px; flex:1;">
-                    <input type="checkbox" style="width:22px; height:22px; accent-color:var(--success); cursor:pointer;" ${checkedAttr} onchange="toggleTaskState(${idx}, this.checked)">
-                    <span class="task-title-text" style="font-size:1.05rem; font-weight:700; color: var(--text-main);">${task.title}</span>
-                </div>
-                <span class="task-pill">${formatHours(task.allocated_hours)}</span>
+    let html = '';
+    let currentDate = '';
+    filtered.forEach(task => {
+        const dateStr = task.planned_date || '';
+        if (dateStr && dateStr !== currentDate) {
+            currentDate = dateStr;
+            html += `<div style="font-weight:800; font-size:1.1rem; color:var(--primary); margin: 15px 0 8px 0; padding-bottom:5px; border-bottom:2px solid var(--border);">
+                <i class="fa-regular fa-calendar"></i> ${formatDate(dateStr)}
             </div>`;
-        });
-    }
-    html += `</div>`;
-    document.getElementById('daily-card-container').innerHTML = html;
-    updateProgress(store);
-}
-
-function toggleTaskState(idx, isDone) {
-    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
-    store.plans[store.currentIndex].tasks[idx].done = isDone;
-    localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
-    renderTodayCard();
-}
-
-function updateProgress(store) {
-    let total = 0, completed = 0;
-    store.plans.forEach(day => {
-        if (!day.is_off_day && day.tasks) {
-            day.tasks.forEach(t => { total++; if (t.done) completed++; });
         }
-    });
-    const percentage = total === 0 ? (store.currentIndex >= store.plans.length ? 100 : 0) : Math.round((completed / total) * 100);
-    const bar = document.getElementById('progress-bar-fill');
-    const label = document.getElementById('progress-percent-label');
-    if(bar) bar.style.width = percentage + '%';
-    if(label) label.innerText = percentage + '%';
-}
-
-async function completeDayAction() {
-    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
-    const today = store.plans[store.currentIndex];
-    
-    let uncompleted = [];
-    if (!today.is_off_day && today.tasks) {
-        uncompleted = today.tasks.filter(t => !t.done);
-    }
-
-    if (uncompleted.length === 0) {
-        confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
-        document.getElementById('success-modal').style.display = 'flex';
-    } else {
-        const remainingDays = store.plans.slice(store.currentIndex + 1);
-        if (remainingDays.length === 0) { alert("هذا آخر يوم في الخطة! يرجى إنهاء مهامك المتبقية أولاً."); return; }
-        if (!confirm("لديك مهام غير مكتملة، سيتم ترحيلها للأيام القادمة عبر الذكاء الاصطناعي. هل أنت موافق؟")) return;
-
-        switchView('loading-view');
-        try {
-            const res = await fetch('/reschedule_plan', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ missed_tasks: uncompleted, remaining_plans: remainingDays })
-            });
-            const result = await res.json();
-            const resPlans = result.plans || (Array.isArray(result) ? result : null);
-            if (resPlans) {
-                const formattedPlans = resPlans.map(p => {
-                    let tasksArr = p.tasks || p.plan || p.schedule || [];
-                    if (!Array.isArray(tasksArr)) tasksArr = Object.values(tasksArr);
-                    const off = isOffDay(p) || (tasksArr.length === 0);
-                    return {
-                        date: p.date || p.day_date || '',
-                        day_name: getDayName(p),
-                        is_off_day: off,
-                        tasks: off ? [] : tasksArr.map(t => ({
-                            title: getTaskTitle(t),
-                            allocated_hours: getTaskHours(t),
-                            done: false
-                        }))
-                    };
-                });
-                store.plans.splice(store.currentIndex + 1, remainingDays.length, ...formattedPlans);
-            }
-        } catch (e) { 
-            console.error(e);
-            alert("حدث خطأ في تحديث الخطة، سيتم الانتقال لليوم التالي كما هو."); 
-        }
+        const completedClass = task.completed ? 'completed' : '';
+        const sourceClass = 'source-' + (task.source || 'manual');
+        const sourceLabel = task.source === 'planner' ? '📚 عام' : task.source === 'exam' ? '🎯 اختبار' : '📝 يدوي';
+        const priorityLabel = task.priority === 1 ? 'عالية' : task.priority === 2 ? 'متوسطة' : 'منخفضة';
+        const priorityPill = task.priority === 1 ? 'pill-danger' : task.priority === 2 ? 'pill-warning' : 'pill-primary';
         
-        store.currentIndex++;
-        localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
-        switchView('tracking-view');
-        renderTodayCard();
+        html += `
+            <div class="task-card ${completedClass}" data-id="${task.id}">
+                <div class="task-info">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskComplete(${task.id}, this.checked)">
+                    <span class="task-title">${task.title}</span>
+                </div>
+                <div class="task-meta">
+                    <span class="task-pill ${priorityPill}">${priorityLabel}</span>
+                    <span class="source-badge ${sourceClass}">${sourceLabel}</span>
+                    ${task.lesson_id ? `<span class="task-pill pill-primary" style="font-size:0.7rem;">📖 درس</span>` : ''}
+                </div>
+                <div class="task-actions">
+                    <button onclick="editTaskDate(${task.id})" title="تعديل التاريخ"><i class="fa-regular fa-calendar-pen"></i></button>
+                    <button class="del-btn" onclick="deleteTask(${task.id})" title="حذف"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    updateProgress(tasks);
+}
+
+// ==========================================
+// TASK OPERATIONS
+// ==========================================
+async function toggleTaskComplete(taskId, isChecked) {
+    // تحديث في localStorage
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const index = tasks.findIndex(t => t.id === taskId);
+    if (index > -1) {
+        tasks[index].completed = isChecked;
+        tasks[index].synced = false;
+        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
     }
+    // تحديث في API
+    if (isStudentLoggedIn()) {
+        try {
+            await fetch(`/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: isChecked })
+            });
+            updateSyncStatus(taskId, true);
+        } catch(e) { /* فشل */ }
+    }
+    // إذا تم الإكمال، نحتفل
+    if (isChecked) {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+        document.getElementById('success-modal').style.display = 'flex';
+    }
+    loadTasks();
 }
 
 function closeSuccessModal() {
     document.getElementById('success-modal').style.display = 'none';
-    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
-    store.currentIndex++;
-    localStorage.setItem('acadmay_schedule_data', JSON.stringify(store));
-    renderTodayCard();
 }
 
-function exportFullPlan() {
-    const store = JSON.parse(localStorage.getItem('acadmay_schedule_data'));
-    if (!store) return;
-    
-    let exportHTML = `
-        <div style="text-align: center; margin-bottom: 35px; border-bottom: 2px solid #1e293b; padding-bottom: 25px;">
-            <h1 style="color: #38bdf8; font-size: 40px; margin: 0 0 10px 0; font-weight: 900; font-family:'Outfit', sans-serif;">Amr Suhail Academy</h1>
-            <h2 style="color: #f8fafc; font-size: 22px; margin: 0;">الخطة الدراسية الشاملة المعتمدة</h2>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-    `;
+async function deleteTask(taskId) {
+    if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+    // حذف من localStorage
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    tasks = tasks.filter(t => t.id !== taskId);
+    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+    // حذف من API
+    if (isStudentLoggedIn()) {
+        try {
+            await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+        } catch(e) { /* فشل */ }
+    }
+    showToast('تم حذف المهمة', 'info');
+    loadTasks();
+}
 
-    store.plans.forEach(day => {
-        const dayLabel = getDayName(day);
-        const dateLabel = day.date || '';
-        exportHTML += `
-            <div style="background: #162032; border: 1px solid #1e293b; border-radius: 20px; padding: 25px;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px;">
-                    <span style="color: #38bdf8; font-size: 20px; font-weight: 900;">${dayLabel}</span>
-                    <span style="color: #94a3b8; font-size: 16px; font-family:'Outfit', sans-serif;">${dateLabel}</span>
-                </div>
-        `;
-        
-        if (day.is_off_day || !day.tasks || day.tasks.length === 0) {
-            exportHTML += `<div style="text-align:center; color:#94a3b8; padding: 15px; font-weight:bold; font-size:16px;">يوم مخصص للراحة وتجديد النشاط</div>`;
-        } else {
-            day.tasks.forEach(t => {
-                exportHTML += `
-                    <div style="background: #1e293b; padding: 15px 20px; border-radius: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 16px; font-weight: bold; color: #f8fafc;">${t.title}</span>
-                        <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 6px 14px; border-radius: 50px; font-size: 14px; font-weight: 900;">${formatHours(t.allocated_hours)}</span>
-                    </div>
-                `;
+async function editTaskDate(taskId) {
+    const newDate = prompt('أدخل التاريخ الجديد (YYYY-MM-DD):', getToday());
+    if (!newDate) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+        alert('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD');
+        return;
+    }
+    // تحديث في localStorage
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const index = tasks.findIndex(t => t.id === taskId);
+    if (index > -1) {
+        tasks[index].planned_date = newDate;
+        tasks[index].synced = false;
+        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+    }
+    // تحديث في API
+    if (isStudentLoggedIn()) {
+        try {
+            await fetch(`/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planned_date: newDate })
             });
-        }
-        exportHTML += `</div>`;
-    });
-    
-    exportHTML += `</div><div style="text-align:center; margin-top:40px; color:#94a3b8; font-size:16px; font-weight:bold;">تم إنشاء هذه الخطة آلياً عبر الذكاء الاصطناعي - أكاديمية عمرو سهيل</div>`;
-    
-    const container = document.getElementById('hidden-export-container');
-    container.innerHTML = exportHTML;
-    
-    html2canvas(container, { backgroundColor: '#0b1120', scale: 2 }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'Amr-Suhail-Smart-Plan.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
+            updateSyncStatus(taskId, true);
+        } catch(e) { /* فشل */ }
+    }
+    showToast('تم تحديث التاريخ', 'success');
+    loadTasks();
 }
 
-function confirmReset() {
-    if (confirm("هل أنت متأكد من مسح خطتك الحالية نهائياً والبدء من جديد؟")) {
-        localStorage.removeItem('acadmay_schedule_data');
-        location.reload();
+// ==========================================
+// ADD MANUAL TASK
+// ==========================================
+async function addManualTask() {
+    const title = document.getElementById('manual_title').value.trim();
+    const date = document.getElementById('manual_date').value;
+    const desc = document.getElementById('manual_desc').value.trim();
+    const priority = parseInt(document.getElementById('manual_priority').value);
+
+    if (!title) return alert('يرجى إدخال عنوان المهمة.');
+    if (!date) return alert('يرجى تحديد التاريخ.');
+
+    const taskData = {
+        title: title,
+        planned_date: date,
+        description: desc,
+        source: 'manual',
+        priority: priority,
+        completed: false,
+        lesson_id: null
+    };
+
+    const result = await autoSaveTask(taskData);
+    if (result) {
+        document.getElementById('manual_title').value = '';
+        document.getElementById('manual_desc').value = '';
+        document.getElementById('manual_date').value = '';
+        showToast('✅ تم إضافة المهمة', 'success');
+        loadTasks();
+        // التبديل إلى تبويب خططي
+        document.querySelector('[data-tab="my-plans"]').click();
     }
 }
+
+// ==========================================
+// GENERATE PLANNER PLAN (AI)
+// ==========================================
+async function generatePlannerPlan() {
+    const subjects = document.getElementById('subjects').value.trim();
+    const targetDate = document.getElementById('target_date').value;
+    const discipline = document.getElementById('discipline').value;
+    const sleepStart = document.getElementById('sleep_start').value;
+    const sleepEnd = document.getElementById('sleep_end').value;
+    const busyStart = document.getElementById('busy_start').value;
+    const busyEnd = document.getElementById('busy_end').value;
+    const offDays = Array.from(document.querySelectorAll('.off-day:checked')).map(c => c.value);
+    const wird = document.getElementById('wird').checked;
+    const quran = document.getElementById('quran').checked;
+    const quranPages = document.getElementById('quran_pages').value || 1;
+
+    if (!subjects || !targetDate) {
+        alert('يرجى ملء المواد وتاريخ الهدف.');
+        return;
+    }
+
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
+
+    try {
+        const res = await fetch('/generate_plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_date: getToday(),
+                subjects: subjects,
+                target_date: targetDate,
+                discipline: discipline,
+                sleep_hours: `${sleepStart}-${sleepEnd}`,
+                busy_hours: `${busyStart}-${busyEnd}`,
+                off_days: offDays,
+                wird: wird,
+                quran_enabled: quran,
+                quran_pages: quranPages
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast('✅ تم توليد الخطة وحفظها تلقائياً!', 'success');
+            loadTasks();
+            document.querySelector('[data-tab="my-plans"]').click();
+        } else {
+            alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+        }
+    } catch(e) {
+        alert('خطأ في الاتصال بالخادم.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة'; }
+    }
+}
+
+// ==========================================
+// GENERATE EXAM PLAN (AI)
+// ==========================================
+async function generateExamPlan() {
+    const planName = document.getElementById('exam_name').value.trim();
+    const examDate = document.getElementById('exam_date').value;
+    const lessonIdsRaw = document.getElementById('exam_lesson_ids').value.trim();
+
+    if (!planName) return alert('يرجى إدخال اسم الاختبار.');
+    if (!examDate) return alert('يرجى تحديد تاريخ الاختبار.');
+    if (!lessonIdsRaw) return alert('يرجى إدخال معرفات الدروس (مفصولة بفاصلة).');
+
+    const lessonIds = lessonIdsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+    if (lessonIds.length === 0) return alert('يرجى إدخال معرفات صحيحة (أرقام).');
+
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
+
+    try {
+        const res = await fetch('/api/generate-exam-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                plan_name: planName,
+                exam_date: examDate,
+                lesson_ids: lessonIds
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast('✅ تم توليد خطة الاختبارات وحفظها!', 'success');
+            document.getElementById('exam_name').value = '';
+            document.getElementById('exam_date').value = '';
+            document.getElementById('exam_lesson_ids').value = '';
+            loadTasks();
+            document.querySelector('[data-tab="my-plans"]').click();
+        } else {
+            alert('حدث خطأ: ' + (data.message || 'غير معروف'));
+        }
+    } catch(e) {
+        alert('خطأ في الاتصال بالخادم.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات'; }
+    }
+}
+
+// ==========================================
+// RESCHEDULE TASKS
+// ==========================================
+async function rescheduleTasks() {
+    if (!isStudentLoggedIn()) {
+        alert('يرجى تسجيل الدخول لإعادة التوزيع.');
+        return;
+    }
+    // جلب المهام غير المكتملة
+    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const incomplete = tasks.filter(t => !t.completed);
+    if (incomplete.length === 0) {
+        showToast('🎉 جميع المهام مكتملة!', 'success');
+        return;
+    }
+    if (!confirm(`لديك ${incomplete.length} مهام غير مكتملة. إعادة توزيعها على الأيام القادمة؟`)) return;
+
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعادة التوزيع...'; }
+
+    try {
+        // إرسال المهام غير المكتملة إلى API لإعادة التوزيع
+        const res = await fetch('/reschedule_plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                missed_tasks: incomplete.map(t => ({ title: t.title, allocated_hours: 1.5 })),
+                remaining_plans: [] // سنستخدم المهام الحالية
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            // تحديث تواريخ المهام غير المكتملة
+            const newPlans = data.plan?.plans || [];
+            if (newPlans.length > 0) {
+                // نوزع المهام على الأيام الجديدة
+                let taskIndex = 0;
+                for (const day of newPlans) {
+                    for (const task of day.tasks || []) {
+                        if (taskIndex < incomplete.length) {
+                            const oldTask = incomplete[taskIndex];
+                            // تحديث تاريخ المهمة
+                            const taskId = oldTask.id;
+                            const newDate = day.date || getToday();
+                            // تحديث في localStorage
+                            let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+                            const idx = tasks.findIndex(t => t.id === taskId);
+                            if (idx > -1) {
+                                tasks[idx].planned_date = newDate;
+                                tasks[idx].synced = false;
+                                localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+                            }
+                            // تحديث في API
+                            try {
+                                await fetch(`/api/tasks/${taskId}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ planned_date: newDate })
+                                });
+                            } catch(e) { /* فشل */ }
+                            taskIndex++;
+                        }
+                    }
+                }
+                showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
+                loadTasks();
+            } else {
+                showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
+            }
+        } else {
+            alert('حدث خطأ في إعادة التوزيع.');
+        }
+    } catch(e) {
+        alert('خطأ في الاتصال بالخادم.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة'; }
+    }
+}
+
+// ==========================================
+// CLEAR ALL TASKS
+// ==========================================
+function confirmClearAll() {
+    if (!confirm('⚠️ هل أنت متأكد من مسح جميع المهام نهائياً؟ لا يمكن التراجع.')) return;
+    if (!confirm('تأكيد نهائي: مسح كل المهام؟')) return;
+    // مسح localStorage
+    localStorage.removeItem('unified_tasks');
+    // مسح API (جلب كل المهام وحذفها)
+    if (isStudentLoggedIn()) {
+        (async () => {
+            try {
+                const res = await fetch('/api/tasks');
+                const tasks = await res.json();
+                for (const task of tasks) {
+                    await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+                }
+            } catch(e) { /* فشل */ }
+        })();
+    }
+    showToast('تم مسح جميع المهام', 'info');
+    loadTasks();
+    updateStats();
+}
+
+// ==========================================
+// UPDATE PROGRESS
+// ==========================================
+function updateProgress(tasks) {
+    if (!tasks) {
+        tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    }
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    document.getElementById('progress-bar-fill').style.width = percentage + '%';
+    document.getElementById('progress-percent-label').innerText = percentage + '%';
+}
+
+// ==========================================
+// UPDATE STATS
+// ==========================================
+function updateStats() {
+    const tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = total - completed;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-completed').innerText = completed;
+    document.getElementById('stat-pending').innerText = pending;
+    document.getElementById('stat-progress').innerText = percentage + '%';
+
+    // توزيع المصادر
+    const sources = {};
+    tasks.forEach(t => {
+        const s = t.source || 'manual';
+        sources[s] = (sources[s] || 0) + 1;
+    });
+    const distContainer = document.getElementById('source-distribution');
+    const labels = { manual: '📝 يدوي', planner: '📚 عام', exam: '🎯 اختبار' };
+    distContainer.innerHTML = Object.entries(sources).map(([key, count]) => `
+        <div style="background:var(--bg-card-inner); padding:8px 16px; border-radius:50px; font-weight:700; font-size:0.9rem;">
+            ${labels[key] || key}: ${count}
+        </div>
+    `).join('');
+}
+
+// ==========================================
+// EXPORT FULL PLAN
+// ==========================================
+function exportFullPlan() {
+    const tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+    if (tasks.length === 0) {
+        showToast('لا توجد مهام للتصدير', 'error');
+        return;
+    }
+    // تجميع حسب التاريخ
+    const grouped = {};
+    tasks.forEach(t => {
+        const date = t.planned_date || 'بدون تاريخ';
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(t);
+    });
+    const sortedDates = Object.keys(grouped).sort();
+
+    let exportHTML = `
+        <div style="text-align:center; margin-bottom:35px; border-bottom:2px solid #1e293b; padding-bottom:25px;">
+            <h1 style="color:#38bdf8; font-size:36px; margin:0 0 8px 0; font-weight:900; font-family:'Outfit', sans-serif;">Amr Suhail Academy</h1>
+            <h2 style="color:#f8fafc; font-size:20px; margin:0;">خطتي الدراسية الموحدة</h2>
+            <p style="color:#94a3b8; font-size:14px; margin-top:8px;">تم إنشاؤها في ${new Date().toLocaleDateString('ar-EG')}</p>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    `;
+
+    sortedDates.forEach(date => {
+        const dayTasks = grouped[date];
+        const completedCount = dayTasks.filter(t => t.completed).length;
+        exportHTML += `
+            <div style="background:#162032; border:1px solid #1e293b; border-radius:16px; padding:20px;">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #1e293b; padding-bottom:12px; margin-bottom:15px;">
+                    <span style="color:#38bdf8; font-size:18px; font-weight:900;">${formatDate(date)}</span>
+                    <span style="color:#94a3b8; font-size:14px; font-family:'Outfit', sans-serif;">${completedCount}/${dayTasks.length} ✅</span>
+                </div>
+        `;
+        dayTasks.forEach(t => {
+            const sourceLabel = t.source === 'planner' ? '📚' : t.source === 'exam' ? '🎯' : '📝';
+            const priorityLabel = t.priority === 1 ? 'عالية' : t.priority === 2 ? 'متوسطة' : 'منخفضة';
+            exportHTML += `
+                <div style="background:#1e293b; padding:12px 16px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:${t.completed ? '#10b981' : '#94a3b8'};">${t.completed ? '✅' : '⬜'}</span>
+                        <span style="color:#f8fafc; font-weight:600; font-size:14px;">${t.title}</span>
+                    </div>
+                    <span style="color:#94a3b8; font-size:12px;">${sourceLabel} ${priorityLabel}</span>
+                </div>
+            `;
+        });
+        exportHTML += `</div>`;
+    });
+
+    exportHTML += `</div><div style="text-align:center; margin-top:30px; color:#94a3b8; font-size:14px; font-weight:bold;">أكاديمية عمرو سهيل - من لا شيء إلى شيء</div>`;
+
+    const container = document.getElementById('hidden-export-container');
+    container.innerHTML = exportHTML;
+
+    html2canvas(container, { backgroundColor: '#0b1120', scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Amr-Suhail-My-Plans.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('✅ تم تصدير الخطة كصورة', 'success');
+    }).catch(() => showToast('خطأ في التصدير', 'error'));
+}
+
+// ==========================================
+// INIT
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // تعيين التاريخ الافتراضي للحقول
+    const today = getToday();
+    document.querySelectorAll('input[type="date"]').forEach(el => {
+        if (!el.value) el.value = today;
+    });
+    // تحميل المهام
+    loadTasks();
+    // تحديث الإحصائيات
+    updateStats();
+    // إذا كان المستخدم غير مسجل دخول، نعرض رسالة
+    if (!isStudentLoggedIn()) {
+        showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
+    }
+});
+
+// جلب تحديثات عند العودة للصفحة
+window.addEventListener('focus', () => {
+    loadTasks();
+    updateStats();
+});
 </script>
 </body>
 </html>

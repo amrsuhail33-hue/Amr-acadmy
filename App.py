@@ -1623,7 +1623,7 @@ def webauthn_register_begin():
 @app.route('/webauthn/register/complete', methods=['POST'])
 def webauthn_register_complete():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         user_id = session.get('webauthn_user_id')
         challenge_b64 = session.get('webauthn_challenge')
 
@@ -1634,7 +1634,11 @@ def webauthn_register_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        credential = parse_registration_credential_json(data.get('credential'))
+        cred_dict = data.get('credential', {})
+        if 'rawId' not in cred_dict and 'id' in cred_dict:
+            cred_dict['rawId'] = cred_dict['id']
+
+        credential = parse_registration_credential_json(cred_dict)
 
         verification = verify_registration_response(
             credential=credential,
@@ -1708,7 +1712,7 @@ def webauthn_login_begin():
 @app.route('/webauthn/login/complete', methods=['POST'])
 def webauthn_login_complete():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         username = session.get('webauthn_username')
         challenge_b64 = session.get('webauthn_challenge')
 
@@ -1719,13 +1723,16 @@ def webauthn_login_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        credential_json = data.get('credential')
-        cred_id_str = credential_json.get('id')
+        cred_dict = data.get('credential', {})
+        cred_id_str = cred_dict.get('id')
         db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id_str).first()
         if not db_cred:
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
 
-        credential = parse_authentication_credential_json(credential_json)
+        if 'rawId' not in cred_dict and 'id' in cred_dict:
+            cred_dict['rawId'] = cred_dict['id']
+
+        credential = parse_authentication_credential_json(cred_dict)
 
         verification = verify_authentication_response(
             credential=credential,
@@ -1764,4 +1771,3 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-

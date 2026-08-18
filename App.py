@@ -34,7 +34,7 @@ else:
 
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
-# إزالة معاملات sslmode تماماً لمنع تعارض pg8000
+# إزالة معاملات sslmode تماماً لحل خطأ connect() got an unexpected keyword argument 'sslmode'
 if "?sslmode=" in db_url:
     db_url = db_url.split("?sslmode=")[0]
 elif "&sslmode=" in db_url:
@@ -262,9 +262,9 @@ def get_data_from_sheet():
                 c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
                 if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
                 if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
-                if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
-                    data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
-                subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
+                if c_subject not in data[c_year]["terms"][term]["subjects"]:
+                    data[c_year]["terms"][term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
+                subj_data = data[c_year]["terms"][term]["subjects"][c_subject]
                 if c_type == "videos":
                     if c_chapter not in subj_data["types"]["videos"]["chapters"]: subj_data["types"]["videos"]["chapters"][c_chapter] = {"name": c_chapter, "lessons": []}
                     subj_data["types"]["videos"]["chapters"][c_chapter]["lessons"].append({"title": item.title, "video": item.url, "download": item.download_url, "notes": item.notes, "custom_id": item.id})

@@ -1,12 +1,13 @@
 {
   "name": "Amr Suhail Academy",
-  "short_name": "AS Academy",
-  "description": "منصة أكاديمية عمرو سهيل للتعليم والمخطط الدراسي الذكي",
+  "short_name": "ASA",
+  "description": "منصة تعليمية حديثة - من لا شيء إلى شيء",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090D16",
-  "theme_color": "#38BDF8",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "https://i.postimg.cc/mDFqRtsJ/logo.png",
@@ -20,5 +21,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "splash_pages": null
 }

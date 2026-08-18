@@ -53,6 +53,7 @@
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
             --radius: 16px;
             --radius-lg: 24px;
+            --gold: #f59e0b;
         }
 
         html.dark-mode {
@@ -81,6 +82,7 @@
         body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .app-container { width: 100%; max-width: 850px; }
 
+        /* ===== HEADER ===== */
         .brand-header { text-align: center; margin-bottom: 25px; }
         .brand-title { font-size: 2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0; }
         .brand-sub { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
@@ -89,16 +91,44 @@
         .brand-user .logout-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .brand-user .login-link { color: var(--primary); font-weight: 800; text-decoration: none; }
         .brand-user .login-link:hover { text-decoration: underline; }
+        .brand-user .profile-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .brand-user .profile-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .brand-user .profile-badge .level-badge {
+            background: var(--gold);
+            color: #0f172a;
+            padding: 0 8px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
 
+        /* ===== TABS ===== */
         .tabs-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
         .tab-btn { padding: 12px 24px; border-radius: 50px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
         .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
         .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
 
+        /* ===== CARDS ===== */
         .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); margin-bottom: 25px; }
         .section-title { font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
         .section-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
 
+        /* ===== FORMS ===== */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; outline: none; transition: 0.3s; -webkit-appearance: none; appearance: none; }
@@ -191,6 +221,7 @@
         .pill-primary { background: var(--primary-glow); color: var(--primary); }
         .pill-warning { background: var(--warning-glow); color: var(--warning); }
         .pill-danger { background: var(--danger-glow); color: var(--danger); }
+        .pill-gold { background: rgba(245, 158, 11, 0.2); color: var(--gold); }
         .source-badge { font-size: 0.7rem; font-weight: 800; padding: 2px 10px; border-radius: 50px; }
         .source-manual { background: var(--primary-glow); color: var(--primary); }
         .source-planner { background: var(--purple-glow); color: var(--purple); }
@@ -305,6 +336,11 @@
             <i class="fa-regular fa-user"></i> 
             {% if student_id %}
                 <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
+                <!-- شارة المستوى والنقاط (تفتح الملف الشخصي في index.html) -->
+                <span class="profile-badge" onclick="window.location.href='/'" title="اذهب للملف الشخصي">
+                    <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
+                    <span style="font-weight:400; font-size:0.75rem; margin-right:4px;">⭐ <span id="navPoints">0</span></span>
+                </span>
                 <button onclick="logoutStudent()" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> خروج
                 </button>
@@ -732,7 +768,12 @@ async function loadTasks() {
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
-        } catch(e) {}
+            else if (data.error) {
+                showToast('خطأ في تحميل المهام: ' + data.error, 'error');
+            }
+        } catch(e) {
+            console.error('Error loading tasks:', e);
+        }
     }
     let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const apiIds = tasks.map(t => t.id);
@@ -771,6 +812,8 @@ async function loadTasks() {
         const priorityLabel = task.priority === 1 ? 'عالية' : task.priority === 2 ? 'متوسطة' : 'منخفضة';
         const priorityPill = task.priority === 1 ? 'pill-danger' : task.priority === 2 ? 'pill-warning' : 'pill-primary';
         const hours = task.allocated_hours || 1.0;
+        // شارة الورد
+        const wirdBadge = task.is_wird ? '<span class="task-pill pill-gold"><i class="fa-solid fa-book-quran"></i> ورد</span>' : '';
         
         html += `
             <div class="task-card-modern ${completedClass}" data-id="${task.id}">
@@ -783,6 +826,7 @@ async function loadTasks() {
                         <span class="task-pill ${priorityPill}">${priorityLabel}</span>
                         <span class="source-badge ${sourceClass}">${sourceLabel}</span>
                         ${task.lesson_id ? `<span class="task-pill pill-primary" style="font-size:0.7rem;">📖 درس</span>` : ''}
+                        ${wirdBadge}
                     </div>
                     <div class="task-actions">
                         <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskComplete(${task.id}, this.checked)">
@@ -810,12 +854,19 @@ async function toggleTaskComplete(taskId, isChecked) {
     }
     if (isStudentLoggedIn()) {
         try {
-            await fetch(`/api/tasks/${taskId}`, {
+            const res = await fetch(`/api/tasks/${taskId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ completed: isChecked })
             });
-            updateSyncStatus(taskId, true);
+            const data = await res.json();
+            if (data.status === 'success') {
+                updateSyncStatus(taskId, true);
+                // إذا تم الإكمال، منح نقاط (سيتم التعامل معها في الخادم)
+                showToast('✅ تم إكمال المهمة', 'success');
+                // تحديث المستوى والنقاط في الـ navbar
+                await loadProfileBadge();
+            }
         } catch(e) {}
     }
     if (isChecked) {
@@ -886,6 +937,7 @@ async function addManualTask() {
         source: 'manual', 
         priority, 
         allocated_hours: 1.0,
+        is_wird: false,
         completed: false, 
         lesson_id: null 
     };
@@ -901,7 +953,25 @@ async function addManualTask() {
 }
 
 // ==========================================
-// GENERATE PLANNER PLAN (مع الورد اليومي)
+// 🆕 LOAD PROFILE BADGE (Navbar)
+// ==========================================
+async function loadProfileBadge() {
+    if (!isStudentLoggedIn()) return;
+    try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+        if (data.status === 'success') {
+            const p = data.profile;
+            document.getElementById('navLevelBadge').innerText = p.level;
+            document.getElementById('navPoints').innerText = p.points;
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+// ==========================================
+// GENERATE PLANNER PLAN (مع الورد اليومي وإصلاح الأخطاء)
 // ==========================================
 async function generatePlannerPlan() {
     const subjects = document.getElementById('subjects').value.trim();
@@ -913,7 +983,7 @@ async function generatePlannerPlan() {
     const busyEnd = document.getElementById('busy_end').value;
     const offDays = Array.from(document.querySelectorAll('.off-day:checked')).map(c => c.value);
     const wird = document.getElementById('wird').checked;
-    const wirdPages = parseInt(document.getElementById('wird_pages').value) || 1;  // ✅ جديد
+    const wirdPages = parseInt(document.getElementById('wird_pages').value) || 1;
     const quran = document.getElementById('quran').checked;
     const quranPages = document.getElementById('quran_pages').value || 1;
 
@@ -926,33 +996,42 @@ async function generatePlannerPlan() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
 
     try {
+        const payload = {
+            current_date: getToday(),
+            subjects,
+            target_date: targetDate,
+            discipline,
+            sleep_hours: `${sleepStart}-${sleepEnd}`,
+            busy_hours: `${busyStart}-${busyEnd}`,
+            off_days: offDays,
+            wird: wird,
+            wird_pages: wirdPages,
+            quran_enabled: quran,
+            quran_pages: quranPages
+        };
+        console.log('📤 إرسال طلب توليد الخطة:', payload);
+
         const res = await fetch('/generate_plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                current_date: getToday(),
-                subjects,
-                target_date: targetDate,
-                discipline,
-                sleep_hours: `${sleepStart}-${sleepEnd}`,
-                busy_hours: `${busyStart}-${busyEnd}`,
-                off_days: offDays,
-                wird: wird,
-                wird_pages: wirdPages,  // ✅ جديد
-                quran_enabled: quran,
-                quran_pages: quranPages
-            })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
+        console.log('📥 رد الخادم:', data);
+
         if (data.status === 'success') {
             showToast('✅ تم توليد الخطة وحفظها تلقائياً!', 'success');
-            loadTasks();
+            await loadTasks();
+            // تحديث شارة المستوى
+            await loadProfileBadge();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
             alert('حدث خطأ: ' + (data.error || 'غير معروف'));
+            console.error('خطأ في التوليد:', data);
         }
     } catch(e) {
-        alert('خطأ في الاتصال بالخادم.');
+        console.error('خطأ في الاتصال:', e);
+        alert('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة'; }
     }
@@ -994,6 +1073,7 @@ async function loadLessonsForExam() {
         container.innerHTML = html;
         updateSelectedCount();
     } catch(e) {
+        console.error(e);
         container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger);">خطأ في تحميل الدروس</div>`;
     }
 }
@@ -1040,7 +1120,8 @@ async function generateExamPlan() {
             document.getElementById('exam_date').value = '';
             selectedLessonIds = [];
             loadLessonsForExam();
-            loadTasks();
+            await loadTasks();
+            await loadProfileBadge();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
             alert('حدث خطأ: ' + (data.message || 'غير معروف'));
@@ -1110,7 +1191,8 @@ async function rescheduleTasks() {
                     }
                 }
                 showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
-                loadTasks();
+                await loadTasks();
+                await loadProfileBadge();
             } else {
                 showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
             }
@@ -1139,12 +1221,15 @@ function confirmClearAll() {
                 for (const task of tasks) {
                     await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
                 }
+                showToast('تم مسح جميع المهام', 'info');
+                loadTasks();
+                loadProfileBadge();
             } catch(e) {}
         })();
+    } else {
+        showToast('تم مسح جميع المهام محلياً', 'info');
+        loadTasks();
     }
-    showToast('تم مسح جميع المهام', 'info');
-    loadTasks();
-    updateStats();
 }
 
 // ==========================================
@@ -1225,12 +1310,14 @@ function exportFullPlan() {
             const sourceLabel = t.source === 'planner' ? '📚' : t.source === 'exam' ? '🎯' : '📝';
             const priorityLabel = t.priority === 1 ? 'عالية' : t.priority === 2 ? 'متوسطة' : 'منخفضة';
             const hours = t.allocated_hours || 1.0;
+            const wirdLabel = t.is_wird ? '🕌 ورد' : '';
             exportHTML += `
                 <div style="background:#1e293b; padding:12px 16px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="color:${t.completed ? '#10b981' : '#94a3b8'};">${t.completed ? '✅' : '⬜'}</span>
                         <span style="color:#f8fafc; font-weight:600; font-size:14px;">${t.title}</span>
                         <span style="color:#38bdf8; font-size:12px; font-weight:800;">${hours} ساعة</span>
+                        ${wirdLabel ? `<span style="color:#f59e0b; font-size:11px; font-weight:700;">${wirdLabel}</span>` : ''}
                     </div>
                     <span style="color:#94a3b8; font-size:12px;">${sourceLabel} ${priorityLabel}</span>
                 </div>
@@ -1268,12 +1355,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (!isStudentLoggedIn()) {
         showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
+    } else {
+        loadProfileBadge();
     }
 });
 
 window.addEventListener('focus', () => {
     loadTasks();
     updateStats();
+    if (isStudentLoggedIn()) loadProfileBadge();
 });
 </script>
 </body>

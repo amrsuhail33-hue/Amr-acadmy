@@ -13,7 +13,7 @@ from flask import (
     make_response
 )
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import text  # 🆕 ضروري لتحديث قاعدة البيانات
+from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
 from webauthn import generate_registration_options, verify_registration_response
@@ -288,31 +288,6 @@ class Favorite(db.Model):
             "added_at": self.added_at.strftime("%Y-%m-%d %H:%M") if self.added_at else ""
         }
 
-class Schedule(db.Model):
-    __tablename__ = 'schedules'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
-    planned_date = db.Column(db.Date, nullable=False)
-    completed = db.Column(db.Boolean, default=False)
-    notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    student = db.relationship('Student', backref='schedules')
-    lesson = db.relationship('CustomLesson', backref='scheduled_by')
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "student_id": self.student_id,
-            "lesson_id": self.lesson_id,
-            "lesson_title": self.lesson.title if self.lesson else "",
-            "planned_date": self.planned_date.strftime("%Y-%m-%d") if self.planned_date else "",
-            "completed": self.completed,
-            "notes": self.notes or "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
-        }
-
 class Progress(db.Model):
     __tablename__ = 'progress'
     id = db.Column(db.Integer, primary_key=True)
@@ -334,47 +309,6 @@ class Progress(db.Model):
             "status": self.status,
             "progress_percent": self.progress_percent,
             "last_accessed": self.last_accessed.strftime("%Y-%m-%d %H:%M") if self.last_accessed else ""
-        }
-
-class ExamPlan(db.Model):
-    __tablename__ = 'exam_plans'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    plan_name = db.Column(db.String(200), nullable=False)
-    exam_date = db.Column(db.Date, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    student = db.relationship('Student', backref='exam_plans')
-    items = db.relationship('ExamPlanItem', backref='exam_plan', cascade='all, delete-orphan')
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "plan_name": self.plan_name,
-            "exam_date": self.exam_date.strftime("%Y-%m-%d") if self.exam_date else "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
-            "items": [item.to_dict() for item in self.items]
-        }
-
-class ExamPlanItem(db.Model):
-    __tablename__ = 'exam_plan_items'
-    id = db.Column(db.Integer, primary_key=True)
-    exam_plan_id = db.Column(db.Integer, db.ForeignKey('exam_plans.id'), nullable=False)
-    lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=False)
-    scheduled_date = db.Column(db.Date, nullable=False)
-    completed = db.Column(db.Boolean, default=False)
-    priority = db.Column(db.Integer, default=2)
-    
-    lesson = db.relationship('CustomLesson')
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "lesson_id": self.lesson_id,
-            "lesson_title": self.lesson.title if self.lesson else "",
-            "scheduled_date": self.scheduled_date.strftime("%Y-%m-%d") if self.scheduled_date else "",
-            "completed": self.completed,
-            "priority": self.priority
         }
 
 class LessonQuestion(db.Model):
@@ -481,26 +415,20 @@ class QuizQuestion(db.Model):
             "explanation": self.explanation or ""
         }
 
-# ==========================================
-# 🚀 إنشاء الجداول والترقيع التلقائي (هنا الحل لمشكلة البلانر)
-# ==========================================
 with app.app_context():
     try:
         db.create_all()
-        
-        # --- ترقيع لقاعدة البيانات لإضافة الأعمدة الناقصة بدون فقدان بيانات ---
         try:
             db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN allocated_hours FLOAT DEFAULT 1.0;'))
             db.session.commit()
         except Exception:
-            db.session.rollback() # العمود موجود مسبقاً
+            db.session.rollback()
             
         try:
             db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN is_wird BOOLEAN DEFAULT FALSE;'))
             db.session.commit()
         except Exception:
-            db.session.rollback() # العمود موجود مسبقاً
-        # ----------------------------------------------------------------------
+            db.session.rollback()
 
         if PlatformUpdate.query.count() == 0:
             db.session.add(PlatformUpdate(
@@ -517,7 +445,6 @@ with app.app_context():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Startup DB Status: {e}")
 
 # ==========================================
 # Auth Decorators
@@ -546,16 +473,10 @@ def student_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ==========================================
-# إعداد نموذج الذكاء الاصطناعي من Groq
-# ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "openai/gpt-oss-120b"
 
-# ==========================================
-# دالة بناء بيانات المنصة
-# ==========================================
 def get_platform_data():
     data = {}
     try:
@@ -619,7 +540,6 @@ def get_platform_data():
                     s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
     except Exception as e:
         db.session.rollback()
-        print(f"Error building platform data from DB: {e}")
 
     return data
 
@@ -637,9 +557,6 @@ def add_header(response):
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
-# ==========================================
-# Routes الرئيسية
-# ==========================================
 @app.route('/')
 def home():
     try:
@@ -699,9 +616,6 @@ def home():
     except Exception as e: 
         return f"Error: {str(e)}"
 
-# ==========================================
-# استرجاع بنك الأسئلة
-# ==========================================
 @app.route('/api/quiz', methods=['GET'])
 def get_quiz():
     subject_name = request.args.get('subject')
@@ -756,9 +670,6 @@ def check_quiz_answer():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# إدارة المفضلة
-# ==========================================
 @app.route('/api/favorites', methods=['GET', 'POST', 'DELETE'])
 @student_required
 def manage_favorites():
@@ -792,9 +703,6 @@ def manage_favorites():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# API الملف الشخصي
-# ==========================================
 @app.route('/api/profile', methods=['GET'])
 @student_required
 def get_profile():
@@ -867,9 +775,6 @@ def get_leaderboard():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# مصادقة الإدارة والمساعد
-# ==========================================
 @app.route('/admin/login', methods=['POST', 'GET'])
 def admin_login():
     if request.method == 'GET':
@@ -903,9 +808,6 @@ def admin_status():
         "is_assistant": session.get('is_assistant', False)
     })
 
-# ==========================================
-# Routes الطالب
-# ==========================================
 @app.route('/student/register', methods=['POST'])
 def student_register():
     try:
@@ -975,9 +877,6 @@ def student_logout():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# إدارة المحتوى
-# ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
 def add_custom_content():
@@ -1057,9 +956,6 @@ def delete_custom_content(content_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# الأسئلة والتحديثات
-# ==========================================
 @app.route('/ask-question', methods=['POST'])
 def submit_question():
     try:
@@ -1156,9 +1052,6 @@ def delete_update(update_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# حساب التقديرات
-# ==========================================
 @app.route('/calculate-grade', methods=['POST'])
 def calculate_grade():
     try:
@@ -1172,9 +1065,6 @@ def calculate_grade():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# خدمات الذكاء الاصطناعي
-# ==========================================
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
     try:
@@ -1190,7 +1080,7 @@ def ask_ai():
         messages = [
             {
                 "role": "system", 
-                "content": "أنت المساعد الأكاديمي الذكي للأكاديمية. وظيفتك الإجابة بوضوح وبأسلوب علمي وهندسي مبسط، وشرح خطوات الحل للطلاب خطوة بخطوة باللغة العربية. (ملاحظة: إذا سألك المستخدم عن صورة، اعتذر بلطف لأنك نموذج لغوي فقط حالياً واطلب منه كتابة استفساره)."
+                "content": "أنت المساعد الأكاديمي الذكي للأكاديمية. وظيفتك الإجابة بوضوح وبأسلوب علمي وهندسي مبسط، وشرح خطوات الحل للطلاب خطوة بخطوة باللغة العربية."
             },
             {
                 "role": "user", 
@@ -1210,15 +1100,15 @@ def ask_ai():
     except Exception as e:
         return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
-# ==========================================
-# Route Planner
-# ==========================================
 @app.route('/planner')
 def planner():
     student_id = session.get('student_id')
     student_name = session.get('student_name')
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
+# ==========================================
+# 🆕 توليد الخطة العامة بواقعية واعتدال
+# ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
@@ -1233,75 +1123,33 @@ def generate_plan():
         wird_enabled = data.get('wird', True)
         
         base_profiles = {
-            "مرن": {
-                "hours": "1.5 to 2.5 hours total",
-                "tasks": "1 to 2 light tasks per active day",
-                "style": "Conceptual reading, high-level summaries, and gentle reviews without academic stress."
-            },
-            "متوازن": {
-                "hours": "3.5 to 5 hours total",
-                "tasks": "2 to 3 structured tasks per active day",
-                "style": "Standard lecture study, chapter breakdowns, and moderate practice exercise solving."
-            },
-            "مكثف": {
-                "hours": "6 to 8.5+ hours total",
-                "tasks": "3 to 5 deep-focus tasks per active day",
-                "style": "Comprehensive chapter mastery, intense problem-solving sessions, past exam papers, and rigorous timed drills."
-            }
+            "مرن": "1 to 2 hours total per day. Maximum 1-2 small study tasks per active day.",
+            "متوازن": "2 to 3.5 hours total per day. Maximum 2 moderate tasks per active day.",
+            "مكثف": "4 to 5.5 hours total per day. Maximum 3 focused tasks per active day."
         }
         
-        profile = base_profiles.get(discipline, base_profiles["متوازن"])
+        limit_desc = base_profiles.get(discipline, base_profiles["متوازن"])
         
-        wird_text = ""
-        if wird_enabled and wird_pages > 0:
-            wird_text = f"\n- Daily Wird (Quran reading): {wird_pages} pages every day.\n- IMPORTANT: If the user misses the daily Wird, it MUST be redistributed to the next available days as a priority task.\n- The Wird task should be included every day and marked as 'الورد اليومي (قراءة {wird_pages} صفحات)'."
-        else:
-            wird_text = "\n- No daily Wird required.\n"
-        
-        discipline_profile = (
-            f"PACE: {discipline.upper()}\n"
-            f"- Daily study workload: {profile['hours']}.\n"
-            f"- Tasks count: {profile['tasks']}.\n"
-            f"- Task style: {profile['style']}.\n"
-            f"{wird_text}"
-        )
+        wird_text = f"Daily Wird: {wird_pages} pages every day (0.5 hour allocated)." if wird_enabled and wird_pages > 0 else "No daily Wird."
 
         system_instruction = (
-            "You are an expert academic planner. Generate a highly realistic, customized daily study schedule in pure JSON format.\n\n"
-            f"SELECTED DISCIPLINE MODE & CONSTRAINTS:\n{discipline_profile}\n\n"
+            "You are a realistic academic study planner. DO NOT overwhelm the student.\n"
+            f"Workload Limit: {limit_desc}\n"
+            f"{wird_text}\n"
             "STRICT RULES:\n"
-            "1. Output ONLY a valid JSON object matching this exact schema:\n"
-            "{\n"
-            '  "plans": [\n'
-            '    {\n'
-            '      "day_name": "السبت",\n'
-            '      "date": "YYYY-MM-DD",\n'
-            '      "is_off_day": false,\n'
-            '      "tasks": [\n'
-            '        {"title": "اسم المادة أو المهمة والموضوع بتفصيل واضح ومحفز", "allocated_hours": 2}\n'
-            '      ]\n'
-            '    }\n'
-            '  ]\n'
-            "}\n"
-            "2. Make sure the total daily hours and task depths strictly reflect the chosen discipline level.\n"
-            "3. Distribute the requested subjects logically across all active days from Start Date to Target Date.\n"
-            "4. For requested Weekly Off-Days, set 'is_off_day': true and 'tasks': [].\n"
-            "5. If Quran reading (الورد) is enabled, include it as a daily task with appropriate allocated hours.\n"
-            "6. If Quran memorization is enabled, allocate proper time for the requested page count.\n"
-            "7. All task titles, subjects, and day names must be written in clear, professional Arabic.\n"
-            "8. IMPORTANT: If the user misses the daily Wird, redistribute it to the next available days."
+            "1. Output ONLY valid JSON: {'plans': [{'day_name': 'السبت', 'date': 'YYYY-MM-DD', 'is_off_day': false, 'tasks': [{'title': 'مهمة واقعية ومحددة', 'allocated_hours': 1.5}]}]}\n"
+            "2. Total daily study hours must NEVER exceed the limit specified above.\n"
+            "3. Only give 1 or 2 high-value distinct subjects per day. Do not repeat identical task names over and over.\n"
+            "4. Off days must have 'is_off_day': true and 'tasks': []."
         )
 
         user_prompt = (
             f"Start Date: {data.get('current_date')}\n"
             f"Target Date: {data.get('target_date')}\n"
-            f"Subjects/Courses: {data.get('subjects')}\n"
-            f"Requested Discipline Mode: {discipline}\n"
-            f"Sleep Hours: {data.get('sleep_hours')}\n"
-            f"Busy/Work Hours: {data.get('busy_hours')}\n"
+            f"Subjects: {data.get('subjects')}\n"
+            f"Mode: {discipline}\n"
             f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
-            f"Include Daily Wird: {'Yes, ' + str(wird_pages) + ' pages' if wird_enabled and wird_pages > 0 else 'No'}\n"
-            f"Quran Memorization: {'Yes, ' + str(data.get('quran_pages', 1)) + ' pages' if data.get('quran_enabled') else 'No'}"
+            f"Quran Wird: {'Yes, ' + str(wird_pages) + ' pages' if wird_enabled and wird_pages > 0 else 'No'}"
         )
 
         response = groq_client.chat.completions.create(
@@ -1311,14 +1159,16 @@ def generate_plan():
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.65
+            temperature=0.4
         )
 
-        reply_text = response.choices[0].message.content
-        plan_data = json.loads(reply_text)
+        plan_data = json.loads(response.choices[0].message.content)
 
         if student_id and plan_data.get('plans'):
             try:
+                # حذف المهام السابقة المولدة من البلانر لتفادي التراكم والتكرار
+                UnifiedTask.query.filter_by(student_id=student_id, source='planner').delete()
+                
                 for day in plan_data['plans']:
                     day_date = day.get('date')
                     if not day_date:
@@ -1331,16 +1181,12 @@ def generate_plan():
                         task_title = task.get('title', '').strip()
                         if not task_title:
                             continue
-                        allocated_hours = task.get('allocated_hours', 1.5)
+                        allocated_hours = float(task.get('allocated_hours', 1.0))
                         is_wird = 'الورد' in task_title or 'قراءة' in task_title
-                        
-                        lesson = CustomLesson.query.filter(
-                            CustomLesson.title.ilike(f'%{task_title}%')
-                        ).first()
                         
                         unified_task = UnifiedTask(
                             student_id=student_id,
-                            lesson_id=lesson.id if lesson else None,
+                            lesson_id=None,
                             title=task_title,
                             planned_date=planned_date,
                             source='planner',
@@ -1373,12 +1219,7 @@ def reschedule_plan():
         remaining = data.get('remaining_plans', [])
 
         system_instruction = (
-            "You are an academic rescheduling assistant. Re-distribute uncompleted tasks smartly into the remaining study days.\n"
-            "STRICT RULES:\n"
-            "1. Output ONLY a valid JSON object with the key 'plans' containing the updated days array.\n"
-            "2. Preserve the exact structure: [{'day_name': '...', 'date': '...', 'is_off_day': false, 'tasks': [{'title': '...', 'allocated_hours': 1.5}]}]\n"
-            "3. Do not drop any tasks; merge missed ones logically into active study days without overloading off-days.\n"
-            "4. Priority tasks (like Quran Wird) should be scheduled as early as possible in the remaining days."
+            "You are an academic rescheduling assistant. Re-distribute uncompleted tasks smartly into the remaining days without overloading the student. Max 2-3 hours daily."
         )
 
         user_prompt = (
@@ -1398,48 +1239,6 @@ def reschedule_plan():
 
         reply_text = response.choices[0].message.content
         plan_data = json.loads(reply_text)
-
-        if student_id and plan_data.get('plans'):
-            try:
-                for day in plan_data['plans']:
-                    day_date = day.get('date')
-                    if not day_date:
-                        continue
-                    try:
-                        planned_date = datetime.strptime(day_date, '%Y-%m-%d').date()
-                    except ValueError:
-                        continue
-                    for task in day.get('tasks', []):
-                        task_title = task.get('title', '').strip()
-                        if not task_title:
-                            continue
-                        allocated_hours = task.get('allocated_hours', 1.5)
-                        is_wird = 'الورد' in task_title or 'قراءة' in task_title
-                        
-                        existing_task = UnifiedTask.query.filter(
-                            UnifiedTask.student_id == student_id,
-                            UnifiedTask.title == task_title,
-                            UnifiedTask.completed == False
-                        ).first()
-                        if existing_task:
-                            existing_task.planned_date = planned_date
-                            existing_task.allocated_hours = allocated_hours
-                            existing_task.is_wird = is_wird
-                        else:
-                            unified_task = UnifiedTask(
-                                student_id=student_id,
-                                title=task_title,
-                                planned_date=planned_date,
-                                source='planner',
-                                priority=2,
-                                allocated_hours=allocated_hours,
-                                is_wird=is_wird,
-                                completed=False
-                            )
-                            db.session.add(unified_task)
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
 
         return jsonify({"status": "success", "plan": plan_data})
 
@@ -1482,9 +1281,6 @@ def complete_task(task_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ==========================================
-# واجهات المهام الموحدة
-# ==========================================
 @app.route('/api/tasks', methods=['GET'])
 @student_required
 def get_unified_tasks():
@@ -1522,11 +1318,6 @@ def add_unified_task():
             planned_date_obj = datetime.strptime(planned_date, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({"status": "error", "message": "صيغة التاريخ غير صحيحة"}), 400
-
-        if lesson_id:
-            lesson = CustomLesson.query.get(lesson_id)
-            if not lesson:
-                return jsonify({"status": "error", "message": "الدرس غير موجود"}), 404
 
         task = UnifiedTask(
             student_id=student_id,
@@ -1610,68 +1401,6 @@ def delete_unified_task(task_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/tasks/sync', methods=['POST'])
-@student_required
-def sync_unified_tasks():
-    try:
-        student_id = session['student_id']
-        data = request.get_json(silent=True) or {}
-        tasks_data = data.get('tasks', [])
-        
-        for task_data in tasks_data:
-            task_id = task_data.get('id')
-            if task_id:
-                task = UnifiedTask.query.get(task_id)
-                if task and task.student_id == student_id:
-                    if 'completed' in task_data:
-                        is_completed = bool(task_data['completed'])
-                        if is_completed and not task.completed:
-                            profile = UserProfile.query.filter_by(student_id=student_id).first()
-                            if profile:
-                                points = 5 if task.is_wird else 10
-                                profile.add_points(points, f"إكمال مهمة: {task.title}")
-                        task.completed = is_completed
-                    if 'planned_date' in task_data:
-                        try:
-                            task.planned_date = datetime.strptime(task_data['planned_date'], '%Y-%m-%d').date()
-                        except ValueError:
-                            continue
-                    if 'allocated_hours' in task_data:
-                        task.allocated_hours = float(task_data['allocated_hours'])
-                    if 'is_wird' in task_data:
-                        task.is_wird = bool(task_data['is_wird'])
-                    task.updated_at = datetime.utcnow()
-                    continue
-            
-            title = task_data.get('title', '').strip()
-            planned_date = task_data.get('planned_date')
-            if not title or not planned_date:
-                continue
-            try:
-                planned_date_obj = datetime.strptime(planned_date, '%Y-%m-%d').date()
-            except ValueError:
-                continue
-            
-            new_task = UnifiedTask(
-                student_id=student_id,
-                lesson_id=task_data.get('lesson_id'),
-                title=title,
-                description=task_data.get('description', ''),
-                planned_date=planned_date_obj,
-                source=task_data.get('source', 'manual'),
-                priority=task_data.get('priority', 2),
-                allocated_hours=task_data.get('allocated_hours', 1.0),
-                is_wird=task_data.get('is_wird', False),
-                completed=task_data.get('completed', False)
-            )
-            db.session.add(new_task)
-        
-        db.session.commit()
-        return jsonify({"status": "success", "message": "تمت المزامنة بنجاح"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
 @app.route('/api/lessons', methods=['GET'])
 @student_required
 def get_all_lessons():
@@ -1714,102 +1443,56 @@ def generate_exam_plan():
         if not lessons:
             return jsonify({"status": "error", "message": "لم يتم العثور على الدروس المحددة"}), 404
 
-        lessons_info = []
-        for l in lessons:
-            est_minutes = 30 if l.content_type == 'videos' else 20
-            if 'محاضرة' in l.title or 'شرح' in l.title:
-                est_minutes = 45
-            lessons_info.append({
-                "id": l.id,
-                "title": l.title,
-                "type": l.content_type,
-                "estimated_minutes": est_minutes
-            })
-
+        lessons_info = [{"id": l.id, "title": l.title, "type": l.content_type} for l in lessons]
         today = datetime.now().date()
         delta = (exam_date_obj - today).days
         if delta < 1:
             return jsonify({"status": "error", "message": "تاريخ الاختبار يجب أن يكون في المستقبل"}), 400
 
         prompt = f"""
-        أنت مخطط أكاديمي ذكي متخصص في إعداد خطط مكثفة للاختبارات.
-        
-        اسم الاختبار: {plan_name}
-        تاريخ الاختبار: {exam_date} (عدد الأيام المتاحة: {delta} يوماً)
-        
-        قائمة الدروس المطلوب مراجعتها:
-        {json.dumps(lessons_info, ensure_ascii=False, indent=2)}
-        
-        المطلوب:
-        1. توزيع الدروس على الأيام المتاحة بشكل متوازن.
-        2. تحديد أولوية كل درس (عالٍ، متوسط، منخفض) بناءً على صعوبة المادة ووقتها المقدر.
-        3. اقتراح وقت لكل درس بالدقائق.
-        4. إذا كان عدد الأيام أكبر من عدد الدروس، وزع الدروس مع فترات مراجعة إضافية.
-        5. إذا كان عدد الدروس أكبر من الأيام، ضغط الجدول مع تحديد أولويات.
-        
-        أخرج النتيجة بصيغة JSON بهذا الهيكل الدقيق:
-        {{
-            "plan": [
-                {{
-                    "day": "2026-08-20",
-                    "tasks": [
-                        {{"lesson_id": 1, "title": "مقدمة في الدايدود", "priority": "عال", "minutes": 45, "allocated_hours": 0.75}}
-                    ]
-                }}
-            ]
-        }}
-        تأكد من أن اليوم الأول هو أقرب يوم (اليوم أو غداً) وأن جميع الدروس مغطاة.
+        أنت مخطط أكاديمي ذكي. وزع الدروس التالية على {delta} يوماً باعتدال وبدون إرهاق (1-2 درس يومياً بحد أقصى ساعة ونصف يومياً).
+        الدروس: {json.dumps(lessons_info, ensure_ascii=False)}
+        أخرج فقط JSON: {{"plan": [{{"day": "2026-08-20", "tasks": [{{"lesson_id": 1, "title": "مقدمة", "priority": "متوسط", "allocated_hours": 1.0}}]}}]}}
         """
 
         response = groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
-                {"role": "system", "content": "أنت مخطط أكاديمي ذكي. أخرج فقط JSON صالح."},
+                {"role": "system", "content": "أنت مخطط أكاديمي. أخرج فقط JSON."},
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            temperature=0.5
+            temperature=0.4
         )
 
         plan_data = json.loads(response.choices[0].message.content)
-
         priority_map = {"عال": 1, "متوسط": 2, "منخفض": 3}
+
         for day_obj in plan_data.get('plan', []):
             day_date_str = day_obj.get('day')
-            if not day_date_str:
-                continue
-            try:
-                day_date = datetime.strptime(day_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                continue
+            if not day_date_str: continue
+            try: day_date = datetime.strptime(day_date_str, '%Y-%m-%d').date()
+            except ValueError: continue
+
             for task in day_obj.get('tasks', []):
                 lesson_id = task.get('lesson_id')
-                if not lesson_id:
-                    continue
-                lesson = CustomLesson.query.get(lesson_id)
-                if not lesson:
-                    continue
-                allocated_hours = task.get('allocated_hours', task.get('minutes', 30) / 60.0)
-                
+                lesson = CustomLesson.query.get(lesson_id) if lesson_id else None
                 unified_task = UnifiedTask(
                     student_id=student_id,
                     lesson_id=lesson_id,
-                    title=task.get('title', lesson.title),
-                    description=f"خطة اختبار: {plan_name} - أولوية: {task.get('priority', 'متوسط')} - {task.get('minutes', 30)} دقيقة",
+                    title=task.get('title', lesson.title if lesson else 'مراجعة'),
+                    description=f"خطة اختبار: {plan_name}",
                     planned_date=day_date,
                     source='exam',
                     priority=priority_map.get(task.get('priority', 'متوسط'), 2),
-                    allocated_hours=allocated_hours,
+                    allocated_hours=float(task.get('allocated_hours', 1.0)),
                     is_wird=False,
                     completed=False
                 )
                 db.session.add(unified_task)
         db.session.commit()
 
-        return jsonify({
-            "status": "success",
-            "plan": plan_data
-        })
+        return jsonify({"status": "success", "plan": plan_data})
 
     except Exception as e:
         db.session.rollback()
@@ -1867,7 +1550,7 @@ def add_or_update_progress():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# WebAuthn (تسجيل الدخول بالبصمة)
+# 🆕 WebAuthn (تسجيل الدخول بالبصمة) - تصحيح raw_id
 # ==========================================
 RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com') 
 RP_NAME = "Amr Suhail Academy"
@@ -1897,7 +1580,6 @@ def webauthn_register_begin():
             ),
         )
 
-        # 🆕 تحويل الـ Bytes إلى Base64 String ليتم قراءتها كـ JSON دون أخطاء
         challenge_b64 = bytes_to_base64url(registration_options.challenge)
         user_id_b64 = bytes_to_base64url(registration_options.user.id)
 
@@ -1956,6 +1638,7 @@ def webauthn_register_complete():
         verification = verify_registration_response(
             credential=RegistrationCredential(
                 id=credential_id,
+                raw_id=credential_id, # 👈 تم إضافة raw_id لإصلاح الخطأ
                 response={
                     "clientDataJSON": client_data_json,
                     "attestationObject": attestation_object,
@@ -2010,9 +1693,7 @@ def webauthn_login_begin():
             user_verification=UserVerificationRequirement.PREFERRED,
         )
 
-        # 🆕 تحويل الـ Bytes إلى Base64 String ليتم قراءتها كـ JSON دون أخطاء
         challenge_b64 = bytes_to_base64url(authentication_options.challenge)
-        
         session['webauthn_challenge'] = challenge_b64
         session['webauthn_username'] = username
 
@@ -2052,10 +1733,12 @@ def webauthn_login_complete():
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
 
         challenge_bytes = base64url_to_bytes(challenge_b64)
+        credential_id_bytes = base64url_to_bytes(cred_id)
 
         verification = verify_authentication_response(
             credential=AuthenticationCredential(
-                id=base64url_to_bytes(cred_id),
+                id=credential_id_bytes,
+                raw_id=credential_id_bytes, # 👈 تم إضافة raw_id لإصلاح الخطأ
                 response={
                     "clientDataJSON": base64url_to_bytes(credential['response']['clientDataJSON']),
                     "authenticatorData": base64url_to_bytes(credential['response']['authenticatorData']),
@@ -2080,7 +1763,6 @@ def webauthn_login_complete():
         session['student_name'] = student.name
         session.pop('is_admin', None)
         session.pop('is_assistant', None)
-
         session.pop('webauthn_challenge', None)
         session.pop('webauthn_username', None)
 

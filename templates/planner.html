@@ -73,7 +73,11 @@
         .brand-header { text-align: center; margin-bottom: 25px; }
         .brand-title { font-size: 2rem; font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); margin: 0; }
         .brand-sub { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
-        .brand-user { font-size: 0.9rem; color: var(--primary); font-weight: 800; }
+        .brand-user { font-size: 0.95rem; color: var(--text-main); font-weight: 700; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .brand-user .logout-btn { background: var(--danger); color: white; border: none; padding: 6px 16px; border-radius: 50px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+        .brand-user .logout-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .brand-user .login-link { color: var(--primary); font-weight: 800; text-decoration: none; }
+        .brand-user .login-link:hover { text-decoration: underline; }
 
         .tabs-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
         .tab-btn { padding: 12px 24px; border-radius: 50px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
@@ -159,7 +163,6 @@
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
 
-        /* قائمة الدروس المختارة */
         .lesson-checkbox-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -226,11 +229,14 @@
         <div class="brand-sub">نظام التخطيط الدراسي الموحّد</div>
         <div class="brand-user" id="userDisplay">
             <i class="fa-regular fa-user"></i> 
-            {% if student_name %}
-                {{ student_name }}
+            {% if student_id %}
+                <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
+                <button onclick="logoutStudent()" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> خروج
+                </button>
             {% else %}
                 <span style="color:var(--danger);">غير مسجل الدخول</span>
-                <a href="/" style="color:var(--primary); font-weight:800; text-decoration:none;">→ تسجيل الدخول</a>
+                <a href="/" class="login-link">→ تسجيل الدخول</a>
             {% endif %}
         </div>
     </div>
@@ -362,9 +368,7 @@
                 <button class="btn btn-purple" onclick="generatePlannerPlan()"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
-            <!-- ========================================================== -->
-            <!-- 🆕 Exam Form (مع قائمة الدروس بدلاً من المعرفات) -->
-            <!-- ========================================================== -->
+            <!-- Exam Form -->
             <div id="exam-form" style="display:none;">
                 <div class="form-group">
                     <label>اسم الاختبار:</label>
@@ -377,7 +381,6 @@
                 <div class="form-group">
                     <label>اختر الدروس التي تريد مراجعتها:</label>
                     <div id="exam-lessons-container" style="margin-top: 8px;">
-                        <!-- سيتم ملؤها بواسطة JavaScript بقائمة الدروس -->
                         <div class="loading-state" style="padding: 20px;">
                             <div class="spinner" style="width:30px; height:30px;"></div>
                             <p style="font-size:0.9rem; color:var(--text-muted);">جاري تحميل الدروس...</p>
@@ -493,6 +496,19 @@ function showToast(message, type = 'info') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 500);
     }, 3000);
+}
+
+// ==========================================
+// LOGOUT
+// ==========================================
+async function logoutStudent() {
+    if (!confirm('تسجيل الخروج؟')) return;
+    try {
+        await fetch('/student/logout', { method: 'POST' });
+        window.location.href = '/';
+    } catch(e) {
+        window.location.href = '/';
+    }
 }
 
 // ==========================================
@@ -833,7 +849,7 @@ async function generatePlannerPlan() {
 }
 
 // ==========================================
-// 🆕 GENERATE EXAM PLAN (مع قائمة الدروس المختارة)
+// EXAM PLAN (مع قائمة الدروس المختارة)
 // ==========================================
 let selectedLessonIds = [];
 
@@ -913,7 +929,7 @@ async function generateExamPlan() {
             document.getElementById('exam_name').value = '';
             document.getElementById('exam_date').value = '';
             selectedLessonIds = [];
-            loadLessonsForExam(); // إعادة تحميل القائمة لإلغاء التحديد
+            loadLessonsForExam();
             loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
@@ -1135,7 +1151,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     loadTasks();
     updateStats();
-    // تحميل الدروس إذا كانت خطة الاختبارات ظاهرة
     if (document.getElementById('exam-form').style.display !== 'none') {
         loadLessonsForExam();
     }

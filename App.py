@@ -24,15 +24,21 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
+# تحويل الرابط إلى محرك pg8000 المتوافق
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
-elif raw_db_url.startswith("postgresql://") and not raw_db_url.startswith("postgresql+pg8000://"):
+elif raw_db_url.startswith("postgresql://"):
     db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 else:
     db_url = raw_db_url
 
-# تنظيف أي بادئة psycopg2 سابقة للتحويل إلى pg8000
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
+
+# إزالة معاملات sslmode تماماً لمنع تعارض pg8000
+if "?sslmode=" in db_url:
+    db_url = db_url.split("?sslmode=")[0]
+elif "&sslmode=" in db_url:
+    db_url = db_url.split("&sslmode=")[0]
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -255,7 +261,7 @@ def get_data_from_sheet():
             for item in custom_items:
                 c_year, c_term, c_subject, c_chapter, c_type = item.year.strip(), item.term.strip(), item.subject_name.strip(), item.chapter_name.strip() or "عام", item.content_type.strip()
                 if c_year not in data: data[c_year] = {"name": c_year, "terms": {}}
-                if c_term not in data[c_year]["terms"]: data[c_year]["terms"][c_term] = {"name": c_term, "subjects": {}}
+                if c_term not in data[c_year]["terms"]: data[c_year]["terms"][term] = {"name": c_term, "subjects": {}}
                 if c_subject not in data[c_year]["terms"][c_term]["subjects"]:
                     data[c_year]["terms"][c_term]["subjects"][c_subject] = {"id": f"{c_year}_{c_term}_{c_subject}".replace(" ", "_"),"name": c_subject,"types": {"videos": {"chapters": {}}, "files": {"chapters": {}}, "quiz": {"chapters": {}}}}
                 subj_data = data[c_year]["terms"][c_term]["subjects"][c_subject]
@@ -732,4 +738,3 @@ def reschedule_plan():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-

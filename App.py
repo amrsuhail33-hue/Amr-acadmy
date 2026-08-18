@@ -27,7 +27,7 @@ raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 if raw_db_url.startswith("postgres://"):
     db_url = raw_db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif raw_db_url.startswith("postgresql://"):
-    db_url = raw_db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+    db_url = raw_db_url.replace("postgresql+pg8000://", 1)
 else:
     db_url = raw_db_url
 
@@ -220,11 +220,11 @@ def can_manage_content(f):
     return decorated_function
 
 # ==========================================
-# قراءة وبناء هيكل المواد مباشرة من Supabase (خفيف وفائق السرعة)
+# إعداد نموذج الذكاء الاصطناعي من Groq
 # ==========================================
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 groq_client = Groq(api_key=GROQ_API_KEY)
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 @app.route('/sw.js')
 def serve_sw():

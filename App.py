@@ -16,14 +16,20 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
-from webauthn import generate_registration_options, verify_registration_response
-from webauthn import generate_authentication_options, verify_authentication_response
+from webauthn import (
+    generate_registration_options, verify_registration_response,
+    generate_authentication_options, verify_authentication_response,
+    options_to_json
+)
 from webauthn.helpers.structs import (
-    RegistrationCredential, AuthenticationCredential,
     AuthenticatorSelectionCriteria, UserVerificationRequirement,
     ResidentKeyRequirement
 )
-from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
+from webauthn.helpers import (
+    bytes_to_base64url, base64url_to_bytes,
+    parse_registration_credential_json,
+    parse_authentication_credential_json
+)
 import uuid
 import math
 
@@ -1107,7 +1113,7 @@ def planner():
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
 # ==========================================
-# 🆕 توليد الخطة العامة بواقعية واعتدال
+# توليد الخطة العامة بواقعية واعتدال
 # ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
@@ -1166,7 +1172,6 @@ def generate_plan():
 
         if student_id and plan_data.get('plans'):
             try:
-                # حذف المهام السابقة المولدة من البلانر لتفادي التراكم والتكرار
                 UnifiedTask.query.filter_by(student_id=student_id, source='planner').delete()
                 
                 for day in plan_data['plans']:
@@ -1550,7 +1555,7 @@ def add_or_update_progress():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕 WebAuthn (تسجيل الدخول بالبصمة) - النسخة المصححة
+# WebAuthn (تسجيل الدخول بالبصمة)
 # ==========================================
 RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com') 
 RP_NAME = "Amr Suhail Academy"
@@ -1619,7 +1624,6 @@ def webauthn_register_begin():
 def webauthn_register_complete():
     try:
         data = request.get_json()
-        credential = data.get('credential')
         user_id = session.get('webauthn_user_id')
         challenge_b64 = session.get('webauthn_challenge')
 
@@ -1630,23 +1634,11 @@ def webauthn_register_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        cred_id_str = credential['id']
-        credential_id_bytes = base64url_to_bytes(cred_id_str)
-        client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
-        attestation_object = base64url_to_bytes(credential['response']['attestationObject'])
-        challenge_bytes = base64url_to_bytes(challenge_b64)
+        credential = parse_registration_credential_json(data.get('credential'))
 
         verification = verify_registration_response(
-            credential=RegistrationCredential(
-                id=cred_id_str,
-                raw_id=credential_id_bytes,
-                response={
-                    "clientDataJSON": client_data_json,
-                    "attestationObject": attestation_object,
-                },
-                type="public-key",
-            ),
-            expected_challenge=challenge_bytes,
+            credential=credential,
+            expected_challenge=base64url_to_bytes(challenge_b64),
             expected_rp_id=RP_ID,
             expected_origin=ORIGIN,
             require_user_verification=False,
@@ -1717,7 +1709,6 @@ def webauthn_login_begin():
 def webauthn_login_complete():
     try:
         data = request.get_json()
-        credential = data.get('credential')
         username = session.get('webauthn_username')
         challenge_b64 = session.get('webauthn_challenge')
 
@@ -1728,27 +1719,17 @@ def webauthn_login_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        cred_id_str = credential['id']
+        credential_json = data.get('credential')
+        cred_id_str = credential_json.get('id')
         db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id_str).first()
         if not db_cred:
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
 
-        challenge_bytes = base64url_to_bytes(challenge_b64)
-        credential_id_bytes = base64url_to_bytes(cred_id_str)
+        credential = parse_authentication_credential_json(credential_json)
 
         verification = verify_authentication_response(
-            credential=AuthenticationCredential(
-                id=cred_id_str,
-                raw_id=credential_id_bytes,
-                response={
-                    "clientDataJSON": base64url_to_bytes(credential['response']['clientDataJSON']),
-                    "authenticatorData": base64url_to_bytes(credential['response']['authenticatorData']),
-                    "signature": base64url_to_bytes(credential['response']['signature']),
-                    "userHandle": None,
-                },
-                type="public-key",
-            ),
-            expected_challenge=challenge_bytes,
+            credential=credential,
+            expected_challenge=base64url_to_bytes(challenge_b64),
             expected_rp_id=RP_ID,
             expected_origin=ORIGIN,
             credential_public_key=db_cred.public_key,
@@ -1783,3 +1764,4 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+

@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    send_from_directory, redirect, url_for, session
+    send_from_directory, redirect, url_for, session,
+    make_response
 )
 from flask_sqlalchemy import SQLAlchemy
 from groq import Groq
@@ -21,6 +22,7 @@ from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria, UserVerificationRequirement,
     ResidentKeyRequirement
 )
+from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
 import uuid
 
 app = Flask(__name__)
@@ -234,7 +236,7 @@ class UnifiedTask(db.Model):
     completed = db.Column(db.Boolean, default=False)
     priority = db.Column(db.Integer, default=2)
     source = db.Column(db.String(20), default='manual')
-    allocated_hours = db.Column(db.Float, default=1.0)  # ✅ جديد
+    allocated_hours = db.Column(db.Float, default=1.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -252,7 +254,7 @@ class UnifiedTask(db.Model):
             "completed": self.completed,
             "priority": self.priority,
             "source": self.source,
-            "allocated_hours": self.allocated_hours or 1.0,  # ✅ جديد
+            "allocated_hours": self.allocated_hours or 1.0,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
         }
@@ -498,6 +500,30 @@ def get_platform_data():
     return data
 
 # ==========================================
+# 🆕 تحسينات iPhone/Safari (headers and cache control)
+# ==========================================
+@app.after_request
+def add_header(response):
+    """إضافة رؤوس HTTP لتحسين التوافق مع iPhone/Safari"""
+    # منع التخزين المؤقت للصفحات الديناميكية (يمنع مشاكل Safari)
+    if request.path.startswith('/') and not request.path.startswith('/static'):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    
+    # دعم CORS للـ WebAuthn (في حال الحاجة)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    
+    # دعم Safari على iPhone (منع مشاكل الـ viewport)
+    if 'Safari' in request.headers.get('User-Agent', ''):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    
+    return response
+
+# ==========================================
 # Routes الرئيسية
 # ==========================================
 @app.route('/')
@@ -615,7 +641,7 @@ def admin_status():
     })
 
 # ==========================================
-# إدارة المحتوى (بدون تغيير)
+# إدارة المحتوى
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
@@ -845,7 +871,7 @@ def ask_ai():
         return jsonify({"reply": f"عذراً، حدث خطأ أثناء المعالجة: {str(e)}"}), 500
 
 # ==========================================
-# Route Planner (معدل لتمرير بيانات الطالب)
+# Route Planner
 # ==========================================
 @app.route('/planner')
 def planner():
@@ -854,7 +880,7 @@ def planner():
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
 # ==========================================
-# توليد الخطة العامة (مع حفظ allocated_hours)
+# 🆕 توليد الخطة العامة (مع الورد اليومي)
 # ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
@@ -862,33 +888,50 @@ def generate_plan():
         data = request.get_json(silent=True) or {}
         student_id = session.get('student_id')
         discipline = (data.get('discipline') or 'متوازن').strip()
-
-        discipline_profiles = {
-            "مرن": (
-                "PACE: FLEXIBLE & LIGHT\n"
-                "- Daily study workload: 1.5 to 2.5 hours total.\n"
-                "- Tasks count: 1 to 2 light tasks per active day.\n"
-                "- Task style: Conceptual reading, high-level summaries, and gentle reviews without academic stress."
-            ),
-            "متوازن": (
-                "PACE: BALANCED & STANDARD\n"
-                "- Daily study workload: 3.5 to 5 hours total.\n"
-                "- Tasks count: 2 to 3 structured tasks per active day.\n"
-                "- Task style: Standard lecture study, chapter breakdowns, and moderate practice exercise solving."
-            ),
-            "مكثف": (
-                "PACE: INTENSIVE EXAM BOOTCAMP\n"
-                "- Daily study workload: 6 to 8.5+ hours total (maximize study time around sleep & busy hours).\n"
-                "- Tasks count: 3 to 5 deep-focus tasks per active day.\n"
-                "- Task style: Comprehensive chapter mastery, intense problem-solving sessions, past exam papers, and rigorous timed drills."
-            )
+        
+        # ✅ جديد: عدد صفحات الورد اليومي
+        wird_pages = data.get('wird_pages', 1)
+        wird_enabled = data.get('wird', True)  # هل الورد مفعل؟
+        
+        # بناء مستويات الانضباط مع تضمين الورد
+        base_profiles = {
+            "مرن": {
+                "hours": "1.5 to 2.5 hours total",
+                "tasks": "1 to 2 light tasks per active day",
+                "style": "Conceptual reading, high-level summaries, and gentle reviews without academic stress."
+            },
+            "متوازن": {
+                "hours": "3.5 to 5 hours total",
+                "tasks": "2 to 3 structured tasks per active day",
+                "style": "Standard lecture study, chapter breakdowns, and moderate practice exercise solving."
+            },
+            "مكثف": {
+                "hours": "6 to 8.5+ hours total",
+                "tasks": "3 to 5 deep-focus tasks per active day",
+                "style": "Comprehensive chapter mastery, intense problem-solving sessions, past exam papers, and rigorous timed drills."
+            }
         }
-
-        selected_profile = discipline_profiles.get(discipline, discipline_profiles["متوازن"])
+        
+        profile = base_profiles.get(discipline, base_profiles["متوازن"])
+        
+        # بناء نص الورد
+        wird_text = ""
+        if wird_enabled and wird_pages > 0:
+            wird_text = f"\n- Daily Wird (Quran reading): {wird_pages} pages every day.\n- IMPORTANT: If the user misses the daily Wird, it MUST be redistributed to the next available days as a priority task.\n- The Wird task should be included every day and marked as 'الورد اليومي (قراءة {wird_pages} صفحات)'."
+        else:
+            wird_text = "\n- No daily Wird required.\n"
+        
+        discipline_profile = (
+            f"PACE: {discipline.upper()}\n"
+            f"- Daily study workload: {profile['hours']}.\n"
+            f"- Tasks count: {profile['tasks']}.\n"
+            f"- Task style: {profile['style']}.\n"
+            f"{wird_text}"
+        )
 
         system_instruction = (
             "You are an expert academic planner. Generate a highly realistic, customized daily study schedule in pure JSON format.\n\n"
-            f"SELECTED DISCIPLINE MODE & CONSTRAINTS:\n{selected_profile}\n\n"
+            f"SELECTED DISCIPLINE MODE & CONSTRAINTS:\n{discipline_profile}\n\n"
             "STRICT RULES:\n"
             "1. Output ONLY a valid JSON object matching this exact schema:\n"
             "{\n"
@@ -906,9 +949,10 @@ def generate_plan():
             "2. Make sure the total daily hours and task depths strictly reflect the chosen discipline level.\n"
             "3. Distribute the requested subjects logically across all active days from Start Date to Target Date.\n"
             "4. For requested Weekly Off-Days, set 'is_off_day': true and 'tasks': [].\n"
-            "5. If Quran reading (الورد) is enabled, include it as an extra task (~0.5 hour).\n"
+            "5. If Quran reading (الورد) is enabled, include it as a daily task with appropriate allocated hours.\n"
             "6. If Quran memorization is enabled, allocate proper time for the requested page count.\n"
-            "7. All task titles, subjects, and day names must be written in clear, professional Arabic."
+            "7. All task titles, subjects, and day names must be written in clear, professional Arabic.\n"
+            "8. IMPORTANT: If the user misses the daily Wird, redistribute it to the next available days."
         )
 
         user_prompt = (
@@ -919,7 +963,7 @@ def generate_plan():
             f"Sleep Hours: {data.get('sleep_hours')}\n"
             f"Busy/Work Hours: {data.get('busy_hours')}\n"
             f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
-            f"Include Daily Wird: {'Yes' if data.get('wird') else 'No'}\n"
+            f"Include Daily Wird: {'Yes, ' + str(wird_pages) + ' pages' if wird_enabled and wird_pages > 0 else 'No'}\n"
             f"Quran Memorization: {'Yes, ' + str(data.get('quran_pages', 1)) + ' pages' if data.get('quran_enabled') else 'No'}"
         )
 
@@ -977,7 +1021,7 @@ def generate_plan():
         return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
 
 # ==========================================
-# إعادة التوزيع
+# 🆕 إعادة التوزيع (مع تضمين الورد المفقود)
 # ==========================================
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
@@ -992,7 +1036,8 @@ def reschedule_plan():
             "STRICT RULES:\n"
             "1. Output ONLY a valid JSON object with the key 'plans' containing the updated days array.\n"
             "2. Preserve the exact structure: [{'day_name': '...', 'date': '...', 'is_off_day': false, 'tasks': [{'title': '...', 'allocated_hours': 1.5}]}]\n"
-            "3. Do not drop any tasks; merge missed ones logically into active study days without overloading off-days."
+            "3. Do not drop any tasks; merge missed ones logically into active study days without overloading off-days.\n"
+            "4. Priority tasks (like Quran Wird) should be scheduled as early as possible in the remaining days."
         )
 
         user_prompt = (
@@ -1015,6 +1060,7 @@ def reschedule_plan():
 
         if student_id and plan_data.get('plans'):
             try:
+                # بدلاً من الحذف، نقوم بتحديث تواريخها
                 for day in plan_data['plans']:
                     day_date = day.get('date')
                     if not day_date:
@@ -1028,6 +1074,7 @@ def reschedule_plan():
                         if not task_title:
                             continue
                         allocated_hours = task.get('allocated_hours', 1.5)
+                        # البحث عن المهمة القديمة وتحديث تاريخها
                         existing_task = UnifiedTask.query.filter(
                             UnifiedTask.student_id == student_id,
                             UnifiedTask.title == task_title,
@@ -1037,6 +1084,7 @@ def reschedule_plan():
                             existing_task.planned_date = planned_date
                             existing_task.allocated_hours = allocated_hours
                         else:
+                            # إنشاء مهمة جديدة إذا لم تكن موجودة
                             unified_task = UnifiedTask(
                                 student_id=student_id,
                                 title=task_title,
@@ -1058,7 +1106,7 @@ def reschedule_plan():
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 # ==========================================
-# واجهات المهام الموحدة (مع allocated_hours)
+# واجهات المهام الموحدة
 # ==========================================
 @app.route('/api/tasks', methods=['GET'])
 @student_required
@@ -1251,7 +1299,7 @@ def get_all_lessons():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# توليد خطة الاختبارات (مع allocated_hours)
+# توليد خطة الاختبارات
 # ==========================================
 @app.route('/api/generate-exam-plan', methods=['POST'])
 @student_required
@@ -1350,7 +1398,7 @@ def generate_exam_plan():
                 lesson = CustomLesson.query.get(lesson_id)
                 if not lesson:
                     continue
-                allocated_hours = task.get('allocated_hours', task.get('minutes', 30) / 60.0)  # تحويل الدقائق إلى ساعات
+                allocated_hours = task.get('allocated_hours', task.get('minutes', 30) / 60.0)
                 
                 unified_task = UnifiedTask(
                     student_id=student_id,
@@ -1376,7 +1424,7 @@ def generate_exam_plan():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# واجهات قديمة (للتوافق)
+# واجهات قديمة (للتوافق مع الكود القديم)
 # ==========================================
 @app.route('/api/exam-plans', methods=['GET'])
 @student_required
@@ -1609,9 +1657,7 @@ def add_or_update_progress():
 # ==========================================
 # 🆕🆕 WebAuthn (تسجيل الدخول بالبصمة)
 # ==========================================
-from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
-
-RP_ID = os.environ.get('RP_ID', 'localhost')  # يجب أن يكون اسم النطاق الخاص بك
+RP_ID = os.environ.get('RP_ID', 'localhost')
 RP_NAME = "Amr Suhail Academy"
 ORIGIN = os.environ.get('ORIGIN', 'http://localhost:5000')
 
@@ -1624,7 +1670,6 @@ def webauthn_register_begin():
         if not student:
             return jsonify({"status": "error", "message": "الطالب غير موجود"}), 404
 
-        # توليد خيارات التسجيل
         registration_options = generate_registration_options(
             rp_id=RP_ID,
             rp_name=RP_NAME,
@@ -1637,7 +1682,6 @@ def webauthn_register_begin():
             ),
         )
 
-        # تخزين الجلسة المؤقتة (للاستخدام في complete)
         session['webauthn_challenge'] = registration_options.challenge
         session['webauthn_user_id'] = str(student.id)
 
@@ -1678,17 +1722,14 @@ def webauthn_register_complete():
         data = request.get_json()
         credential = data.get('credential')
 
-        # التحقق من التحدي
         challenge = session.get('webauthn_challenge')
         if not challenge:
             return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
 
-        # تحويل البيانات إلى bytes
         credential_id = base64url_to_bytes(credential['id'])
         client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
         attestation_object = base64url_to_bytes(credential['response']['attestationObject'])
 
-        # التحقق من التسجيل
         verification = verify_registration_response(
             credential=RegistrationCredential(
                 id=credential_id,
@@ -1704,7 +1745,6 @@ def webauthn_register_complete():
             require_user_verification=False,
         )
 
-        # حفظ بيانات الاعتماد
         new_cred = WebAuthnCredential(
             student_id=student_id,
             credential_id=bytes_to_base64url(verification.credential_id),
@@ -1734,12 +1774,10 @@ def webauthn_login_begin():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        # جلب بيانات البصمة المسجلة
         credentials = WebAuthnCredential.query.filter_by(student_id=student.id).all()
         if not credentials:
             return jsonify({"status": "error", "message": "لا توجد بصمة مسجلة لهذا المستخدم"}), 400
 
-        # توليد خيارات المصادقة
         authentication_options = generate_authentication_options(
             rp_id=RP_ID,
             allow_credentials=[
@@ -1782,13 +1820,11 @@ def webauthn_login_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        # جلب بيانات الاعتماد
         cred_id = credential['id']
         db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id).first()
         if not db_cred:
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
 
-        # التحقق من المصادقة
         verification = verify_authentication_response(
             credential=AuthenticationCredential(
                 id=base64url_to_bytes(cred_id),
@@ -1808,11 +1844,9 @@ def webauthn_login_complete():
             require_user_verification=False,
         )
 
-        # تحديث عدد التوقيعات
         db_cred.sign_count = verification.new_sign_count
         db.session.commit()
 
-        # تسجيل الدخول
         session.permanent = True
         session['student_id'] = student.id
         session['student_name'] = student.name
@@ -1826,6 +1860,35 @@ def webauthn_login_complete():
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕 تسجيل خروج الطالب (محسن)
+# ==========================================
+@app.route('/student/logout', methods=['POST'])
+def student_logout():
+    try:
+        # مسح جميع بيانات الجلسة الخاصة بالطالب
+        session.pop('student_id', None)
+        session.pop('student_name', None)
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_username', None)
+        session.pop('webauthn_user_id', None)
+        
+        # التأكد من أن الجلسة نظيفة
+        return jsonify({"status": "success", "message": "تم تسجيل الخروج بنجاح"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🆕 نقطة صحية (Health Check) لاختبار الخادم
+# ==========================================
+@app.route('/health')
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": "connected" if db.engine else "disconnected"
+    })
 
 # ==========================================
 # تشغيل التطبيق

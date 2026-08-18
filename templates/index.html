@@ -110,10 +110,8 @@
         .action-btn.download { color: var(--accent); }
         .action-btn.download:hover { background: var(--accent); color: white; border-color: var(--accent); }
         .action-btn.fav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-        .action-btn.schedule-btn { color: var(--warning); }
-        .action-btn.schedule-btn:hover { background: var(--warning); color: white; border-color: var(--warning); }
-        .action-btn.exam-btn { color: #8b5cf6; }
-        .action-btn.exam-btn:hover { background: #8b5cf6; color: white; border-color: #8b5cf6; }
+        .action-btn.plan-btn { color: #8b5cf6; }
+        .action-btn.plan-btn:hover { background: #8b5cf6; color: white; border-color: #8b5cf6; }
         .custom-checkbox { position: relative; display: block; width: 24px; height: 24px; cursor: pointer; user-select: none; flex-shrink: 0;}
         .custom-checkbox input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
         .checkmark { position: absolute; top: 0; left: 0; height: 24px; width: 24px; background-color: var(--bg-body); border: 2px solid var(--border); border-radius: 6px; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
@@ -162,32 +160,17 @@
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
         .fav-item-link { display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); padding:12px 16px; border-radius:12px; margin-bottom:10px; text-decoration:none; color:var(--text-main); transition:0.3s; box-shadow:var(--card-shadow); }
         .fav-item-link:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 10px 20px rgba(37,99,235,0.15); }
-        .schedule-item { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; transition:0.3s; }
-        .schedule-item:hover { border-color:var(--primary); }
-        .schedule-item .s-title { font-weight:800; color:var(--text-main); }
-        .schedule-item .s-meta { font-size:0.8rem; color:var(--text-muted); }
-        .schedule-actions { display:flex; gap:8px; }
-        .schedule-actions button { background:none; border:none; cursor:pointer; font-size:1.1rem; padding:4px 8px; border-radius:8px; transition:0.3s; }
-        .schedule-actions .s-done { color:var(--accent); }
-        .schedule-actions .s-done:hover { background:var(--accent-light); }
-        .schedule-actions .s-del { color:var(--danger); }
-        .schedule-actions .s-del:hover { background:rgba(239,68,68,0.1); }
-        .exam-plan-item { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; transition:0.3s; }
-        .exam-plan-item:hover { border-color:#8b5cf6; }
-        .exam-plan-item .ep-title { font-weight:800; color:var(--text-main); }
-        .exam-plan-item .ep-meta { font-size:0.8rem; color:var(--text-muted); }
-        .exam-plan-actions { display:flex; gap:8px; }
-        .exam-plan-actions button { background:none; border:none; cursor:pointer; font-size:1.1rem; padding:4px 8px; border-radius:8px; transition:0.3s; }
-        .exam-plan-actions .ep-done { color:var(--accent); }
-        .exam-plan-actions .ep-done:hover { background:var(--accent-light); }
-        .exam-plan-actions .ep-del { color:var(--danger); }
-        .exam-plan-actions .ep-del:hover { background:rgba(239,68,68,0.1); }
-        .priority-high { border-right: 4px solid #ef4444; }
-        .priority-medium { border-right: 4px solid #f59e0b; }
-        .priority-low { border-right: 4px solid #3b82f6; }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-card); color: var(--text-main); padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid var(--border); z-index: 9999; font-weight: 700; font-size: 0.95rem; transition: 0.3s; opacity: 0; visibility: hidden; white-space: nowrap; }
+        .toast.show { opacity: 1; visibility: visible; }
+        .toast.success { border-color: var(--accent); color: var(--accent); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+        .toast.info { border-color: var(--primary); color: var(--primary); }
     </style>
 </head>
 <body class="notranslate">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-card);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -219,7 +202,7 @@
     </nav>
 
     <!-- ========================================================== -->
-    <!-- POPUPS -->
+    <!-- POPUPS (المتبقية فقط: Login, Favorites, Calculator, AI, Admin, WhatsNew) -->
     <!-- ========================================================== -->
 
     <!-- Login/Register -->
@@ -254,42 +237,6 @@
             </div>
             <div id="favVideosList"></div>
             <div id="favFilesList" style="display:none;"></div>
-        </div>
-    </div>
-
-    <!-- Daily Schedule -->
-    <div class="popup-box" id="scheduleBox">
-        <div class="popup-header"><div><i class="fa-regular fa-calendar header-icon" style="color:var(--warning);"></i> خطتي اليومية</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
-        <div class="popup-body" id="scheduleBody">
-            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <input type="date" id="schedule_date" class="qa-input-field" style="flex:1; margin-bottom:0;">
-                <input type="number" id="schedule_lesson_id" placeholder="معرف الدرس" class="qa-input-field" style="flex:1; margin-bottom:0;">
-                <button onclick="addScheduleItem()" class="btn-calc-action" style="background:var(--accent); padding:10px 20px; flex:0 0 auto;"><i class="fa-solid fa-plus"></i> أضف</button>
-            </div>
-            <div id="scheduleList"></div>
-        </div>
-    </div>
-
-    <!-- 🆕 Exam Plan Popup -->
-    <div class="popup-box" id="examPlanBox">
-        <div class="popup-header">
-            <div><i class="fa-solid fa-file-pen header-icon" style="color:#8b5cf6;"></i> خطة الاختبارات</div>
-            <span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
-        </div>
-        <div class="popup-body">
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
-                <input type="date" id="exam_date" class="qa-input-field" style="flex:1; margin-bottom:0;">
-                <input type="text" id="exam_name" placeholder="اسم الاختبار (مثل: إلكترونيات - منتصف الفصل)" class="qa-input-field" style="flex:2; margin-bottom:0;">
-            </div>
-            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <button onclick="clearExamPlanSelection()" class="btn-calc-outline" style="flex:1; border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-trash"></i> تفريغ القائمة</button>
-                <button onclick="generateExamPlan()" class="btn-calc-action" style="flex:2; background:#8b5cf6;"><i class="fa-solid fa-wand-magic-sparkles"></i> أنشئ خطة اختبار ذكية</button>
-            </div>
-            <div id="examLessonList" style="max-height:200px; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:10px; margin-bottom:15px;"></div>
-            
-            <div id="examPlanResult" style="margin-top:15px;">
-                <!-- ستظهر خطط الاختبارات المحفوظة هنا -->
-            </div>
         </div>
     </div>
 
@@ -581,8 +528,9 @@
                 </div>
                 <div class="item-actions">
                     <button class="action-btn fav-btn" data-lesson-id="{{ item.id }}" onclick="toggleFavorite(this)" title="مفضلة"><i class="fa-regular fa-heart"></i></button>
-                    <button class="action-btn schedule-btn" onclick="quickAddSchedule({{ item.id }})" title="خطتي اليومية"><i class="fa-regular fa-calendar-plus"></i></button>
-                    <button class="action-btn exam-btn" data-lesson-id="{{ item.id }}" onclick="addToExamPlan(this)" title="خطة الاختبارات"><i class="fa-solid fa-list-check"></i></button>
+                    <!-- زر موحد لإضافة الدرس للخطة -->
+                    <button class="action-btn plan-btn" data-lesson-id="{{ item.id }}" data-title="{{ item.title }}" onclick="addToUnifiedPlan(this, 'manual')" title="أضف إلى خطتي"><i class="fa-regular fa-calendar-plus"></i></button>
+                    <button class="action-btn plan-btn" data-lesson-id="{{ item.id }}" data-title="{{ item.title }}" onclick="addToUnifiedPlan(this, 'exam')" title="أضف لخطة الاختبارات"><i class="fa-solid fa-list-check"></i></button>
                     {% if item.video or item.file %}
                         <a href="{{ item.video or item.file }}" target="_blank" class="action-btn view" title="فتح">{% if content_type == 'videos' %}<i class="fa-solid fa-play"></i>{% else %}<i class="fa-regular fa-eye"></i>{% endif %}</a>
                     {% endif %}
@@ -607,7 +555,11 @@
             <div id="qaSuccessAlert" style="background:var(--accent-light); color:var(--accent); padding:12px; border-radius:10px; margin-bottom:15px; display:none; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> تم إرسال استفسارك بنجاح!</div>
             <form onsubmit="handleQuestionSubmit(event)" style="margin-bottom:30px;">
                 <input type="hidden" id="qa_subject_id" value="{{ subject.id }}">
-                            </form>
+                <input type="hidden" id="qa_chapter_name" value="{{ chapter.name }}">
+                <input type="text" id="qa_student_name" placeholder="الاسم (اختياري)" class="qa-input-field">
+                <textarea id="qa_question_text" rows="2" placeholder="اكتب سؤالك بوضوح..." required class="qa-input-field"></textarea>
+                <button type="submit" id="qaSubmitBtn" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-paper-plane"></i> طرح السؤال</button>
+            </form>
             <div style="display:flex; flex-direction:column; gap:15px;">
                 {% if questions %}
                     {% for q in questions %}
@@ -658,16 +610,13 @@
         <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي">
             <i class="fa-solid fa-heart" style="color:var(--primary);"></i>
         </div>
-        <div class="fab-item" onclick="togglePopup('scheduleBox')" title="خطتي اليومية">
-            <i class="fa-regular fa-calendar-check" style="color:var(--warning);"></i>
-        </div>
-        <div class="fab-item" onclick="togglePopup('examPlanBox')" title="خطة الاختبارات">
-            <i class="fa-solid fa-file-pen" style="color:#8b5cf6;"></i>
-        </div>
+        <!-- زر واحد يفتح البلانر (الخطة الموحدة) -->
+        <a href="/planner" target="_blank" class="fab-item" title="خطتي الدراسية (الموحدة)">
+            <i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i>
+        </a>
         <div class="fab-item" onclick="openWhatsNewModal()" title="التحديثات">
             <i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadStarDot" style="display:none; top:0; right:0;"></span>
         </div>
-        <a href="/planner" target="_blank" class="fab-item" title="المخطط العام"><i class="fa-regular fa-calendar"></i></a>
         <div class="fab-item" onclick="togglePopup('calcBox')" title="الحاسبة"><i class="fa-solid fa-calculator"></i></div>
         <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i></div>
     </div>
@@ -689,7 +638,215 @@
     <!-- ========================================================== -->
     <script>
     // ========================
-    // UTILITY & THEME
+    // TOAST SYSTEM (إشعارات)
+    // ========================
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type + ' show';
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // ========================
+    // AUTO-SAVE SYSTEM (حفظ تلقائي مزدوج)
+    // ========================
+    async function autoSaveTask(taskData) {
+        // 1. حفظ في localStorage فوراً
+        saveToLocal(taskData);
+        
+        // 2. حفظ في API (في الخلفية)
+        try {
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                // تحديث حالة المزامنة في localStorage
+                updateSyncStatus(taskData.id || data.task?.id, true);
+                showToast('✅ تم الحفظ تلقائياً', 'success');
+                return data;
+            } else {
+                showToast('⚠️ تم الحفظ محلياً، سيتم المزامنة لاحقاً', 'error');
+                return null;
+            }
+        } catch (e) {
+            showToast('⚠️ حفظ محلي (لا يوجد اتصال)', 'error');
+            return null;
+        }
+    }
+
+    function saveToLocal(taskData) {
+        let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        const index = tasks.findIndex(t => t.id === taskData.id);
+        if (index > -1) {
+            tasks[index] = { ...tasks[index], ...taskData, synced: false };
+        } else {
+            tasks.push({ ...taskData, synced: false, id: taskData.id || Date.now() });
+        }
+        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+    }
+
+    function updateSyncStatus(taskId, synced) {
+        let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        const index = tasks.findIndex(t => t.id === taskId);
+        if (index > -1) {
+            tasks[index].synced = synced;
+            localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+        }
+    }
+
+    function getUnsyncedTasks() {
+        let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        return tasks.filter(t => !t.synced);
+    }
+
+    // مزامنة دورية كل 30 ثانية
+    setInterval(async () => {
+        const unsynced = getUnsyncedTasks();
+        for (const task of unsynced) {
+            try {
+                const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(task)
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    updateSyncStatus(task.id, true);
+                }
+            } catch(e) { /* تجاهل */ }
+        }
+    }, 30000);
+
+    // حفظ عند إغلاق الصفحة
+    window.addEventListener('beforeunload', async () => {
+        const unsynced = getUnsyncedTasks();
+        for (const task of unsynced) {
+            try {
+                await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(task)
+                });
+            } catch(e) { /* تجاهل */ }
+        }
+    });
+
+    // تحميل البيانات المدمجة (API + Local)
+    async function loadUnifiedTasks() {
+        let mergedTasks = [];
+        // جلب من API
+        try {
+            const res = await fetch('/api/tasks');
+            const apiTasks = await res.json();
+            mergedTasks = apiTasks;
+        } catch(e) { /* فشل */ }
+        
+        // جلب من localStorage
+        let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        
+        // دمج: API له الأولوية، لكن نحتفظ بالمهام المحلية غير المتزامنة
+        const apiIds = mergedTasks.map(t => t.id);
+        for (const local of localTasks) {
+            if (!apiIds.includes(local.id) && !local.synced) {
+                mergedTasks.push(local);
+            }
+        }
+        
+        localStorage.setItem('unified_tasks', JSON.stringify(mergedTasks));
+        return mergedTasks;
+    }
+
+    // ========================
+    // إضافة درس إلى الخطة الموحدة
+    // ========================
+    async function addToUnifiedPlan(btn, source = 'manual') {
+        const lessonId = btn.getAttribute('data-lesson-id');
+        const title = btn.getAttribute('data-title') || 'درس بدون عنوان';
+        
+        if (!lessonId) return alert('معرف الدرس غير موجود!');
+        if (!isStudentLoggedIn()) {
+            alert('يرجى تسجيل الدخول أولاً.');
+            return;
+        }
+        
+        // التاريخ: اليوم + 1 يوم (افتراضي)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const plannedDate = tomorrow.toISOString().split('T')[0];
+        
+        const taskData = {
+            lesson_id: parseInt(lessonId),
+            title: title,
+            planned_date: plannedDate,
+            source: source,
+            priority: source === 'exam' ? 1 : 2,
+            completed: false
+        };
+        
+        const result = await autoSaveTask(taskData);
+        if (result) {
+            showToast(`✅ تم إضافة "${title}" إلى خطتك ${source === 'exam' ? '(اختبارات)' : ''}`, 'success');
+        }
+        // تشغيل كونفيتي احتفالاً
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 50, spread: 60 });
+        }
+    }
+
+    // ========================
+    // إعادة التوزيع (Reschedule)
+    // ========================
+    async function rescheduleTasks() {
+        if (!isStudentLoggedIn()) {
+            alert('يرجى تسجيل الدخول أولاً.');
+            return;
+        }
+        
+        showToast('🔄 جاري إعادة توزيع المهام...', 'info');
+        
+        try {
+            // جلب المهام غير المكتملة
+            const res = await fetch('/api/tasks');
+            const tasks = await res.json();
+            const incomplete = tasks.filter(t => !t.completed);
+            
+            if (incomplete.length === 0) {
+                showToast('🎉 جميع المهام مكتملة!', 'success');
+                return;
+            }
+            
+            // طلب إعادة التوزيع من الـ AI
+            const rescheduleRes = await fetch('/api/reschedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tasks: incomplete,
+                    days: 7 // عدد الأيام المتاحة
+                })
+            });
+            const data = await rescheduleRes.json();
+            
+            if (data.status === 'success') {
+                showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
+                // إعادة تحميل المهام
+                // يمكن توجيه الطالب إلى البلانر
+                window.open('/planner', '_blank');
+            } else {
+                showToast('⚠️ ' + (data.message || 'خطأ في إعادة التوزيع'), 'error');
+            }
+        } catch(e) {
+            showToast('⚠️ خطأ في الاتصال', 'error');
+        }
+    }
+
+    // ========================
+    // UTILITY & THEME (بقية الدوال كما هي)
     // ========================
     function updateThemeIcon() {
         const isDark = document.documentElement.classList.contains('dark-mode');
@@ -946,258 +1103,6 @@
     }
 
     // ========================
-    // DAILY SCHEDULE (API)
-    // ========================
-    async function loadSchedule() {
-        const container = document.getElementById('scheduleList');
-        if (!container) return;
-        if (!isStudentLoggedIn()) {
-            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لإدارة خطتك اليومية.</div>';
-            return;
-        }
-        try {
-            const res = await fetch('/api/schedule');
-            const schedules = await res.json();
-            if (schedules.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد خطط حالياً.</div>';
-                return;
-            }
-            container.innerHTML = schedules.map(s => `
-                <div class="schedule-item">
-                    <div>
-                        <div class="s-title">${s.lesson_title || 'درس بدون عنوان'}</div>
-                        <div class="s-meta"><i class="fa-regular fa-calendar"></i> ${s.planned_date} ${s.completed ? '✅ مكتمل' : ''}</div>
-                    </div>
-                    <div class="schedule-actions">
-                        ${!s.completed ? `<button class="s-done" onclick="toggleScheduleComplete(${s.id})" title="تحديد كمكتمل"><i class="fa-regular fa-circle-check"></i></button>` : ''}
-                        <button class="s-del" onclick="deleteSchedule(${s.id})" title="حذف"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        } catch(e) { container.innerHTML = '<div style="color:var(--danger);">خطأ في تحميل الخطة</div>'; }
-    }
-
-    async function addScheduleItem() {
-        const date = document.getElementById('schedule_date').value;
-        const lessonId = document.getElementById('schedule_lesson_id').value;
-        if (!date || !lessonId) return alert('يرجى إدخال التاريخ ومعرف الدرس.');
-        if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول أولاً.');
-        try {
-            const res = await fetch('/api/schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lesson_id: lessonId, planned_date: date })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                document.getElementById('schedule_date').value = '';
-                document.getElementById('schedule_lesson_id').value = '';
-                loadSchedule();
-            } else alert(data.message);
-        } catch(e) { alert('خطأ في الاتصال.'); }
-    }
-
-    async function toggleScheduleComplete(scheduleId) {
-        try {
-            const res = await fetch(`/api/schedule/${scheduleId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completed: true })
-            });
-            const data = await res.json();
-            if (data.status === 'success') loadSchedule();
-            else alert(data.message);
-        } catch(e) { alert('خطأ في الاتصال.'); }
-    }
-
-    async function deleteSchedule(scheduleId) {
-        if (!confirm('حذف هذه الخطة؟')) return;
-        try {
-            await fetch(`/api/schedule/${scheduleId}`, { method: 'DELETE' });
-            loadSchedule();
-        } catch(e) { alert('خطأ في الاتصال.'); }
-    }
-
-    function quickAddSchedule(lessonId) {
-        if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول أولاً.');
-        document.getElementById('schedule_lesson_id').value = lessonId;
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('schedule_date').value = today;
-        togglePopup('scheduleBox');
-    }
-
-    // ========================
-    // 🆕 EXAM PLAN (API)
-    // ========================
-    let examPlanLessons = [];
-
-    function addToExamPlan(btn) {
-        const lessonId = btn.getAttribute('data-lesson-id');
-        if (!lessonId) return alert('معرف الدرس غير موجود!');
-        if (!isStudentLoggedIn()) {
-            alert('يرجى تسجيل الدخول أولاً لإضافة خطة اختبار.');
-            return;
-        }
-        // نبحث عن عنوان الدرس من العنصر المجاور
-        const item = btn.closest('.list-item');
-        const titleEl = item ? item.querySelector('.item-title') : null;
-        const title = titleEl ? titleEl.innerText : 'درس بدون عنوان';
-        
-        if (!examPlanLessons.find(l => l.id == lessonId)) {
-            examPlanLessons.push({ id: lessonId, title });
-            renderExamPlanLessons();
-            togglePopup('examPlanBox');
-        } else {
-            alert('هذا الدرس مضاف بالفعل إلى خطة الاختبار.');
-        }
-    }
-
-    function renderExamPlanLessons() {
-        const container = document.getElementById('examLessonList');
-        if (!container) return;
-        if (examPlanLessons.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:10px;">لم تختار أي درس بعد. اختر دروساً من الفصل لإضافتها لخطة الاختبار.</div>';
-            return;
-        }
-        container.innerHTML = examPlanLessons.map(l => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--border);">
-                <span style="font-weight:700; font-size:0.95rem;">${l.title}</span>
-                <button onclick="removeFromExamPlan(${l.id})" style="color:var(--danger); background:none; border:none; cursor:pointer; font-size:1.1rem;">
-                    <i class="fa-solid fa-xmark-circle"></i>
-                </button>
-            </div>
-        `).join('');
-    }
-
-    function removeFromExamPlan(lessonId) {
-        examPlanLessons = examPlanLessons.filter(l => l.id != lessonId);
-        renderExamPlanLessons();
-    }
-
-    function clearExamPlanSelection() {
-        if (examPlanLessons.length === 0) return;
-        if (!confirm('تفريغ قائمة الدروس المختارة؟')) return;
-        examPlanLessons = [];
-        renderExamPlanLessons();
-        document.getElementById('examPlanResult').innerHTML = '';
-    }
-
-    async function generateExamPlan() {
-        const planName = document.getElementById('exam_name').value.trim();
-        const examDate = document.getElementById('exam_date').value;
-        const lessonIds = examPlanLessons.map(l => l.id);
-
-        if (!planName) return alert('يرجى إدخال اسم الاختبار.');
-        if (!examDate) return alert('يرجى تحديد تاريخ الاختبار.');
-        if (lessonIds.length === 0) return alert('يرجى اختيار دروس لإضافتها إلى الخطة.');
-
-        const btn = event?.target || document.querySelector('#examPlanBox .btn-calc-action');
-        if(btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
-
-        try {
-            const res = await fetch('/api/generate-exam-plan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan_name: planName, exam_date: examDate, lesson_ids: lessonIds })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                alert('تم إنشاء خطة الاختبار بنجاح! 🎉');
-                // عرض الخطة في النتيجة
-                let html = `<div style="margin-top:20px; background:var(--bg-card); border:1px solid #8b5cf6; border-radius:12px; padding:15px;">
-                    <h4 style="color:#8b5cf6; margin:0 0 10px;"><i class="fa-regular fa-calendar-check"></i> ${planName}</h4>`;
-                data.plan.plan.forEach(day => {
-                    html += `<div style="margin-bottom:10px;"><strong style="color:var(--text-main);">📅 ${day.day}</strong>`;
-                    day.tasks.forEach(task => {
-                        const priorityClass = task.priority === 'عال' ? 'priority-high' : task.priority === 'متوسط' ? 'priority-medium' : 'priority-low';
-                        html += `<div class="exam-plan-item ${priorityClass}" style="margin-bottom:5px; padding:8px 12px; background:var(--bg-body); border-radius:8px;">
-                            <span class="ep-title">${task.title}</span>
-                            <span style="font-size:0.8rem; color:var(--text-muted);">⏱ ${task.minutes} دقيقة | أولوية: ${task.priority}</span>
-                        </div>`;
-                    });
-                    html += `</div>`;
-                });
-                html += `<button onclick="loadExamPlans()" class="btn-calc-outline" style="margin-top:10px; border-color:#8b5cf6; color:#8b5cf6;"><i class="fa-regular fa-eye"></i> عرض كل الخطط المحفوظة</button>`;
-                html += `</div>`;
-                document.getElementById('examPlanResult').innerHTML = html;
-                
-                // تفريغ القائمة المؤقتة بعد الحفظ
-                examPlanLessons = [];
-                renderExamPlanLessons();
-                document.getElementById('exam_name').value = '';
-                document.getElementById('exam_date').value = '';
-            } else {
-                alert(data.message || 'حدث خطأ أثناء إنشاء الخطة.');
-            }
-        } catch(e) {
-            alert('خطأ في الاتصال بالخادم.');
-        } finally {
-            if(btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> أنشئ خطة اختبار ذكية'; }
-        }
-    }
-
-    async function loadExamPlans() {
-        if (!isStudentLoggedIn()) return;
-        try {
-            const res = await fetch('/api/exam-plans');
-            const plans = await res.json();
-            const container = document.getElementById('examPlanResult');
-            if (!container) return;
-            if (plans.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد خطط اختبار محفوظة.</div>';
-                return;
-            }
-            let html = `<div style="margin-top:20px;"><h4 style="color:#8b5cf6;"><i class="fa-solid fa-list-check"></i> خطط الاختبارات المحفوظة</h4>`;
-            plans.forEach(p => {
-                html += `<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:15px; margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                        <div><strong style="font-size:1.1rem;">${p.plan_name}</strong> <span style="font-size:0.85rem; color:var(--text-muted);">📅 ${p.exam_date}</span></div>
-                        <button onclick="deleteExamPlan(${p.id})" style="color:var(--danger); background:none; border:none; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                    <div style="margin-top:10px;">`;
-                p.items.forEach(item => {
-                    const priorityClass = item.priority === 1 ? 'priority-high' : item.priority === 2 ? 'priority-medium' : 'priority-low';
-                    html += `<div class="exam-plan-item ${priorityClass}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; margin-bottom:5px; background:var(--bg-body); border-radius:8px;">
-                        <span class="ep-title">${item.lesson_title}</span>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.75rem; color:var(--text-muted);">${item.scheduled_date}</span>
-                            <button onclick="toggleExamItemComplete(${item.id})" style="color:${item.completed ? 'var(--accent)' : 'var(--text-muted)'}; background:none; border:none; cursor:pointer; font-size:1.1rem;">
-                                <i class="fa-${item.completed ? 'solid' : 'regular'} fa-circle-check"></i>
-                            </button>
-                        </div>
-                    </div>`;
-                });
-                html += `</div></div>`;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
-        } catch(e) {
-            console.error(e);
-        }
-    }
-
-    async function toggleExamItemComplete(itemId) {
-        try {
-            const res = await fetch(`/api/exam-plan-item/${itemId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completed: true })
-            });
-            const data = await res.json();
-            if (data.status === 'success') loadExamPlans();
-            else alert(data.message);
-        } catch(e) { alert('خطأ في الاتصال.'); }
-    }
-
-    async function deleteExamPlan(planId) {
-        if (!confirm('حذف خطة الاختبار هذه؟')) return;
-        try {
-            await fetch(`/api/exam-plans/${planId}`, { method: 'DELETE' });
-            loadExamPlans();
-        } catch(e) { alert('خطأ في الاتصال.'); }
-    }
-
-    // ========================
     // ADMIN / ASSISTANT
     // ========================
     async function handleSecretAdminClick() {
@@ -1354,8 +1259,10 @@
         e.preventDefault();
         const btn = document.getElementById('qaSubmitBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الإرسال...';
         const formData = new FormData();
-        formData.append('subject_id', document.getElementById('qa_subject_id').value); formData.append('chapter_name', document.getElementById('qa_chapter_name').value);
-        formData.append('student_name', document.getElementById('qa_student_name').value); formData.append('question_text', document.getElementById('qa_question_text').value);
+        formData.append('subject_id', document.getElementById('qa_subject_id').value); 
+        formData.append('chapter_name', document.getElementById('qa_chapter_name').value);
+        formData.append('student_name', document.getElementById('qa_student_name').value); 
+        formData.append('question_text', document.getElementById('qa_question_text').value);
         await fetch('/ask-question', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
         btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> طرح السؤال';
         document.getElementById('qa_question_text').value = ''; document.getElementById('qaSuccessAlert').style.display = 'block';
@@ -1556,10 +1463,7 @@
         loadStudentProgress();
         renderFavLists();
         initFavoriteButtons();
-        if (isStudentLoggedIn()) {
-            loadSchedule();
-            loadExamPlans();
-        }
+        loadUnifiedTasks();
         if (!sessionStorage.getItem('visited')) {
             document.getElementById('splash-screen').classList.remove('hidden');
         } else {

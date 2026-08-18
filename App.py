@@ -641,6 +641,74 @@ def admin_status():
     })
 
 # ==========================================
+# 🆕 Routes الطالب (المفقودة)
+# ==========================================
+@app.route('/student/register', methods=['POST'])
+def student_register():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+        name = (data.get('name') or '').strip()
+
+        if not username or not password or not name:
+            return jsonify({"status": "error", "message": "جميع الحقول مطلوبة"}), 400
+
+        if Student.query.filter_by(username=username).first():
+            return jsonify({"status": "error", "message": "اسم المستخدم موجود بالفعل"}), 400
+
+        student = Student(username=username, name=name)
+        student.set_password(password)
+        db.session.add(student)
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "تم تسجيل الطالب بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/student/login', methods=['POST'])
+def student_login():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+
+        student = Student.query.filter_by(username=username).first()
+        if not student or not student.check_password(password):
+            return jsonify({"status": "error", "message": "اسم المستخدم أو كلمة المرور غير صحيحة"}), 401
+
+        session.permanent = True
+        session['student_id'] = student.id
+        session['student_name'] = student.name
+        session.pop('is_admin', None)
+        session.pop('is_assistant', None)
+
+        return jsonify({"status": "success", "student": student.to_dict()})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/student/status', methods=['GET'])
+def student_status():
+    if session.get('student_id'):
+        student = Student.query.get(session['student_id'])
+        if student:
+            return jsonify({"status": "logged_in", "student": student.to_dict()})
+    return jsonify({"status": "logged_out"})
+
+@app.route('/student/logout', methods=['POST'])
+def student_logout():
+    try:
+        session.pop('student_id', None)
+        session.pop('student_name', None)
+        session.pop('webauthn_challenge', None)
+        session.pop('webauthn_username', None)
+        session.pop('webauthn_user_id', None)
+        return jsonify({"status": "success", "message": "تم تسجيل الخروج بنجاح"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
 # إدارة المحتوى
 # ==========================================
 @app.route('/admin/add-content', methods=['POST'])
@@ -889,11 +957,9 @@ def generate_plan():
         student_id = session.get('student_id')
         discipline = (data.get('discipline') or 'متوازن').strip()
         
-        # ✅ جديد: عدد صفحات الورد اليومي
         wird_pages = data.get('wird_pages', 1)
-        wird_enabled = data.get('wird', True)  # هل الورد مفعل؟
+        wird_enabled = data.get('wird', True)
         
-        # بناء مستويات الانضباط مع تضمين الورد
         base_profiles = {
             "مرن": {
                 "hours": "1.5 to 2.5 hours total",
@@ -914,7 +980,6 @@ def generate_plan():
         
         profile = base_profiles.get(discipline, base_profiles["متوازن"])
         
-        # بناء نص الورد
         wird_text = ""
         if wird_enabled and wird_pages > 0:
             wird_text = f"\n- Daily Wird (Quran reading): {wird_pages} pages every day.\n- IMPORTANT: If the user misses the daily Wird, it MUST be redistributed to the next available days as a priority task.\n- The Wird task should be included every day and marked as 'الورد اليومي (قراءة {wird_pages} صفحات)'."
@@ -1060,7 +1125,6 @@ def reschedule_plan():
 
         if student_id and plan_data.get('plans'):
             try:
-                # بدلاً من الحذف، نقوم بتحديث تواريخها
                 for day in plan_data['plans']:
                     day_date = day.get('date')
                     if not day_date:
@@ -1074,7 +1138,6 @@ def reschedule_plan():
                         if not task_title:
                             continue
                         allocated_hours = task.get('allocated_hours', 1.5)
-                        # البحث عن المهمة القديمة وتحديث تاريخها
                         existing_task = UnifiedTask.query.filter(
                             UnifiedTask.student_id == student_id,
                             UnifiedTask.title == task_title,
@@ -1084,7 +1147,6 @@ def reschedule_plan():
                             existing_task.planned_date = planned_date
                             existing_task.allocated_hours = allocated_hours
                         else:
-                            # إنشاء مهمة جديدة إذا لم تكن موجودة
                             unified_task = UnifiedTask(
                                 student_id=student_id,
                                 title=task_title,
@@ -1859,24 +1921,6 @@ def webauthn_login_complete():
         return jsonify({"status": "success", "student": student.to_dict()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# ==========================================
-# 🆕 تسجيل خروج الطالب (محسن)
-# ==========================================
-@app.route('/student/logout', methods=['POST'])
-def student_logout():
-    try:
-        # مسح جميع بيانات الجلسة الخاصة بالطالب
-        session.pop('student_id', None)
-        session.pop('student_name', None)
-        session.pop('webauthn_challenge', None)
-        session.pop('webauthn_username', None)
-        session.pop('webauthn_user_id', None)
-        
-        # التأكد من أن الجلسة نظيفة
-        return jsonify({"status": "success", "message": "تم تسجيل الخروج بنجاح"})
-    except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================

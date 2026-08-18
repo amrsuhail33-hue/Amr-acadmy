@@ -91,31 +91,9 @@
         .brand-user .logout-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .brand-user .login-link { color: var(--primary); font-weight: 800; text-decoration: none; }
         .brand-user .login-link:hover { text-decoration: underline; }
-        .brand-user .profile-badge {
-            background: var(--primary);
-            color: white;
-            padding: 4px 14px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 800;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .brand-user .profile-badge:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px var(--primary-glow);
-        }
-        .brand-user .profile-badge .level-badge {
-            background: var(--gold);
-            color: #0f172a;
-            padding: 0 8px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 900;
-        }
+        .brand-user .profile-badge { background: var(--primary); color: white; padding: 4px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s; }
+        .brand-user .profile-badge:hover { transform: scale(1.05); box-shadow: 0 4px 12px var(--primary-glow); }
+        .brand-user .profile-badge .level-badge { background: var(--gold); color: #0f172a; padding: 0 8px; border-radius: 50px; font-size: 0.75rem; font-weight: 900; }
 
         /* ===== TABS ===== */
         .tabs-container { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
@@ -123,26 +101,55 @@
         .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
         .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
 
-        /* ===== CARDS ===== */
+        /* ===== CARDS & FORMS ===== */
         .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); margin-bottom: 25px; }
         .section-title { font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
         .section-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
-
-        /* ===== FORMS ===== */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: 800; font-size: 14px; }
         input, select, textarea { width: 100%; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card-inner); color: var(--text-main); font-size: 15px; font-weight: 500; outline: none; transition: 0.3s; -webkit-appearance: none; appearance: none; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
         textarea { resize: vertical; min-height: 70px; }
-
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .main-card { padding: 20px; } }
 
-        .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
-        .checkbox-pill { background: var(--bg-card-inner); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700; transition: 0.3s; user-select: none; }
-        .checkbox-pill:hover { border-color: var(--primary); background: var(--primary-glow); }
-        .checkbox-pill input { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
+        /* ===== 🚀 NEW: RADIO CARDS (أزرار اختيار نوع الخطة) ===== */
+        .plan-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .radio-card { cursor: pointer; display: block; }
+        .radio-card input { display: none; }
+        .radio-card .card-content { background: var(--bg-card-inner); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 25px 20px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .radio-card:hover .card-content { border-color: var(--primary); transform: translateY(-3px); }
+        .radio-card input:checked + .card-content { background: var(--primary-glow); border-color: var(--primary); box-shadow: 0 10px 25px var(--primary-glow); }
+        .radio-card input:checked + .card-content i { color: var(--primary) !important; transform: scale(1.1); }
+        .radio-card input:checked + .card-content .card-title { color: var(--primary); }
 
+        /* ===== 🚀 NEW: CUSTOM TOGGLES (أزرار الراحة والورد) ===== */
+        .custom-toggle { cursor: pointer; display: inline-block; width: 100%; }
+        .custom-toggle input { display: none; }
+        .custom-toggle .toggle-text { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--bg-card-inner); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; transition: 0.3s; user-select: none; }
+        .custom-toggle:hover .toggle-text { border-color: var(--primary-glow); }
+        .custom-toggle input:checked + .toggle-text { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); transform: translateY(-2px); }
+        .custom-toggle input:checked + .toggle-text.danger-toggle { background: var(--danger); border-color: var(--danger); box-shadow: 0 8px 20px var(--danger-glow); }
+        .custom-toggle input:checked + .toggle-text.success-toggle { background: var(--success); border-color: var(--success); box-shadow: 0 8px 20px var(--success-glow); }
+        .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
+
+        /* ===== 🚀 NEW: EXAM LESSONS CHECKBOXES ===== */
+        .lesson-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-height: 350px; overflow-y: auto; padding: 10px; background: transparent; }
+        @media (max-width: 600px) { .lesson-checkbox-grid { grid-template-columns: 1fr; } }
+        .lesson-checkbox-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--bg-card-inner); border: 2px solid var(--border); cursor: pointer; transition: 0.3s; font-weight: 700; overflow: hidden; }
+        .lesson-checkbox-item input { display: none; }
+        .lesson-checkbox-item:hover { border-color: var(--primary-glow); }
+        .check-indicator { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: transparent; transition: 0.3s; flex-shrink: 0; background: var(--bg-card); }
+        .check-indicator i { opacity: 0; transition: 0.2s; transform: scale(0.5); }
+        .lesson-checkbox-item input:checked ~ .check-indicator { background: var(--primary); color: white; border-color: var(--primary); }
+        .lesson-checkbox-item input:checked ~ .check-indicator i { opacity: 1; transform: scale(1); color: white;}
+        .lesson-checkbox-item input:checked ~ .lesson-content .lesson-title { color: var(--primary); }
+        .lesson-checkbox-item .lesson-content { display: flex; flex-direction: column; gap: 2px; }
+        .lesson-checkbox-item .lesson-title { font-size: 0.95rem; color: var(--text-main); transition: 0.3s; }
+        .lesson-checkbox-item .lesson-meta { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .selected-count { font-size: 0.95rem; color: var(--primary); font-weight: 800; margin-bottom: 15px; text-align: center; }
+
+        /* ===== BUTTONS ===== */
         .btn { width: 100%; padding: 14px; border-radius: var(--radius); font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; border: none; }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
@@ -159,66 +166,15 @@
         .btn-outline:hover { background: var(--bg-card-inner); }
 
         /* ===== TASK CARD MODERN ===== */
-        .task-card-modern {
-            background: var(--bg-card-inner);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 18px;
-            margin-bottom: 12px;
-            transition: 0.3s;
-        }
-        .task-card-modern:hover {
-            border-color: var(--primary);
-            transform: translateX(-4px);
-            box-shadow: var(--card-shadow);
-        }
-        .task-card-modern.completed {
-            background: var(--bg-completed);
-            opacity: 0.7;
-        }
-        .task-card-modern.completed .task-title-text {
-            text-decoration: line-through;
-            color: var(--text-muted);
-        }
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-        .task-title-text {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--text-main);
-            word-break: break-word;
-            overflow-wrap: break-word;
-            flex: 1;
-            line-height: 1.6;
-        }
-        .task-hours {
-            font-weight: 800;
-            color: var(--primary);
-            white-space: nowrap;
-            font-size: 0.9rem;
-            background: var(--primary-glow);
-            padding: 2px 12px;
-            border-radius: 50px;
-            flex-shrink: 0;
-        }
-        .task-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .task-meta {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+        .task-card-modern { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; transition: 0.3s; }
+        .task-card-modern:hover { border-color: var(--primary); transform: translateX(-4px); box-shadow: var(--card-shadow); }
+        .task-card-modern.completed { background: var(--bg-completed); opacity: 0.7; }
+        .task-card-modern.completed .task-title-text { text-decoration: line-through; color: var(--text-muted); }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .task-title-text { font-weight: 700; font-size: 1rem; color: var(--text-main); word-break: break-word; overflow-wrap: break-word; flex: 1; line-height: 1.6; }
+        .task-hours { font-weight: 800; color: var(--primary); white-space: nowrap; font-size: 0.9rem; background: var(--primary-glow); padding: 2px 12px; border-radius: 50px; flex-shrink: 0; }
+        .task-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .task-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .task-pill { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 50px; white-space: nowrap; }
         .pill-primary { background: var(--primary-glow); color: var(--primary); }
         .pill-warning { background: var(--warning-glow); color: var(--warning); }
@@ -265,64 +221,7 @@
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
 
-        .lesson-checkbox-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 10px;
-            background: var(--bg-card-inner);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            margin-bottom: 15px;
-        }
-        .lesson-checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 10px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .lesson-checkbox-item:hover {
-            border-color: var(--primary);
-            background: var(--primary-glow);
-        }
-        .lesson-checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--purple);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .lesson-checkbox-item .lesson-meta {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            font-weight: 400;
-            margin-right: auto;
-        }
-        .selected-count {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        @media (max-width: 600px) {
-            .lesson-checkbox-grid { grid-template-columns: 1fr; }
-        }
-
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 40px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
-        
-        /* ===== تحسينات iPhone ===== */
-        input, select, textarea, button { -webkit-appearance: none; appearance: none; }
-        button, input, select, textarea { border-radius: 0; }
-        .task-title-text { -webkit-hyphens: auto; hyphens: auto; }
     </style>
 </head>
 <body>
@@ -390,33 +289,41 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- TAB 2: خطة جديدة -->
+    <!-- TAB 2: خطة جديدة (بتصميم Toggle Buttons) -->
     <!-- ========================================================== -->
     <div id="tab-new-plan" class="view-section">
         <div class="main-card">
-            <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--purple);"></i> اختر نوع الخطة</div>
-            <div class="section-desc">يمكنك إنشاء خطة جديدة باستخدام الذكاء الاصطناعي، أو إضافة مهام يدوية.</div>
+            <div class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--purple);"></i> اختر نوع الخطة</div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('planner')">
-                    <i class="fa-solid fa-calendar-plus" style="font-size:1.8rem; color:var(--purple);"></i>
-                    <span style="font-weight:900;">خطة عامة (AI)</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لجدولك اليومي</span>
-                </div>
-                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('exam')">
-                    <i class="fa-solid fa-file-pen" style="font-size:1.8rem; color:var(--warning);"></i>
-                    <span style="font-weight:900;">خطة اختبارات (AI)</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لدروس محددة</span>
-                </div>
-                <div class="checkbox-pill" style="flex-direction:column; padding:20px; cursor:pointer; border:2px solid var(--border);" onclick="showPlanType('manual')">
-                    <i class="fa-solid fa-pen" style="font-size:1.8rem; color:var(--primary);"></i>
-                    <span style="font-weight:900;">مهمة مخصصة</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">أضف مهمة يدوياً</span>
-                </div>
+            <div class="plan-type-grid">
+                <label class="radio-card">
+                    <input type="radio" name="plan_type" value="planner" onclick="showPlanType('planner')">
+                    <div class="card-content">
+                        <i class="fa-solid fa-calendar-plus" style="font-size:2rem; color:var(--text-muted); transition:0.3s;"></i>
+                        <span class="card-title" style="font-weight:900; font-size:1.1rem; transition:0.3s;">خطة عامة (AI)</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لجدولك اليومي</span>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="plan_type" value="exam" onclick="showPlanType('exam')">
+                    <div class="card-content">
+                        <i class="fa-solid fa-file-pen" style="font-size:2rem; color:var(--text-muted); transition:0.3s;"></i>
+                        <span class="card-title" style="font-weight:900; font-size:1.1rem; transition:0.3s;">خطة اختبارات (AI)</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">AI يخطط لدروس محددة</span>
+                    </div>
+                </label>
+                <label class="radio-card">
+                    <input type="radio" name="plan_type" value="manual" onclick="showPlanType('manual')">
+                    <div class="card-content">
+                        <i class="fa-solid fa-pen" style="font-size:2rem; color:var(--text-muted); transition:0.3s;"></i>
+                        <span class="card-title" style="font-weight:900; font-size:1.1rem; transition:0.3s;">مهمة مخصصة</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">أضف مهمة يدوياً</span>
+                    </div>
+                </label>
             </div>
 
             <!-- Planner Form -->
-            <div id="planner-form" style="display:none;">
+            <div id="planner-form" style="display:none; animation: viewIn 0.3s;">
                 <div class="form-group">
                     <label>المسارات والمواد الدراسية:</label>
                     <input type="text" id="subjects" placeholder="مثال: الدوائر الكهربائية، رسم هندسي، رياضيات">
@@ -451,47 +358,47 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="form-group">
-                    <label>أيام الراحة:</label>
+                    <label style="margin-bottom:12px;"><i class="fa-solid fa-mug-hot"></i> اختر أيام الراحة:</label>
                     <div class="days-grid">
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأحد"> الأحد</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الاثنين"> الاثنين</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الثلاثاء"> الثلاثاء</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الأربعاء"> الأربعاء</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الخميس"> الخميس</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="الجمعة" checked> الجمعة</label>
-                        <label class="checkbox-pill"><input type="checkbox" class="off-day" value="السبت"> السبت</label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الأحد"><span class="toggle-text danger-toggle">الأحد</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الاثنين"><span class="toggle-text danger-toggle">الاثنين</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الثلاثاء"><span class="toggle-text danger-toggle">الثلاثاء</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الأربعاء"><span class="toggle-text danger-toggle">الأربعاء</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الخميس"><span class="toggle-text danger-toggle">الخميس</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="الجمعة" checked><span class="toggle-text danger-toggle">الجمعة</span></label>
+                        <label class="custom-toggle"><input type="checkbox" class="off-day" value="السبت"><span class="toggle-text danger-toggle">السبت</span></label>
                     </div>
                 </div>
                 
-                <div class="form-group" style="background:var(--bg-card-inner); padding:15px; border-radius:var(--radius);">
-                    <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
-                        <input type="checkbox" id="wird" checked> تضمين الورد القرآني
+                <div class="form-group" style="background:var(--bg-card-inner); padding:20px; border-radius:var(--radius-lg); border:1px solid var(--border); margin-top:25px;">
+                    <label class="custom-toggle" style="margin-bottom:15px;">
+                        <input type="checkbox" id="wird" checked onchange="document.getElementById('wird_settings').style.display=this.checked?'block':'none'">
+                        <span class="toggle-text success-toggle"><i class="fa-solid fa-book-open-reader"></i> تضمين الورد القرآني</span>
                     </label>
-                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-                        <label style="font-weight:700; font-size:0.9rem; display:block; margin-bottom:6px;">
-                            <i class="fa-solid fa-book-quran" style="color:var(--success); margin-left:6px;"></i>
-                            عدد صفحات الورد اليومي:
-                        </label>
-                        <input type="number" id="wird_pages" value="1" min="0" max="20" class="qa-input-field" style="width:100%; padding:12px 16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); font-size:0.95rem;">
-                        <small style="color:var(--text-muted); font-size:0.8rem;">ضع 0 لإلغاء الورد، سيتم إعادة توزيع الصفحات المفقودة تلقائياً</small>
+                    
+                    <div id="wird_settings" style="background:var(--bg-card); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:15px;">
+                        <label style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">عدد صفحات الورد اليومي:</label>
+                        <input type="number" id="wird_pages" value="1" min="1" max="20" class="qa-input-field" style="width:100%; margin:0;">
                     </div>
-                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-                        <label class="checkbox-pill" style="justify-content:flex-start; background:transparent; border:none; padding:0;">
-                            <input type="checkbox" id="quran" onchange="document.getElementById('quran_field').style.display=this.checked?'block':'none'"> حفظ القرآن
-                        </label>
-                        <div id="quran_field" style="display:none; margin-top:10px;">
-                            <input type="number" id="quran_pages" placeholder="عدد الصفحات اليومية" min="1" max="20" class="qa-input-field">
-                        </div>
+
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="quran" onchange="document.getElementById('quran_settings').style.display=this.checked?'block':'none'">
+                        <span class="toggle-text success-toggle"><i class="fa-solid fa-book-quran"></i> حفظ القرآن الكريم</span>
+                    </label>
+                    
+                    <div id="quran_settings" style="display:none; background:var(--bg-card); padding:15px; border-radius:12px; border:1px solid var(--border); margin-top:15px;">
+                        <label style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">عدد صفحات الحفظ اليومية:</label>
+                        <input type="number" id="quran_pages" value="1" min="1" max="20" class="qa-input-field" style="width:100%; margin:0;">
                     </div>
                 </div>
                 
-                <!-- تمرير الـ event -->
                 <button class="btn btn-purple" onclick="generatePlannerPlan(event)"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
             <!-- Exam Form -->
-            <div id="exam-form" style="display:none;">
+            <div id="exam-form" style="display:none; animation: viewIn 0.3s;">
                 <div class="form-group">
                     <label>اسم الاختبار:</label>
                     <input type="text" id="exam_name" placeholder="مثال: إلكترونيات - منتصف الفصل">
@@ -501,17 +408,17 @@
                     <input type="date" id="exam_date">
                 </div>
                 <div class="form-group">
-                    <label>اختر الدروس التي تريد مراجعتها:</label>
-                    <div id="exam-lessons-container" style="margin-top: 8px;">
+                    <label style="margin-bottom:10px;"><i class="fa-solid fa-list-check"></i> اختر الدروس التي تريد مراجعتها:</label>
+                    <div id="exam-lessons-container">
                         <div class="loading-state" style="padding: 20px;">
                             <div class="spinner" style="width:30px; height:30px;"></div>
                             <p style="font-size:0.9rem; color:var(--text-muted);">جاري تحميل الدروس...</p>
                         </div>
                     </div>
-                    <div class="selected-count" id="selected-count">تم اختيار 0 درس</div>
+                    <div class="selected-count" id="selected-count" style="margin-top:10px;">تم اختيار 0 درس</div>
                 </div>
-                <div style="background:var(--bg-card-inner); padding:12px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--text-muted);">
-                    <i class="fa-regular fa-lightbulb"></i> اختر الدروس التي تريد مراجعتها للاختبار، وسيقوم الذكاء الاصطناعي بتوزيعها على الأيام المتبقية.
+                <div style="background:rgba(245, 158, 11, 0.1); padding:15px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--warning); font-weight:700;">
+                    <i class="fa-regular fa-lightbulb"></i> سيقوم الذكاء الاصطناعي بتوزيع الدروس المختارة على الأيام المتبقية بذكاء.
                 </div>
                 <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan(event)">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات
@@ -519,7 +426,7 @@
             </div>
 
             <!-- Manual Form -->
-            <div id="manual-form" style="display:none;">
+            <div id="manual-form" style="display:none; animation: viewIn 0.3s;">
                 <div class="form-group">
                     <label>عنوان المهمة:</label>
                     <input type="text" id="manual_title" placeholder="مثال: مراجعة الفصل الأول">
@@ -682,7 +589,6 @@ async function autoSaveTask(taskData) {
         return true;
     }
     
-    // حفظ مؤقت
     saveToLocal(taskData);
     
     try {
@@ -693,7 +599,6 @@ async function autoSaveTask(taskData) {
         });
         const data = await res.json();
         if (data.status === 'success') {
-            // تحديث الـ ID بالـ ID القادم من قاعدة البيانات
             let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
             const index = tasks.findIndex(t => t.id === taskData.id);
             if (index > -1 && data.task && data.task.id) {
@@ -745,9 +650,7 @@ setInterval(async () => {
     for (const task of unsynced) {
         try {
             const res = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task)
             });
             const data = await res.json();
             if (data.status === 'success' && data.task && data.task.id) {
@@ -771,7 +674,7 @@ window.addEventListener('beforeunload', async () => {
 });
 
 // ==========================================
-// LOAD TASKS
+// LOAD TASKS (منع التكرار)
 // ==========================================
 async function loadTasks() {
     const container = document.getElementById('tasks-container');
@@ -784,17 +687,13 @@ async function loadTasks() {
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
-        } catch(e) { console.error('Error loading tasks:', e); }
-    }
-    
-    let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-    const apiIds = tasks.map(t => t.id);
-    for (const local of localTasks) {
-        if (!apiIds.includes(local.id) && !local.synced) {
-            tasks.push(local);
+            localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+        } catch(e) {
+            tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
         }
+    } else {
+        tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     }
-    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
 
     let filtered = tasks;
     if (currentFilter === 'completed') filtered = tasks.filter(t => t.completed);
@@ -866,16 +765,14 @@ async function toggleTaskComplete(taskId, isChecked) {
     if (isStudentLoggedIn()) {
         try {
             const res = await fetch(`/api/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completed: isChecked })
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completed: isChecked })
             });
             const data = await res.json();
             if (data.status === 'success') {
                 updateSyncStatus(taskId, true);
                 if(isChecked) {
                     showToast('✅ تم إكمال المهمة وإضافة النقاط', 'success');
-                    await loadProfileBadge(); // تحديث شارة المستوى والنقاط
+                    await loadProfileBadge();
                 }
             }
         } catch(e) {}
@@ -887,9 +784,7 @@ async function toggleTaskComplete(taskId, isChecked) {
     loadTasks();
 }
 
-function closeSuccessModal() {
-    document.getElementById('success-modal').style.display = 'none';
-}
+function closeSuccessModal() { document.getElementById('success-modal').style.display = 'none'; }
 
 async function deleteTask(taskId) {
     if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
@@ -937,7 +832,7 @@ async function addManualTask() {
     if (!title) return alert('يرجى إدخال عنوان المهمة.');
     if (!date) return alert('يرجى تحديد التاريخ.');
     const taskData = { 
-        id: Date.now(), // معرف مؤقت
+        id: Date.now(), 
         title, 
         planned_date: date, 
         description: desc, 
@@ -1032,7 +927,11 @@ async function loadLessonsForExam() {
             html += `
                 <label class="lesson-checkbox-item">
                     <input type="checkbox" value="${l.id}" ${checked} onchange="updateSelectedLessons()">
-                    <span>${l.title}</span><span class="lesson-meta">${l.subject_name} - ${l.chapter_name}</span>
+                    <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
+                    <div class="lesson-content">
+                        <span class="lesson-title">${l.title}</span>
+                        <span class="lesson-meta">${l.subject_name} - ${l.chapter_name}</span>
+                    </div>
                 </label>`;
         });
         html += `</div>`;

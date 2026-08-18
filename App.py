@@ -3,6 +3,7 @@ import csv
 import io
 import time
 import json
+import ssl
 import base64
 import requests
 from datetime import datetime, timedelta
@@ -20,7 +21,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000
+# إعداد قاعدة البيانات ومعالجة الرابط لـ Supabase عبر pg8000 مع SSL
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
@@ -33,18 +34,24 @@ else:
 
 db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://")
 
-if "?sslmode=" in db_url:
-    db_url = db_url.split("?sslmode=")[0]
-elif "&sslmode=" in db_url:
-    db_url = db_url.split("&sslmode=")[0]
+# تنظيف معلمات الرابط
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if "sqlite" not in db_url:
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
+        "connect_args": {
+            "ssl_context": ssl_context
+        }
     }
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "123")

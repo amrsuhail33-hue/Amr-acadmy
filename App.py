@@ -1550,7 +1550,7 @@ def add_or_update_progress():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
-# 🆕 WebAuthn (تسجيل الدخول بالبصمة) - تصحيح raw_id
+# 🆕 WebAuthn (تسجيل الدخول بالبصمة) - النسخة المصححة
 # ==========================================
 RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com') 
 RP_NAME = "Amr Suhail Academy"
@@ -1630,15 +1630,16 @@ def webauthn_register_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        credential_id = base64url_to_bytes(credential['id'])
+        cred_id_str = credential['id']
+        credential_id_bytes = base64url_to_bytes(cred_id_str)
         client_data_json = base64url_to_bytes(credential['response']['clientDataJSON'])
         attestation_object = base64url_to_bytes(credential['response']['attestationObject'])
         challenge_bytes = base64url_to_bytes(challenge_b64)
 
         verification = verify_registration_response(
             credential=RegistrationCredential(
-                id=credential_id,
-                raw_id=credential_id, # 👈 تم إضافة raw_id لإصلاح الخطأ
+                id=cred_id_str,
+                raw_id=credential_id_bytes,
                 response={
                     "clientDataJSON": client_data_json,
                     "attestationObject": attestation_object,
@@ -1727,18 +1728,18 @@ def webauthn_login_complete():
         if not student:
             return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
 
-        cred_id = credential['id']
-        db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id).first()
+        cred_id_str = credential['id']
+        db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id_str).first()
         if not db_cred:
             return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
 
         challenge_bytes = base64url_to_bytes(challenge_b64)
-        credential_id_bytes = base64url_to_bytes(cred_id)
+        credential_id_bytes = base64url_to_bytes(cred_id_str)
 
         verification = verify_authentication_response(
             credential=AuthenticationCredential(
-                id=credential_id_bytes,
-                raw_id=credential_id_bytes, # 👈 تم إضافة raw_id لإصلاح الخطأ
+                id=cred_id_str,
+                raw_id=credential_id_bytes,
                 response={
                     "clientDataJSON": base64url_to_bytes(credential['response']['clientDataJSON']),
                     "authenticatorData": base64url_to_bytes(credential['response']['authenticatorData']),

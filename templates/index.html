@@ -39,78 +39,24 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        :root { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --primary: #2563eb; --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255,255,255,0.85); --border: #e2e8f0; --accent: #10b981; --accent-light: #ecfdf5; --warning: #f59e0b; --danger: #ef4444; --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); --hover-shadow: 0 20px 40px -10px rgba(37,99,235,0.15); --radius-lg: 24px; --radius-md: 16px; --gold: #f59e0b; }
-        html.dark-mode { --bg-body: #0b1120; --bg-card: #162032; --text-main: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --primary-light: rgba(59,130,246,0.1); --primary-hover: #60a5fa; --nav-bg: rgba(11,17,32,0.85); --border: #1e293b; --accent-light: rgba(16,185,129,0.1); --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.4); --hover-shadow: 0 20px 40px -10px rgba(59,130,246,0.2); }
+        :root { --bg-body: #f8fafc; --bg-card: #ffffff; --bg-card-inner: #f1f5f9; --text-main: #0f172a; --text-muted: #64748b; --primary: #2563eb; --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255,255,255,0.85); --border: #e2e8f0; --accent: #10b981; --accent-light: #ecfdf5; --warning: #f59e0b; --danger: #ef4444; --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); --hover-shadow: 0 20px 40px -10px rgba(37,99,235,0.15); --radius-lg: 24px; --radius-md: 16px; --gold: #f59e0b; --gradient-profile: linear-gradient(135deg, #2563eb, #8b5cf6); }
+        html.dark-mode { --bg-body: #0b1120; --bg-card: #162032; --bg-card-inner: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --primary-light: rgba(59,130,246,0.1); --primary-hover: #60a5fa; --nav-bg: rgba(11,17,32,0.85); --border: #1e293b; --accent-light: rgba(16,185,129,0.1); --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.4); --hover-shadow: 0 20px 40px -10px rgba(59,130,246,0.2); --gradient-profile: linear-gradient(135deg, #3b82f6, #8b5cf6); }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
         body { background-color: var(--bg-body); margin: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none !important; }
         
-        /* ===== NAVBAR ===== */
-        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; z-index: 100; gap: 10px; flex-wrap: wrap; } 
+        /* ===== NAVBAR (المحدث) ===== */
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; z-index: 100; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02); } 
         .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative;}
-        .nav-title { font-size: 1.25rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap;}
+        .nav-title { font-size: 1.3rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-shadow: 0 2px 10px rgba(37,99,235,0.1); }
         .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 8px; box-shadow: 0 0 8px var(--accent); }
-        .nav-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
-        .navbar-contact { background: var(--bg-card); color: var(--text-main); padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); transition: 0.3s; box-shadow: var(--card-shadow); white-space: nowrap; cursor: pointer; }
-        .navbar-contact:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
-        .navbar-contact.danger { background: var(--danger); color: white; border-color: var(--danger); }
-        .navbar-contact.danger:hover { background: #dc2626; border-color: #dc2626; color: white; }
-        .navbar-contact.primary-bg { background: var(--primary); color: white; border-color: var(--primary); }
-        .navbar-contact.primary-bg:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: white; }
-        .navbar-user { font-weight: 800; color: var(--primary); font-size: 0.9rem; white-space: nowrap; }
+        .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
         
-        /* ===== زر الملف الشخصي (دائري) ===== */
-        .profile-btn {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            border: 2px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
-            position: relative;
-            text-decoration: none;
-        }
-        .profile-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
-        }
-        .profile-btn .level-badge {
-            position: absolute;
-            bottom: -4px;
-            right: -4px;
-            background: var(--gold);
-            color: #0f172a;
-            font-size: 0.6rem;
-            font-weight: 900;
-            padding: 2px 6px;
-            border-radius: 50px;
-            border: 2px solid var(--bg-card);
-            min-width: 20px;
-            text-align: center;
-            line-height: 1.2;
-        }
-        .profile-btn .online-dot {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 12px;
-            height: 12px;
-            background: var(--accent);
-            border-radius: 50%;
-            border: 2px solid var(--bg-card);
-            animation: pulse-dot 2s infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
+        .user-pill { display: flex; align-items: center; background: var(--bg-card); border-radius: 50px; padding: 4px 14px 4px 4px; border: 1px solid var(--border); box-shadow: var(--card-shadow); gap: 10px; cursor: pointer; transition: 0.3s; }
+        .user-pill:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+        .user-pill-name { font-weight: 800; color: var(--text-main); font-size: 0.95rem; white-space: nowrap; }
+        .profile-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; position: relative; }
+        .profile-btn .level-badge { position: absolute; bottom: -4px; right: -4px; background: var(--gold); color: #0f172a; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 50px; border: 2px solid var(--bg-card); min-width: 18px; text-align: center; }
         
         /* ===== MAIN ===== */
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
@@ -198,7 +144,7 @@
         
         .student-progress-box { background: var(--bg-card); padding: 16px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--card-shadow); margin-bottom: 25px; }
         
-        /* ===== FAB MENU (مع زر التواصل) ===== */
+        /* ===== FAB MENU ===== */
         .fab-container { position: fixed; left: 16px; bottom: 20px; z-index: 2005; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; pointer-events: none; }
         .fab-container > * { pointer-events: auto; }
         .fab-main { width: 52px; height: 52px; border-radius: 18px; background: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; box-shadow: 0 10px 25px rgba(37,99,235,0.4); transition: 0.3s; border: none; }
@@ -258,19 +204,36 @@
         .toast.error { border-color: var(--danger); color: var(--danger); }
         .toast.info { border-color: var(--primary); color: var(--primary); }
         
-        /* ===== PROFILE POPUP ===== */
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--primary);
+        /* ===== PROFILE POPUP (المحدث كلياً) ===== */
+        .profile-header-card {
+            background: var(--gradient-profile);
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            margin: 0 auto 10px;
-            border: 3px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(37,99,235,0.2);
+        }
+        .profile-header-card::before {
+            content: '';
+            position: absolute;
+            top: -50px; left: -50px;
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .profile-avatar-large {
+            width: 85px; height: 85px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; color: white;
+            margin: 0 auto 15px;
+            position: relative;
+            z-index: 2;
         }
         .profile-level-badge {
             background: var(--gold);
@@ -280,29 +243,20 @@
             font-weight: 900;
             font-size: 1.1rem;
             display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .profile-points {
-            font-size: 1.3rem;
-            font-weight: 900;
-            color: var(--primary);
-        }
-        .profile-stat {
-            background: var(--bg-card-inner);
-            padding: 12px;
-            border-radius: 12px;
+        .profile-stat-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 16px;
             text-align: center;
             flex: 1;
-            min-width: 80px;
+            min-width: 90px;
+            box-shadow: var(--card-shadow);
         }
-        .profile-stat .num {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--text-main);
-        }
-        .profile-stat .label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
+        .profile-stat-box .num { font-size: 1.6rem; font-weight: 900; color: var(--primary); font-family: 'Outfit', sans-serif; }
+        .profile-stat-box .label { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
         
         input, select, textarea, button { -webkit-appearance: none; appearance: none; }
         button, input, select, textarea { border-radius: 0; }
@@ -324,7 +278,7 @@
 
 <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
 
-<!-- Navbar -->
+<!-- Navbar (المحدث كلياً) -->
 <nav class="navbar">
     <div class="navbar-brand-container" onclick="handleSecretAdminClick()" title="لوحة الإدارة المخفية">
         <div class="nav-title">Amr Suhail Academy</div>
@@ -332,12 +286,13 @@
     </div>
     <div class="nav-actions">
         {% if student_id %}
-            <span class="navbar-user"><i class="fa-regular fa-user"></i> {{ student_name }}</span>
-            <button class="profile-btn" onclick="togglePopup('profileBox')" title="ملفي الشخصي">
-                <i class="fa-regular fa-user"></i>
-                <span class="level-badge" id="navLevelBadge">1</span>
-                <span class="online-dot"></span>
-            </button>
+            <div class="user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي">
+                <span class="user-pill-name">{{ student_name }}</span>
+                <div class="profile-btn">
+                    <i class="fa-regular fa-user"></i>
+                    <span class="level-badge" id="navLevelBadge">1</span>
+                </div>
+            </div>
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact primary-bg"><i class="fa-regular fa-user"></i> دخول الطالب</button>
         {% endif %}
@@ -378,46 +333,56 @@
     </div>
 </div>
 
-<!-- PROFILE POPUP -->
+<!-- PROFILE POPUP (المحدث كلياً) -->
 <div class="popup-box" id="profileBox">
-    <div class="popup-header">
-        <div><i class="fa-regular fa-user header-icon" style="color:var(--primary);"></i> ملفي الشخصي</div>
-        <div style="display:flex; gap:8px;">
-            <button onclick="logoutStudent()" class="navbar-contact danger" style="padding:4px 12px; font-size:0.8rem;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
-            <span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span>
-        </div>
+    <div class="popup-header" style="border:none; padding-bottom:0;">
+        <span class="popup-close" onclick="closeAllPopups()" style="margin-right:auto;"><i class="fa-solid fa-xmark"></i></span>
     </div>
-    <div class="popup-body" id="profileBody">
-        <div style="text-align:center; padding:5px 0 15px;">
-            <div class="profile-avatar"><i class="fa-regular fa-user"></i></div>
-            <div id="profileName" style="font-weight:900; font-size:1.2rem; color:var(--text-main);"></div>
-            <div id="profileUsername" style="color:var(--text-muted); font-size:0.85rem;"></div>
-            <div style="margin-top:8px;">
+    <div class="popup-body" id="profileBody" style="padding-top:0;">
+        <div class="profile-header-card">
+            <div class="profile-avatar-large"><i class="fa-solid fa-user-graduate"></i></div>
+            <div id="profileName" style="font-weight:900; font-size:1.4rem; position:relative; z-index:2;"></div>
+            <div id="profileUsername" style="color:rgba(255,255,255,0.8); font-size:0.9rem; margin-bottom:12px; position:relative; z-index:2;"></div>
+            
+            <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2;">
                 <span class="profile-level-badge" id="profileLevel">المستوى 1</span>
-                <span style="margin-right:12px; font-weight:700; color:var(--text-muted);">⭐ <span id="profilePoints" class="profile-points">0</span> نقطة</span>
+                <span style="background:rgba(0,0,0,0.3); padding:4px 16px; border-radius:50px; font-weight:800; font-size:0.95rem; border:1px solid rgba(255,255,255,0.2);">
+                    ⭐ <span id="profilePoints">0</span>
+                </span>
             </div>
-            <div style="margin-top:6px; font-size:0.85rem; color:var(--text-muted);">
-                <i class="fa-regular fa-fire"></i> <span id="profileStreak">0</span> يوم متتالي
+            <div style="margin-top:10px; font-size:0.85rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
+                <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak">0</span> يوم متتالي
             </div>
         </div>
         
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-            <div class="profile-stat"><div class="num" id="statCompleted">0</div><div class="label">مهام مكتملة</div></div>
-            <div class="profile-stat"><div class="num" id="statTotal">0</div><div class="label">إجمالي المهام</div></div>
-            <div class="profile-stat"><div class="num" id="statRate">0%</div><div class="label">نسبة الإنجاز</div></div>
-        </div>
-        
-        <div style="display:flex; gap:10px; margin-bottom:16px;">
-            <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.85rem;" id="leaderboardToggle">إظهار في الترتيب</button>
-            <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.85rem;"><i class="fa-solid fa-ranking-star"></i> الترتيب</button>
-        </div>
-        
-        <div style="border-top:1px solid var(--border); padding-top:12px;">
-            <div style="font-weight:800; font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">آخر المعاملات</div>
-            <div id="recentTransactions" style="max-height:150px; overflow-y:auto;">
-                <div style="text-align:center; color:var(--text-muted); font-size:0.85rem;">لا توجد معاملات</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+            <div class="profile-stat-box">
+                <div class="num" id="statCompleted">0</div>
+                <div class="label">مهام مكتملة</div>
+            </div>
+            <div class="profile-stat-box">
+                <div class="num" id="statTotal" style="color:var(--purple);">0</div>
+                <div class="label">إجمالي المهام</div>
+            </div>
+            <div class="profile-stat-box">
+                <div class="num" id="statRate" style="color:var(--accent);">0%</div>
+                <div class="label">نسبة الإنجاز</div>
             </div>
         </div>
+        
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.9rem;" id="leaderboardToggle">إظهار في الترتيب</button>
+            <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.9rem;"><i class="fa-solid fa-ranking-star"></i> قائمة المتصدرين</button>
+        </div>
+        
+        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border);">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط</div>
+            <div id="recentTransactions" style="max-height:160px; overflow-y:auto; padding-left:5px;">
+                <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد نشاطات مسجلة بعد</div>
+            </div>
+        </div>
+        
+        <button onclick="logoutStudent()" class="btn-calc-outline" style="margin-top:20px; color:var(--danger); border-color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
 </div>
 
@@ -470,7 +435,6 @@
     </div>
     <div class="popup-body">
         <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-            <!-- تمرير الـ event في onclick -->
             <button onclick="switchAdminTab('qa', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);"><i class="fa-solid fa-comments"></i> الأسئلة</button>
             <button onclick="switchAdminTab('content', event)" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-folder-open"></i> المحتوى</button>
             <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn"><i class="fa-solid fa-bullhorn"></i> إعلان</button>
@@ -657,7 +621,6 @@
     
     <input type="hidden" id="current_lesson_id" value="{{ chapter.lessons[0].id if chapter.lessons else '' }}">
     
-    <!-- واجهة الاختبار المتكاملة -->
     {% if content_type == 'quiz' %}
         <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px 20px; margin-top:25px;">
             <div id="quiz-start" style="text-align:center;">
@@ -867,7 +830,32 @@ async function logoutStudent() {
     }
 }
 
-// BIOMETRIC (WebAuthn)
+// ==========================================
+// BIOMETRIC (WebAuthn) - Fixed Base64URL
+// ==========================================
+function bufferFromBase64Url(base64Url) {
+    if (!base64Url) return new Uint8Array(0);
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) { base64 += '='; }
+    const binStr = atob(base64);
+    const len = binStr.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binStr.charCodeAt(i);
+    }
+    return bytes;
+}
+
+function bufferToBase64Url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let str = '';
+    for (const charCode of bytes) {
+        str += String.fromCharCode(charCode);
+    }
+    const base64 = btoa(str);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
 async function registerBiometric() {
     const username = document.getElementById('login_username').value.trim();
     if (!username) return showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
@@ -879,26 +867,32 @@ async function registerBiometric() {
         if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء التسجيل', 'error');
         
         const options = data.options;
-        const challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
-        const user = {
-            id: Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0)),
-            name: options.user.name,
-            displayName: options.user.displayName,
-        };
         const publicKey = {
-            challenge: challenge, rp: options.rp, user: user, pubKeyCredParams: options.pubKeyCredParams,
-            authenticatorSelection: options.authenticatorSelection, attestation: options.attestation,
-            excludeCredentials: options.excludeCredentials.map(c => ({ id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)), type: c.type }))
+            challenge: bufferFromBase64Url(options.challenge),
+            rp: options.rp,
+            user: {
+                id: bufferFromBase64Url(options.user.id),
+                name: options.user.name,
+                displayName: options.user.displayName,
+            },
+            pubKeyCredParams: options.pubKeyCredParams,
+            authenticatorSelection: options.authenticatorSelection,
+            attestation: options.attestation,
+            excludeCredentials: (options.excludeCredentials || []).map(c => ({
+                id: bufferFromBase64Url(c.id),
+                type: c.type
+            }))
         };
+        
         const credential = await navigator.credentials.create({ publicKey });
         const response = await fetch('/webauthn/register/complete', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 credential: {
-                    id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                    id: credential.id,
                     response: {
-                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
-                        attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
+                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                        attestationObject: bufferToBase64Url(credential.response.attestationObject),
                     },
                     type: credential.type,
                 }
@@ -921,20 +915,26 @@ async function loginWithBiometric() {
         if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء الدخول', 'error');
         
         const options = data.options;
-        const challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
-        const allowCredentials = options.allowCredentials.map(c => ({ id: Uint8Array.from(atob(c.id), x => x.charCodeAt(0)), type: c.type }));
-        const publicKey = { challenge: challenge, rpId: options.rpId, allowCredentials: allowCredentials, userVerification: options.userVerification };
+        const publicKey = {
+            challenge: bufferFromBase64Url(options.challenge),
+            rpId: options.rpId,
+            allowCredentials: (options.allowCredentials || []).map(c => ({
+                id: bufferFromBase64Url(c.id),
+                type: c.type
+            })),
+            userVerification: options.userVerification
+        };
         
         const credential = await navigator.credentials.get({ publicKey });
         const response = await fetch('/webauthn/login/complete', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 credential: {
-                    id: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                    id: credential.id,
                     response: {
-                        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
-                        authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
-                        signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                        authenticatorData: bufferToBase64Url(credential.response.authenticatorData),
+                        signature: bufferToBase64Url(credential.response.signature),
                     },
                     type: credential.type,
                 }
@@ -943,7 +943,7 @@ async function loginWithBiometric() {
         const result = await response.json();
         if (result.status === 'success') {
             showToast('✅ تم الدخول بالبصمة بنجاح!', 'success');
-            location.reload();
+            setTimeout(() => location.reload(), 1000);
         } else showToast(result.message || 'خطأ في الدخول', 'error');
     } catch(e) { showToast('حدث خطأ: ' + e.message, 'error'); }
 }
@@ -973,27 +973,27 @@ async function loadProfile() {
             const transactions = data.recent_transactions || [];
             const container = document.getElementById('recentTransactions');
             if (transactions.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.85rem;">لا توجد معاملات</div>';
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد نشاطات مسجلة بعد</div>';
             } else {
                 container.innerHTML = transactions.map(t => {
                     const sign = t.points > 0 ? '+' : '';
                     const color = t.points > 0 ? 'var(--accent)' : 'var(--danger)';
-                    return `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
-                        <span>${t.reason}</span>
-                        <span style="font-weight:800; color:${color};">${sign}${t.points}</span>
+                    return `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
+                        <span style="color:var(--text-main); font-weight:600;">${t.reason}</span>
+                        <span style="font-weight:900; color:${color}; font-family:'Outfit', sans-serif;">${sign}${t.points}</span>
                     </div>`;
                 }).join('');
             }
             
             const toggleBtn = document.getElementById('leaderboardToggle');
             if (p.show_in_leaderboard) {
-                toggleBtn.innerHTML = '✅ الظهور في الترتيب';
-                toggleBtn.style.borderColor = 'var(--accent)';
-                toggleBtn.style.color = 'var(--accent)';
+                toggleBtn.innerHTML = '✅ إخفاء من الترتيب';
+                toggleBtn.style.background = 'transparent';
+                toggleBtn.style.color = 'var(--text-main)';
             } else {
-                toggleBtn.innerHTML = '⬜ إخفاء من الترتيب';
-                toggleBtn.style.borderColor = 'var(--text-muted)';
-                toggleBtn.style.color = 'var(--text-muted)';
+                toggleBtn.innerHTML = '⬜ إظهار في الترتيب';
+                toggleBtn.style.background = 'var(--primary-light)';
+                toggleBtn.style.color = 'var(--primary)';
             }
         }
     } catch(e) { console.error(e); }
@@ -1002,7 +1002,7 @@ async function loadProfile() {
 async function toggleLeaderboardVisibility() {
     if (!isStudentLoggedIn()) return;
     const toggleBtn = document.getElementById('leaderboardToggle');
-    const current = toggleBtn.innerText.includes('إظهار');
+    const current = toggleBtn.innerText.includes('إخفاء'); // إذا كان مكتوب إخفاء يعني هو حالياً مرئي
     try {
         const res = await fetch('/api/profile/visibility', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: !current })
@@ -1458,7 +1458,7 @@ async function sendAIMessage() {
     b.scrollTop = b.scrollHeight;
 }
 
-// 🏆 QUIZ SYSTEM (محدث ليعمل مع الباك إند ونظام النقاط)
+// 🏆 QUIZ SYSTEM
 let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
 
 async function startQuiz(chapter) {
@@ -1485,7 +1485,7 @@ async function startQuiz(chapter) {
             id: q.id,
             q: q.question_text,
             opts: [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x),
-            ans_text: q.correct_answer, // للإجابة السريعة في الواجهة
+            ans_text: q.correct_answer,
             explain: q.explanation || "",
             status: 'unanswered',
             selectedOpt: null

@@ -45,18 +45,19 @@
         body { background-color: var(--bg-body); margin: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none !important; }
         
-        /* ===== NAVBAR (المحدث) ===== */
-        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; z-index: 100; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02); } 
-        .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative;}
-        .nav-title { font-size: 1.3rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-shadow: 0 2px 10px rgba(37,99,235,0.1); }
+        /* ===== NAVBAR (المطول) ===== */
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 20px 32px; z-index: 100; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02); min-height: 80px; } 
+        .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative; gap: 12px;}
+        .nav-logo { width: 50px; height: 50px; border-radius: 14px; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .nav-title { font-size: 1.5rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-shadow: 0 2px 10px rgba(37,99,235,0.1); }
         .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 8px; box-shadow: 0 0 8px var(--accent); }
-        .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+        .nav-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; flex-wrap: wrap; }
         
-        .user-pill { display: flex; align-items: center; background: var(--bg-card); border-radius: 50px; padding: 4px 14px 4px 4px; border: 1px solid var(--border); box-shadow: var(--card-shadow); gap: 10px; cursor: pointer; transition: 0.3s; }
+        .user-pill { display: flex; align-items: center; background: var(--bg-card); border-radius: 50px; padding: 6px 18px 6px 6px; border: 1px solid var(--border); box-shadow: var(--card-shadow); gap: 12px; cursor: pointer; transition: 0.3s; }
         .user-pill:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
-        .user-pill-name { font-weight: 800; color: var(--text-main); font-size: 0.95rem; white-space: nowrap; }
-        .profile-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; position: relative; }
-        .profile-btn .level-badge { position: absolute; bottom: -4px; right: -4px; background: var(--gold); color: #0f172a; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 50px; border: 2px solid var(--bg-card); min-width: 18px; text-align: center; }
+        .user-pill-name { font-weight: 800; color: var(--text-main); font-size: 1rem; white-space: nowrap; }
+        .profile-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: white; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; position: relative; }
+        .profile-btn .level-badge { position: absolute; bottom: -4px; right: -4px; background: var(--gold); color: #0f172a; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 50px; border: 2px solid var(--bg-card); min-width: 20px; text-align: center; }
         
         /* ===== MAIN ===== */
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
@@ -159,6 +160,7 @@
         .fab-container.open .fab-item:nth-child(6) { transition-delay: 0.25s; }
         .fab-container.open .fab-item:nth-child(7) { transition-delay: 0.3s; }
         .fab-container.open .fab-item:nth-child(8) { transition-delay: 0.35s; }
+        .fab-container.open .fab-item:nth-child(9) { transition-delay: 0.4s; }
         .fab-badge-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-card); animation: pulse 1.5s infinite; }
         
         /* ===== POPUPS ===== */
@@ -191,11 +193,6 @@
         .fav-item-link { display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); padding:12px 16px; border-radius:12px; margin-bottom:10px; text-decoration:none; color:var(--text-main); transition:0.3s; box-shadow:var(--card-shadow); }
         .fav-item-link:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 10px 20px rgba(37,99,235,0.15); }
         
-        /* ===== BIOMETRIC BUTTONS ===== */
-        .bio-btn { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; color: var(--text-main); }
-        .bio-btn:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
-        .bio-btn i { font-size: 1.2rem; }
-        
         /* ===== TOAST ===== */
         .toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
         .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; transition: 0.3s; opacity: 0; transform: translateY(10px); pointer-events: auto; }
@@ -204,7 +201,7 @@
         .toast.error { border-color: var(--danger); color: var(--danger); }
         .toast.info { border-color: var(--primary); color: var(--primary); }
         
-        /* ===== PROFILE POPUP (المحدث كلياً) ===== */
+        /* ===== PROFILE POPUP (المطور كلياً) ===== */
         .profile-header-card {
             background: var(--gradient-profile);
             color: white;
@@ -222,6 +219,14 @@
             top: -50px; left: -50px;
             width: 150px; height: 150px;
             background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .profile-header-card::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.08);
             border-radius: 50%;
         }
         .profile-avatar-large {
@@ -254,13 +259,48 @@
             flex: 1;
             min-width: 90px;
             box-shadow: var(--card-shadow);
+            transition: 0.3s;
         }
+        .profile-stat-box:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); }
         .profile-stat-box .num { font-size: 1.6rem; font-weight: 900; color: var(--primary); font-family: 'Outfit', sans-serif; }
         .profile-stat-box .label { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
         
         input, select, textarea, button { -webkit-appearance: none; appearance: none; }
         button, input, select, textarea { border-radius: 0; }
         .item-title, .task-title-text { -webkit-hyphens: auto; hyphens: auto; }
+        
+        /* ===== SIMULATIONS (المحاكيات) ===== */
+        .simulation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+        .simulation-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 25px 20px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--border); transition: 0.3s; cursor: pointer; position: relative; overflow: hidden; }
+        .simulation-card:hover { transform: translateY(-5px); box-shadow: var(--hover-shadow); border-color: var(--primary); }
+        .simulation-card .sim-icon { width: 65px; height: 65px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 15px; }
+        .simulation-card .sim-icon.math { background: rgba(37,99,235,0.1); color: #2563eb; }
+        .simulation-card .sim-icon.chemistry { background: rgba(16,185,129,0.1); color: #10b981; }
+        .simulation-card .sim-icon.electricity { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .simulation-card .sim-icon.architecture { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+        .simulation-card .sim-icon.civil { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .simulation-card h3 { font-weight: 900; font-size: 1.2rem; margin: 0 0 10px; color: var(--text-main); }
+        .simulation-card p { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 15px; line-height: 1.5; }
+        .simulation-card .sim-items { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .simulation-card .sim-item-tag { background: var(--bg-body); border: 1px solid var(--border); padding: 6px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; color: var(--text-main); transition: 0.3s; }
+        .simulation-card .sim-item-tag:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        
+        /* محاكيات داخلية */
+        .simulator-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95); opacity: 0; visibility: hidden; z-index: 3010; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 25px 50px rgba(0,0,0,0.2); width: 92%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .simulator-modal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
+        .simulator-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .simulator-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 0.95rem; margin-bottom: 10px; outline: none; }
+        .simulator-btn { padding: 12px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; border: none; color: white; transition: 0.3s; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        .simulator-btn:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); }
+        .simulator-result { background: var(--bg-body); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-top: 15px; font-size: 1rem; line-height: 1.6; }
+        
+        /* Periodic Table */
+        .periodic-table { display: grid; grid-template-columns: repeat(18, 1fr); gap: 3px; margin: 15px 0; }
+        .element { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: 6px; padding: 5px; text-align: center; cursor: pointer; transition: 0.3s; font-size: 0.7rem; }
+        .element:hover { background: var(--primary); color: white; transform: scale(1.1); }
+        .element .element-number { font-size: 0.6rem; opacity: 0.7; }
+        .element .element-symbol { font-size: 1.1rem; font-weight: 900; }
+        .element .element-name { font-size: 0.6rem; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -278,9 +318,10 @@
 
 <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
 
-<!-- Navbar (المحدث كلياً) -->
+<!-- Navbar (المطول) -->
 <nav class="navbar">
     <div class="navbar-brand-container" onclick="handleSecretAdminClick()" title="لوحة الإدارة المخفية">
+        <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="nav-logo">
         <div class="nav-title">Amr Suhail Academy</div>
         {% if is_admin or is_assistant %}<span class="admin-indicator-dot"></span>{% endif %}
     </div>
@@ -301,7 +342,7 @@
 
 <!-- POPUPS -->
 
-<!-- Login/Register with Biometric -->
+<!-- Login/Register (بدون بصمة) -->
 <div class="popup-box" id="loginBox">
     <div class="popup-header"><div><i class="fa-solid fa-user header-icon" style="color:var(--primary);"></i> حساب الطالب</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
     <div class="popup-body">
@@ -309,15 +350,6 @@
             <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field">
             <input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field">
             <button onclick="studentLogin()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
-            
-            <hr style="border-color:var(--border); margin:15px 0;">
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button onclick="registerBiometric()" class="bio-btn" style="flex:1;"><i class="fa-solid fa-fingerprint" style="color:var(--accent);"></i> تسجيل البصمة</button>
-                <button onclick="loginWithBiometric()" class="bio-btn" style="flex:1;"><i class="fa-solid fa-fingerprint" style="color:var(--primary);"></i> دخول بالبصمة</button>
-            </div>
-            <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin-top:8px;">
-                <i class="fa-regular fa-lightbulb"></i> أدخل اسم المستخدم ثم اضغط "تسجيل البصمة" لتسجيلها، أو "دخول بالبصمة" للدخول السريع.
-            </div>
             
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted);">ليس لديك حساب؟ <span onclick="showRegisterForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل الآن</span></p>
@@ -333,7 +365,7 @@
     </div>
 </div>
 
-<!-- PROFILE POPUP (المحدث كلياً) -->
+<!-- PROFILE POPUP (المطور كلياً) -->
 <div class="popup-box" id="profileBox">
     <div class="popup-header" style="border:none; padding-bottom:0;">
         <span class="popup-close" onclick="closeAllPopups()" style="margin-right:auto;"><i class="fa-solid fa-xmark"></i></span>
@@ -341,16 +373,16 @@
     <div class="popup-body" id="profileBody" style="padding-top:0;">
         <div class="profile-header-card">
             <div class="profile-avatar-large"><i class="fa-solid fa-user-graduate"></i></div>
-            <div id="profileName" style="font-weight:900; font-size:1.4rem; position:relative; z-index:2;"></div>
-            <div id="profileUsername" style="color:rgba(255,255,255,0.8); font-size:0.9rem; margin-bottom:12px; position:relative; z-index:2;"></div>
+            <div id="profileName" style="font-weight:900; font-size:1.5rem; position:relative; z-index:2; margin-bottom:5px;"></div>
+            <div id="profileUsername" style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2;"></div>
             
-            <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2;">
+            <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2; flex-wrap:wrap;">
                 <span class="profile-level-badge" id="profileLevel">المستوى 1</span>
-                <span style="background:rgba(0,0,0,0.3); padding:4px 16px; border-radius:50px; font-weight:800; font-size:0.95rem; border:1px solid rgba(255,255,255,0.2);">
+                <span style="background:rgba(0,0,0,0.3); padding:5px 18px; border-radius:50px; font-weight:800; font-size:1rem; border:1px solid rgba(255,255,255,0.2);">
                     ⭐ <span id="profilePoints">0</span>
                 </span>
             </div>
-            <div style="margin-top:10px; font-size:0.85rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
+            <div style="margin-top:12px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
                 <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak">0</span> يوم متتالي
             </div>
         </div>
@@ -377,7 +409,7 @@
         
         <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border);">
             <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط</div>
-            <div id="recentTransactions" style="max-height:160px; overflow-y:auto; padding-left:5px;">
+            <div id="recentTransactions" style="max-height:200px; overflow-y:auto; padding-left:5px;">
                 <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد نشاطات مسجلة بعد</div>
             </div>
         </div>
@@ -500,6 +532,167 @@
     </div>
 </div>
 
+<!-- SIMULATOR MODALS -->
+<div class="simulator-modal" id="simMathModal">
+    <div class="popup-header"><div><i class="fa-solid fa-calculator header-icon"></i> محاكي الرياضيات</div><span class="popup-close" onclick="closeSimulator('simMathModal')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="simulator-body">
+        <h3 style="margin-bottom:15px;">المعادلات والمتجهات والتفاضل</h3>
+        <div style="display:grid; gap:12px;">
+            <div>
+                <label>حل معادلة من الدرجة الثانية (ax² + bx + c = 0)</label>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <input type="number" id="mathA" placeholder="a" class="simulator-input" style="margin:0;">
+                    <input type="number" id="mathB" placeholder="b" class="simulator-input" style="margin:0;">
+                    <input type="number" id="mathC" placeholder="c" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="solveQuadratic()" class="simulator-btn" style="background:var(--primary); margin-top:8px;"><i class="fa-solid fa-check"></i> حل المعادلة</button>
+                <div id="quadraticResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>حساب المتجهات (جمع وطرح)</label>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <input type="number" id="vec1x" placeholder="V1x" class="simulator-input" style="margin:0;">
+                    <input type="number" id="vec1y" placeholder="V1y" class="simulator-input" style="margin:0;">
+                    <input type="number" id="vec2x" placeholder="V2x" class="simulator-input" style="margin:0;">
+                    <input type="number" id="vec2y" placeholder="V2y" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateVectors()" class="simulator-btn" style="background:#8b5cf6; margin-top:8px;"><i class="fa-solid fa-check"></i> حساب المتجهات</button>
+                <div id="vectorResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>تفاضل دالة (مشتقة أولى)</label>
+                <input type="text" id="diffFunction" placeholder="مثال: x^2 + 3x" class="simulator-input">
+                <button onclick="differentiate()" class="simulator-btn" style="background:var(--accent);"><i class="fa-solid fa-check"></i> حساب المشتقة</button>
+                <div id="diffResult" class="simulator-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="simulator-modal" id="simChemistryModal">
+    <div class="popup-header"><div><i class="fa-solid fa-flask-vial header-icon"></i> محاكي الكيمياء</div><span class="popup-close" onclick="closeSimulator('simChemistryModal')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="simulator-body">
+        <h3 style="margin-bottom:15px;">الجدول الدوري والمختبر</h3>
+        <div style="margin-bottom:20px;">
+            <h4>الجدول الدوري التفاعلي</h4>
+            <div class="periodic-table" id="periodicTable"></div>
+        </div>
+        <hr style="border-color:var(--border);">
+        <h4>المختبر الكيميائي</h4>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <select id="chem1" class="simulator-input">
+                <option value="">اختر مادة 1</option>
+            </select>
+            <select id="chem2" class="simulator-input">
+                <option value="">اختر مادة 2</option>
+            </select>
+        </div>
+        <button onclick="mixChemicals()" class="simulator-btn" style="background:var(--danger);"><i class="fa-solid fa-flask"></i> خلط المواد</button>
+        <div id="chemResult" class="simulator-result" style="display:none;"></div>
+    </div>
+</div>
+
+<div class="simulator-modal" id="simElectricityModal">
+    <div class="popup-header"><div><i class="fa-solid fa-bolt header-icon"></i> محاكي الكهرباء</div><span class="popup-close" onclick="closeSimulator('simElectricityModal')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="simulator-body">
+        <h3 style="margin-bottom:15px;">الدوائر الكهربائية</h3>
+        <div style="display:grid; gap:12px;">
+            <div>
+                <label>قانون أوم (V = I × R)</label>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <input type="number" id="voltage" placeholder="الجهد V" class="simulator-input" style="margin:0;">
+                    <input type="number" id="current" placeholder="التيار I" class="simulator-input" style="margin:0;">
+                    <input type="number" id="resistance" placeholder="المقاومة R" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateOhmLaw()" class="simulator-btn" style="background:var(--warning); margin-top:8px;"><i class="fa-solid fa-check"></i> حساب</button>
+                <div id="ohmResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>قوانين كيرشوف (حل دائرة بسيطة)</label>
+                <p style="font-size:0.9rem; color:var(--text-muted);">مثال: دائرة بها مقاومتان على التوالي R1 و R2 مع مصدر جهد V</p>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="r1" placeholder="R1" class="simulator-input" style="margin:0;">
+                    <input type="number" id="r2" placeholder="R2" class="simulator-input" style="margin:0;">
+                    <input type="number" id="vSource" placeholder="V" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateKirchhoff()" class="simulator-btn" style="background:#f97316; margin-top:8px;"><i class="fa-solid fa-check"></i> حل الدائرة</button>
+                <div id="kirchhoffResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>تحويل دلتا-ستار</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="deltaR1" placeholder="R12" class="simulator-input" style="margin:0;">
+                    <input type="number" id="deltaR2" placeholder="R23" class="simulator-input" style="margin:0;">
+                    <input type="number" id="deltaR3" placeholder="R31" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="deltaToStar()" class="simulator-btn" style="background:#8b5cf6; margin-top:8px;"><i class="fa-solid fa-check"></i> تحويل</button>
+                <div id="deltaStarResult" class="simulator-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="simulator-modal" id="simArchitectureModal">
+    <div class="popup-header"><div><i class="fa-solid fa-building header-icon"></i> محاكي العمارة</div><span class="popup-close" onclick="closeSimulator('simArchitectureModal')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="simulator-body">
+        <h3 style="margin-bottom:15px;">حسابات معمارية</h3>
+        <div style="display:grid; gap:12px;">
+            <div>
+                <label>حساب مساحة الغرفة (م²)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="roomLength" placeholder="الطول (م)" class="simulator-input" style="margin:0;">
+                    <input type="number" id="roomWidth" placeholder="العرض (م)" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateRoomArea()" class="simulator-btn" style="background:var(--primary); margin-top:8px;"><i class="fa-solid fa-check"></i> حساب</button>
+                <div id="roomAreaResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>حساب حجم الخرسانة (م³)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="concLength" placeholder="الطول (م)" class="simulator-input" style="margin:0;">
+                    <input type="number" id="concWidth" placeholder="العرض (م)" class="simulator-input" style="margin:0;">
+                    <input type="number" id="concHeight" placeholder="الارتفاع (م)" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateConcrete()" class="simulator-btn" style="background:#8b5cf6; margin-top:8px;"><i class="fa-solid fa-check"></i> حساب</button>
+                <div id="concreteResult" class="simulator-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="simulator-modal" id="simCivilModal">
+    <div class="popup-header"><div><i class="fa-solid fa-road header-icon"></i> محاكي المدنية</div><span class="popup-close" onclick="closeSimulator('simCivilModal')"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="simulator-body">
+        <h3 style="margin-bottom:15px;">حسابات مدنية</h3>
+        <div style="display:grid; gap:12px;">
+            <div>
+                <label>حساب حمل العمود (كجم)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="columnArea" placeholder="مساحة المقطع (سم²)" class="simulator-input" style="margin:0;">
+                    <input type="number" id="concreteStrength" placeholder="مقاومة الخرسانة (كجم/سم²)" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateColumnLoad()" class="simulator-btn" style="background:var(--primary); margin-top:8px;"><i class="fa-solid fa-check"></i> حساب</button>
+                <div id="columnLoadResult" class="simulator-result" style="display:none;"></div>
+            </div>
+            <hr style="border-color:var(--border);">
+            <div>
+                <label>حساب ميل السقف (٪)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="riseHeight" placeholder="الارتفاع (م)" class="simulator-input" style="margin:0;">
+                    <input type="number" id="runLength" placeholder="الامتداد (م)" class="simulator-input" style="margin:0;">
+                </div>
+                <button onclick="calculateRoofSlope()" class="simulator-btn" style="background:#f97316; margin-top:8px;"><i class="fa-solid fa-check"></i> حساب</button>
+                <div id="roofSlopeResult" class="simulator-result" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================================== -->
 <!-- MAIN CONTENT -->
 <!-- ========================================================== -->
@@ -527,8 +720,67 @@
         <div class="feature-card"><div class="f-icon blue"><i class="fa-solid fa-shield-halved"></i></div><h4>موثوق وآمن</h4><p>ملفات آمنة ومرفوعة على مكتبة ميكا درايف بشكل منظم.</p></div>
         <div class="feature-card"><div class="f-icon green"><i class="fa-solid fa-cloud-arrow-down"></i></div><h4>تحميل سريع</h4><p>سرعة عالية وروابط مباشرة في تحميل جميع الملفات.</p></div>
         <div class="feature-card"><div class="f-icon purple"><i class="fa-solid fa-layer-group"></i></div><h4>تنظيم احترافي</h4><p>كل المواد مرتبة بطريقة أكاديمية دقيقة للسنوات والمواد.</p></div>
-        <div class="feature-card"><div class="f-icon orange"><i class="fa-solid fa-graduation-cap"></i></div><h4>محتوى شامل</h4><p>محاضرات، ملخصات، أسئلة، ومساعد ذكي للردود المباشرة.</p></div>
+        <div class="feature-card"><div class="f-icon orange"><i class="fa-solid fa-graduation-cap"></i></div><h4>محتوى شامل</h4><p>محاضرات، ملخصات، أسئلة، ومحاكيات تفاعلية.</p></div>
     </section>
+
+    <!-- قسم المحاكيات -->
+    <div class="section-header" style="margin-top: 40px;">
+        <h2><i class="fa-solid fa-flask" style="color:var(--primary);"></i> المحاكيات التفاعلية</h2>
+        <p>تجارب ومحاكيات تعليمية في مختلف التخصصات</p>
+    </div>
+    <div class="simulation-grid">
+        <div class="simulation-card" onclick="openSimulator('simMathModal')">
+            <div class="sim-icon math"><i class="fa-solid fa-square-root-variable"></i></div>
+            <h3>الرياضيات</h3>
+            <p>معادلات، متجهات، تفاضل وتكامل</p>
+            <div class="sim-items">
+                <span class="sim-item-tag">معادلات</span>
+                <span class="sim-item-tag">متجهات</span>
+                <span class="sim-item-tag">تفاضل</span>
+                <span class="sim-item-tag">حسابات متقدمة</span>
+            </div>
+        </div>
+        <div class="simulation-card" onclick="openSimulator('simChemistryModal')">
+            <div class="sim-icon chemistry"><i class="fa-solid fa-flask-vial"></i></div>
+            <h3>الكيمياء</h3>
+            <p>الجدول الدوري التفاعلي والمختبر</p>
+            <div class="sim-items">
+                <span class="sim-item-tag">الجدول الدوري</span>
+                <span class="sim-item-tag">مختبر الخلط</span>
+                <span class="sim-item-tag">التفاعلات</span>
+            </div>
+        </div>
+        <div class="simulation-card" onclick="openSimulator('simElectricityModal')">
+            <div class="sim-icon electricity"><i class="fa-solid fa-bolt"></i></div>
+            <h3>الكهرباء</h3>
+            <p>دوائر كهربائية متقدمة وقوانين</p>
+            <div class="sim-items">
+                <span class="sim-item-tag">قانون أوم</span>
+                <span class="sim-item-tag">كيرشوف</span>
+                <span class="sim-item-tag">دلتا-ستار</span>
+            </div>
+        </div>
+        <div class="simulation-card" onclick="openSimulator('simArchitectureModal')">
+            <div class="sim-icon architecture"><i class="fa-solid fa-building"></i></div>
+            <h3>العمارة</h3>
+            <p>حسابات معمارية وهندسية</p>
+            <div class="sim-items">
+                <span class="sim-item-tag">المساحات</span>
+                <span class="sim-item-tag">الخرسانة</span>
+                <span class="sim-item-tag">التصميم</span>
+            </div>
+        </div>
+        <div class="simulation-card" onclick="openSimulator('simCivilModal')">
+            <div class="sim-icon civil"><i class="fa-solid fa-road"></i></div>
+            <h3>المدنية</h3>
+            <p>حسابات إنشائية ومدنية</p>
+            <div class="sim-items">
+                <span class="sim-item-tag">الأحمال</span>
+                <span class="sim-item-tag">الأعمدة</span>
+                <span class="sim-item-tag">الأسقف</span>
+            </div>
+        </div>
+    </div>
 
     <div class="search-box">
         <input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن أي مادة أو درس أو ملف...">
@@ -778,6 +1030,7 @@
     </a>
     <div class="fab-item" onclick="togglePopup('calcBox')" title="الحاسبة"><i class="fa-solid fa-calculator"></i></div>
     <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i></div>
+    <div class="fab-item" onclick="openSimulator('simMathModal')" title="المحاكيات" style="color:var(--accent);"><i class="fa-solid fa-flask"></i></div>
 </div>
 {% endif %}
 
@@ -828,124 +1081,6 @@ async function logoutStudent() {
     } catch(e) {
         showToast('خطأ في الاتصال بالخادم', 'error');
     }
-}
-
-// ==========================================
-// BIOMETRIC (WebAuthn) - Fixed Base64URL
-// ==========================================
-function bufferFromBase64Url(base64Url) {
-    if (!base64Url) return new Uint8Array(0);
-    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) { base64 += '='; }
-    const binStr = atob(base64);
-    const len = binStr.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binStr.charCodeAt(i);
-    }
-    return bytes;
-}
-
-function bufferToBase64Url(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let str = '';
-    for (const charCode of bytes) {
-        str += String.fromCharCode(charCode);
-    }
-    const base64 = btoa(str);
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-async function registerBiometric() {
-    const username = document.getElementById('login_username').value.trim();
-    if (!username) return showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
-    try {
-        const res = await fetch('/webauthn/register/begin', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء التسجيل', 'error');
-        
-        const options = data.options;
-        const publicKey = {
-            challenge: bufferFromBase64Url(options.challenge),
-            rp: options.rp,
-            user: {
-                id: bufferFromBase64Url(options.user.id),
-                name: options.user.name,
-                displayName: options.user.displayName,
-            },
-            pubKeyCredParams: options.pubKeyCredParams,
-            authenticatorSelection: options.authenticatorSelection,
-            attestation: options.attestation,
-            excludeCredentials: (options.excludeCredentials || []).map(c => ({
-                id: bufferFromBase64Url(c.id),
-                type: c.type
-            }))
-        };
-        
-        const credential = await navigator.credentials.create({ publicKey });
-        const response = await fetch('/webauthn/register/complete', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                credential: {
-                    id: credential.id,
-                    response: {
-                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
-                        attestationObject: bufferToBase64Url(credential.response.attestationObject),
-                    },
-                    type: credential.type,
-                }
-            })
-        });
-        const result = await response.json();
-        if (result.status === 'success') showToast('✅ تم تسجيل البصمة بنجاح!', 'success');
-        else showToast(result.message || 'خطأ في التسجيل', 'error');
-    } catch(e) { showToast('حدث خطأ: ' + e.message, 'error'); }
-}
-
-async function loginWithBiometric() {
-    const username = document.getElementById('login_username').value.trim();
-    if (!username) return showToast('يرجى إدخال اسم المستخدم أولاً', 'error');
-    try {
-        const res = await fetch('/webauthn/login/begin', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.status !== 'success') return showToast(data.message || 'خطأ في بدء الدخول', 'error');
-        
-        const options = data.options;
-        const publicKey = {
-            challenge: bufferFromBase64Url(options.challenge),
-            rpId: options.rpId,
-            allowCredentials: (options.allowCredentials || []).map(c => ({
-                id: bufferFromBase64Url(c.id),
-                type: c.type
-            })),
-            userVerification: options.userVerification
-        };
-        
-        const credential = await navigator.credentials.get({ publicKey });
-        const response = await fetch('/webauthn/login/complete', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                credential: {
-                    id: credential.id,
-                    response: {
-                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
-                        authenticatorData: bufferToBase64Url(credential.response.authenticatorData),
-                        signature: bufferToBase64Url(credential.response.signature),
-                    },
-                    type: credential.type,
-                }
-            })
-        });
-        const result = await response.json();
-        if (result.status === 'success') {
-            showToast('✅ تم الدخول بالبصمة بنجاح!', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else showToast(result.message || 'خطأ في الدخول', 'error');
-    } catch(e) { showToast('حدث خطأ: ' + e.message, 'error'); }
 }
 
 function isStudentLoggedIn() { return STUDENT_ID !== null; }
@@ -1002,7 +1137,7 @@ async function loadProfile() {
 async function toggleLeaderboardVisibility() {
     if (!isStudentLoggedIn()) return;
     const toggleBtn = document.getElementById('leaderboardToggle');
-    const current = toggleBtn.innerText.includes('إخفاء'); // إذا كان مكتوب إخفاء يعني هو حالياً مرئي
+    const current = toggleBtn.innerText.includes('إخفاء');
     try {
         const res = await fetch('/api/profile/visibility', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: !current })
@@ -1078,6 +1213,369 @@ function togglePopup(boxId) {
 function closeAllPopups() {
     document.querySelectorAll('.popup-box').forEach(el => el.classList.remove('active'));
     document.getElementById('chatOverlay').classList.remove('active');
+}
+
+// SIMULATOR FUNCTIONS
+function openSimulator(modalId) {
+    closeAllPopups();
+    document.getElementById(modalId).classList.add('active');
+    document.getElementById('chatOverlay').classList.add('active');
+    
+    if (modalId === 'simChemistryModal') {
+        initPeriodicTable();
+        initChemicalSelects();
+    }
+}
+function closeSimulator(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    document.getElementById('chatOverlay').classList.remove('active');
+}
+
+// MATH SIMULATORS
+function solveQuadratic() {
+    const a = parseFloat(document.getElementById('mathA').value);
+    const b = parseFloat(document.getElementById('mathB').value);
+    const c = parseFloat(document.getElementById('mathC').value);
+    const resultDiv = document.getElementById('quadraticResult');
+    
+    if (isNaN(a) || isNaN(b) || isNaN(c)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال جميع القيم';
+        return;
+    }
+    
+    const discriminant = b*b - 4*a*c;
+    let result = `المعادلة: ${a}x² + ${b}x + ${c} = 0<br>`;
+    result += `المميز (Δ) = ${discriminant}<br>`;
+    
+    if (discriminant > 0) {
+        const x1 = (-b + Math.sqrt(discriminant)) / (2*a);
+        const x2 = (-b - Math.sqrt(discriminant)) / (2*a);
+        result += `الحلان: x₁ = ${x1.toFixed(4)}, x₂ = ${x2.toFixed(4)}`;
+    } else if (discriminant === 0) {
+        const x = -b / (2*a);
+        result += `حل مكرر: x = ${x.toFixed(4)}`;
+    } else {
+        const realPart = -b / (2*a);
+        const imagPart = Math.sqrt(-discriminant) / (2*a);
+        result += `حلان مركبان: x₁ = ${realPart.toFixed(4)} + ${imagPart.toFixed(4)}i, x₂ = ${realPart.toFixed(4)} - ${imagPart.toFixed(4)}i`;
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = result;
+}
+
+function calculateVectors() {
+    const v1x = parseFloat(document.getElementById('vec1x').value) || 0;
+    const v1y = parseFloat(document.getElementById('vec1y').value) || 0;
+    const v2x = parseFloat(document.getElementById('vec2x').value) || 0;
+    const v2y = parseFloat(document.getElementById('vec2y').value) || 0;
+    const resultDiv = document.getElementById('vectorResult');
+    
+    const sumX = v1x + v2x;
+    const sumY = v1y + v2y;
+    const diffX = v1x - v2x;
+    const diffY = v1y - v2y;
+    const magnitude = Math.sqrt(sumX*sumX + sumY*sumY);
+    const angle = Math.atan2(sumY, sumX) * 180 / Math.PI;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>الجمع:</b> (${sumX.toFixed(2)}, ${sumY.toFixed(2)})<br>
+        <b>الطرح:</b> (${diffX.toFixed(2)}, ${diffY.toFixed(2)})<br>
+        <b>مقدار المحصلة:</b> ${magnitude.toFixed(2)}<br>
+        <b>الاتجاه:</b> ${angle.toFixed(2)}°`;
+}
+
+function differentiate() {
+    const func = document.getElementById('diffFunction').value.trim();
+    const resultDiv = document.getElementById('diffResult');
+    
+    if (!func) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال دالة';
+        return;
+    }
+    
+    // Simple differentiation for common patterns
+    let derivative = '';
+    const terms = func.replace(/\s/g, '').split(/(?=[+-])/);
+    
+    terms.forEach(term => {
+        if (!term) return;
+        const match = term.match(/([+-]?)(\d+)?(?:x(?:\^(\d+))?)?/);
+        if (match) {
+            const sign = match[1] || '+';
+            const coeff = match[2] ? parseFloat(match[2]) : 1;
+            const power = match[3] ? parseFloat(match[3]) : (term.includes('x') ? 1 : 0);
+            
+            if (power === 0) return; // Constant derivative is 0
+            
+            const newCoeff = coeff * power;
+            const newPower = power - 1;
+            
+            if (derivative && newCoeff > 0) derivative += ' + ';
+            else if (derivative && newCoeff < 0) derivative += ' - ';
+            
+            if (newCoeff < 0 && !derivative) derivative += '-';
+            
+            const absCoeff = Math.abs(newCoeff);
+            if (newPower === 0) {
+                derivative += absCoeff;
+            } else if (newPower === 1) {
+                derivative += absCoeff + 'x';
+            } else {
+                derivative += absCoeff + 'x^' + newPower;
+            }
+        }
+    });
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = derivative ? `المشتقة: ${derivative}` : 'المشتقة: 0';
+}
+
+// CHEMISTRY SIMULATORS
+const elements = [
+    {num: 1, sym: 'H', name: 'هيدروجين'}, {num: 2, sym: 'He', name: 'هيليوم'},
+    {num: 3, sym: 'Li', name: 'ليثيوم'}, {num: 4, sym: 'Be', name: 'بيريليوم'},
+    {num: 5, sym: 'B', name: 'بورون'}, {num: 6, sym: 'C', name: 'كربون'},
+    {num: 7, sym: 'N', name: 'نيتروجين'}, {num: 8, sym: 'O', name: 'أكسجين'},
+    {num: 9, sym: 'F', name: 'فلور'}, {num: 10, sym: 'Ne', name: 'نيون'},
+    {num: 11, sym: 'Na', name: 'صوديوم'}, {num: 12, sym: 'Mg', name: 'مغنيسيوم'},
+    {num: 13, sym: 'Al', name: 'ألومنيوم'}, {num: 14, sym: 'Si', name: 'سيليكون'},
+    {num: 15, sym: 'P', name: 'فوسفور'}, {num: 16, sym: 'S', name: 'كبريت'},
+    {num: 17, sym: 'Cl', name: 'كلور'}, {num: 18, sym: 'Ar', name: 'أرجون'},
+    {num: 19, sym: 'K', name: 'بوتاسيوم'}, {num: 20, sym: 'Ca', name: 'كالسيوم'},
+    {num: 26, sym: 'Fe', name: 'حديد'}, {num: 29, sym: 'Cu', name: 'نحاس'},
+    {num: 30, sym: 'Zn', name: 'زنك'}, {num: 47, sym: 'Ag', name: 'فضة'},
+    {num: 79, sym: 'Au', name: 'ذهب'}, {num: 80, sym: 'Hg', name: 'زئبق'},
+    {num: 82, sym: 'Pb', name: 'رصاص'}
+];
+
+function initPeriodicTable() {
+    const table = document.getElementById('periodicTable');
+    table.innerHTML = '';
+    
+    elements.forEach(el => {
+        const div = document.createElement('div');
+        div.className = 'element';
+        div.innerHTML = `<div class="element-number">${el.num}</div><div class="element-symbol">${el.sym}</div><div class="element-name">${el.name}</div>`;
+        div.onclick = () => showElementInfo(el);
+        table.appendChild(div);
+    });
+}
+
+function showElementInfo(element) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'simulator-result';
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>العنصر:</b> ${element.name} (${element.sym})<br>
+        <b>العدد الذري:</b> ${element.num}<br>
+        <b>الرمز:</b> ${element.sym}`;
+    
+    // Remove previous result if exists
+    const existing = document.querySelector('.element-info-result');
+    if (existing) existing.remove();
+    resultDiv.classList.add('element-info-result');
+    
+    document.querySelector('#simChemistryModal .simulator-body').appendChild(resultDiv);
+}
+
+const chemicals = [
+    {name: 'ماء (H₂O)', formula: 'H2O', type: 'سائل'},
+    {name: 'حمض الهيدروكلوريك (HCl)', formula: 'HCl', type: 'حمض'},
+    {name: 'هيدروكسيد الصوديوم (NaOH)', formula: 'NaOH', type: 'قاعدة'},
+    {name: 'كلوريد الصوديوم (NaCl)', formula: 'NaCl', type: 'ملح'},
+    {name: 'حمض الكبريتيك (H₂SO₄)', formula: 'H2SO4', type: 'حمض'},
+    {name: 'كربونات الكالسيوم (CaCO₃)', formula: 'CaCO3', type: 'ملح'}
+];
+
+function initChemicalSelects() {
+    const sel1 = document.getElementById('chem1');
+    const sel2 = document.getElementById('chem2');
+    sel1.innerHTML = '<option value="">اختر مادة 1</option>';
+    sel2.innerHTML = '<option value="">اختر مادة 2</option>';
+    
+    chemicals.forEach((c, i) => {
+        sel1.innerHTML += `<option value="${i}">${c.name}</option>`;
+        sel2.innerHTML += `<option value="${i}">${c.name}</option>`;
+    });
+}
+
+function mixChemicals() {
+    const chem1Idx = document.getElementById('chem1').value;
+    const chem2Idx = document.getElementById('chem2').value;
+    const resultDiv = document.getElementById('chemResult');
+    
+    if (!chem1Idx || !chem2Idx) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى اختيار مادتين';
+        return;
+    }
+    
+    const chem1 = chemicals[parseInt(chem1Idx)];
+    const chem2 = chemicals[parseInt(chem2Idx)];
+    
+    let reaction = '';
+    if (chem1.type === 'حمض' && chem2.type === 'قاعدة') {
+        reaction = 'تفاعل تعادل: ينتج ملح وماء';
+    } else if (chem1.type === 'حمض' && chem2.name.includes('كربونات')) {
+        reaction = 'تفاعل حمض مع كربونات: ينتج ملح وماء وثاني أكسيد الكربون';
+    } else if (chem1.type === 'قاعدة' && chem2.type === 'حمض') {
+        reaction = 'تفاعل تعادل: ينتج ملح وماء';
+    } else {
+        reaction = 'لا تفاعل كيميائي كبير بين هاتين المادتين';
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>المواد:</b> ${chem1.name} + ${chem2.name}<br>
+        <b>النوع:</b> ${chem1.type} + ${chem2.type}<br>
+        <b>النتيجة:</b> ${reaction}`;
+}
+
+// ELECTRICITY SIMULATORS
+function calculateOhmLaw() {
+    const v = parseFloat(document.getElementById('voltage').value);
+    const i = parseFloat(document.getElementById('current').value);
+    const r = parseFloat(document.getElementById('resistance').value);
+    const resultDiv = document.getElementById('ohmResult');
+    
+    let result = '';
+    if (!isNaN(v) && !isNaN(i) && isNaN(r)) {
+        result = `المقاومة R = V/I = ${v}/${i} = ${(v/i).toFixed(2)} Ω`;
+    } else if (!isNaN(v) && !isNaN(r) && isNaN(i)) {
+        result = `التيار I = V/R = ${v}/${r} = ${(v/r).toFixed(2)} A`;
+    } else if (!isNaN(i) && !isNaN(r) && isNaN(v)) {
+        result = `الجهد V = I×R = ${i}×${r} = ${(i*r).toFixed(2)} V`;
+    } else {
+        result = '⚠️ أدخل قيمتين فقط للحساب';
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = result;
+}
+
+function calculateKirchhoff() {
+    const r1 = parseFloat(document.getElementById('r1').value);
+    const r2 = parseFloat(document.getElementById('r2').value);
+    const v = parseFloat(document.getElementById('vSource').value);
+    const resultDiv = document.getElementById('kirchhoffResult');
+    
+    if (isNaN(r1) || isNaN(r2) || isNaN(v)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال جميع القيم';
+        return;
+    }
+    
+    const rTotal = r1 + r2;
+    const current = v / rTotal;
+    const v1 = current * r1;
+    const v2 = current * r2;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>المقاومة الكلية:</b> R = ${rTotal.toFixed(2)} Ω<br>
+        <b>التيار الكلي:</b> I = ${current.toFixed(4)} A<br>
+        <b>الجهد على R1:</b> V₁ = ${v1.toFixed(2)} V<br>
+        <b>الجهد على R2:</b> V₂ = ${v2.toFixed(2)} V<br>
+        <b>التحقق من كيرشوف:</b> V₁ + V₂ = ${(v1+v2).toFixed(2)} V`;
+}
+
+function deltaToStar() {
+    const r12 = parseFloat(document.getElementById('deltaR1').value);
+    const r23 = parseFloat(document.getElementById('deltaR2').value);
+    const r31 = parseFloat(document.getElementById('deltaR3').value);
+    const resultDiv = document.getElementById('deltaStarResult');
+    
+    if (isNaN(r12) || isNaN(r23) || isNaN(r31)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال جميع المقاومات';
+        return;
+    }
+    
+    const sum = r12 + r23 + r31;
+    const r1 = (r12 * r31) / sum;
+    const r2 = (r12 * r23) / sum;
+    const r3 = (r23 * r31) / sum;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>تحويل دلتا (Δ) إلى ستار (Y):</b><br>
+        R₁ = ${r1.toFixed(2)} Ω<br>
+        R₂ = ${r2.toFixed(2)} Ω<br>
+        R₃ = ${r3.toFixed(2)} Ω`;
+}
+
+// ARCHITECTURE SIMULATORS
+function calculateRoomArea() {
+    const length = parseFloat(document.getElementById('roomLength').value);
+    const width = parseFloat(document.getElementById('roomWidth').value);
+    const resultDiv = document.getElementById('roomAreaResult');
+    
+    if (isNaN(length) || isNaN(width)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال الطول والعرض';
+        return;
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `مساحة الغرفة = ${length} × ${width} = ${(length*width).toFixed(2)} م²`;
+}
+
+function calculateConcrete() {
+    const length = parseFloat(document.getElementById('concLength').value);
+    const width = parseFloat(document.getElementById('concWidth').value);
+    const height = parseFloat(document.getElementById('concHeight').value);
+    const resultDiv = document.getElementById('concreteResult');
+    
+    if (isNaN(length) || isNaN(width) || isNaN(height)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال جميع الأبعاد';
+        return;
+    }
+    
+    const volume = length * width * height;
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `حجم الخرسانة = ${length} × ${width} × ${height} = ${volume.toFixed(2)} م³`;
+}
+
+// CIVIL SIMULATORS
+function calculateColumnLoad() {
+    const area = parseFloat(document.getElementById('columnArea').value);
+    const strength = parseFloat(document.getElementById('concreteStrength').value);
+    const resultDiv = document.getElementById('columnLoadResult');
+    
+    if (isNaN(area) || isNaN(strength)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال جميع القيم';
+        return;
+    }
+    
+    const load = area * strength;
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `حمل العمود = ${area} × ${strength} = ${load.toFixed(2)} كجم`;
+}
+
+function calculateRoofSlope() {
+    const rise = parseFloat(document.getElementById('riseHeight').value);
+    const run = parseFloat(document.getElementById('runLength').value);
+    const resultDiv = document.getElementById('roofSlopeResult');
+    
+    if (isNaN(rise) || isNaN(run) || run === 0) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '⚠️ يرجى إدخال قيم صحيحة';
+        return;
+    }
+    
+    const slope = (rise / run) * 100;
+    const angle = Math.atan(rise / run) * 180 / Math.PI;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <b>ميل السقف:</b> ${slope.toFixed(2)}%<br>
+        <b>زاوية الميل:</b> ${angle.toFixed(2)}°`;
 }
 
 // STUDENT AUTH

@@ -16,21 +16,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
-from webauthn import (
-    generate_registration_options, verify_registration_response,
-    generate_authentication_options, verify_authentication_response,
-    options_to_json
-)
-from webauthn.helpers.structs import (
-    AuthenticatorSelectionCriteria, UserVerificationRequirement,
-    ResidentKeyRequirement
-)
-from webauthn.helpers import (
-    bytes_to_base64url, base64url_to_bytes,
-    parse_registration_credential_json,
-    parse_authentication_credential_json
-)
-import uuid
 import math
 
 app = Flask(__name__)
@@ -39,7 +24,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # ==========================================
-# إعداد قاعدة البيانات
+# Database Setup
 # ==========================================
 raw_db_url = os.environ.get('DATABASE_URL', 'sqlite:///academy_qa.db').strip()
 
@@ -76,7 +61,7 @@ ASSISTANT_PASSWORD = os.environ.get("ASSISTANT_PASSWORD", "AhmedAI")
 db = SQLAlchemy(app)
 
 # ==========================================
-# دالة حساب التقدير الأكاديمي
+# Grade Calculation
 # ==========================================
 def calculate_grade_estimation(score):
     try:
@@ -109,7 +94,6 @@ class Student(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     profile = db.relationship('UserProfile', backref='student', uselist=False)
-    credentials = db.relationship('WebAuthnCredential', backref='student', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -256,23 +240,6 @@ class UnifiedTask(db.Model):
             "is_wird": self.is_wird,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M") if self.updated_at else ""
-        }
-
-class WebAuthnCredential(db.Model):
-    __tablename__ = 'webauthn_credentials'
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    credential_id = db.Column(db.String(255), unique=True, nullable=False)
-    public_key = db.Column(db.Text, nullable=False)
-    sign_count = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "student_id": self.student_id,
-            "credential_id": self.credential_id,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
 class Favorite(db.Model):
@@ -876,9 +843,6 @@ def student_logout():
     try:
         session.pop('student_id', None)
         session.pop('student_name', None)
-        session.pop('webauthn_challenge', None)
-        session.pop('webauthn_username', None)
-        session.pop('webauthn_user_id', None)
         return jsonify({"status": "success", "message": "تم تسجيل الخروج بنجاح"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -1112,9 +1076,6 @@ def planner():
     student_name = session.get('student_name')
     return render_template('planner.html', student_id=student_id, student_name=student_name)
 
-# ==========================================
-# توليد الخطة العامة بواقعية واعتدال
-# ==========================================
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     try:
@@ -1140,22 +1101,22 @@ def generate_plan():
 
         system_instruction = (
             "You are a realistic academic study planner. DO NOT overwhelm the student.\n"
-            f"Workload Limit: {limit_desc}\n"
-            f"{wird_text}\n"
-            "STRICT RULES:\n"
-            "1. Output ONLY valid JSON: {'plans': [{'day_name': 'السبت', 'date': 'YYYY-MM-DD', 'is_off_day': false, 'tasks': [{'title': 'مهمة واقعية ومحددة', 'allocated_hours': 1.5}]}]}\n"
-            "2. Total daily study hours must NEVER exceed the limit specified above.\n"
-            "3. Only give 1 or 2 high-value distinct subjects per day. Do not repeat identical task names over and over.\n"
-            "4. Off days must have 'is_off_day': true and 'tasks': []."
+            + f"Workload Limit: {limit_desc}\n"
+            + f"{wird_text}\n"
+            + "STRICT RULES:\n"
+            + "1. Output ONLY valid JSON: {'plans': [{'day_name': 'السبت', 'date': 'YYYY-MM-DD', 'is_off_day': false, 'tasks': [{'title': 'مهمة واقعية ومحددة', 'allocated_hours': 1.5}]}]}\n"
+            + "2. Total daily study hours must NEVER exceed the limit specified above.\n"
+            + "3. Only give 1 or 2 high-value distinct subjects per day. Do not repeat identical task names over and over.\n"
+            + "4. Off days must have 'is_off_day': true and 'tasks': []."
         )
 
         user_prompt = (
             f"Start Date: {data.get('current_date')}\n"
-            f"Target Date: {data.get('target_date')}\n"
-            f"Subjects: {data.get('subjects')}\n"
-            f"Mode: {discipline}\n"
-            f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
-            f"Quran Wird: {'Yes, ' + str(wird_pages) + ' pages' if wird_enabled and wird_pages > 0 else 'No'}"
+            + f"Target Date: {data.get('target_date')}\n"
+            + f"Subjects: {data.get('subjects')}\n"
+            + f"Mode: {discipline}\n"
+            + f"Weekly Off-Days: {', '.join(data.get('off_days', []))}\n"
+            + f"Quran Wird: {'Yes, ' + str(wird_pages) + ' pages' if wird_enabled and wird_pages > 0 else 'No'}"
         )
 
         response = groq_client.chat.completions.create(
@@ -1229,7 +1190,7 @@ def reschedule_plan():
 
         user_prompt = (
             f"Missed Tasks: {json.dumps(missed, ensure_ascii=False)}\n"
-            f"Remaining Schedule: {json.dumps(remaining, ensure_ascii=False)}"
+            + f"Remaining Schedule: {json.dumps(remaining, ensure_ascii=False)}"
         )
 
         response = groq_client.chat.completions.create(
@@ -1550,212 +1511,6 @@ def add_or_update_progress():
                 db.session.commit()
 
         return jsonify({"status": "success", "progress": progress.to_dict()})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# ==========================================
-# WebAuthn (تسجيل الدخول بالبصمة)
-# ==========================================
-RP_ID = os.environ.get('RP_ID', 'amr-test-w4qb.onrender.com') 
-RP_NAME = "Amr Suhail Academy"
-ORIGIN = os.environ.get('ORIGIN', 'https://amr-test-w4qb.onrender.com')
-
-@app.route('/webauthn/register/begin', methods=['POST'])
-def webauthn_register_begin():
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        if not username:
-            return jsonify({"status": "error", "message": "اسم المستخدم مطلوب"}), 400
-
-        student = Student.query.filter_by(username=username).first()
-        if not student:
-            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
-
-        registration_options = generate_registration_options(
-            rp_id=RP_ID,
-            rp_name=RP_NAME,
-            user_id=str(student.id).encode(),
-            user_name=student.username,
-            user_display_name=student.name,
-            authenticator_selection=AuthenticatorSelectionCriteria(
-                user_verification=UserVerificationRequirement.PREFERRED,
-                resident_key=ResidentKeyRequirement.PREFERRED,
-            ),
-        )
-
-        challenge_b64 = bytes_to_base64url(registration_options.challenge)
-        user_id_b64 = bytes_to_base64url(registration_options.user.id)
-
-        session['webauthn_challenge'] = challenge_b64
-        session['webauthn_user_id'] = str(student.id)
-
-        return jsonify({
-            "status": "success",
-            "options": {
-                "challenge": challenge_b64,
-                "rp": {
-                    "name": registration_options.rp.name,
-                    "id": registration_options.rp.id,
-                },
-                "user": {
-                    "id": user_id_b64,
-                    "name": registration_options.user.name,
-                    "displayName": registration_options.user.display_name,
-                },
-                "pubKeyCredParams": [{"type": "public-key", "alg": -7}],
-                "authenticatorSelection": {
-                    "authenticatorAttachment": "platform",
-                    "residentKey": "preferred",
-                    "userVerification": "preferred",
-                },
-                "attestation": "none",
-                "excludeCredentials": [
-                    {"id": c.credential_id, "type": "public-key"}
-                    for c in WebAuthnCredential.query.filter_by(student_id=student.id).all()
-                ]
-            }
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/webauthn/register/complete', methods=['POST'])
-def webauthn_register_complete():
-    try:
-        data = request.get_json() or {}
-        user_id = session.get('webauthn_user_id')
-        challenge_b64 = session.get('webauthn_challenge')
-
-        if not user_id or not challenge_b64:
-            return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
-
-        student = Student.query.get(int(user_id))
-        if not student:
-            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
-
-        cred_dict = data.get('credential', {})
-        if 'rawId' not in cred_dict and 'id' in cred_dict:
-            cred_dict['rawId'] = cred_dict['id']
-
-        credential = parse_registration_credential_json(cred_dict)
-
-        verification = verify_registration_response(
-            credential=credential,
-            expected_challenge=base64url_to_bytes(challenge_b64),
-            expected_rp_id=RP_ID,
-            expected_origin=ORIGIN,
-            require_user_verification=False,
-        )
-
-        new_cred = WebAuthnCredential(
-            student_id=student.id,
-            credential_id=bytes_to_base64url(verification.credential_id),
-            public_key=verification.credential_public_key,
-            sign_count=verification.sign_count,
-        )
-        db.session.add(new_cred)
-        db.session.commit()
-
-        session.pop('webauthn_challenge', None)
-        session.pop('webauthn_user_id', None)
-
-        return jsonify({"status": "success", "message": "تم تسجيل البصمة بنجاح"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/webauthn/login/begin', methods=['POST'])
-def webauthn_login_begin():
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        if not username:
-            return jsonify({"status": "error", "message": "اسم المستخدم مطلوب"}), 400
-
-        student = Student.query.filter_by(username=username).first()
-        if not student:
-            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
-
-        credentials = WebAuthnCredential.query.filter_by(student_id=student.id).all()
-        if not credentials:
-            return jsonify({"status": "error", "message": "لا توجد بصمة مسجلة لهذا المستخدم"}), 400
-
-        authentication_options = generate_authentication_options(
-            rp_id=RP_ID,
-            allow_credentials=[
-                {"id": base64url_to_bytes(c.credential_id), "type": "public-key"}
-                for c in credentials
-            ],
-            user_verification=UserVerificationRequirement.PREFERRED,
-        )
-
-        challenge_b64 = bytes_to_base64url(authentication_options.challenge)
-        session['webauthn_challenge'] = challenge_b64
-        session['webauthn_username'] = username
-
-        return jsonify({
-            "status": "success",
-            "options": {
-                "challenge": challenge_b64,
-                "rpId": authentication_options.rp_id,
-                "allowCredentials": [
-                    {"id": c.credential_id, "type": "public-key"}
-                    for c in credentials
-                ],
-                "userVerification": "preferred",
-            }
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/webauthn/login/complete', methods=['POST'])
-def webauthn_login_complete():
-    try:
-        data = request.get_json() or {}
-        username = session.get('webauthn_username')
-        challenge_b64 = session.get('webauthn_challenge')
-
-        if not username or not challenge_b64:
-            return jsonify({"status": "error", "message": "انتهت الجلسة"}), 400
-
-        student = Student.query.filter_by(username=username).first()
-        if not student:
-            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
-
-        cred_dict = data.get('credential', {})
-        cred_id_str = cred_dict.get('id')
-        db_cred = WebAuthnCredential.query.filter_by(credential_id=cred_id_str).first()
-        if not db_cred:
-            return jsonify({"status": "error", "message": "البيانات غير صالحة"}), 400
-
-        if 'rawId' not in cred_dict and 'id' in cred_dict:
-            cred_dict['rawId'] = cred_dict['id']
-
-        credential = parse_authentication_credential_json(cred_dict)
-
-        verification = verify_authentication_response(
-            credential=credential,
-            expected_challenge=base64url_to_bytes(challenge_b64),
-            expected_rp_id=RP_ID,
-            expected_origin=ORIGIN,
-            credential_public_key=db_cred.public_key,
-            credential_current_sign_count=db_cred.sign_count,
-            require_user_verification=False,
-        )
-
-        db_cred.sign_count = verification.new_sign_count
-        db.session.commit()
-
-        session.permanent = True
-        session['student_id'] = student.id
-        session['student_name'] = student.name
-        session.pop('is_admin', None)
-        session.pop('is_assistant', None)
-        session.pop('webauthn_challenge', None)
-        session.pop('webauthn_username', None)
-
-        return jsonify({"status": "success", "student": student.to_dict()})
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500

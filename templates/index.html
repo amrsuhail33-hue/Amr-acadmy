@@ -45,22 +45,20 @@
         body { background-color: var(--bg-body); margin: 0; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; display: none !important; }
         
-        /* ===== NAVBAR (المطول) ===== */
-        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 20px 32px; z-index: 100; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02); min-height: 80px; } 
-        .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative; gap: 12px;}
-        .nav-logo { width: 50px; height: 50px; border-radius: 14px; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-        .nav-title { font-size: 1.5rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-shadow: 0 2px 10px rgba(37,99,235,0.1); }
-        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -12px; top: 8px; box-shadow: 0 0 8px var(--accent); }
-        .nav-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; flex-wrap: wrap; }
+        /* ===== NAVBAR (مصغر) ===== */
+        .navbar { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; z-index: 100; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0,0,0,0.02); min-height: 64px; } 
+        .navbar-brand-container { display: flex; align-items: center; cursor: pointer; user-select: none; position: relative; gap: 8px;}
+        .nav-logo { width: 38px; height: 38px; border-radius: 12px; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .nav-title { font-size: 1.2rem; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; font-family: 'Outfit', sans-serif; white-space: nowrap; text-shadow: 0 2px 10px rgba(37,99,235,0.1); }
+        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--accent); border-radius: 50%; position: absolute; right: -8px; top: 6px; box-shadow: 0 0 8px var(--accent); }
+        .nav-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
         
-        .user-pill { display: flex; align-items: center; background: var(--bg-card); border-radius: 50px; padding: 6px 18px 6px 6px; border: 1px solid var(--border); box-shadow: var(--card-shadow); gap: 12px; cursor: pointer; transition: 0.3s; }
-        .user-pill:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
-        .compact-user-pill { padding:4px !important; width:48px; height:48px; justify-content:center; border-radius:50%; }
-        .profile-letter { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; background:var(--gradient-profile); color:#fff; font-size:1.25rem; font-weight:900; font-family:'Tajawal',sans-serif; }
-        .compact-user-pill .profile-letter { border:2px solid var(--bg-card); }
-        .user-pill-name { font-weight: 800; color: var(--text-main); font-size: 1rem; white-space: nowrap; }
-        .profile-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: white; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; position: relative; }
-        .profile-btn .level-badge { position: absolute; bottom: -4px; right: -4px; background: var(--gold); color: #0f172a; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 50px; border: 2px solid var(--bg-card); min-width: 20px; text-align: center; }
+        .compact-user-pill { width: 42px; height: 42px; border-radius: 50%; background: var(--gradient-profile); border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--card-shadow); transition: 0.3s; }
+        .compact-user-pill:hover { transform: scale(1.05); border-color: var(--primary); }
+        .profile-letter { color: #fff; font-size: 1.2rem; font-weight: 900; font-family: 'Tajawal', sans-serif; }
+        
+        .navbar-contact { background: var(--primary); color: white; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; border: none; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .navbar-contact:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.3); }
         
         /* ===== MAIN ===== */
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
@@ -91,7 +89,7 @@
         .simulator-hub-copy h2 { margin:0 0 6px; font-size:1.35rem; font-weight:900; }
         .simulator-hub-copy p { margin:0; color:var(--text-muted); line-height:1.7; }
         .simulator-hub-arrow { color:var(--primary); font-size:1.25rem; }
-        @media (max-width:600px) { .navbar { padding:12px 14px; min-height:64px; } .nav-logo { width:40px; height:40px; } .nav-title { font-size:1.05rem; } .nav-actions { gap:6px; } .navbar-contact { padding:9px 11px !important; font-size:.82rem !important; } .user-pill { padding:4px 10px 4px 4px; gap:7px; } .user-pill-name { font-size:.82rem; max-width:120px; overflow:hidden; text-overflow:ellipsis; } .simulator-hub-card { padding:16px; gap:12px; } .simulator-hub-icon { width:50px; height:50px; flex-basis:50px; font-size:1.35rem; } .simulator-hub-copy h2 { font-size:1.05rem; } .simulator-hub-copy p { font-size:.82rem; } }
+        @media (max-width:600px) { .navbar { padding:8px 12px; min-height:56px; } .nav-logo { width:32px; height:32px; } .nav-title { font-size:0.95rem; } .compact-user-pill { width:36px; height:36px; } .simulator-hub-card { padding:16px; gap:12px; } .simulator-hub-icon { width:50px; height:50px; flex-basis:50px; font-size:1.35rem; } .simulator-hub-copy h2 { font-size:1.05rem; } .simulator-hub-copy p { font-size:.82rem; } }
         .search-box { margin-bottom: 30px; position: relative; max-width: 800px; margin-left: auto; margin-right: auto; }
         .search-box i { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem; pointer-events: none; }
         #searchInput { width: 100%; padding: 16px 55px 16px 20px; border-radius: 50px; border: 1px solid var(--border); font-size: 1rem; background: var(--bg-card); color: var(--text-main); transition: all 0.3s; box-shadow: var(--card-shadow); outline: none; }
@@ -195,6 +193,8 @@
         
         .footer { text-align: center; padding: 20px 20px; font-weight: 700; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--bg-card); margin-top: auto; }
         
+        /* ===== QUIZ FIX ===== */
+        .quiz-question-text { font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; line-height: 1.6; color: var(--text-main); }
         .quiz-opt { padding: 14px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 10px; background: var(--bg-card); color: var(--text-main); text-align: right; width: 100%; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
         .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); transform: translateX(-5px); }
         .quiz-opt.correct { background: var(--accent) !important; border-color: var(--accent) !important; color: white !important; }
@@ -329,7 +329,7 @@
 
 <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
 
-<!-- Navbar (المطول) -->
+<!-- Navbar (مصغر) -->
 <nav class="navbar">
     <div class="navbar-brand-container" onclick="handleSecretAdminClick()" title="لوحة الإدارة المخفية">
         <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="nav-logo">
@@ -338,11 +338,11 @@
     </div>
     <div class="nav-actions">
         {% if student_id %}
-            <button class="user-pill compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
+            <button class="compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
                 <span class="profile-letter">{{ (student_name or 'ط')[:1] }}</span>
             </button>
         {% else %}
-            <button onclick="togglePopup('loginBox')" class="navbar-contact primary-bg"><i class="fa-regular fa-user"></i> دخول الطالب</button>
+            <button onclick="togglePopup('loginBox')" class="navbar-contact"><i class="fa-regular fa-user"></i> دخول</button>
         {% endif %}
     </div>
 </nav>
@@ -737,7 +737,7 @@
     <!-- فقاعة المحاكيات: كل التجارب في مساحة مستقلة -->
     <a href="/simulators" class="simulator-hub-card">
         <div class="simulator-hub-icon"><i class="fa-solid fa-atom"></i></div>
-        <div class="simulator-hub-copy"><h2>مختبر المحاكيات التفاعلي</h2><p>حاسبة علمية، تكامل، ذرات متحركة، مختبر كيميائي ودوائر كهربائية مرئية في مكان واحد.</p></div>
+        <div class="simulator-hub-copy"><h2>مختبر المحاكيات التفاعلي المتكامل</h2><p>حاسبة علمية، تكامل، ذرات متحركة، مختبر كيميائي ودوائر كهربائية مرئية في مكان واحد.</p></div>
         <span class="simulator-hub-arrow"><i class="fa-solid fa-arrow-left"></i></span>
     </a>
 
@@ -846,7 +846,8 @@
                     <span id="qCount" style="color:var(--primary);"></span>
                     <button onclick="confirmEndQuiz()" style="color:var(--danger); background:rgba(239,68,68,0.1); padding:6px 14px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">إنهاء <i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
-                <h3 id="qText" style="margin-bottom:20px; line-height:1.6; font-size:1.1rem; color:var(--text-main);"></h3>
+                <!-- السؤال يظهر هنا كعنوان مستقل -->
+                <div id="qText" class="quiz-question-text"></div>
                 <div id="qOptions"></div>
                 <div id="quizExplanation" style="background:rgba(245,158,11,0.08); padding:16px; border-radius:12px; margin:16px 0; display:none; border-right:4px solid var(--warning);"></div>
                 <div style="display:flex; gap:10px; margin-top:25px; flex-wrap:wrap;">
@@ -1061,8 +1062,6 @@ async function loadProfile() {
             document.getElementById('statCompleted').innerText = data.stats.completed_tasks;
             document.getElementById('statTotal').innerText = data.stats.total_tasks;
             document.getElementById('statRate').innerText = data.stats.completion_rate + '%';
-            
-            if(document.getElementById('navLevelBadge')) document.getElementById('navLevelBadge').innerText = p.level;
             
             const achievements = data.achievements || [];
             const achievementBox = document.getElementById('achievementsGrid');
@@ -1919,7 +1918,7 @@ async function sendAIMessage() {
     b.scrollTop = b.scrollHeight;
 }
 
-// 🏆 QUIZ SYSTEM
+// 🏆 QUIZ SYSTEM (تم إصلاح مشكلة السؤال)
 let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
 
 async function startQuiz(chapter) {
@@ -1942,15 +1941,19 @@ async function startQuiz(chapter) {
             return;
         }
         
-        quizState.questions = data.map(q => ({
-            id: q.id,
-            q: q.question_text,
-            opts: [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x && x.trim() && x.trim() !== q.question_text.trim()),
-            ans_text: q.correct_answer,
-            explain: q.explanation || "",
-            status: 'unanswered',
-            selectedOpt: null
-        }));
+        // تصحيح: استبعاد الخيارات المطابقة لنص السؤال
+        quizState.questions = data.map(q => {
+            const opts = [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x && x.trim() && x.trim() !== q.question_text.trim());
+            return {
+                id: q.id,
+                q: q.question_text,
+                opts: opts.length > 0 ? opts : ["لا توجد خيارات متاحة"], // تأمين
+                ans_text: q.correct_answer,
+                explain: q.explanation || "",
+                status: 'unanswered',
+                selectedOpt: null
+            };
+        });
         
         document.getElementById('quiz-start').classList.add('hidden');
         document.getElementById('quiz-view').classList.remove('hidden');
@@ -1963,8 +1966,9 @@ async function startQuiz(chapter) {
 
 function loadQuestion() {
     const q = quizState.questions[quizState.currentQ];
+    if (!q) return;
     document.getElementById('qCount').innerHTML = `<i class="fa-solid fa-list-ol"></i> السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
-    document.getElementById('qText').innerText = q.q;
+    document.getElementById('qText').innerText = q.q;  // السؤال يظهر هنا
     document.getElementById('quizProgressBar').style.width = ((quizState.currentQ)/quizState.questions.length)*100 + '%';
     
     const optsDiv = document.getElementById('qOptions');

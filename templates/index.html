@@ -55,6 +55,9 @@
         
         .user-pill { display: flex; align-items: center; background: var(--bg-card); border-radius: 50px; padding: 6px 18px 6px 6px; border: 1px solid var(--border); box-shadow: var(--card-shadow); gap: 12px; cursor: pointer; transition: 0.3s; }
         .user-pill:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+        .compact-user-pill { padding:4px !important; width:48px; height:48px; justify-content:center; border-radius:50%; }
+        .profile-letter { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; background:var(--gradient-profile); color:#fff; font-size:1.25rem; font-weight:900; font-family:'Tajawal',sans-serif; }
+        .compact-user-pill .profile-letter { border:2px solid var(--bg-card); }
         .user-pill-name { font-weight: 800; color: var(--text-main); font-size: 1rem; white-space: nowrap; }
         .profile-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: white; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; position: relative; }
         .profile-btn .level-badge { position: absolute; bottom: -4px; right: -4px; background: var(--gold); color: #0f172a; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 50px; border: 2px solid var(--bg-card); min-width: 20px; text-align: center; }
@@ -335,13 +338,9 @@
     </div>
     <div class="nav-actions">
         {% if student_id %}
-            <div class="user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي">
-                <span class="user-pill-name">{{ student_name }}</span>
-                <div class="profile-btn">
-                    <i class="fa-regular fa-user"></i>
-                    <span class="level-badge" id="navLevelBadge">1</span>
-                </div>
-            </div>
+            <button class="user-pill compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
+                <span class="profile-letter">{{ (student_name or 'ط')[:1] }}</span>
+            </button>
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact primary-bg"><i class="fa-regular fa-user"></i> دخول الطالب</button>
         {% endif %}
@@ -1946,7 +1945,7 @@ async function startQuiz(chapter) {
         quizState.questions = data.map(q => ({
             id: q.id,
             q: q.question_text,
-            opts: [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x),
+            opts: [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x && x.trim() && x.trim() !== q.question_text.trim()),
             ans_text: q.correct_answer,
             explain: q.explanation || "",
             status: 'unanswered',

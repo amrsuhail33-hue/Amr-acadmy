@@ -6,30 +6,483 @@
 <meta name="theme-color" content="#07111f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>مختبر المحاكيات | أكاديمية عمرو</title>
+<title>مختبر المحاكيات المتكامل | أكاديمية عمرو</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-:root{--bg:#07111f;--panel:#0e1d31;--panel2:#132640;--line:#223a59;--text:#e9f1ff;--muted:#93a9c5;--blue:#56a7ff;--cyan:#35d5d0;--gold:#ffc857;--pink:#ff719a;--green:#65e6a4;--shadow:0 24px 70px #02091480}*{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% -10%,#163a64 0,transparent 34%),radial-gradient(circle at 10% 30%,#0b3140 0,transparent 28%),var(--bg);color:var(--text);font-family:Tajawal,system-ui,sans-serif;min-height:100vh}.shell{max-width:1240px;margin:auto;padding:0 20px 60px}.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:calc(14px + env(safe-area-inset-top)) 0 14px;background:#07111fe8;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:12px}.brandmark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),#6d5cff);box-shadow:0 10px 30px #438dff45;font-size:1.2rem}.brand h1{font-size:1.05rem;margin:0;font-weight:900}.brand small{display:block;color:var(--muted);font-size:.73rem;margin-top:2px}.top-actions{display:flex;gap:8px}.link-btn,.tab,.key,.select,.range{border:1px solid var(--line);background:#ffffff08;color:var(--text);border-radius:12px;cursor:pointer;font:inherit}.link-btn{padding:10px 13px;text-decoration:none;font-weight:800;font-size:.86rem}.link-btn:hover,.tab.active{border-color:var(--blue);background:#3186ed25}.hero{padding:56px 0 28px;display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}.eyebrow{color:var(--cyan);font-weight:900;letter-spacing:.8px}.hero h2{font-size:clamp(2.1rem,5vw,4.2rem);line-height:1.08;margin:12px 0}.hero h2 span{color:var(--blue)}.hero p{color:var(--muted);font-size:1.08rem;line-height:1.9;max-width:620px}.hero-art{min-height:250px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(145deg,#14345a,#0b1729);display:grid;place-items:center;box-shadow:var(--shadow);position:relative;overflow:hidden}.hero-art:after{content:'';position:absolute;width:220px;height:220px;border:1px solid #56a7ff55;border-radius:50%;box-shadow:0 0 0 22px #56a7ff0b,0 0 0 44px #56a7ff08}.hero-orb{width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,#1763c2 55%,#111bff);box-shadow:0 0 45px var(--cyan);z-index:1}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tab{padding:11px 16px;font-weight:800}.workspace{background:#ffffff05;border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:var(--shadow)}.sim-panel{display:none}.sim-panel.active{display:block;animation:rise .35s ease}@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.panel-head h3{margin:0;font-size:1.55rem}.panel-head p{color:var(--muted);margin:7px 0 0;line-height:1.7}.badge{padding:7px 10px;border-radius:10px;background:#ffc85718;color:var(--gold);font-size:.8rem;font-weight:900;white-space:nowrap}.calc-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.calculator,.control-card{background:#081524;border:1px solid var(--line);border-radius:20px;padding:16px}.display{width:100%;padding:17px 14px;min-height:65px;background:#030a13;color:var(--cyan);border:1px solid #1c4264;border-radius:14px;text-align:left;direction:ltr;font:800 1.45rem Outfit,monospace;margin-bottom:13px;overflow:auto}.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.key{min-height:46px;font-weight:800;font-size:1rem;transition:.15s}.key:hover{background:#56a7ff25;border-color:var(--blue);transform:translateY(-2px)}.key.op{color:var(--gold)}.key.equal{background:var(--blue);color:#04101f;border-color:var(--blue)}.key.danger{color:var(--pink)}.field-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:.85rem}.field input,.field select{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:#0d2035;color:var(--text);font:inherit;outline:none}.field input:focus,.field select:focus{border-color:var(--blue)}.primary{margin-top:13px;border:0;border-radius:12px;padding:13px 16px;background:linear-gradient(135deg,var(--blue),#6972ff);color:#fff;font:800 1rem Tajawal;cursor:pointer;width:100%}.result{margin-top:13px;padding:14px;border-radius:13px;background:#35d5d012;border:1px solid #35d5d033;color:#dffef5;line-height:1.9;min-height:50px}.canvas-wrap{background:#030a13;border:1px solid var(--line);border-radius:20px;padding:10px;min-height:330px;display:grid;place-items:center}.canvas-wrap canvas{width:100%;height:310px;touch-action:none}.slider-row{display:flex;align-items:center;gap:12px;margin:13px 0;color:var(--muted)}input[type=range]{accent-color:var(--blue);width:100%}.atom-layout,.circuit-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}.chem-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:15px}.element{min-height:74px;padding:8px;border:1px solid var(--line);border-radius:12px;background:#0a192b;cursor:pointer;transition:.2s}.element:hover,.element.selected{transform:translateY(-3px);border-color:var(--cyan);background:#35d5d012}.element b{display:block;color:var(--cyan);font:900 1.2rem Outfit}.element small{color:var(--muted);font-size:.7rem}.mixer{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{color:var(--muted);line-height:1.8;padding:12px;background:#ffffff06;border-radius:12px;margin-top:12px}.footer-note{color:var(--muted);text-align:center;margin:24px 0;font-size:.85rem}@media(max-width:800px){.hero{grid-template-columns:1fr;padding-top:32px}.hero-art{min-height:180px}.calc-layout,.atom-layout,.circuit-layout{grid-template-columns:1fr}.chem-grid{grid-template-columns:repeat(3,1fr)}.topbar{align-items:flex-start}.top-actions{flex-wrap:wrap;justify-content:flex-end}.workspace{padding:14px}.field-row{grid-template-columns:1fr}.keys{gap:6px}.key{min-height:42px}.shell{padding:0 12px 40px}}
+:root{--bg:#07111f;--panel:#0e1d31;--panel2:#132640;--line:#223a59;--text:#e9f1ff;--muted:#93a9c5;--blue:#56a7ff;--cyan:#35d5d0;--gold:#ffc857;--pink:#ff719a;--green:#65e6a4;--shadow:0 24px 70px #02091480}*{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% -10%,#163a64 0,transparent 34%),radial-gradient(circle at 10% 30%,#0b3140 0,transparent 28%),var(--bg);color:var(--text);font-family:Tajawal,system-ui,sans-serif;min-height:100vh}.shell{max-width:1240px;margin:auto;padding:0 20px 60px}.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:calc(14px + env(safe-area-inset-top)) 0 14px;background:#07111fe8;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:12px}.brandmark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),#6d5cff);box-shadow:0 10px 30px #438dff45;font-size:1.2rem}.brand h1{font-size:1.05rem;margin:0;font-weight:900}.brand small{display:block;color:var(--muted);font-size:.73rem;margin-top:2px}.top-actions{display:flex;gap:8px}.link-btn,.tab,.key,.select,.range{border:1px solid var(--line);background:#ffffff08;color:var(--text);border-radius:12px;cursor:pointer;font:inherit}.link-btn{padding:10px 13px;text-decoration:none;font-weight:800;font-size:.86rem}.link-btn:hover,.tab.active{border-color:var(--blue);background:#3186ed25}.hero{padding:56px 0 28px;display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}.eyebrow{color:var(--cyan);font-weight:900;letter-spacing:.8px}.hero h2{font-size:clamp(2.1rem,5vw,4.2rem);line-height:1.08;margin:12px 0}.hero h2 span{color:var(--blue)}.hero p{color:var(--muted);font-size:1.08rem;line-height:1.9;max-width:620px}.hero-art{min-height:250px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(145deg,#14345a,#0b1729);display:grid;place-items:center;box-shadow:var(--shadow);position:relative;overflow:hidden}.hero-art:after{content:'';position:absolute;width:220px;height:220px;border:1px solid #56a7ff55;border-radius:50%;box-shadow:0 0 0 22px #56a7ff0b,0 0 0 44px #56a7ff08}.hero-orb{width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,#1763c2 55%,#111bff);box-shadow:0 0 45px var(--cyan);z-index:1}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tab{padding:11px 16px;font-weight:800}.workspace{background:#ffffff05;border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:var(--shadow)}.sim-panel{display:none}.sim-panel.active{display:block;animation:rise .35s ease}@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.panel-head h3{margin:0;font-size:1.55rem}.panel-head p{color:var(--muted);margin:7px 0 0;line-height:1.7}.badge{padding:7px 10px;border-radius:10px;background:#ffc85718;color:var(--gold);font-size:.8rem;font-weight:900;white-space:nowrap}.calc-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.calculator,.control-card{background:#081524;border:1px solid var(--line);border-radius:20px;padding:16px}.display{width:100%;padding:17px 14px;min-height:65px;background:#030a13;color:var(--cyan);border:1px solid #1c4264;border-radius:14px;text-align:left;direction:ltr;font:800 1.45rem Outfit,monospace;margin-bottom:13px;overflow:auto}.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.key{min-height:46px;font-weight:800;font-size:1rem;transition:.15s}.key:hover{background:#56a7ff25;border-color:var(--blue);transform:translateY(-2px)}.key.op{color:var(--gold)}.key.equal{background:var(--blue);color:#04101f;border-color:var(--blue)}.key.danger{color:var(--pink)}.field-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:.85rem}.field input,.field select{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:#0d2035;color:var(--text);font:inherit;outline:none}.field input:focus,.field select:focus{border-color:var(--blue)}.primary{margin-top:13px;border:0;border-radius:12px;padding:13px 16px;background:linear-gradient(135deg,var(--blue),#6972ff);color:#fff;font:800 1rem Tajawal;cursor:pointer;width:100%}.result{margin-top:13px;padding:14px;border-radius:13px;background:#35d5d012;border:1px solid #35d5d033;color:#dffef5;line-height:1.9;min-height:50px}.canvas-wrap{background:#030a13;border:1px solid var(--line);border-radius:20px;padding:10px;min-height:330px;display:grid;place-items:center}.canvas-wrap canvas{width:100%;height:310px;touch-action:none}.slider-row{display:flex;align-items:center;gap:12px;margin:13px 0;color:var(--muted)}input[type=range]{accent-color:var(--blue);width:100%}.atom-layout,.circuit-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}.chem-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:15px}.element{min-height:74px;padding:8px;border:1px solid var(--line);border-radius:12px;background:#0a192b;cursor:pointer;transition:.2s}.element:hover,.element.selected{transform:translateY(-3px);border-color:var(--cyan);background:#35d5d012}.element b{display:block;color:var(--cyan);font:900 1.2rem Outfit}.element small{color:var(--muted);font-size:.7rem}.mixer{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{color:var(--muted);line-height:1.8;padding:12px;background:#ffffff06;border-radius:12px;margin-top:12px}.footer-note{color:var(--muted);text-align:center;margin:24px 0;font-size:.85rem}.phet-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-top:20px}.phet-card{background:#0a192b;border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;transition:.3s}.phet-card:hover{transform:translateY(-6px);border-color:var(--blue);box-shadow:0 12px 30px #00000055}.phet-card i{font-size:2.5rem;color:var(--blue);margin-bottom:12px}.phet-card h4{color:var(--text);margin:6px 0}.phet-card p{font-size:.85rem;color:var(--muted);margin:6px 0 12px}.phet-card a{color:var(--cyan);text-decoration:none;font-weight:800}.phet-card a:hover{color:var(--gold)}.arch-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.arch-tool-btn{padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);cursor:pointer;font-weight:700;transition:.2s}.arch-tool-btn.active,.arch-tool-btn:hover{border-color:var(--blue);background:#3186ed25}@media(max-width:800px){.hero{grid-template-columns:1fr;padding-top:32px}.hero-art{min-height:180px}.calc-layout,.atom-layout,.circuit-layout{grid-template-columns:1fr}.chem-grid{grid-template-columns:repeat(3,1fr)}.topbar{align-items:flex-start}.top-actions{flex-wrap:wrap;justify-content:flex-end}.workspace{padding:14px}.field-row{grid-template-columns:1fr}.keys{gap:6px}.key{min-height:42px}.shell{padding:0 12px 40px}}
 </style>
 </head>
 <body>
 <div class="shell">
-<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><i class="fa-solid fa-atom"></i></div><div><h1>أكاديمية عمرو</h1><small>مختبر المحاكيات التفاعلي</small></div></a><div class="top-actions"><a class="link-btn" href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>{% if student_id %}<a class="link-btn" href="/#profile"><i class="fa-solid fa-user"></i> حسابي</a>{% endif %}</div></header>
-<section class="hero"><div><div class="eyebrow">تعلّم بالتجربة، لا بالحفظ</div><h2>مختبرك العلمي<br><span>بين يديك</span></h2><p>محاكيات مرئية وتفاعلية تساعدك على فهم الفكرة من خلال الحركة والقياس والتجربة. صُممت لتعمل بسلاسة على الهاتف والكمبيوتر.</p></div><div class="hero-art"><div class="hero-orb"></div></div></section>
-<div class="toolbar"><button class="tab active" data-tab="math"><i class="fa-solid fa-calculator"></i> الرياضيات</button><button class="tab" data-tab="chem"><i class="fa-solid fa-atom"></i> الكيمياء والذرة</button><button class="tab" data-tab="electric"><i class="fa-solid fa-bolt"></i> الكهرباء</button><button class="tab" data-tab="architecture"><i class="fa-solid fa-cubes"></i> العمارة</button></div>
+<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><i class="fa-solid fa-atom"></i></div><div><h1>أكاديمية عمرو</h1><small>مختبر المحاكيات المتكامل</small></div></a><div class="top-actions"><a class="link-btn" href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>{% if student_id %}<a class="link-btn" href="/#profile"><i class="fa-solid fa-user"></i> حسابي</a>{% endif %}</div></header>
+<section class="hero"><div><div class="eyebrow">تعلّم بالتجربة، لا بالحفظ</div><h2>مختبرك العلمي<br><span>بين يديك</span></h2><p>محاكيات مرئية وتفاعلية تشمل الرياضيات المتقدمة، الكيمياء، الكهرباء، العمارة، ومحاكيات Phet الشهيرة.</p></div><div class="hero-art"><div class="hero-orb"></div></div></section>
+<div class="toolbar"><button class="tab active" data-tab="math"><i class="fa-solid fa-calculator"></i> الرياضيات</button><button class="tab" data-tab="chem"><i class="fa-solid fa-atom"></i> الكيمياء</button><button class="tab" data-tab="electric"><i class="fa-solid fa-bolt"></i> الكهرباء</button><button class="tab" data-tab="architecture"><i class="fa-solid fa-cubes"></i> العمارة</button><button class="tab" data-tab="phet"><i class="fa-solid fa-flask"></i> منوع (Phet)</button></div>
 <main class="workspace">
-<section id="math" class="sim-panel active"><div class="panel-head"><div><h3>الحاسبة العلمية والتكامل</h3><p>استخدم الأزرار بدل الكتابة. تشمل المثلثات واللوغاريتمات والأسس والتكامل العددي.</p></div><span class="badge">رياضيات تفاعلية</span></div><div class="toolbar math-modes"><button class="tab math-mode active" data-mode="normal">حساب عادي</button><button class="tab math-mode" data-mode="diff">تفاضل</button><button class="tab math-mode" data-mode="integral">تكامل</button></div><div id="mathModeHint" class="notice">الوضع الحالي: حساب عادي باستخدام لوحة الأزرار العلمية.</div><div class="calc-layout"><div class="calculator"><div id="calcDisplay" class="display">0</div><div class="keys"><button class="key danger" data-action="clear">AC</button><button class="key op" data-action="back">⌫</button><button class="key op" data-value="(">(</button><button class="key op" data-value=")">)</button><button class="key op" data-value="÷">÷</button><button class="key" data-value="7">7</button><button class="key" data-value="8">8</button><button class="key" data-value="9">9</button><button class="key op" data-value="×">×</button><button class="key op" data-value="^">xʸ</button><button class="key" data-value="4">4</button><button class="key" data-value="5">5</button><button class="key" data-value="6">6</button><button class="key op" data-value="−">−</button><button class="key op" data-value="√(">√</button><button class="key" data-value="1">1</button><button class="key" data-value="2">2</button><button class="key" data-value="3">3</button><button class="key op" data-value="+">+</button><button class="key op" data-value="sin(">sin</button><button class="key" data-value="0">0</button><button class="key" data-value=".">.</button><button class="key op" data-value="π">π</button><button class="key equal" data-action="equal">=</button><button class="key op" data-value="cos(">cos</button><button class="key op" data-value="tan(">tan</button><button class="key op" data-value="log10(">log</button></div></div><div class="control-card" id="calculusCard"><h4>التفاضل والتكامل</h4><p class="notice">اختر نوع التكامل ثم استخدم الأزرار والحقل العلمي. يمكن حساب التكامل المحدد عدديًا، أو إظهار صيغة غير محددة لكثيرات الحدود.</p><div class="toolbar integral-modes"><button class="link-btn integral-mode active" data-integral="definite">تكامل محدد</button><button class="link-btn integral-mode" data-integral="indefinite">تكامل غير محدد</button></div><div id="intBounds" class="field-row"><label class="field">الدالة<input id="intFn" value="x^2"></label><label class="field">من<input id="intA" type="number" value="0"></label><label class="field">إلى<input id="intB" type="number" value="3"></label></div><button class="primary" id="integrateBtn">احسب التكامل</button><div id="intResult" class="result">النتيجة ستظهر هنا</div><div id="indefiniteTool" style="display:none;margin-top:18px"><h4>التكامل غير المحدد</h4><div id="indefiniteResult" class="result">ستظهر الصيغة هنا</div></div><div id="derivativeTool" style="display:none;margin-top:18px"><h4>اشتقاق دالة</h4><p class="notice">أدخل دالة بسيطة مثل x^3 + 2*x أو اختر زرًا جاهزًا.</p><label class="field">الدالة<input id="diffFn" value="x^3 + 2*x"></label><button class="primary" id="differentiateBtn">احسب المشتقة</button><div id="diffResult" class="result">النتيجة ستظهر هنا</div></div><h4 style="margin-top:22px">دوال سريعة</h4><div class="toolbar"><button class="link-btn preset" data-fn="x^2">x²</button><button class="link-btn preset" data-fn="sin(x)">sin(x)</button><button class="link-btn preset" data-fn="1/x">1/x</button></div></div></div></section>
-<section id="chem" class="sim-panel"><div class="panel-head"><div><h3>الذرة والجدول الدوري</h3><p>اضغط على أي عنصر لترى نواته وإلكتروناته في مدارات متحركة، ثم جرّب مزج المواد في المختبر.</p></div><span class="badge">مختبر كيميائي</span></div><div class="atom-layout"><div class="canvas-wrap"><canvas id="atomCanvas"></canvas></div><div class="control-card"><div id="elementInfo" class="result">اختر عنصرًا من الجدول لتبدأ التجربة.</div><div class="slider-row"><span>سرعة الإلكترونات</span><input id="atomSpeed" type="range" min=".2" max="3" step=".1" value="1"><b id="atomSpeedVal">1×</b></div><h4>عناصر شائعة</h4><div id="elementsGrid" class="chem-grid"></div></div></div><div class="control-card" style="margin-top:18px"><h4><i class="fa-solid fa-vial"></i> مختبر المزج الآمن</h4><div class="mixer"><label class="field">المادة الأولى<select id="chemA"><option value="acid">حمض الهيدروكلوريك HCl</option><option value="base">هيدروكسيد الصوديوم NaOH</option><option value="carbonate">كربونات الكالسيوم CaCO₃</option><option value="water">ماء H₂O</option></select></label><label class="field">المادة الثانية<select id="chemB"><option value="base">هيدروكسيد الصوديوم NaOH</option><option value="acid">حمض الهيدروكلوريك HCl</option><option value="carbonate">كربونات الكالسيوم CaCO₃</option><option value="water">ماء H₂O</option></select></label></div><button class="primary" id="mixBtn">ابدأ التفاعل</button><div id="mixResult" class="result">اختر مادتين ثم ابدأ التفاعل.</div></div></section>
-<section id="electric" class="sim-panel"><div class="panel-head"><div><h3>مختبر الدوائر الكهربائية</h3><p>غيّر مصدر الجهد والمقاومة وشاهد التيار والقدرة وتوهج المصباح مباشرةً على الدائرة.</p></div><span class="badge">محاكاة قانون أوم</span></div><div class="circuit-layout"><div class="canvas-wrap"><canvas id="circuitCanvas"></canvas></div><div class="control-card"><label class="field">الجهد V <input id="voltageCtrl" type="range" min="0" max="24" step=".5" value="12"></label><div class="slider-row"><span>القيمة</span><b id="voltageVal">12 V</b></div><label class="field">المقاومة R <input id="resistanceCtrl" type="range" min="1" max="100" step="1" value="12"></label><div class="slider-row"><span>القيمة</span><b id="resistanceVal">12 Ω</b></div><div id="circuitStats" class="result"></div><button class="primary" id="toggleCircuit"><i class="fa-solid fa-power-off"></i> تشغيل/إيقاف الدائرة</button><div class="notice">المحاكاة توضح دائرة توالٍ تعليمية: I = V ÷ R و P = V × I. حرّك القيم ولاحظ تغير شدة التيار واللمبة.</div></div></div></section><section id="architecture" class="sim-panel"><div class="panel-head"><div><h3>محاكي العمارة والتخطيط</h3><p>ارسم شبكة غرفة ثنائية الأبعاد، غيّر الأبعاد، وأضف الأبواب والنوافذ والأثاث ثم شاهد تقدير المساحة.</p></div><span class="badge">تخطيط 2D</span></div><div class="circuit-layout"><div class="canvas-wrap"><canvas id="roomCanvas"></canvas></div><div class="control-card"><div class="field-row"><label class="field">الطول بالمتر<input id="roomL" type="range" min="2" max="15" step=".5" value="6"></label><label class="field">العرض بالمتر<input id="roomW" type="range" min="2" max="12" step=".5" value="4"></label></div><div class="slider-row"><span>الأبعاد</span><b id="roomDims">6 × 4 م</b></div><div class="toolbar"><button class="link-btn room-tool active" data-tool="door">باب</button><button class="link-btn room-tool" data-tool="window">نافذة</button><button class="link-btn room-tool" data-tool="desk">أثاث</button></div><button class="primary" id="addRoomItem">أضف العنصر إلى المخطط</button><div id="roomResult" class="result">المساحة: 24 م²<br>المحيط: 20 م</div><div class="notice">اضغط زر الإضافة لوضع عناصر على المخطط. هذا نموذج تعليمي قابل للتوسعة إلى عرض ثلاثي الأبعاد لاحقًا.</div></div></div></section></main><p class="footer-note">كل تجربة ناجحة يمكن أن تمنحك نقاطًا وتفتح إنجازات جديدة عند تسجيل الدخول.</p>
+<!-- ========== الرياضيات المتطورة ========== -->
+<section id="math" class="sim-panel active"><div class="panel-head"><div><h3>الحاسبة العلمية والتفاضل والتكامل</h3><p>استخدم الأزرار للكتابة، واختر وضع التشغيل: حساب عادي، تفاضل، أو تكامل (محدد أو غير محدد).</p></div><span class="badge">رياضيات متقدمة</span></div><div class="toolbar math-modes"><button class="tab math-mode active" data-mode="normal">حساب عادي</button><button class="tab math-mode" data-mode="diff">تفاضل</button><button class="tab math-mode" data-mode="integral">تكامل</button></div><div id="mathModeHint" class="notice">الوضع الحالي: حساب عادي باستخدام لوحة الأزرار العلمية.</div><div class="calc-layout"><div class="calculator"><div id="calcDisplay" class="display">0</div><div class="keys"><button class="key danger" data-action="clear">AC</button><button class="key op" data-action="back">⌫</button><button class="key op" data-value="(">(</button><button class="key op" data-value=")">)</button><button class="key op" data-value="÷">÷</button><button class="key" data-value="7">7</button><button class="key" data-value="8">8</button><button class="key" data-value="9">9</button><button class="key op" data-value="×">×</button><button class="key op" data-value="^">xʸ</button><button class="key" data-value="4">4</button><button class="key" data-value="5">5</button><button class="key" data-value="6">6</button><button class="key op" data-value="−">−</button><button class="key op" data-value="√(">√</button><button class="key" data-value="1">1</button><button class="key" data-value="2">2</button><button class="key" data-value="3">3</button><button class="key op" data-value="+">+</button><button class="key op" data-value="sin(">sin</button><button class="key" data-value="0">0</button><button class="key" data-value=".">.</button><button class="key op" data-value="π">π</button><button class="key equal" data-action="equal">=</button><button class="key op" data-value="cos(">cos</button><button class="key op" data-value="tan(">tan</button><button class="key op" data-value="log10(">log</button></div></div><div class="control-card" id="calculusCard"><h4>التفاضل والتكامل</h4><p class="notice">اختر نوع العملية، ثم استخدم الحاسبة لكتابة الدالة.</p><div class="toolbar integral-modes"><button class="link-btn integral-mode active" data-integral="definite">تكامل محدد</button><button class="link-btn integral-mode" data-integral="indefinite">تكامل غير محدد</button></div><div id="intBounds" class="field-row"><label class="field">الدالة<input id="intFn" value="x^2"></label><label class="field">من<input id="intA" type="number" value="0"></label><label class="field">إلى<input id="intB" type="number" value="3"></label></div><button class="primary" id="integrateBtn">احسب التكامل (عددي)</button><div id="intResult" class="result">النتيجة ستظهر هنا</div><div id="indefiniteTool" style="display:none;margin-top:18px"><h4>التكامل غير المحدد</h4><div id="indefiniteResult" class="result">ستظهر الصيغة هنا</div></div><div id="derivativeTool" style="display:none;margin-top:18px"><h4>اشتقاق دالة</h4><p class="notice">أدخل دالة باستخدام الحاسبة أو اكتبها يدوياً (مثل: x^3 + 2*x).</p><label class="field">الدالة<input id="diffFn" value="x^3 + 2*x"></label><button class="primary" id="differentiateBtn">احسب المشتقة</button><div id="diffResult" class="result">النتيجة ستظهر هنا</div></div><h4 style="margin-top:22px">دوال سريعة</h4><div class="toolbar"><button class="link-btn preset" data-fn="x^2">x²</button><button class="link-btn preset" data-fn="sin(x)">sin(x)</button><button class="link-btn preset" data-fn="1/x">1/x</button></div></div></div></section>
+<!-- ========== الكيمياء المتطورة ========== -->
+<section id="chem" class="sim-panel"><div class="panel-head"><div><h3>الجدول الدوري والمختبر الكيميائي</h3><p>اضغط على عنصر لترى تفاصيله، ثم جرّب مزج المواد في المختبر المتقدم.</p></div><span class="badge">مختبر كيميائي</span></div><div class="atom-layout"><div class="canvas-wrap"><canvas id="atomCanvas"></canvas></div><div class="control-card"><div id="elementInfo" class="result">اختر عنصراً من الجدول لترى نموذج الذرة.</div><div class="slider-row"><span>سرعة الإلكترونات</span><input id="atomSpeed" type="range" min=".2" max="3" step=".1" value="1"><b id="atomSpeedVal">1×</b></div><h4>عناصر شائعة</h4><div id="elementsGrid" class="chem-grid"></div></div></div><div class="control-card" style="margin-top:18px"><h4><i class="fa-solid fa-vial"></i> مختبر المزج الآمن</h4><div class="mixer"><label class="field">المادة الأولى<select id="chemA"><option value="acid">حمض الهيدروكلوريك HCl</option><option value="base">هيدروكسيد الصوديوم NaOH</option><option value="carbonate">كربونات الكالسيوم CaCO₃</option><option value="water">ماء H₂O</option><option value="salt">كلوريد الصوديوم NaCl</option></select></label><label class="field">المادة الثانية<select id="chemB"><option value="base">هيدروكسيد الصوديوم NaOH</option><option value="acid">حمض الهيدروكلوريك HCl</option><option value="carbonate">كربونات الكالسيوم CaCO₃</option><option value="water">ماء H₂O</option><option value="salt">كلوريد الصوديوم NaCl</option></select></label></div><button class="primary" id="mixBtn">ابدأ التفاعل</button><div id="mixResult" class="result">اختر مادتين ثم ابدأ التفاعل.</div></div></section>
+<!-- ========== الكهرباء ========== -->
+<section id="electric" class="sim-panel"><div class="panel-head"><div><h3>مختبر الدوائر الكهربائية</h3><p>غيّر الجهد والمقاومة وشاهد التيار والقدرة وتوهج المصباح.</p></div><span class="badge">قانون أوم</span></div><div class="circuit-layout"><div class="canvas-wrap"><canvas id="circuitCanvas"></canvas></div><div class="control-card"><label class="field">الجهد V <input id="voltageCtrl" type="range" min="0" max="24" step=".5" value="12"></label><div class="slider-row"><span>القيمة</span><b id="voltageVal">12 V</b></div><label class="field">المقاومة R <input id="resistanceCtrl" type="range" min="1" max="100" step="1" value="12"></label><div class="slider-row"><span>القيمة</span><b id="resistanceVal">12 Ω</b></div><div id="circuitStats" class="result"></div><button class="primary" id="toggleCircuit"><i class="fa-solid fa-power-off"></i> تشغيل/إيقاف الدائرة</button><div class="notice">المحاكاة توضح دائرة توالٍ تعليمية: I = V ÷ R و P = V × I.</div></div></div></section>
+<!-- ========== العمارة المتطورة ========== -->
+<section id="architecture" class="sim-panel"><div class="panel-head"><div><h3>محاكي العمارة والتخطيط (3D)</h3><p>ارسم مخططاً تفاعلياً، وأضف الأبواب والنوافذ والأثاث بالنقر على المخطط.</p></div><span class="badge">تخطيط احترافي</span></div><div class="circuit-layout"><div class="canvas-wrap"><canvas id="roomCanvas"></canvas></div><div class="control-card"><div class="field-row"><label class="field">الطول بالمتر<input id="roomL" type="range" min="2" max="15" step=".5" value="6"></label><label class="field">العرض بالمتر<input id="roomW" type="range" min="2" max="12" step=".5" value="4"></label></div><div class="slider-row"><span>الأبعاد</span><b id="roomDims">6 × 4 م</b></div><div class="arch-tools"><button class="arch-tool-btn active" data-tool="wall">حائط</button><button class="arch-tool-btn" data-tool="door">باب</button><button class="arch-tool-btn" data-tool="window">نافذة</button><button class="arch-tool-btn" data-tool="desk">أثاث</button></div><div class="notice">اختر أداة، ثم اضغط على المخطط لإضافة العنصر في المكان المحدد.</div><div id="roomResult" class="result">المساحة: 24 م²<br>المحيط: 20 م</div></div></div></section>
+<!-- ========== منوع (Phet) ========== -->
+<section id="phet" class="sim-panel"><div class="panel-head"><div><h3>محاكيات Phet التفاعلية</h3><p>مجموعة من أشهر محاكيات الفيزياء والكيمياء من جامعة كولورادو.</p></div><span class="badge">مرجع علمي</span></div><div class="phet-grid"><div class="phet-card"><i class="fa-solid fa-bolt"></i><h4>دائرة كهربائية</h4><p>بناء دوائر كهربائية وقياس التيار والجهد.</p><a href="https://phet.colorado.edu/sims/html/circuit-construction-kit-dc/latest/circuit-construction-kit-dc_ar.html" target="_blank">جرب المحاكي <i class="fa-solid fa-arrow-left"></i></a></div><div class="phet-card"><i class="fa-solid fa-flask"></i><h4>معايرة الحموضة</h4><p>محاكاة معايرة حمض-قاعدة مع مؤشرات.</p><a href="https://phet.colorado.edu/sims/html/acid-base-solutions/latest/acid-base-solutions_ar.html" target="_blank">جرب المحاكي <i class="fa-solid fa-arrow-left"></i></a></div><div class="phet-card"><i class="fa-solid fa-mountain"></i><h4>الحركة والاصطدام</h4><p>محاكاة حركة الكتل والاصطدامات المرنة.</p><a href="https://phet.colorado.edu/sims/html/collision-lab/latest/collision-lab_ar.html" target="_blank">جرب المحاكي <i class="fa-solid fa-arrow-left"></i></a></div><div class="phet-card"><i class="fa-solid fa-sun"></i><h4>الطاقة المتجددة</h4><p>محاكاة الطاقة الشمسية وطاقة الرياح.</p><a href="https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_ar.html" target="_blank">جرب المحاكي <i class="fa-solid fa-arrow-left"></i></a></div></div></section>
+</main><p class="footer-note">كل تجربة ناجحة يمكن أن تمنحك نقاطاً وتفتح إنجازات جديدة عند تسجيل الدخول.</p>
 </div>
 <script>
-const loggedIn={{ 'true' if student_id else 'false' }};let activeTab='math';const $=id=>document.getElementById(id);let mathMode='normal';function setMathMode(mode){mathMode=mode;document.querySelectorAll('.math-mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));const card=$('calculusCard'),diff=$('derivativeTool'),hint=$('mathModeHint');if(mode==='normal'){card.style.display='none';hint.textContent='الوضع الحالي: حساب عادي باستخدام لوحة الأزرار العلمية.'}else{card.style.display='block';diff.style.display=mode==='diff'?'block':'none';hint.textContent=mode==='diff'?'الوضع الحالي: تفاضل دالة واستخراج المشتقة الأولى.':'الوضع الحالي: تكامل؛ اختر محددًا بالفترة أو غير محدد.'}}let integralMode='definite';function setIntegralMode(mode){integralMode=mode;document.querySelectorAll('.integral-mode').forEach(b=>b.classList.toggle('active',b.dataset.integral===mode));$('intBounds').style.display=mode==='definite'?'grid':'none';$('integrateBtn').style.display=mode==='definite'?'block':'none';$('intResult').style.display=mode==='definite'?'block':'none';$('indefiniteTool').style.display=mode==='indefinite'?'block':'none';if(mode==='indefinite')try{$('indefiniteResult').textContent='∫ '+$('intFn').value+' dx = '+integratePolynomial($('intFn').value)+' + C'}catch{$('indefiniteResult').textContent='استخدم كثيرات حدود بصيغة x^3 + 2*x'}}function integratePolynomial(raw){const terms=raw.replace(/\s+/g,'').replace(/−/g,'-').match(/[+-]?[^+-]+/g)||[],out=[];for(const term of terms){const m=term.match(/^([+-]?)(\d*(?:\.\d+)?)?x(?:\^(\d+))?$/);if(m){const sign=m[1]==='-'?-1:1,c=(m[2]?Number(m[2]):1)*sign,p=m[3]?Number(m[3]):1,n=p+1,k=c/n;out.push((k<0?' - ':' + ')+Math.abs(k)+'x'+(n===1?'':`^${n}`))}else if(!/[x]/.test(term)){const n=Number(term);if(!Number.isNaN(n))out.push((n<0?' - ':' + ')+Math.abs(n)+'x')}}return out.join('').replace(/^ \+ /,'')||'0'}document.querySelectorAll('.integral-mode').forEach(b=>b.onclick=()=>setIntegralMode(b.dataset.integral));document.querySelectorAll('.math-mode').forEach(b=>b.onclick=()=>setMathMode(b.dataset.mode));setMathMode('normal');
-async function reward(activity){if(!loggedIn)return;try{await fetch('/api/simulators/activity',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({activity})})}catch(e){}}
-function switchTab(id){activeTab=id;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.sim-panel').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='chem')resizeCanvas($('atomCanvas'),drawAtom);if(id==='electric')resizeCanvas($('circuitCanvas'),drawCircuit);if(id==='architecture')resizeCanvas($('roomCanvas'),drawRoom)}document.querySelectorAll('.tab[data-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-let expr='';function renderCalc(){ $('calcDisplay').textContent=expr||'0'}function safeEval(s){s=s.replaceAll('×','*').replaceAll('÷','/').replaceAll('−','-').replaceAll('π','Math.PI').replaceAll('^','**').replaceAll('√(','Math.sqrt(').replaceAll('sin(','Math.sin(').replaceAll('cos(','Math.cos(').replaceAll('tan(','Math.tan(').replaceAll('log10(','Math.log10(');if(!/^[0-9+\-*/().\sA-Za-z*]+$/.test(s))throw Error();return Function('"use strict";return ('+s+')')()}document.querySelectorAll('.key').forEach(k=>k.onclick=()=>{if(k.dataset.action==='clear')expr='';else if(k.dataset.action==='back')expr=expr.slice(0,-1);else if(k.dataset.action==='equal'){try{expr=String(Number(safeEval(expr).toFixed(10)));reward('الحاسبة العلمية')}catch{expr='خطأ'}}else expr+=k.dataset.value;renderCalc()});document.addEventListener('keydown',e=>{if(activeTab!=='math')return;if(/[0-9.()+\-*/]/.test(e.key))expr+=e.key;else if(e.key==='Enter')try{expr=String(safeEval(expr))}catch{expr='خطأ'}renderCalc()});
-function derivePolynomial(raw){let s=raw.replace(/\s+/g,'').replace(/−/g,'-');const terms=s.match(/[+-]?[^+-]+/g)||[];const out=[];for(const term of terms){const m=term.match(/^([+-]?)(\d*(?:\.\d+)?)?x(?:\^(\d+))?$/);if(m){const sign=m[1]==='-'?-1:1,coef=(m[2]?Number(m[2]):1)*sign,pow=m[3]?Number(m[3]):1;if(pow===0)continue;const c=coef*pow,p=pow-1;out.push((c<0?' - ':' + ')+Math.abs(c)+(p===0?'':`x${p===1?'':`^${p}`}`))}else if(!/[x]/.test(term)){}else throw Error()}return (out.join('').replace(/^ \\+ /,'')||'0').trim()}$('differentiateBtn').onclick=()=>{try{$('diffResult').textContent='المشتقة: '+derivePolynomial($('diffFn').value);reward('التفاضل الرمزي')}catch{$('diffResult').textContent='استخدم كثيرات حدود بصيغة مثل x^3 + 2*x + 1'}};function fnEval(raw,x){let s=raw.toLowerCase().replaceAll('^','**').replaceAll('sin','Math.sin').replaceAll('cos','Math.cos').replaceAll('tan','Math.tan').replaceAll('sqrt','Math.sqrt').replaceAll('pi','Math.PI').replaceAll('x',`(${x})`);if(!/^[0-9+\-*/().\sA-Za-z*]+$/.test(s))throw Error();return Function('"use strict";return '+s)()}function simpson(raw,a,b,n=1000){if(n%2)n++;const h=(b-a)/n;let sum=fnEval(raw,a)+fnEval(raw,b);for(let i=1;i<n;i++)sum+=(i%2?4:2)*fnEval(raw,a+i*h);return sum*h/3} $('integrateBtn').onclick=()=>{try{const v=simpson($('intFn').value,Number($('intA').value),Number($('intB').value));$('intResult').textContent=`قيمة التكامل التقريبية = ${v.toFixed(6)}`;reward('التكامل العددي')}catch{$('intResult').textContent='تحقق من صيغة الدالة والقيم المدخلة.'}};document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>{$('intFn').value=b.dataset.fn});
-const els=[['H','هيدروجين',1,1],['He','هيليوم',2,2],['C','كربون',6,2],['N','نيتروجين',7,2],['O','أكسجين',8,2],['Na','صوديوم',11,3],['Mg','مغنيسيوم',12,3],['Al','ألومنيوم',13,3],['Cl','كلور',17,3],['K','بوتاسيوم',19,4],['Ca','كالسيوم',20,4],['Fe','حديد',26,4],['Cu','نحاس',29,4],['Ag','فضة',47,5],['Au','ذهب',79,6],['Hg','زئبق',80,6],['Pb','رصاص',82,6]];let atom=els[0],atomT=0;els.forEach(e=>{const d=document.createElement('button');d.className='element';d.innerHTML=`<b>${e[0]}</b><small>${e[1]}<br>Z = ${e[2]}</small>`;d.onclick=()=>{atom=e;document.querySelectorAll('.element').forEach(x=>x.classList.remove('selected'));d.classList.add('selected');$('elementInfo').innerHTML=`<b>${e[1]} (${e[0]})</b><br>العدد الذري: ${e[2]}<br>الإلكترونات في النموذج: ${e[3]} مستويات`;reward('الجدول الدوري التفاعلي')};$('elementsGrid').appendChild(d)});function resizeCanvas(c,fn){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;c.getContext('2d').setTransform(d,0,0,d,0,0);fn()}function drawAtom(){const c=$('atomCanvas'),ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,cx=w/2,cy=h/2;ctx.clearRect(0,0,w,h);const speed=Number($('atomSpeed').value);ctx.fillStyle='#56a7ff12';ctx.fillRect(0,0,w,h);for(let shell=1;shell<=atom[3];shell++){const r=35+shell*35;ctx.strokeStyle=shell%2?'#35d5d055':'#56a7ff55';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(cx,cy,r,r*.62,0,0,Math.PI*2);ctx.stroke();for(let i=0;i<shell+1;i++){const a=atomT*speed*(.8+shell*.15)+i*Math.PI*2/(shell+1),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*.62;ctx.fillStyle=shell%2?'#65e6a4':'#ffc857';ctx.shadowBlur=12;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}}ctx.fillStyle='#ff719a';ctx.shadowBlur=28;ctx.shadowColor='#ff719a';ctx.beginPath();ctx.arc(cx,cy,26,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='900 16px Tajawal';ctx.textAlign='center';ctx.fillText(atom[0],cx,cy+6);atomT+=.025;requestAnimationFrame(drawAtom)}$('atomSpeed').oninput=()=>{$('atomSpeedVal').textContent=$('atomSpeed').value+'×'};function mix(){const a=$('chemA').value,b=$('chemB').value;let t='لا تفاعل ملحوظ في النموذج التعليمي.';if((a==='acid'&&b==='base')||(a==='base'&&b==='acid'))t='تفاعل تعادل: حمض + قاعدة → ملح + ماء. راقب تغير الطاقة نظريًا.';else if((a==='acid'&&b==='carbonate')||(a==='carbonate'&&b==='acid'))t='تفاعل حمض مع كربونات: ينتج ملح + ماء + ثاني أكسيد الكربون (فقاعات).';$('mixResult').textContent=t;reward('مختبر الكيمياء التفاعلي')}$('mixBtn').onclick=mix;
-let roomTool='door',roomItems=[];document.querySelectorAll('.room-tool').forEach(b=>b.onclick=()=>{roomTool=b.dataset.tool;document.querySelectorAll('.room-tool').forEach(x=>x.classList.toggle('active',x===b))});function drawRoom(){const c=$('roomCanvas'),ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,L=Number($('roomL').value),W=Number($('roomW').value),scale=Math.min((w-70)/L,(h-70)/W),rw=L*scale,rh=W*scale,x=(w-rw)/2,y=(h-rh)/2;ctx.clearRect(0,0,w,h);ctx.fillStyle='#102945';ctx.fillRect(x,y,rw,rh);ctx.strokeStyle='#4d83ad';ctx.lineWidth=5;ctx.strokeRect(x,y,rw,rh);ctx.strokeStyle='#234c70';ctx.lineWidth=1;for(let gx=x;gx<=x+rw;gx+=scale){ctx.beginPath();ctx.moveTo(gx,y);ctx.lineTo(gx,y+rh);ctx.stroke()}for(let gy=y;gy<=y+rh;gy+=scale){ctx.beginPath();ctx.moveTo(x,gy);ctx.lineTo(x+rw,gy);ctx.stroke()}ctx.fillStyle='#65e6a4';ctx.font='800 13px Tajawal';ctx.textAlign='center';ctx.fillText(L+' م',x+rw/2,y-14);ctx.save();ctx.translate(x-18,y+rh/2);ctx.rotate(-Math.PI/2);ctx.fillText(W+' م',0,0);ctx.restore();roomItems.forEach((it,n)=>{const px=x+it.rx*rw,py=y+it.ry*rh;ctx.fillStyle=it.type==='door'?'#ffc857':it.type==='window'?'#56a7ff':'#ff719a';if(it.type==='desk'){ctx.fillRect(px-22,py-12,44,24);ctx.fillStyle='#fff';ctx.fillText('أثاث',px,py+4)}else{ctx.fillRect(px-28,py-5,56,10);ctx.fillStyle='#07111f';ctx.fillText(it.type==='door'?'باب':'نافذة',px,py+4)}});$('roomDims').textContent=L+' × '+W+' م';$('roomResult').innerHTML=`المساحة: ${(L*W).toFixed(1)} م²<br>المحيط: ${(2*(L+W)).toFixed(1)} م<br>العناصر: ${roomItems.length}`}$('roomL').oninput=drawRoom;$('roomW').oninput=drawRoom;$('addRoomItem').onclick=()=>{roomItems.push({type:roomTool,rx:.25+.5*Math.random(),ry:.22+.56*Math.random()});drawRoom();reward('محاكي العمارة والتخطيط')};let circuitOn=true;function drawCircuit(){const c=$('circuitCanvas'),ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight;ctx.clearRect(0,0,w,h);const v=Number($('voltageCtrl').value),r=Number($('resistanceCtrl').value),i=circuitOn?v/r:0,p=Math.min(1,i/3),y=h/2,x1=w*.12,x2=w*.88;ctx.lineWidth=4;ctx.strokeStyle='#2d5579';ctx.beginPath();ctx.moveTo(x1,y-55);ctx.lineTo(x1,y-100);ctx.lineTo(x2,y-100);ctx.lineTo(x2,y-55);ctx.moveTo(x1,y+55);ctx.lineTo(x1,y+100);ctx.lineTo(x2,y+100);ctx.lineTo(x2,y+55);ctx.stroke();ctx.strokeStyle=circuitOn?'#35d5d0':'#2d5579';ctx.beginPath();ctx.moveTo(x1,y-100);ctx.lineTo(x1+50,y-100);ctx.stroke();ctx.fillStyle='#ffc857';ctx.fillRect(x1+50,y-114,54,28);ctx.fillStyle='#07111f';ctx.font='800 13px Tajawal';ctx.textAlign='center';ctx.fillText('مصدر',x1+77,y-95);ctx.strokeStyle=circuitOn?'#56a7ff':'#2d5579';ctx.beginPath();ctx.moveTo(x2-50,y-100);ctx.lineTo(x2,y-100);ctx.stroke();ctx.fillStyle='#15314d';ctx.strokeStyle='#56a7ff';ctx.lineWidth=3;ctx.beginPath();ctx.rect(x2-55,y-18,110,36);ctx.fill();ctx.stroke();ctx.fillStyle='#e9f1ff';ctx.fillText('R = '+r+' Ω',x2,y+5);ctx.beginPath();ctx.arc((x1+x2)/2,y+100,22,0,Math.PI*2);ctx.fillStyle=`rgba(255,200,87,${.15+p*.85})`;ctx.shadowBlur=circuitOn?35*p:0;ctx.shadowColor='#ffc857';ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ffc857';ctx.fillText('مصباح', (x1+x2)/2,y+105);if(circuitOn){ctx.fillStyle='#65e6a4';for(let n=0;n<8;n++){const q=(performance.now()/500+n/8)%1;ctx.beginPath();ctx.arc(x1+(x2-x1)*q,y-100,3,0,Math.PI*2);ctx.fill()}}$('voltageVal').textContent=v+' V';$('resistanceVal').textContent=r+' Ω';$('circuitStats').innerHTML=`<b>التيار:</b> ${(i).toFixed(3)} A<br><b>القدرة:</b> ${(v*i).toFixed(3)} W<br><b>الحالة:</b> ${circuitOn?'الدائرة مغلقة':'الدائرة مفتوحة'}`}function refreshCircuit(){drawCircuit();requestAnimationFrame(refreshCircuit)}$('voltageCtrl').oninput=drawCircuit;$('resistanceCtrl').oninput=drawCircuit;$('toggleCircuit').onclick=()=>{circuitOn=!circuitOn;reward('مختبر الدوائر الكهربائية');drawCircuit()};window.addEventListener('resize',()=>{resizeCanvas($('atomCanvas'),drawAtom);resizeCanvas($('circuitCanvas'),drawCircuit);resizeCanvas($('roomCanvas'),drawRoom)});setTimeout(()=>{resizeCanvas($('atomCanvas'),drawAtom);resizeCanvas($('circuitCanvas'),drawCircuit);resizeCanvas($('roomCanvas'),drawRoom);refreshCircuit()},50);
-</script></body></html>
+// ============================================================
+//  منطق المحاكيات المتطور (يشمل الرياضيات، الكيمياء، العمارة، Phet)
+// ============================================================
+const loggedIn = {{ 'true' if student_id else 'false' }};
+let activeTab = 'math';
+const $ = id => document.getElementById(id);
+
+// ---- تبديل علامات التبويب ----
+function switchTab(id) {
+    activeTab = id;
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    document.querySelectorAll('.sim-panel').forEach(p => p.classList.toggle('active', p.id === id));
+    if (id === 'chem') resizeCanvas($('atomCanvas'), drawAtom);
+    if (id === 'electric') resizeCanvas($('circuitCanvas'), drawCircuit);
+    if (id === 'architecture') resizeCanvas($('roomCanvas'), drawRoom);
+}
+document.querySelectorAll('.tab[data-tab]').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+// ==================== الرياضيات المتطورة ====================
+let expr = '';
+let mathMode = 'normal';
+let integralMode = 'definite';
+
+function renderCalc() { $('calcDisplay').textContent = expr || '0'; }
+
+function safeEval(s) {
+    s = s.replaceAll('×', '*').replaceAll('÷', '/').replaceAll('−', '-')
+         .replaceAll('π', 'Math.PI').replaceAll('^', '**').replaceAll('√(', 'Math.sqrt(')
+         .replaceAll('sin(', 'Math.sin(').replaceAll('cos(', 'Math.cos(')
+         .replaceAll('tan(', 'Math.tan(').replaceAll('log10(', 'Math.log10(');
+    if (!/^[0-9+\-*/().\sA-Za-z*]+$/.test(s)) throw Error();
+    return Function('"use strict"; return (' + s + ')')();
+}
+
+document.querySelectorAll('.key').forEach(k => {
+    k.onclick = () => {
+        if (k.dataset.action === 'clear') expr = '';
+        else if (k.dataset.action === 'back') expr = expr.slice(0, -1);
+        else if (k.dataset.action === 'equal') {
+            try { expr = String(Number(safeEval(expr).toFixed(10))); } catch { expr = 'خطأ'; }
+        } else expr += k.dataset.value;
+        renderCalc();
+        // تحديث حقول الدوال إذا كانت مرئية
+        if (mathMode === 'diff') $('diffFn').value = expr;
+        if (mathMode === 'integral') $('intFn').value = expr;
+    };
+});
+
+document.addEventListener('keydown', e => {
+    if (activeTab !== 'math') return;
+    if (/[0-9.()+\-*/]/.test(e.key)) expr += e.key;
+    else if (e.key === 'Enter') try { expr = String(safeEval(expr)); } catch { expr = 'خطأ'; }
+    renderCalc();
+    if (mathMode === 'diff') $('diffFn').value = expr;
+    if (mathMode === 'integral') $('intFn').value = expr;
+});
+
+// ---- أوضاع الرياضيات ----
+function setMathMode(mode) {
+    mathMode = mode;
+    document.querySelectorAll('.math-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    const card = $('calculusCard'), diff = $('derivativeTool'), hint = $('mathModeHint');
+    if (mode === 'normal') {
+        card.style.display = 'none';
+        hint.textContent = 'الوضع الحالي: حساب عادي باستخدام لوحة الأزرار العلمية.';
+    } else {
+        card.style.display = 'block';
+        diff.style.display = mode === 'diff' ? 'block' : 'none';
+        hint.textContent = mode === 'diff' ? 'الوضع الحالي: تفاضل دالة واستخراج المشتقة الأولى.' : 'الوضع الحالي: تكامل؛ اختر محدداً بالفترة أو غير محدد.';
+    }
+}
+document.querySelectorAll('.math-mode').forEach(b => b.onclick = () => setMathMode(b.dataset.mode));
+setMathMode('normal');
+
+// ---- التكامل (محدد / غير محدد) ----
+function setIntegralMode(mode) {
+    integralMode = mode;
+    document.querySelectorAll('.integral-mode').forEach(b => b.classList.toggle('active', b.dataset.integral === mode));
+    $('intBounds').style.display = mode === 'definite' ? 'grid' : 'none';
+    $('integrateBtn').style.display = mode === 'definite' ? 'block' : 'none';
+    $('intResult').style.display = mode === 'definite' ? 'block' : 'none';
+    $('indefiniteTool').style.display = mode === 'indefinite' ? 'block' : 'none';
+    if (mode === 'indefinite') {
+        try {
+            $('indefiniteResult').textContent = '∫ ' + $('intFn').value + ' dx = ' + integratePolynomial($('intFn').value) + ' + C';
+        } catch {
+            $('indefiniteResult').textContent = 'استخدم كثيرات حدود بصيغة x^3 + 2*x';
+        }
+    }
+}
+document.querySelectorAll('.integral-mode').forEach(b => b.onclick = () => setIntegralMode(b.dataset.integral));
+setIntegralMode('definite');
+
+function integratePolynomial(raw) {
+    const terms = raw.replace(/\s+/g, '').replace(/−/g, '-').match(/[+-]?[^+-]+/g) || [];
+    const out = [];
+    for (const term of terms) {
+        const m = term.match(/^([+-]?)(\d*(?:\.\d+)?)?x(?:\^(\d+))?$/);
+        if (m) {
+            const sign = m[1] === '-' ? -1 : 1;
+            const c = (m[2] ? Number(m[2]) : 1) * sign;
+            const p = m[3] ? Number(m[3]) : 1;
+            const n = p + 1;
+            const k = c / n;
+            out.push((k < 0 ? ' - ' : ' + ') + Math.abs(k) + 'x' + (n === 1 ? '' : `^${n}`));
+        } else if (!/[x]/.test(term)) {
+            const n = Number(term);
+            if (!isNaN(n)) out.push((n < 0 ? ' - ' : ' + ') + Math.abs(n) + 'x');
+        }
+    }
+    return out.join('').replace(/^ \+ /, '') || '0';
+}
+
+function fnEval(raw, x) {
+    let s = raw.toLowerCase().replaceAll('^', '**').replaceAll('sin', 'Math.sin')
+            .replaceAll('cos', 'Math.cos').replaceAll('tan', 'Math.tan')
+            .replaceAll('sqrt', 'Math.sqrt').replaceAll('pi', 'Math.PI')
+            .replaceAll('x', `(${x})`);
+    if (!/^[0-9+\-*/().\sA-Za-z*]+$/.test(s)) throw Error();
+    return Function('"use strict"; return ' + s)();
+}
+
+function simpson(raw, a, b, n = 1000) {
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let sum = fnEval(raw, a) + fnEval(raw, b);
+    for (let i = 1; i < n; i++) sum += (i % 2 ? 4 : 2) * fnEval(raw, a + i * h);
+    return sum * h / 3;
+}
+
+$('integrateBtn').onclick = () => {
+    try {
+        const v = simpson($('intFn').value, Number($('intA').value), Number($('intB').value));
+        $('intResult').textContent = `قيمة التكامل التقريبية = ${v.toFixed(6)}`;
+    } catch {
+        $('intResult').textContent = 'تحقق من صيغة الدالة والقيم المدخلة.';
+    }
+};
+
+// ---- التفاضل ----
+function derivePolynomial(raw) {
+    let s = raw.replace(/\s+/g, '').replace(/−/g, '-');
+    const terms = s.match(/[+-]?[^+-]+/g) || [];
+    const out = [];
+    for (const term of terms) {
+        const m = term.match(/^([+-]?)(\d*(?:\.\d+)?)?x(?:\^(\d+))?$/);
+        if (m) {
+            const sign = m[1] === '-' ? -1 : 1;
+            const coef = (m[2] ? Number(m[2]) : 1) * sign;
+            const pow = m[3] ? Number(m[3]) : 1;
+            if (pow === 0) continue;
+            const c = coef * pow;
+            const p = pow - 1;
+            out.push((c < 0 ? ' - ' : ' + ') + Math.abs(c) + (p === 0 ? '' : `x${p === 1 ? '' : `^${p}`}`));
+        }
+    }
+    return out.join('').replace(/^ \+ /, '') || '0';
+}
+
+$('differentiateBtn').onclick = () => {
+    try {
+        $('diffResult').textContent = 'المشتقة: ' + derivePolynomial($('diffFn').value);
+    } catch {
+        $('diffResult').textContent = 'استخدم كثيرات حدود بصيغة مثل x^3 + 2*x + 1';
+    }
+};
+
+document.querySelectorAll('.preset').forEach(b => b.onclick = () => {
+    const val = b.dataset.fn;
+    if (mathMode === 'diff') { $('diffFn').value = val; expr = val; renderCalc(); }
+    else if (mathMode === 'integral') { $('intFn').value = val; expr = val; renderCalc(); }
+});
+
+// ==================== الكيمياء المتطورة ====================
+const els = [
+    ['H', 'هيدروجين', 1, 1], ['He', 'هيليوم', 2, 2], ['Li', 'ليثيوم', 3, 2],
+    ['Be', 'بيريليوم', 4, 2], ['B', 'بورون', 5, 2], ['C', 'كربون', 6, 2],
+    ['N', 'نيتروجين', 7, 2], ['O', 'أكسجين', 8, 2], ['F', 'فلور', 9, 2],
+    ['Ne', 'نيون', 10, 2], ['Na', 'صوديوم', 11, 3], ['Mg', 'مغنيسيوم', 12, 3],
+    ['Al', 'ألومنيوم', 13, 3], ['Si', 'سيليكون', 14, 3], ['P', 'فوسفور', 15, 3],
+    ['S', 'كبريت', 16, 3], ['Cl', 'كلور', 17, 3], ['Ar', 'أرجون', 18, 3],
+    ['K', 'بوتاسيوم', 19, 4], ['Ca', 'كالسيوم', 20, 4], ['Fe', 'حديد', 26, 4],
+    ['Cu', 'نحاس', 29, 4], ['Ag', 'فضة', 47, 5], ['Au', 'ذهب', 79, 6],
+    ['Hg', 'زئبق', 80, 6], ['Pb', 'رصاص', 82, 6]
+];
+let atom = els[0], atomT = 0;
+
+els.forEach(e => {
+    const d = document.createElement('button');
+    d.className = 'element';
+    d.innerHTML = `<b>${e[0]}</b><small>${e[1]}<br>Z = ${e[2]}</small>`;
+    d.onclick = () => {
+        atom = e;
+        document.querySelectorAll('.element').forEach(x => x.classList.remove('selected'));
+        d.classList.add('selected');
+        $('elementInfo').innerHTML = `<b>${e[1]} (${e[0]})</b><br>العدد الذري: ${e[2]}<br>الإلكترونات في النموذج: ${e[3]} مستويات`;
+    };
+    $('elementsGrid').appendChild(d);
+});
+
+function resizeCanvas(c, fn) {
+    if (!c) return;
+    const r = c.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const d = devicePixelRatio || 1;
+    c.width = r.width * d;
+    c.height = r.height * d;
+    const ctx = c.getContext('2d');
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    fn();
+}
+
+function drawAtom() {
+    const c = $('atomCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.clientWidth, h = c.clientHeight, cx = w / 2, cy = h / 2;
+    ctx.clearRect(0, 0, w, h);
+    const speed = Number($('atomSpeed').value);
+    ctx.fillStyle = '#56a7ff12';
+    ctx.fillRect(0, 0, w, h);
+    for (let shell = 1; shell <= atom[3]; shell++) {
+        const r = 35 + shell * 35;
+        ctx.strokeStyle = shell % 2 ? '#35d5d055' : '#56a7ff55';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * .62, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let i = 0; i < shell + 1; i++) {
+            const a = atomT * speed * (.8 + shell * .15) + i * Math.PI * 2 / (shell + 1);
+            const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * .62;
+            ctx.fillStyle = shell % 2 ? '#65e6a4' : '#ffc857';
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+    ctx.fillStyle = '#ff719a';
+    ctx.shadowBlur = 28;
+    ctx.shadowColor = '#ff719a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 16px Tajawal';
+    ctx.textAlign = 'center';
+    ctx.fillText(atom[0], cx, cy + 6);
+    atomT += .025;
+    requestAnimationFrame(drawAtom);
+}
+
+$('atomSpeed').oninput = () => { $('atomSpeedVal').textContent = $('atomSpeed').value + '×'; };
+
+// ---- مختبر الخلط المتقدم ----
+function mixChemicals() {
+    const a = $('chemA').value, b = $('chemB').value;
+    let t = 'لا تفاعل ملحوظ في النموذج التعليمي.';
+    if ((a === 'acid' && b === 'base') || (a === 'base' && b === 'acid'))
+        t = '🧪 تفاعل تعادل: حمض + قاعدة → ملح + ماء. راقب تغير الطاقة نظرياً.';
+    else if ((a === 'acid' && b === 'carbonate') || (a === 'carbonate' && b === 'acid'))
+        t = '💨 تفاعل حمض مع كربونات: ينتج ملح + ماء + ثاني أكسيد الكربون (فقاعات).';
+    else if ((a === 'acid' && b === 'salt') || (a === 'salt' && b === 'acid'))
+        t = '⚗️ لا تفاعل قوي، لكن يمكن أن يحدث تبادل أيوني بسيط.';
+    else if ((a === 'base' && b === 'salt') || (a === 'salt' && b === 'base'))
+        t = '🧪 تفاعل قاعدة مع ملح: قد ينتج راسب أو غاز.';
+    else if ((a === 'water' && b === 'acid') || (a === 'acid' && b === 'water'))
+        t = '💧 تخفيف الحمض: يجب إضافة الحمض إلى الماء وليس العكس.';
+    else if ((a === 'water' && b === 'base') || (a === 'base' && b === 'water'))
+        t = '💧 تخفيف القاعدة: عملية طاردة للحرارة قليلاً.';
+    else if (a === b)
+        t = '♻️ نفس المادة، لا تفاعل.';
+    $('mixResult').textContent = t;
+}
+$('mixBtn').onclick = mixChemicals;
+
+// ==================== العمارة المتطورة ====================
+let archTool = 'wall';
+let roomItems = [];
+let isDrawing = false;
+
+document.querySelectorAll('.arch-tool-btn').forEach(b => {
+    b.onclick = () => {
+        archTool = b.dataset.tool;
+        document.querySelectorAll('.arch-tool-btn').forEach(x => x.classList.toggle('active', x === b));
+    };
+});
+
+function drawRoom() {
+    const c = $('roomCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.clientWidth, h = c.clientHeight;
+    const L = Number($('roomL').value), W = Number($('roomW').value);
+    const scale = Math.min((w - 70) / L, (h - 70) / W);
+    const rw = L * scale, rh = W * scale;
+    const x = (w - rw) / 2, y = (h - rh) / 2;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#102945';
+    ctx.fillRect(x, y, rw, rh);
+    ctx.strokeStyle = '#4d83ad';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x, y, rw, rh);
+
+    // شبكة
+    ctx.strokeStyle = '#234c70';
+    ctx.lineWidth = 1;
+    for (let gx = x; gx <= x + rw; gx += scale) { ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + rh); ctx.stroke(); }
+    for (let gy = y; gy <= y + rh; gy += scale) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + rw, gy); ctx.stroke(); }
+
+    // أبعاد
+    ctx.fillStyle = '#65e6a4';
+    ctx.font = '800 13px Tajawal';
+    ctx.textAlign = 'center';
+    ctx.fillText(L + ' م', x + rw / 2, y - 14);
+    ctx.save();
+    ctx.translate(x - 18, y + rh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(W + ' م', 0, 0);
+    ctx.restore();
+
+    // رسم العناصر
+    roomItems.forEach((it) => {
+        const px = x + it.rx * rw, py = y + it.ry * rh;
+        ctx.fillStyle = it.type === 'wall' ? '#ffc857' : it.type === 'door' ? '#56a7ff' : it.type === 'window' ? '#65e6a4' : '#ff719a';
+        if (it.type === 'wall') {
+            ctx.fillRect(px - 4, py - 20, 8, 40);
+        } else if (it.type === 'door') {
+            ctx.fillRect(px - 20, py - 8, 40, 16);
+            ctx.fillStyle = '#07111f';
+            ctx.font = 'bold 12px Tajawal';
+            ctx.fillText('🚪', px, py + 5);
+        } else if (it.type === 'window') {
+            ctx.fillRect(px - 25, py - 6, 50, 12);
+            ctx.fillStyle = '#07111f';
+            ctx.font = 'bold 12px Tajawal';
+            ctx.fillText('🪟', px, py + 5);
+        } else if (it.type === 'desk') {
+            ctx.fillRect(px - 22, py - 12, 44, 24);
+            ctx.fillStyle = '#07111f';
+            ctx.font = 'bold 12px Tajawal';
+            ctx.fillText('🪑', px, py + 5);
+        }
+    });
+
+    $('roomDims').textContent = L + ' × ' + W + ' م';
+    $('roomResult').innerHTML = `المساحة: ${(L * W).toFixed(1)} م²<br>المحيط: ${(2 * (L + W)).toFixed(1)} م<br>العناصر: ${roomItems.length}`;
+}
+
+// إضافة عنصر بالنقر على الكانفاس
+$('roomCanvas').addEventListener('click', (e) => {
+    const c = $('roomCanvas');
+    const rect = c.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    if (x < 0 || x > 1 || y < 0 || y > 1) return;
+    // تجنب الحواف
+    const margin = 0.05;
+    if (x < margin || x > 1 - margin || y < margin || y > 1 - margin) return;
+    roomItems.push({ type: archTool, rx: x, ry: y });
+    drawRoom();
+});
+
+$('roomL').oninput = drawRoom;
+$('roomW').oninput = drawRoom;
+
+// ==================== الكهرباء ====================
+let circuitOn = true;
+
+function drawCircuit() {
+    const c = $('circuitCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const w = c.clientWidth, h = c.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+    const v = Number($('voltageCtrl').value), r = Number($('resistanceCtrl').value);
+    const i = circuitOn ? v / r : 0;
+    const p = Math.min(1, i / 3);
+    const y = h / 2, x1 = w * .12, x2 = w * .88;
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#2d5579';
+    ctx.beginPath();
+    ctx.moveTo(x1, y - 55); ctx.lineTo(x1, y - 100); ctx.lineTo(x2, y - 100); ctx.lineTo(x2, y - 55);
+    ctx.moveTo(x1, y + 55); ctx.lineTo(x1, y + 100); ctx.lineTo(x2, y + 100); ctx.lineTo(x2, y + 55);
+    ctx.stroke();
+
+    ctx.strokeStyle = circuitOn ? '#35d5d0' : '#2d5579';
+    ctx.beginPath(); ctx.moveTo(x1, y - 100); ctx.lineTo(x1 + 50, y - 100); ctx.stroke();
+    ctx.fillStyle = '#ffc857'; ctx.fillRect(x1 + 50, y - 114, 54, 28);
+    ctx.fillStyle = '#07111f'; ctx.font = '800 13px Tajawal'; ctx.textAlign = 'center';
+    ctx.fillText('مصدر', x1 + 77, y - 95);
+
+    ctx.strokeStyle = circuitOn ? '#56a7ff' : '#2d5579';
+    ctx.beginPath(); ctx.moveTo(x2 - 50, y - 100); ctx.lineTo(x2, y - 100); ctx.stroke();
+    ctx.fillStyle = '#15314d'; ctx.strokeStyle = '#56a7ff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.rect(x2 - 55, y - 18, 110, 36); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e9f1ff'; ctx.fillText('R = ' + r + ' Ω', x2, y + 5);
+
+    ctx.beginPath(); ctx.arc((x1 + x2) / 2, y + 100, 22, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,200,87,${.15 + p * .85})`;
+    ctx.shadowBlur = circuitOn ? 35 * p : 0;
+    ctx.shadowColor = '#ffc857';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffc857';
+    ctx.fillText('مصباح', (x1 + x2) / 2, y + 105);
+
+    if (circuitOn) {
+        ctx.fillStyle = '#65e6a4';
+        for (let n = 0; n < 8; n++) {
+            const q = (performance.now() / 500 + n / 8) % 1;
+            ctx.beginPath(); ctx.arc(x1 + (x2 - x1) * q, y - 100, 3, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+    $('voltageVal').textContent = v + ' V';
+    $('resistanceVal').textContent = r + ' Ω';
+    $('circuitStats').innerHTML =
+        `<b>التيار:</b> ${(i).toFixed(3)} A<br><b>القدرة:</b> ${(v * i).toFixed(3)} W<br><b>الحالة:</b> ${circuitOn ? 'الدائرة مغلقة' : 'الدائرة مفتوحة'}`;
+}
+
+function refreshCircuit() { drawCircuit(); requestAnimationFrame(refreshCircuit); }
+
+$('voltageCtrl').oninput = drawCircuit;
+$('resistanceCtrl').oninput = drawCircuit;
+$('toggleCircuit').onclick = () => { circuitOn = !circuitOn; drawCircuit(); };
+
+// ==================== تهيئة canvas ====================
+window.addEventListener('resize', () => {
+    resizeCanvas($('atomCanvas'), drawAtom);
+    resizeCanvas($('circuitCanvas'), drawCircuit);
+    resizeCanvas($('roomCanvas'), drawRoom);
+});
+
+setTimeout(() => {
+    resizeCanvas($('atomCanvas'), drawAtom);
+    resizeCanvas($('circuitCanvas'), drawCircuit);
+    resizeCanvas($('roomCanvas'), drawRoom);
+    refreshCircuit();
+}, 100);
+
+// دالة مساعدة للـ reward (اختياري)
+async function reward(activity) {
+    if (!loggedIn) return;
+    try { await fetch('/api/simulators/activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activity }) }); } catch (e) {}
+}
+</script>
+</body>
+</html>

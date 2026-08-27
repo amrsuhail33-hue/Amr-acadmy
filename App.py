@@ -589,6 +589,41 @@ def home():
     except Exception as e: 
         return f"Error: {str(e)}"
 
+@app.route('/simulators')
+def simulators():
+    return render_template('simulators.html', student_id=session.get('student_id'), student_name=session.get('student_name'))
+
+@app.route('/api/simulators/activity', methods=['POST'])
+@student_required
+def record_simulator_activity():
+    """Grant a simulator reward once per activity per calendar day."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        activity = str(payload.get('activity', '')).strip()[:120]
+        if not activity:
+            return jsonify({'status': 'error', 'message': 'اسم النشاط مطلوب'}), 400
+        student_id = session['student_id']
+        today = datetime.utcnow().date()
+        reason = f'محاكي: {activity}'
+        start = datetime.combine(today, datetime.min.time())
+        already_rewarded = PointTransaction.query.filter(
+            PointTransaction.student_id == student_id,
+            PointTransaction.reason == reason,
+            PointTransaction.created_at >= start
+        ).first()
+        profile = UserProfile.query.filter_by(student_id=student_id).first()
+        if not profile:
+            profile = UserProfile(student_id=student_id)
+            db.session.add(profile)
+            db.session.commit()
+        if already_rewarded:
+            return jsonify({'status': 'success', 'awarded': False, 'profile': profile.to_dict()})
+        result = profile.add_points(5, reason)
+        return jsonify({'status': 'success', 'awarded': True, 'points_added': 5, 'profile': profile.to_dict(), 'result': result})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/quiz', methods=['GET'])
 def get_quiz():
     subject_name = request.args.get('subject')
@@ -625,14 +660,21 @@ def check_quiz_answer():
         
         if is_correct:
             if profile:
-                update_result = profile.add_points(5, f"إجابة صحيحة: {question.question_text[:30]}...")
-                result["points_added"] = 5
-                result["level_up"] = update_result.get("level_up", False)
-                result["new_level"] = update_result.get("new_level", profile.level)
-                result["new_points"] = update_result.get("new_points", profile.points)
+                reward_reason = f"إجابة صحيحة للسؤال: {question.id}"
+                already_rewarded = PointTransaction.query.filter_by(student_id=student_id, reason=reward_reason).first()
+                if already_rewarded:
+                    result["already_rewarded"] = True
+                    result["new_level"] = profile.level
+                    result["new_points"] = profile.points
+                else:
+                    update_result = profile.add_points(5, reward_reason)
+                    result["points_added"] = 5
+                    result["level_up"] = update_result.get("level_up", False)
+                    result["new_level"] = update_result.get("new_level", profile.level)
+                    result["new_points"] = update_result.get("new_points", profile.points)
         else:
             if profile:
-                update_result = profile.deduct_points(3, f"إجابة خاطئة: {question.question_text[:30]}...")
+                update_result = profile.deduct_points(3, f"إجابة خاطئة للسؤال: {question.id}")
                 result["points_deducted"] = 3
                 result["level_down"] = update_result.get("level_down", False)
                 result["new_level"] = update_result.get("new_level", profile.level)
@@ -676,6 +718,19 @@ def manage_favorites():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+def build_achievements(profile, completed_tasks, student_id):
+    simulator_count = PointTransaction.query.filter(
+        PointTransaction.student_id == student_id,
+        PointTransaction.reason.like('محاكي:%')
+    ).count()
+    return [
+        {'id': 'first-step', 'title': 'الخطوة الأولى', 'description': 'ابدأ رحلتك التعليمية', 'icon': 'fa-flag', 'unlocked': profile.total_points >= 5},
+        {'id': 'explorer', 'title': 'مستكشف المحاكيات', 'description': 'جرّب ثلاث محاكيات', 'icon': 'fa-flask', 'unlocked': simulator_count >= 3},
+        {'id': 'finisher', 'title': 'منجز', 'description': 'أكمل خمسة دروس أو مهام', 'icon': 'fa-check-double', 'unlocked': completed_tasks >= 5},
+        {'id': 'streak', 'title': 'سلسلة تعلم', 'description': 'حافظ على نشاطك ثلاثة أيام', 'icon': 'fa-fire', 'unlocked': (profile.streak_days or 0) >= 3},
+        {'id': 'master', 'title': 'متقدم', 'description': 'اجمع 500 نقطة', 'icon': 'fa-trophy', 'unlocked': profile.total_points >= 500}
+    ]
+
 @app.route('/api/profile', methods=['GET'])
 @student_required
 def get_profile():
@@ -703,7 +758,8 @@ def get_profile():
                 "total_tasks": total_tasks,
                 "completion_rate": round((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0, 1)
             },
-            "recent_transactions": [t.to_dict() for t in recent_transactions]
+            "recent_transactions": [t.to_dict() for t in recent_transactions],
+            "achievements": build_achievements(profile, completed_tasks, student_id)
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

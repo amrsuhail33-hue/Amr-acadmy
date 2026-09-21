@@ -179,8 +179,8 @@
         
         .footer { text-align: center; padding: 20px 20px; font-weight: 700; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--bg-card); margin-top: auto; }
         
-        .quiz-question-text { font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; line-height: 1.6; color: var(--text-main); }
-        .quiz-opt { padding: 14px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 10px; background: var(--bg-card); color: var(--text-main); text-align: right; width: 100%; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
+        .quiz-question-text { font-size: 1.25rem; font-weight: 800; margin-bottom: 20px; line-height: 1.6; color: var(--text-main); text-align: right; }
+        .quiz-opt { padding: 14px 18px; border: 2px solid var(--border); border-radius: 14px; margin-bottom: 12px; background: var(--bg-card); color: var(--text-main); text-align: right; width: 100%; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; }
         .quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); transform: translateX(-5px); }
         .quiz-opt.correct { background: var(--accent) !important; border-color: var(--accent) !important; color: white !important; }
         .quiz-opt.wrong { background: var(--danger) !important; border-color: var(--danger) !important; color: white !important; }
@@ -281,7 +281,7 @@
             <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2; flex-wrap:wrap;">
                 <span class="profile-level-badge" id="profileLevel">المستوى 1</span>
                 <span style="background:rgba(0,0,0,0.3); padding:5px 18px; border-radius:50px; font-weight:800; font-size:1rem; border:1px solid rgba(255,255,255,0.2);">
-                    ⭐ <span id="profilePoints">0</span>
+                    ⭐ <span id="profilePoints">0</span> XP
                 </span>
             </div>
             <div style="margin-top:12px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
@@ -310,7 +310,7 @@
         </div>
         
         <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط (XP)</div>
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط المكتسبة</div>
             <div id="recentTransactions" style="max-height:200px; overflow-y:auto; padding-left:5px;">
                 <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد حركات نقاط مسجلة بعد</div>
             </div>
@@ -338,7 +338,7 @@
     <div class="popup-body" id="whatsNewList"><div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div></div>
 </div>
 
-<!-- Calculator Box (حاسبة المعدل التراكمي) -->
+<!-- Calculator Box -->
 <div class="popup-box" id="calcBox">
     <div class="popup-header"><div><i class="fa-solid fa-calculator header-icon"></i> حاسبة المعدل الجامعي</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
     <div class="popup-body">
@@ -687,7 +687,7 @@
                             <div style="font-weight:bold; color:var(--accent); font-size:0.85rem; margin-bottom:5px;"><i class="fa-solid fa-reply"></i> رد الأكاديمية:</div>
                             <div style="margin:0; font-size:0.95rem;">{{ q.answer_text }}</div>
                         </div>
-                    {% elif is_admin %}
+                    {% elif is_admin or is_assistant %}
                         <textarea id="inline_reply_{{ q.id }}" rows="1" placeholder="اكتب الرد..." class="qa-input-field" style="margin-bottom:5px;"></textarea>
                         <button onclick="submitInlineReply({{ q.id }})" class="btn-calc-outline" style="border-color:var(--accent); color:var(--accent); padding:8px;"><i class="fa-solid fa-check"></i> نشر الرد</button>
                     {% endif %}
@@ -702,7 +702,7 @@
     {% endif %}
 </div>
 
-<!-- الزر العائم (FAB) تم إزالة المحاكيات بالكامل منه -->
+<!-- الزر العائم (FAB) -->
 {% if view == 'years' %}
 <div class="fab-container" id="fabMenu">
     <div class="fab-main" onclick="toggleFabMenu()" title="أدوات المنصة">
@@ -1206,7 +1206,7 @@ async function sendAIMessage() {
     b.scrollTop = b.scrollHeight;
 }
 
-// 9. نظام الاختبارات MCQ وفصل درجات المحاولات عن الـ XP
+// 9. نظام الاختبارات MCQ المحدث بدقة
 let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
 
 async function startQuiz(chapter) {
@@ -1217,47 +1217,75 @@ async function startQuiz(chapter) {
     try {
         const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}`);
         const data = await res.json();
-        if(!data || data.length===0) { 
+        if(!data || data.length === 0) { 
             alert("لا توجد أسئلة معتمدة متاحة لهذا الفصل حالياً."); 
             document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>'; 
             return; 
         }
         
         quizState.questions = data.map(q => {
-            const opts = [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x && x.trim());
+            const questionTitle = q.question_text || q.title || "سؤال";
+            const rawOpts = [q.option_a, q.option_b, q.option_c, q.option_d];
+            const cleanOpts = rawOpts.filter(opt => opt && String(opt).trim() !== "" && String(opt).trim() !== questionTitle.trim());
+
             return {
-                id: q.id, q: q.question_text, opts: opts.length > 0 ? opts : ["لا توجد خيارات"],
-                ans_text: q.correct_answer, explain: q.explanation || "", status: 'unanswered', selectedOpt: null
+                id: q.id,
+                q: questionTitle,
+                opts: cleanOpts.length > 0 ? cleanOpts : rawOpts.filter(Boolean),
+                ans_text: (q.correct_answer || "").trim(),
+                explain: q.explanation || "",
+                status: 'unanswered',
+                selectedOpt: null
             };
         });
+        
         document.getElementById('quiz-start').classList.add('hidden');
         document.getElementById('quiz-view').classList.remove('hidden');
         loadQuestion();
-    } catch (e) { alert("خطأ في جلب بيانات الاختبار."); document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار'; }
+    } catch (e) {
+        alert("خطأ في جلب بيانات الاختبار.");
+        document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار';
+    }
 }
 
 function loadQuestion() {
-    const q = quizState.questions[quizState.currentQ]; if (!q) return;
+    const q = quizState.questions[quizState.currentQ];
+    if (!q) return;
     document.getElementById('qCount').innerHTML = `<i class="fa-solid fa-list-ol"></i> السؤال ${quizState.currentQ + 1} من ${quizState.questions.length}`;
-    document.getElementById('qText').innerText = q.q;
-    document.getElementById('quizProgressBar').style.width = ((quizState.currentQ)/quizState.questions.length)*100 + '%';
     
-    const optsDiv = document.getElementById('qOptions'); optsDiv.innerHTML = '';
+    // وضع نص السؤال في الحاوية المخصصة
+    document.getElementById('qText').innerText = q.q;
+    document.getElementById('quizProgressBar').style.width = ((quizState.currentQ) / quizState.questions.length) * 100 + '%';
+    
+    const optsDiv = document.getElementById('qOptions');
+    optsDiv.innerHTML = '';
+    
     q.opts.forEach((opt, idx) => {
-        const b = document.createElement('button'); b.className = 'quiz-opt';
+        const b = document.createElement('button');
+        b.className = 'quiz-opt';
         b.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
+        
         if (q.status === 'answered') {
             b.disabled = true;
-            if (opt === q.ans_text) { b.classList.add('correct'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`; }
-            else if (idx === q.selectedOpt) { b.classList.add('wrong'); b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`; }
-            else { b.innerHTML = `<span>${opt}</span>`; }
-        } else { b.onclick = () => selectOption(idx); }
+            if (String(opt).trim() === q.ans_text) {
+                b.classList.add('correct');
+                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`;
+            } else if (idx === q.selectedOpt) {
+                b.classList.add('wrong');
+                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`;
+            } else {
+                b.innerHTML = `<span>${opt}</span>`;
+            }
+        } else {
+            b.onclick = () => selectOption(idx);
+        }
         optsDiv.appendChild(b);
     });
     
     const expBox = document.getElementById('quizExplanation');
-    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain}`;
+    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain || 'لا يوجد توضيح متاح لهذا السؤال.'}`;
     expBox.style.display = q.status === 'answered' ? 'block' : 'none';
+    
     document.getElementById('btnPrev').style.display = quizState.currentQ > 0 ? 'flex' : 'none';
     const nextBtn = document.getElementById('btnSkipNext');
     nextBtn.innerHTML = q.status === 'answered' ? (quizState.currentQ === quizState.questions.length - 1 ? 'عرض النتيجة <i class="fa-solid fa-flag-checkered"></i>' : 'التالي <i class="fa-solid fa-arrow-left"></i>') : 'تخطي <i class="fa-solid fa-forward"></i>';
@@ -1267,9 +1295,10 @@ function loadQuestion() {
 function selectOption(idx) {
     if(quizState.questions[quizState.currentQ].status === 'answered') return;
     const q = quizState.questions[quizState.currentQ];
-    q.selectedOpt = idx; q.status = 'answered';
+    q.selectedOpt = idx;
+    q.status = 'answered';
     loadQuestion();
-    if(q.opts[idx] === q.ans_text) showToast('إجابة صحيحة!', 'success'); else showToast('إجابة خاطئة', 'error');
+    if(String(q.opts[idx]).trim() === q.ans_text) showToast('إجابة صحيحة!', 'success'); else showToast('إجابة خاطئة', 'error');
 }
 
 function showHint() { document.getElementById('quizExplanation').style.display = 'block'; }
@@ -1282,15 +1311,17 @@ function nextQuestion() {
 function confirmEndQuiz() { if(confirm("إنهاء الاختبار الآن وحساب النتيجة؟")) showQuizResult(); }
 
 async function showQuizResult() {
-    document.getElementById('quiz-view').classList.add('hidden'); document.getElementById('result-view').classList.remove('hidden');
-    const score = quizState.questions.filter(q => q.status === 'answered' && q.opts[q.selectedOpt] === q.ans_text).length;
+    document.getElementById('quiz-view').classList.add('hidden'); 
+    document.getElementById('result-view').classList.remove('hidden');
+    
+    const score = quizState.questions.filter(q => q.status === 'answered' && String(q.opts[q.selectedOpt]).trim() === q.ans_text).length;
     const perc = (score / quizState.questions.length) * 100;
     
-    let grade='راسب', color='var(--danger)', icon = '<i class="fa-solid fa-xmark"></i>';
-    if(perc>=90){grade='ممتاز'; color='var(--accent)'; icon='<i class="fa-solid fa-star"></i>';}
-    else if(perc>=80){grade='جيد جداً'; color='var(--primary)'; icon='<i class="fa-solid fa-check-double"></i>';}
-    else if(perc>=70){grade='جيد'; color='var(--warning)'; icon='<i class="fa-solid fa-check"></i>';}
-    else if(perc>=50){grade='مقبول'; color='#f97316'; icon='<i class="fa-solid fa-minus"></i>';}
+    let grade = 'راسب', color = 'var(--danger)', icon = '<i class="fa-solid fa-xmark"></i>';
+    if(perc >= 90) { grade = 'ممتاز'; color = 'var(--accent)'; icon = '<i class="fa-solid fa-star"></i>'; }
+    else if(perc >= 80) { grade = 'جيد جداً'; color = 'var(--primary)'; icon = '<i class="fa-solid fa-check-double"></i>'; }
+    else if(perc >= 70) { grade = 'جيد'; color = 'var(--warning)'; icon = '<i class="fa-solid fa-check"></i>'; }
+    else if(perc >= 50) { grade = 'مقبول'; color = '#f97316'; icon = '<i class="fa-solid fa-minus"></i>'; }
     
     document.getElementById('certStudentName').innerText = quizState.studentName; 
     document.getElementById('certChapterName').innerText = quizState.chapterName;
@@ -1300,7 +1331,7 @@ async function showQuizResult() {
     document.getElementById('certGrade').style.color = color;
     document.getElementById('certGrade').style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : '239,68,68'}, 0.15)`;
     
-    if(perc>=50 && typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+    if(perc >= 50 && typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
     
     // حفظ المحاولة في الباك إند ومنح XP لمرة واحدة فقط
     if (isStudentLoggedIn()) {

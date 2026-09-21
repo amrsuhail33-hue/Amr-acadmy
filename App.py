@@ -15,6 +15,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
+from sqlalchemy.dialects.postgresql import UUID
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
 import math
@@ -65,34 +66,14 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 GROQ_MODEL = "openai/gpt-oss-120b"
 
 # ==========================================
-# Grade Calculation
-# ==========================================
-def calculate_grade_estimation(score):
-    try:
-        score = float(score)
-        if 90 <= score <= 100:
-            return "ممتاز"
-        elif 80 <= score < 90:
-            return "جيد جداً"
-        elif 65 <= score < 80:
-            return "جيد"
-        elif 50 <= score < 65:
-            return "مقبول"
-        elif 0 <= score < 50:
-            return "راسب"
-        else:
-            return "درجة غير صالحة"
-    except (ValueError, TypeError):
-        return "خطأ في القيمة"
-
-# ==========================================
 # Database Models
 # ==========================================
 
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
-    auth_user_id = db.Column(db.String(50), unique=True, nullable=True)
+    # استخدام نوع UUID الصريح المتوافق مع Supabase لمنع خطأ تحويل الأنواع
+    auth_user_id = db.Column(UUID(as_uuid=True), nullable=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -408,6 +389,13 @@ class QuizQuestion(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        q_text = (self.question_text or '').strip()
+        opts = [self.option_a, self.option_b, self.option_c, self.option_d]
+        cleaned_opts = []
+        for o in opts:
+            if o and o.strip() and o.strip() != q_text:
+                cleaned_opts.append(o.strip())
+
         return {
             "id": self.id,
             "year": self.year,
@@ -415,12 +403,12 @@ class QuizQuestion(db.Model):
             "college": self.college or "",
             "subject_name": self.subject_name,
             "chapter_name": self.chapter_name,
-            "question_text": self.question_text,
-            "option_a": self.option_a or "",
-            "option_b": self.option_b or "",
-            "option_c": self.option_c or "",
-            "option_d": self.option_d or "",
-            "correct_answer": self.correct_answer or "",
+            "question_text": q_text,
+            "option_a": cleaned_opts[0] if len(cleaned_opts) > 0 else (self.option_a or ""),
+            "option_b": cleaned_opts[1] if len(cleaned_opts) > 1 else (self.option_b or ""),
+            "option_c": cleaned_opts[2] if len(cleaned_opts) > 2 else (self.option_c or ""),
+            "option_d": cleaned_opts[3] if len(cleaned_opts) > 3 else (self.option_d or ""),
+            "correct_answer": (self.correct_answer or "").strip(),
             "explanation": self.explanation or "",
             "status": self.status or 'approved'
         }
@@ -453,18 +441,6 @@ class QuizAttempt(db.Model):
 with app.app_context():
     try:
         db.create_all()
-        try:
-            db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN allocated_hours FLOAT DEFAULT 1.0;'))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            
-        try:
-            db.session.execute(text('ALTER TABLE unified_tasks ADD COLUMN is_wird BOOLEAN DEFAULT FALSE;'))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
         students = Student.query.all()
         for s in students:
             if not UserProfile.query.filter_by(student_id=s.id).first():
@@ -728,6 +704,7 @@ def student_register():
         if Student.query.filter(Student.username.ilike(username)).first():
             return jsonify({"status": "error", "message": "اسم المستخدم مسجل مسبقاً"}), 400
 
+        # إنشاء الطالب بدون تمرير auth_user_id لتفادي أي خطأ في النوع مع Supabase
         student = Student(username=username, name=name, role='student')
         student.set_password(password)
         db.session.add(student)
@@ -740,7 +717,7 @@ def student_register():
         return jsonify({"status": "success", "message": "تم التسجيل بنجاح"})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": f"خطأ في التسجيل: {str(e)}"}), 500
 
 @app.route('/student/logout', methods=['POST'])
 def student_logout():

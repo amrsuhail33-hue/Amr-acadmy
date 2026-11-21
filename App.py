@@ -15,7 +15,6 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import text
-from sqlalchemy.dialects.postgresql import UUID
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
 import math
@@ -71,8 +70,8 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
-    # استخدام نوع UUID الصريح المتوافق مع Supabase لمنع خطأ تحويل الأنواع
-    auth_user_id = db.Column(UUID(as_uuid=True), nullable=True)
+    # UUID نصي (String) يعمل على SQLite وPostgres معاً، بدل نوع Postgres الخاص الذي كان يكسر SQLite
+    auth_user_id = db.Column(db.String(36), nullable=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -448,6 +447,9 @@ with app.app_context():
         db.session.commit()
     except Exception as e:
         db.session.rollback()
+        # لا تبتلع الخطأ بصمت: اطبعه ثم أعد رفعه ليفشل التشغيل بسرعة بدل العمل بجداول ناقصة
+        print(f"خطأ فادح عند إنشاء جداول قاعدة البيانات: {e}", flush=True)
+        raise
 
 # ==========================================
 # Helpers & Auth Decorators
@@ -731,6 +733,12 @@ def student_logout():
 # نظام إدارة المحتوى والمراجعة (Workflow)
 # ==========================================
 
+def _safe_str(value, default=""):
+    """نص آمن: يعيد القيمة الافتراضية عند None، وإلا النص بعد إزالة المسافات."""
+    if value is None:
+        return default
+    return str(value).strip()
+
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
 def add_custom_content():
@@ -740,17 +748,28 @@ def add_custom_content():
 
         status = 'approved' if user.role == 'admin' else 'pending_review'
 
+        year = _safe_str(data.get('year'))
+        term = _safe_str(data.get('term'))
+        subject_name = _safe_str(data.get('subject_name'))
+        title = _safe_str(data.get('title'))
+        content_type = _safe_str(data.get('content_type'), 'videos')
+
+        if not year or not term or not subject_name or not title:
+            return jsonify({"status": "error", "message": "السنة والترم واسم المادة والعنوان حقول مطلوبة"}), 400
+        if content_type not in ('videos', 'files', 'quiz'):
+            return jsonify({"status": "error", "message": "نوع المحتوى غير صالح (يجب أن يكون videos أو files أو quiz)"}), 400
+
         lesson = CustomLesson(
-            year=data.get('year', '').strip(),
-            term=data.get('term', '').strip(),
-            college=data.get('college', '').strip(),
-            subject_name=data.get('subject_name', '').strip(),
-            chapter_name=data.get('chapter_name', 'عام').strip() or 'عام',
-            content_type=data.get('content_type', 'videos').strip(),
-            title=data.get('title', '').strip(),
-            url=data.get('url', '').strip(),
-            download_url=data.get('download_url', '').strip(),
-            notes=data.get('notes', '').strip(),
+            year=year,
+            term=term,
+            college=_safe_str(data.get('college')),
+            subject_name=subject_name,
+            chapter_name=_safe_str(data.get('chapter_name'), 'عام') or 'عام',
+            content_type=content_type,
+            title=title,
+            url=_safe_str(data.get('url')),
+            download_url=_safe_str(data.get('download_url')),
+            notes=_safe_str(data.get('notes')),
             status=status,
             created_by=user.id
         )
@@ -788,15 +807,20 @@ def edit_custom_content(content_id):
             return jsonify({"status": "error", "message": "غير مصرح لك بتعديل محتوى الآخرين"}), 403
 
         data = request.get_json(silent=True) or request.form or {}
-        item.year = data.get('year', item.year).strip()
-        item.term = data.get('term', item.term).strip()
-        item.subject_name = data.get('subject_name', item.subject_name).strip()
-        item.chapter_name = data.get('chapter_name', item.chapter_name).strip()
-        item.content_type = data.get('content_type', item.content_type).strip()
-        item.title = data.get('title', item.title).strip()
-        item.url = data.get('url', item.url).strip()
-        item.download_url = data.get('download_url', item.download_url).strip()
-        item.notes = data.get('notes', item.notes).strip()
+        item.year = _safe_str(data.get('year'), item.year)
+        item.term = _safe_str(data.get('term'), item.term)
+        item.subject_name = _safe_str(data.get('subject_name'), item.subject_name)
+        item.chapter_name = _safe_str(data.get('chapter_name'), item.chapter_name)
+        item.content_type = _safe_str(data.get('content_type'), item.content_type)
+        item.title = _safe_str(data.get('title'), item.title)
+        item.url = _safe_str(data.get('url'), item.url)
+        item.download_url = _safe_str(data.get('download_url'), item.download_url)
+        item.notes = _safe_str(data.get('notes'), item.notes)
+
+        if not item.year or not item.term or not item.subject_name or not item.title:
+            return jsonify({"status": "error", "message": "السنة والترم واسم المادة والعنوان حقول مطلوبة"}), 400
+        if item.content_type not in ('videos', 'files', 'quiz'):
+            return jsonify({"status": "error", "message": "نوع المحتوى غير صالح (يجب أن يكون videos أو files أو quiz)"}), 400
 
         db.session.commit()
         return jsonify({"status": "success", "message": "تم تحديث المحتوى بنجاح"})
@@ -809,6 +833,10 @@ def edit_custom_content(content_id):
 def delete_custom_content(content_id):
     try:
         item = CustomLesson.query.get_or_404(content_id)
+        # حذف المرتبطات أولاً لتفادي مخالفة المفتاح الأجنبي، وفصل المهام عن الدرس المحذوف
+        Favorite.query.filter_by(lesson_id=content_id).delete(synchronize_session=False)
+        Progress.query.filter_by(lesson_id=content_id).delete(synchronize_session=False)
+        UnifiedTask.query.filter_by(lesson_id=content_id).update({"lesson_id": None}, synchronize_session=False)
         db.session.delete(item)
         db.session.commit()
         return jsonify({"status": "success"})
@@ -1042,6 +1070,33 @@ def delete_question(question_id):
 # المساعد الذكي وتقديرات الدرجات
 # ==========================================
 
+def calculate_grade_estimation(score):
+    """تقدير الدرجة: يقبل مقياس 0-100 أو 0-4، ويعيد التقدير كنص عربي مع الحرف."""
+    try:
+        value = float(score)
+    except (TypeError, ValueError):
+        raise ValueError("الدرجة يجب أن تكون رقماً")
+    if value <= 4:
+        # مقياس 0-4 (معدل)
+        if value >= 3.5:
+            return "ممتاز (A)"
+        if value >= 3.0:
+            return "جيد جداً (B)"
+        if value >= 2.0:
+            return "جيد (C)"
+        if value >= 1.0:
+            return "مقبول (D)"
+        return "راسب (F)"
+    if value >= 90:
+        return "ممتاز (A)"
+    if value >= 80:
+        return "جيد جداً (B)"
+    if value >= 70:
+        return "جيد (C)"
+    if value >= 60:
+        return "مقبول (D)"
+    return "راسب (F)"
+
 @app.route('/calculate-grade', methods=['POST'])
 def calculate_grade():
     try:
@@ -1049,9 +1104,16 @@ def calculate_grade():
         score = data.get('score')
         if score is None:
             return jsonify({"status": "error", "message": "يرجى إدخال الدرجة"}), 400
-        
-        grade = calculate_grade_estimation(score)
-        return jsonify({"status": "success", "score": score, "grade": grade})
+
+        try:
+            numeric_score = float(score)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "الدرجة يجب أن تكون رقماً"}), 400
+        if numeric_score < 0 or numeric_score > 100:
+            return jsonify({"status": "error", "message": "الدرجة يجب أن تكون بين 0 و 100"}), 400
+
+        grade = calculate_grade_estimation(numeric_score)
+        return jsonify({"status": "success", "score": numeric_score, "grade": grade})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

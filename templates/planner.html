@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ===== دعم iPhone / Safari ===== -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
             document.documentElement.classList.add('dark-mode');
         }
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
-        const STUDENT_NAME = {% if student_name %}"{{ student_name }}"{% else %}null{% endif %};
+        const STUDENT_NAME = {{ student_name|tojson }};
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">

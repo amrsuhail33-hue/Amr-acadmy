@@ -46,6 +46,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if "sqlite" not in db_url:
     ssl_context = ssl.create_default_context()
+    ca_file = os.environ.get("PGSSLROOTCERT")
+    if ca_file:
+        ssl_context.load_verify_locations(cafile=ca_file)
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
@@ -1640,8 +1643,23 @@ def add_platform_update():
 def health_check():
     try:
         db.session.execute(text("SELECT 1"))
-    except Exception:
+    except Exception as exc:
         db.session.rollback()
+        error = getattr(exc, "orig", exc)
+        causes = [error]
+        while causes[-1].__cause__ and causes[-1].__cause__ not in causes:
+            causes.append(causes[-1].__cause__)
+        tls_error = next((cause for cause in causes if isinstance(cause, ssl.SSLCertVerificationError)), None)
+        details = error.args[0] if error.args else None
+        sqlstate = details.get("C", "") if isinstance(details, dict) else ""
+        sqlstate = sqlstate if isinstance(sqlstate, str) and len(sqlstate) == 5 and sqlstate.isalnum() else "-"
+        app.logger.warning(
+            "DB health failed: driver=%s errors=%s sqlstate=%s tls_verify_code=%s",
+            db.engine.url.drivername,
+            ",".join(type(cause).__name__ for cause in causes),
+            sqlstate,
+            tls_error.verify_code if tls_error else "-",
+        )
         return jsonify(status="unavailable", database="disconnected"), 503
     return jsonify({
         "status": "healthy",

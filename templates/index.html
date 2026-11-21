@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
     
     <!-- دعم iPhone / Safari -->
@@ -25,8 +25,8 @@
         const IS_ADMIN = {% if is_admin %}true{% else %}false{% endif %};
         const IS_ASSISTANT = {% if is_assistant %}true{% else %}false{% endif %};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
-        const STUDENT_NAME = {% if student_name %}"{{ student_name }}"{% else %}null{% endif %};
-        const CURRENT_SUBJECT = "{% if subject %}{{ subject.name }}{% endif %}";
+        const STUDENT_NAME = {{ student_name|tojson }};
+        const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
     </script>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -481,19 +481,21 @@
     </section>
 
     <div class="search-box">
-        <input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن أي مادة أو درس أو ملف...">
+        <input type="text" id="searchInput" oninput="searchItems()" aria-label="بحث" placeholder="ابحث عن أي مادة أو درس أو ملف...">
         <i class="fa-solid fa-magnifying-glass"></i>
     </div>
 
+    <div id="catalogResults" class="grid-container" aria-live="polite"></div>
     <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
     <div class="grid-container">
         {% for id, year in data.items() %}
-            <a href="/?year={{ id }}" class="card green year-card">
+            <a href="/?year={{ id|urlencode }}" class="card green year-card">
                 <div class="card-icon-wrapper"></div>
                 <h3 class="card-title year-card-title">{{ year.name }}</h3>
                 <div class="card-subtitle">جميع مواد ومحتوى السنة</div>
                 <div class="card-btn">استعرض المواد</div>
             </a>
+        {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "ستظهر السنوات هنا عند نشر أول مقرر." }}</p>
         {% endfor %}
     </div>
     {% endif %}
@@ -502,7 +504,7 @@
     <div class="section-header"><h2>اختر الفصل الدراسي</h2></div>
     <div class="grid-container">
         {% for t_id, term_data in terms.items() %}
-        <a href="/?year={{ y_id }}&term={{ t_id }}" class="card">
+        <a href="/?year={{ y_id|urlencode }}&term={{ t_id|urlencode }}" class="card">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
             <h3 class="card-title">{{ term_data.name }}</h3>
             <div class="card-btn">تصفح الفصل</div>
@@ -513,13 +515,13 @@
 
     {% if view == 'subjects' %}
     <div class="search-box">
-        <input type="text" id="searchInput" onkeyup="searchItems()" placeholder="ابحث عن مادة محددة...">
+        <input type="text" id="searchInput" oninput="searchItems()" aria-label="بحث" placeholder="ابحث عن مادة محددة...">
         <i class="fa-solid fa-magnifying-glass"></i>
     </div>
     <div class="section-header"><h2>المقررات الدراسية</h2></div>
     <div class="grid-container">
         {% for subject in subjects %}
-            <a href="/?subject={{ subject.id }}" class="card" style="justify-content:center; align-items:center; text-align:center; padding:45px 20px;">
+            <a href="/?subject={{ subject.id|urlencode }}" class="card" style="justify-content:center; align-items:center; text-align:center; padding:45px 20px;">
                 <h3 class="card-title" style="margin:0 0 25px 0; font-size:1.6rem;">{{ subject.name }}</h3>
                 <div class="card-btn" style="max-width:200px; margin:0 auto;">دخول للمادة</div>
             </a>
@@ -530,17 +532,17 @@
     {% if view == 'select_type' %}
     <div class="section-header"><h2>{{ subject.name }}</h2><p>اختر نوع المحتوى</p></div>
     <div class="grid-container">
-        <a href="/?subject={{ subject.id }}&type=videos" class="card">
+        <a href="/?subject={{ subject.id|urlencode }}&type=videos" class="card">
             <div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>
             <h3 class="card-title">المحاضرات</h3>
             <div class="card-btn">تصفح الفيديوهات</div>
         </a>
-        <a href="/?subject={{ subject.id }}&type=files" class="card green">
+        <a href="/?subject={{ subject.id|urlencode }}&type=files" class="card green">
             <div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>
             <h3 class="card-title">الملفات</h3>
             <div class="card-btn">تصفح الملفات</div>
         </a>
-        <a href="/?subject={{ subject.id }}&type=quiz" class="card" style="border-color:transparent;">
+        <a href="/?subject={{ subject.id|urlencode }}&type=quiz" class="card" style="border-color:transparent;">
             <div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>
             <h3 class="card-title">اختبار</h3>
             <div class="card-btn" style="color:var(--warning); border-color:var(--warning);">بدء الاختبار</div>
@@ -552,7 +554,7 @@
     <div class="section-header"><h2>الفصول والمواضيع</h2></div>
     <div class="grid-container">
         {% for chapter in chapters %}
-            <a href="/?subject={{ subject.id }}&type={{ content_type }}&chapter={{ chapter.name }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px;">
+            <a href="/?subject={{ subject.id|urlencode }}&type={{ content_type|urlencode }}&chapter={{ chapter.name|urlencode }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px;">
                 <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}</span>
                 <i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i>
             </a>
@@ -575,7 +577,7 @@
                 <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 15px;"><i class="fa-solid fa-award"></i></div>
                 <h3 style="margin-bottom:12px; font-size:1.4rem; font-weight:900;">تقييم فهمك للفصل</h3>
                 <input type="text" id="studentNameInput" placeholder="الاسم الثلاثي..." class="qa-input-field" style="max-width:100%; margin:0 auto 20px;" value="{{ student_name or '' }}">
-                <button id="startQuizBtn" class="btn-calc-action" style="background:var(--primary); max-width:100%; margin:0 auto;" onclick="startQuiz('{{ chapter.name }}')">بدء الاختبار <i class="fa-solid fa-rocket"></i></button>
+                <button id="startQuizBtn" class="btn-calc-action" style="background:var(--primary); max-width:100%; margin:0 auto;" onclick="startQuiz(this.dataset.chapter)" data-chapter="{{ chapter.name }}">بدء الاختبار <i class="fa-solid fa-rocket"></i></button>
             </div>
             
             <div id="quiz-view" class="hidden">
@@ -714,6 +716,7 @@
     <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي"><i class="fa-solid fa-heart" style="color:var(--primary);"></i></div>
     <a href="https://wa.me/967774485611" target="_blank" class="fab-item" title="الدعم الفني"><i class="fa-solid fa-headset" style="color:var(--accent);"></i></a>
     <div class="fab-item" onclick="openWhatsNewModal()" title="التحديثات"><i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadStarDot" style="display:none; top:0; right:0;"></span></div>
+    <a href="/simulators" class="fab-item" aria-label="المحاكيات" title="المحاكيات"><i class="fa-solid fa-flask"></i></a>
     <a href="/planner" target="_blank" class="fab-item" title="الخطة الدراسية"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
     <div class="fab-item" onclick="togglePopup('calcBox')" title="حاسبة المعدل"><i class="fa-solid fa-calculator"></i></div>
     <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i></div>
@@ -821,8 +824,40 @@ function scrollToYears() {
     if(sec) window.scrollTo({top: sec.getBoundingClientRect().top + window.pageYOffset - 80, behavior: 'smooth'});
 }
 
+function escapeText(value) {
+    const span = document.createElement('span');
+    span.textContent = value ?? '';
+    return span.innerHTML;
+}
 function searchItems() {
     const f = (document.getElementById("searchInput")?.value || "").toUpperCase();
+    const results = document.getElementById('catalogResults');
+    if (results) {
+        const term = f.trim().toLowerCase();
+        results.replaceChildren();
+        if (!term) return;
+        const catalog = {{ data | tojson }};
+        const add = (label, params) => {
+            const link = document.createElement('a');
+            link.className = 'card';
+            link.textContent = label;
+            link.href = '/?' + new URLSearchParams(params);
+            results.append(link);
+        };
+        for (const year of Object.values(catalog))
+            for (const semester of Object.values(year.terms))
+                for (const subject of semester.subjects) {
+                    const label = [subject.name, year.name, semester.name].join(' · ');
+                    if (label.toLowerCase().includes(term)) add(label, {subject:subject.id});
+                    for (const [type, content] of Object.entries(subject.types))
+                        for (const chapter of content.chapters)
+                            for (const lesson of chapter.lessons)
+                                if (lesson.title.toLowerCase().includes(term))
+                                    add(lesson.title + ' · ' + subject.name, {subject:subject.id, type, chapter:chapter.name});
+                }
+        if (!results.childElementCount) results.textContent = 'لا توجد نتائج مطابقة';
+        return;
+    }
     document.querySelectorAll(".grid-container .card, .content-list .list-item").forEach(c => {
         c.style.display = c.innerText.toUpperCase().indexOf(f) > -1 ? "" : "none";
     });
@@ -961,8 +996,8 @@ async function loadCustomContentList() {
             return `
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
-                    <div style="font-weight:bold;">${item.title} ${statusBadge}</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${item.subject_name} (${item.chapter_name})</div>
+                    <div style="font-weight:bold;">${escapeText(item.title)} ${statusBadge}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${escapeText(item.subject_name)} (${escapeText(item.chapter_name)})</div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button onclick="editCustomContentForm(${item.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
@@ -1024,8 +1059,8 @@ async function loadReviewQueue() {
         let html = '';
         data.lessons.forEach(l => {
             html += `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
-                <div style="font-weight:bold; color:var(--primary);"><i class="fa-solid fa-play"></i> محتوى: ${l.title}</div>
-                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${l.subject_name} | ${l.chapter_name}</div>
+                <div style="font-weight:bold; color:var(--primary);"><i class="fa-solid fa-play"></i> محتوى: ${escapeText(l.title)}</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${escapeText(l.subject_name)} | ${escapeText(l.chapter_name)}</div>
                 <div style="display:flex; gap:10px;">
                     <button onclick="approveQueueItem('lesson', ${l.id}, 'approve')" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">اعتماد</button>
                     <button onclick="approveQueueItem('lesson', ${l.id}, 'reject')" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">رفض</button>
@@ -1034,8 +1069,8 @@ async function loadReviewQueue() {
         });
         data.quizzes.forEach(q => {
             html += `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
-                <div style="font-weight:bold; color:var(--warning);"><i class="fa-solid fa-question"></i> سؤال: ${q.question_text.substring(0,50)}...</div>
-                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${q.subject_name} | ${q.chapter_name}</div>
+                <div style="font-weight:bold; color:var(--warning);"><i class="fa-solid fa-question"></i> سؤال: ${escapeText(q.question_text.substring(0,50))}...</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${escapeText(q.subject_name)} | ${escapeText(q.chapter_name)}</div>
                 <div style="display:flex; gap:10px;">
                     <button onclick="approveQueueItem('quiz', ${q.id}, 'approve')" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">اعتماد</button>
                     <button onclick="approveQueueItem('quiz', ${q.id}, 'reject')" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">رفض</button>
@@ -1077,8 +1112,8 @@ async function loadAdminQuestions() {
         if(qs.length === 0) return c.innerHTML = '<div style="text-align:center; padding:20px; color:var(--accent);">لا توجد أسئلة معلقة.</div>';
         c.innerHTML = qs.map(q => `
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
-                <div style="font-size:0.85rem; color:var(--text-muted);">${q.subject_id} | ${q.chapter_name}</div>
-                <div style="font-weight:bold; margin:5px 0;">${q.student_name}: ${q.question_text}</div>
+                <div style="font-size:0.85rem; color:var(--text-muted);">${q.subject_id} | ${escapeText(q.chapter_name)}</div>
+                <div style="font-weight:bold; margin:5px 0;">${escapeText(q.student_name)}: ${escapeText(q.question_text)}</div>
                 <textarea id="reply_input_${q.id}" rows="2" placeholder="اكتب ردك..." class="qa-input-field"></textarea>
                 <button onclick="submitAdminReply(${q.id})" class="btn-calc-action" style="background:var(--primary); padding:8px;"><i class="fa-solid fa-reply"></i> نشر الرد</button>
             </div>`).join('');
@@ -1145,9 +1180,9 @@ async function openWhatsNewModal() {
             localStorage.setItem('last_seen_update_id', updates[0].id);
             c.innerHTML = updates.map(u => `
                 <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:15px;">
-                    <span style="background:var(--primary-light); color:var(--primary); padding:4px 12px; border-radius:50px; font-size:0.8rem; font-weight:800;">${u.tag}</span>
-                    <div style="font-weight:900; font-size:1.1rem; margin:10px 0 6px;">${u.title}</div>
-                    <div style="font-size:0.95rem; color:var(--text-muted); line-height:1.6;">${u.description}</div>
+                    <span style="background:var(--primary-light); color:var(--primary); padding:4px 12px; border-radius:50px; font-size:0.8rem; font-weight:800;">${escapeText(u.tag)}</span>
+                    <div style="font-weight:900; font-size:1.1rem; margin:10px 0 6px;">${escapeText(u.title)}</div>
+                    <div style="font-size:0.95rem; color:var(--text-muted); line-height:1.6;">${escapeText(u.description)}</div>
                 </div>`).join('');
         } else c.innerHTML = '<div style="text-align:center; padding:20px;">لا توجد إعلانات حالياً.</div>';
     } catch(e) { c.innerHTML = "خطأ بالتحميل"; }
@@ -1179,7 +1214,7 @@ async function sendAIMessage() {
             <div style="width:35px; height:35px; border-radius:10px; background:var(--bg-body); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.1rem;"><i class="fa-solid fa-user"></i></div>
             <div style="background:var(--primary); color:white; padding:15px; border-radius:16px; border-bottom-left-radius:4px; max-width:85%;">
                 ${file ? `<img src="${URL.createObjectURL(file)}" style="max-width:100%; border-radius:8px; margin-bottom:10px;">` : ''}
-                <div style="line-height:1.5;">${txt}</div>
+                <div style="line-height:1.5;">${escapeText(txt)}</div>
             </div>
         </div>`;
     document.getElementById('aiUserInput').value = ''; clearAiImage(); b.scrollTop = b.scrollHeight;
@@ -1197,7 +1232,7 @@ async function sendAIMessage() {
         const data = await res.json();
         document.getElementById(loadId)?.remove();
         const rId = 'r_' + Date.now();
-        b.innerHTML += `<div style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;"><div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-robot"></i></div><div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; max-width:85%; line-height:1.6;" id="${rId}">${data.reply.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}</div></div>`;
+        b.innerHTML += `<div style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;"><div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-robot"></i></div><div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; max-width:85%; line-height:1.6;" id="${rId}">${escapeText(data.reply || data.error).replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}</div></div>`;
         if(window.MathJax) MathJax.typesetPromise([document.getElementById(rId)]);
     } catch(e) {
         document.getElementById(loadId)?.remove();
@@ -1215,7 +1250,7 @@ async function startQuiz(chapter) {
     quizState.studentName = name; quizState.chapterName = chapter; quizState.currentQ = 0;
     document.getElementById('startQuizBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...';
     try {
-        const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}`);
+        const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}&subject=${encodeURIComponent(CURRENT_SUBJECT)}&year=${encodeURIComponent({{ (subject.year if subject else "")|tojson }})}&term=${encodeURIComponent({{ (subject.term if subject else "")|tojson }})}`);
         const data = await res.json();
         if(!data || data.length === 0) { 
             alert("لا توجد أسئلة معتمدة متاحة لهذا الفصل حالياً."); 
@@ -1263,18 +1298,18 @@ function loadQuestion() {
     q.opts.forEach((opt, idx) => {
         const b = document.createElement('button');
         b.className = 'quiz-opt';
-        b.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
+        b.innerHTML = `<span>${escapeText(opt)}</span> <i class="fa-regular fa-circle"></i>`;
         
         if (q.status === 'answered') {
             b.disabled = true;
             if (String(opt).trim() === q.ans_text) {
                 b.classList.add('correct');
-                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-check"></i>`;
+                b.innerHTML = `<span>${escapeText(opt)}</span> <i class="fa-solid fa-circle-check"></i>`;
             } else if (idx === q.selectedOpt) {
                 b.classList.add('wrong');
-                b.innerHTML = `<span>${opt}</span> <i class="fa-solid fa-circle-xmark"></i>`;
+                b.innerHTML = `<span>${escapeText(opt)}</span> <i class="fa-solid fa-circle-xmark"></i>`;
             } else {
-                b.innerHTML = `<span>${opt}</span>`;
+                b.innerHTML = `<span>${escapeText(opt)}</span>`;
             }
         } else {
             b.onclick = () => selectOption(idx);

@@ -44,10 +44,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if "sqlite" not in db_url:
+    # Render Postgres يستخدم شهادة موقعة ذاتياً، فالتحقق الافتراضي يفشل
+    # (SSLCertVerificationError, tls_verify_code=19). إذا وفّرنا ملف CA عبر
+    # PGSSLROOTCERT نبقي التحقق مفعّلاً، وإلا نعطّل التحقق لهذا الاتصال فقط.
     ssl_context = ssl.create_default_context()
     ca_file = os.environ.get("PGSSLROOTCERT")
     if ca_file:
         ssl_context.load_verify_locations(cafile=ca_file)
+    else:
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
@@ -1732,3 +1738,4 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+

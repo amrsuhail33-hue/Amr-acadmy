@@ -21,7 +21,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import math
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'amr_suhail_academy_secure_secret_key_2026')
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(32)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
 
 # ==========================================
@@ -46,8 +46,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if "sqlite" not in db_url:
     ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
@@ -56,13 +54,11 @@ if "sqlite" not in db_url:
         }
     }
 
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "123")
-ASSISTANT_PASSWORD = os.environ.get("ASSISTANT_PASSWORD", "AhmedAI")
 
 db = SQLAlchemy(app)
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-groq_client = Groq(api_key=GROQ_API_KEY)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 GROQ_MODEL = "openai/gpt-oss-120b"
 
 # ==========================================
@@ -498,12 +494,18 @@ def get_platform_data(user):
             query = query.filter((CustomLesson.status == 'approved') | (CustomLesson.created_by == user.id))
 
         lessons = query.order_by(CustomLesson.id.asc()).all()
-        for item in lessons:
+        quiz_query = QuizQuestion.query
+        if not user or user.role == 'student':
+            quiz_query = quiz_query.filter_by(status='approved')
+        elif user.role == 'assistant':
+            quiz_query = quiz_query.filter((QuizQuestion.status == 'approved') | (QuizQuestion.created_by == user.id))
+        quiz_groups = quiz_query.with_entities(QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name, QuizQuestion.chapter_name).distinct().all()
+        for item in [*lessons, *quiz_groups]:
             year = (item.year or '').strip()
             term = (item.term or '').strip()
             subject = (item.subject_name or '').strip()
             chapter = (item.chapter_name or 'عام').strip() or 'عام'
-            c_type = (item.content_type or 'videos').strip()
+            c_type = (getattr(item, 'content_type', 'quiz') or 'videos').strip()
 
             if not year or not term or not subject:
                 continue
@@ -515,7 +517,7 @@ def get_platform_data(user):
             if subject not in data[year]["terms"][term]["subjects"]:
                 data[year]["terms"][term]["subjects"][subject] = {
                     "id": f"{year}_{term}_{subject}".replace(" ", "_"),
-                    "name": subject,
+                    "name": subject, "year": year, "term": term,
                     "types": {
                         "videos": {"chapters": {}},
                         "files": {"chapters": {}},
@@ -531,6 +533,8 @@ def get_platform_data(user):
             if chapter not in subj_data["types"][c_type]["chapters"]:
                 subj_data["types"][c_type]["chapters"][chapter] = {"name": chapter, "lessons": []}
 
+            if not isinstance(item, CustomLesson):
+                continue
             lesson_dict = {
                 "id": item.id,
                 "title": item.title,
@@ -557,6 +561,8 @@ def get_platform_data(user):
     except Exception as e:
         db.session.rollback()
 
+        return None
+
     return data
 
 @app.after_request
@@ -578,6 +584,8 @@ def add_header(response):
 def home():
     user = get_current_user()
     data = get_platform_data(user)
+    catalog_error = data is None
+    data = data or {}
 
     is_admin = (user.role == 'admin') if user else False
     is_assistant = (user.role == 'assistant') if user else False
@@ -589,6 +597,7 @@ def home():
         updates = []
 
     view_context = {
+        'catalog_error': catalog_error,
         'updates': updates,
         'is_admin': is_admin,
         'is_assistant': is_assistant,
@@ -653,21 +662,12 @@ def student_login():
         if not username or not password:
             return jsonify({"status": "error", "message": "يرجى إدخال اسم المستخدم وكلمة المرور"}), 400
 
-        student = Student.query.filter(Student.username.ilike(username)).first()
+        student = Student.query.filter(db.func.lower(Student.username) == username.lower()).first()
         if not student:
             return jsonify({"status": "error", "message": "اسم المستخدم غير موجود"}), 401
 
-        is_valid = False
-        try:
-            is_valid = student.check_password(password)
-        except Exception:
-            is_valid = (student.password_hash == password)
-
-        if not is_valid and student.password_hash == password:
-            is_valid = True
-
-        if not is_valid:
-            return jsonify({"status": "error", "message": "كلمة المرور غير صحيحة"}), 401
+        if not student.is_active or not student.check_password(password):
+            return jsonify({"status":"error","message":"تعذر تسجيل الدخول بهذه البيانات"}), 401
 
         session.permanent = True
         session['student_id'] = student.id
@@ -701,14 +701,14 @@ def student_register():
         if not username or not password or not name:
             return jsonify({"status": "error", "message": "جميع الحقول مطلوبة"}), 400
 
-        if Student.query.filter(Student.username.ilike(username)).first():
+        if Student.query.filter(db.func.lower(Student.username) == username.lower()).first():
             return jsonify({"status": "error", "message": "اسم المستخدم مسجل مسبقاً"}), 400
 
         # إنشاء الطالب بدون تمرير auth_user_id لتفادي أي خطأ في النوع مع Supabase
         student = Student(username=username, name=name, role='student')
         student.set_password(password)
         db.session.add(student)
-        db.session.commit()
+        db.session.flush()
 
         profile = UserProfile(student_id=student.id)
         db.session.add(profile)
@@ -717,7 +717,7 @@ def student_register():
         return jsonify({"status": "success", "message": "تم التسجيل بنجاح"})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": f"خطأ في التسجيل: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": "تعذر إنشاء الحساب. حاول مرة أخرى."}), 500
 
 @app.route('/student/logout', methods=['POST'])
 def student_logout():
@@ -861,6 +861,9 @@ def get_quiz():
         query = QuizQuestion.query
         if chapter_name:
             query = query.filter_by(chapter_name=chapter_name)
+        for field in ('year', 'term'):
+            if request.args.get(field):
+                query = query.filter_by(**{field: request.args[field]})
         if subject_name:
             query = query.filter_by(subject_name=subject_name)
 
@@ -1051,6 +1054,8 @@ def calculate_grade():
 
 @app.route('/ask-ai', methods=['POST'])
 def ask_ai():
+    if groq_client is None:
+        return jsonify({"error": "خدمة الذكاء الاصطناعي غير مهيأة حاليًا"}), 503
     try:
         data = request.get_json(silent=True) or {}
         user_message = data.get('message') or request.form.get('message') or ''
@@ -1083,6 +1088,10 @@ def ask_ai():
 # نظام التخطيط الدراسي والذكاء الاصطناعي الكامل
 # ==========================================
 
+@app.route('/simulators')
+def simulators():
+    return render_template('simulators.html', student_id=session.get('student_id'))
+
 @app.route('/planner')
 def planner():
     user = get_current_user()
@@ -1090,6 +1099,8 @@ def planner():
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
+    if groq_client is None:
+        return jsonify({"error": "خدمة الذكاء الاصطناعي غير مهيأة حاليًا"}), 503
     try:
         data = request.get_json(silent=True) or {}
         student_id = session.get('student_id')
@@ -1186,6 +1197,8 @@ def generate_plan():
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
+    if groq_client is None:
+        return jsonify({"error": "خدمة الذكاء الاصطناعي غير مهيأة حاليًا"}), 503
     try:
         data = request.get_json(silent=True) or {}
         student_id = session.get('student_id')
@@ -1378,6 +1391,8 @@ def get_all_lessons():
 @app.route('/api/generate-exam-plan', methods=['POST'])
 @student_required
 def generate_exam_plan():
+    if groq_client is None:
+        return jsonify({"error": "خدمة الذكاء الاصطناعي غير مهيأة حاليًا"}), 503
     try:
         data = request.get_json(silent=True) or {}
         student_id = session['student_id']
@@ -1569,12 +1584,14 @@ def manage_progress():
         status = data.get('status', 'not_started')
         progress_percent = data.get('progress_percent', 0)
 
+        if type(progress_percent) is not int or not 0 <= progress_percent <= 100 or not db.session.get(CustomLesson, lesson_id):
+            return jsonify({"status":"error","message":"بيانات الدرس غير صالحة"}), 400
         prog = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
         if not prog:
             prog = Progress(student_id=student_id, lesson_id=lesson_id)
             db.session.add(prog)
 
-        old_progress = prog.progress_percent
+        old_progress = prog.progress_percent or 0
         prog.status = status
         prog.progress_percent = progress_percent
         prog.last_accessed = datetime.utcnow()
@@ -1621,6 +1638,11 @@ def add_platform_update():
 
 @app.route('/health')
 def health_check():
+    try:
+        db.session.execute(text("SELECT 1"))
+    except Exception:
+        db.session.rollback()
+        return jsonify(status="unavailable", database="disconnected"), 503
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),

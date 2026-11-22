@@ -390,7 +390,7 @@ class QuizQuestion(db.Model):
     option_b = db.Column(db.Text, nullable=True)
     option_c = db.Column(db.Text, nullable=True)
     option_d = db.Column(db.Text, nullable=True)
-    correct_answer = db.Column(db.String(100), nullable=True)
+    correct_answer = db.Column(db.String(200), nullable=True)
     explanation = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='approved')
     created_by = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=True)
@@ -468,36 +468,50 @@ with app.app_context():
                 profile = UserProfile(student_id=s.id)
                 db.session.add(profile)
 
+        db.session.commit()
+
         # --- تصحيح لمرة واحدة (Dev): إجابات مخزنة خاطئة في أسئلة إلكترونك، الشبتر السادس ---
-        # القيم الصحيحة تم التحقق منها مقابل نصوص خيارات كل سؤال عبر /api/quiz؛
+        # القيم الصحيحة تم التحقق منها مقابل نصوص خيارات كل سؤال عبر /api/quiz.
         # يطبّق التصحيح مرة واحدة فقط (على الصفوف التي ما زالت تحمل القيمة الخاطئة)
         # ثم يُحذف هذا الكتلة في التزام تنظيف لاحق.
-        _QUIZ_ANSWER_FIXES = {
-            1: "0.7V",
-            2: "40.60%",
-            3: "100Hz",
-            4: "Vm",
-            5: "0.48",
-            6: "عند توصيله انحياز عكسي في منطقة الانهيار (Breakdown Region)",
-            7: "Capacitor Filter",
-            8: "إنتاج جهد مستمر يعادل ضعفي القيمة العظمى لجهد الدخل (2 Vm)",
-            9: "دايودان على التوالي",
-            10: "ينصهر فيوز الحماية في الدخل (Primary Fuse Blows)",
-        }
-        _fixed_count = 0
-        for _qid, _correct in _QUIZ_ANSWER_FIXES.items():
-            _q = QuizQuestion.query.filter_by(
-                id=_qid, subject_name="إلكترونك", chapter_name="الشبتر السادس"
-            ).first()
-            if _q and _q.correct_answer != _correct:
-                _options = [str(o).strip() for o in
-                            [_q.option_a, _q.option_b, _q.option_c, _q.option_d] if o]
-                if _correct in _options:
-                    _q.correct_answer = _correct
-                    _fixed_count += 1
-        if _fixed_count:
-            print(f"تم تصحيح {_fixed_count} من إجابات اختبار إلكترونك (الشبتر السادس)", flush=True)
-        db.session.commit()
+        # ملاحظة: عمود correct_answer في قاعدة البيانات الحية varchar(50) بينما النموذج
+        # String(100)، وبعض الإجابات الصحيحة أطول من 50 حرفاً؛ لذا نوسّع العمود أولاً.
+        # الكتلة كلها معزولة: أي خطأ فيها يُسجَّل فقط ولا يُسقط تشغيل التطبيق.
+        try:
+            if "sqlite" not in db_url:
+                db.session.execute(text(
+                    "ALTER TABLE quiz_questions ALTER COLUMN correct_answer TYPE VARCHAR(200)"
+                ))
+                db.session.commit()
+            _QUIZ_ANSWER_FIXES = {
+                1: "0.7V",
+                2: "40.60%",
+                3: "100Hz",
+                4: "Vm",
+                5: "0.48",
+                6: "عند توصيله انحياز عكسي في منطقة الانهيار (Breakdown Region)",
+                7: "Capacitor Filter",
+                8: "إنتاج جهد مستمر يعادل ضعفي القيمة العظمى لجهد الدخل (2 Vm)",
+                9: "دايودان على التوالي",
+                10: "ينصهر فيوز الحماية في الدخل (Primary Fuse Blows)",
+            }
+            _fixed_count = 0
+            for _qid, _correct in _QUIZ_ANSWER_FIXES.items():
+                _q = QuizQuestion.query.filter_by(
+                    id=_qid, subject_name="إلكترونك", chapter_name="الشبتر السادس"
+                ).first()
+                if _q and _q.correct_answer != _correct:
+                    _options = [str(o).strip() for o in
+                                [_q.option_a, _q.option_b, _q.option_c, _q.option_d] if o]
+                    if _correct in _options:
+                        _q.correct_answer = _correct
+                        _fixed_count += 1
+            if _fixed_count:
+                db.session.commit()
+                print(f"تم تصحيح {_fixed_count} من إجابات اختبار إلكترونك (الشبتر السادس)", flush=True)
+        except Exception as _fix_err:
+            db.session.rollback()
+            print(f"تعذّر تصحيح إجابات الاختبار لمرة واحدة: {_fix_err}", flush=True)
     except Exception as e:
         db.session.rollback()
         # لا تبتلع الخطأ بصمت: اطبعه ثم أعد رفعه ليفشل التشغيل بسرعة بدل العمل بجداول ناقصة

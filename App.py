@@ -82,8 +82,10 @@ class Student(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='student')  # student, assistant, admin
+    role = db.Column(db.String(20), default='student')  # student, assistant, admin, college_supervisor, specialization_supervisor
     college = db.Column(db.String(150), nullable=True)
+    supervisor_college = db.Column(db.String(150), nullable=True)  # نطاق المشرف: اسم الكلية التي يشرف عليها
+    supervisor_specialization = db.Column(db.String(150), nullable=True)  # نطاق مشرف التخصص: اسم المادة
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -105,6 +107,21 @@ class Student(db.Model):
             "name": self.name,
             "role": self.role or 'student',
             "college": self.college or '',
+            "supervisor_college": self.supervisor_college or '',
+            "supervisor_specialization": self.supervisor_specialization or '',
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+class College(db.Model):
+    __tablename__ = 'colleges'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
@@ -490,6 +507,21 @@ with app.app_context():
         print(f"خطأ فادح عند إنشاء جداول قاعدة البيانات: {e}", flush=True)
         raise
 
+# بذر الكليات الافتراضية وربط المحتوى القديم بكلية الهندسة.
+# كتلة مستقلة محمية بـ try/except حتى لا يُسقط أي خطأ بياناتٍ التشغيل أبداً.
+with app.app_context():
+    try:
+        for _cname in ("كلية الهندسة", "كلية الطب"):
+            if not College.query.filter_by(name=_cname).first():
+                db.session.add(College(name=_cname))
+        db.session.commit()
+        CustomLesson.query.filter((CustomLesson.college == None) | (CustomLesson.college == "")).update({"college": "كلية الهندسة"}, synchronize_session=False)
+        QuizQuestion.query.filter((QuizQuestion.college == None) | (QuizQuestion.college == "")).update({"college": "كلية الهندسة"}, synchronize_session=False)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"تعذر بذر الكليات وربط المحتوى القديم: {e}", flush=True)
+
 
 # ==========================================
 # Helpers & Auth Decorators
@@ -509,11 +541,64 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+SUPERVISOR_ROLES = ('college_supervisor', 'specialization_supervisor')
+
+def _in_scope(user, college, subject_name=None):
+    """هل هذا العنصر (كلية/تخصص) ضمن نطاق المستخدم؟ المشرف الأعلى يرى كل شيء."""
+    if not user:
+        return False
+    if user.role == 'admin':
+        return True
+    if user.role == 'college_supervisor':
+        return (user.supervisor_college or '') == (college or '')
+    if user.role == 'specialization_supervisor':
+        return ((user.supervisor_college or '') == (college or '')
+                and (user.supervisor_specialization or '') == (subject_name or ''))
+    return False
+
+def _scope_query(query, user, model):
+    """فلترة استعلام محتوى (CustomLesson أو QuizQuestion) حسب نطاق المستخدم.
+    المشرف الأعلى والمساعد يبقيان على سلوكهما الحالي (الفلترة تتم في المسار نفسه)."""
+    if not user or user.role == 'admin' or user.role == 'assistant':
+        return query
+    if user.role == 'college_supervisor':
+        return query.filter(model.college == (user.supervisor_college or ''))
+    if user.role == 'specialization_supervisor':
+        return query.filter(model.college == (user.supervisor_college or ''),
+                            model.subject_name == (user.supervisor_specialization or ''))
+    return query
+
+def _subject_college_info(subject_id):
+    """كلية واسم مادة معرّف مادة ما (year_term_subject) من صفوف الدروس أو الأسئلة."""
+    for model in (CustomLesson, QuizQuestion):
+        for row in model.query.with_entities(model.year, model.term, model.subject_name, model.college).all():
+            sid = f"{row.year}_{row.term}_{row.subject_name}".replace(" ", "_")
+            if sid == subject_id:
+                return (row.college or "كلية الهندسة", row.subject_name)
+    return None
+
+def _question_in_scope(q, user):
+    """هل سؤال درس ما ضمن نطاق المشرف؟"""
+    info = _subject_college_info(q.subject_id)
+    if not info:
+        return False
+    college, subject_name = info
+    return _in_scope(user, college, subject_name)
+
+def admin_or_supervisor_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user or user.role not in ('admin',) + SUPERVISOR_ROLES:
+            return jsonify({"status": "error", "message": "غير مصرح لك (مطلوب مسؤول)"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
 def can_manage_content(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user = get_current_user()
-        if not user or user.role not in ['admin', 'assistant']:
+        if not user or user.role not in ['admin', 'assistant'] + list(SUPERVISOR_ROLES):
             return jsonify({"status": "error", "message": "غير مصرح لك بإدارة المحتوى"}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -533,8 +618,20 @@ def student_required(f):
 YEAR_NAME_FIXES = {"السنة الاولئ": "السنة الأولى"}
 
 def get_platform_data(user):
+    # البنية: كلية -> سنوات -> فصول دراسية -> مواد -> أنواع محتوى -> فصول -> دروس
     data = {}
     try:
+        # الكليات المعروفة من جدول الكليات (مرتبة حسب الإضافة)؛
+        # وأي كلية تظهر في محتوى قديم تُضاف تلقائياً حتى لا يضيع محتواها.
+        try:
+            known_colleges = [c.name for c in College.query.order_by(College.id).all()]
+        except Exception:
+            known_colleges = []
+        if not known_colleges:
+            known_colleges = ["كلية الهندسة"]
+        for _cname in known_colleges:
+            data[_cname] = {"name": _cname, "years": {}}
+
         query = CustomLesson.query
         if not user or user.role == 'student':
             query = query.filter_by(status='approved')
@@ -547,7 +644,7 @@ def get_platform_data(user):
             quiz_query = quiz_query.filter_by(status='approved')
         elif user.role == 'assistant':
             quiz_query = quiz_query.filter((QuizQuestion.status == 'approved') | (QuizQuestion.created_by == user.id))
-        quiz_groups = quiz_query.with_entities(QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name, QuizQuestion.chapter_name).distinct().all()
+        quiz_groups = quiz_query.with_entities(QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name, QuizQuestion.chapter_name, QuizQuestion.college).distinct().all()
         for item in [*lessons, *quiz_groups]:
             year = (item.year or '').strip()
             year = YEAR_NAME_FIXES.get(year, year)
@@ -555,18 +652,22 @@ def get_platform_data(user):
             subject = (item.subject_name or '').strip()
             chapter = (item.chapter_name or 'عام').strip() or 'عام'
             c_type = (getattr(item, 'content_type', 'quiz') or 'videos').strip()
+            college = (getattr(item, 'college', '') or '').strip() or "كلية الهندسة"
 
             if not year or not term or not subject:
                 continue
 
-            if year not in data:
-                data[year] = {"name": year, "terms": {}}
-            if term not in data[year]["terms"]:
-                data[year]["terms"][term] = {"name": term, "subjects": {}}
-            if subject not in data[year]["terms"][term]["subjects"]:
-                data[year]["terms"][term]["subjects"][subject] = {
+            if college not in data:
+                data[college] = {"name": college, "years": {}}
+            years = data[college]["years"]
+            if year not in years:
+                years[year] = {"name": year, "terms": {}}
+            if term not in years[year]["terms"]:
+                years[year]["terms"][term] = {"name": term, "subjects": {}}
+            if subject not in years[year]["terms"][term]["subjects"]:
+                years[year]["terms"][term]["subjects"][subject] = {
                     "id": f"{year}_{term}_{subject}".replace(" ", "_"),
-                    "name": subject, "year": year, "term": term,
+                    "name": subject, "year": year, "term": term, "college": college,
                     "types": {
                         "videos": {"chapters": {}},
                         "files": {"chapters": {}},
@@ -574,7 +675,7 @@ def get_platform_data(user):
                     }
                 }
 
-            subj_data = data[year]["terms"][term]["subjects"][subject]
+            subj_data = years[year]["terms"][term]["subjects"][subject]
             
             if c_type not in subj_data["types"]:
                 subj_data["types"][c_type] = {"chapters": {}}
@@ -600,13 +701,14 @@ def get_platform_data(user):
 
             subj_data["types"][c_type]["chapters"][chapter]["lessons"].append(lesson_dict)
 
-        for y in data.values():
-            for t in y["terms"].values():
-                t["subjects"] = list(t["subjects"].values())
-                for s in t["subjects"]:
-                    s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
-                    s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
-                    s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
+        for c in data.values():
+            for y in c["years"].values():
+                for t in y["terms"].values():
+                    t["subjects"] = list(t["subjects"].values())
+                    for s in t["subjects"]:
+                        s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
+                        s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
+                        s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
     except Exception as e:
         db.session.rollback()
 
@@ -638,6 +740,15 @@ def home():
 
     is_admin = (user.role == 'admin') if user else False
     is_assistant = (user.role == 'assistant') if user else False
+    is_supervisor = (user.role in SUPERVISOR_ROLES) if user else False
+
+    try:
+        colleges = [c.to_dict() for c in College.query.order_by(College.id).all()]
+    except Exception:
+        db.session.rollback()
+        colleges = []
+    if not colleges:
+        colleges = [{"id": 0, "name": "كلية الهندسة"}]
 
     try:
         updates = PlatformUpdate.query.order_by(PlatformUpdate.created_at.desc()).all()
@@ -650,52 +761,79 @@ def home():
         'updates': updates,
         'is_admin': is_admin,
         'is_assistant': is_assistant,
+        'is_supervisor': is_supervisor,
+        'user_role': user.role if user else '',
+        'supervisor_college': (user.supervisor_college or '') if user else '',
+        'supervisor_specialization': (user.supervisor_specialization or '') if user else '',
         'student_id': user.id if user else None,
         'student_name': user.name if user else None,
+        'colleges': colleges,
         'data': data
     }
 
+    college_name = (request.args.get('college') or '').strip()
     year = request.args.get('year')
     term = request.args.get('term')
     subject_id = request.args.get('subject')
     content_type = request.args.get('type')
     chapter_name = request.args.get('chapter')
 
+    def _find_subject(sid):
+        for c in data.values():
+            for y in c["years"].values():
+                for t in y["terms"].values():
+                    for s in t["subjects"]:
+                        if s["id"] == sid:
+                            return s
+        return None
+
+    def _find_year_term(yname, tname=None):
+        # أول كلية تحوي هذه السنة (والترم إن حدّد) — كلية الهندسة أولاً لأنها بُذرت أولاً
+        for c in data.values():
+            years = c["years"]
+            if yname in years:
+                if tname is None:
+                    return c, years[yname]
+                if tname in years[yname]["terms"]:
+                    return c, years[yname]
+        return None, None
+
     if subject_id and content_type and chapter_name:
-        for y in data.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id and content_type in s["types"]:
-                        for c in s["types"][content_type]["chapters"]:
-                            if c["name"] == chapter_name:
-                                q_query = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name)
-                                if is_admin or is_assistant:
-                                    questions = q_query.order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
-                                else:
-                                    questions = q_query.filter_by(is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
-                                return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, **view_context)
+        s = _find_subject(subject_id)
+        if s and content_type in s["types"]:
+            for c in s["types"][content_type]["chapters"]:
+                if c["name"] == chapter_name:
+                    q_query = LessonQuestion.query.filter_by(subject_id=subject_id, chapter_name=chapter_name)
+                    if is_admin or is_assistant:
+                        questions = q_query.order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
+                    else:
+                        questions = q_query.filter_by(is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
+                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, **view_context)
 
     if subject_id and content_type:
-        for y in data.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id and content_type in s["types"]:
-                        return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], **view_context)
+        s = _find_subject(subject_id)
+        if s and content_type in s["types"]:
+            return render_template('index.html', view='chapters', subject=s, content_type=content_type, chapters=s["types"][content_type]["chapters"], **view_context)
 
     if subject_id:
-        for y in data.values():
-            for t in y["terms"].values():
-                for s in t["subjects"]:
-                    if s["id"] == subject_id:
-                        return render_template('index.html', view='select_type', subject=s, **view_context)
+        s = _find_subject(subject_id)
+        if s:
+            return render_template('index.html', view='select_type', subject=s, **view_context)
 
-    if year and term and year in data and term in data[year]["terms"]:
-        return render_template('index.html', view='subjects', subjects=data[year]["terms"][term]["subjects"], y_id=year, **view_context)
+    if year and term:
+        c, ydata = _find_year_term(year, term)
+        if ydata:
+            return render_template('index.html', view='subjects', subjects=ydata["terms"][term]["subjects"], y_id=year, college_name=c["name"], **view_context)
 
-    if year and year in data:
-        return render_template('index.html', view='terms', terms=data[year]["terms"], y_id=year, **view_context)
+    if year:
+        c, ydata = _find_year_term(year)
+        if ydata:
+            return render_template('index.html', view='terms', terms=ydata["terms"], y_id=year, college_name=c["name"], **view_context)
 
-    return render_template('index.html', view='years', **view_context)
+    if college_name and college_name in data:
+        return render_template('index.html', view='years', years=data[college_name]["years"], college_name=college_name, **view_context)
+
+    return render_template('index.html', view='colleges', **view_context)
 
 # ==========================================
 # Auth APIs (تسجيل الدخول والتسجيل)
@@ -817,6 +955,18 @@ def add_custom_content():
         title = _safe_str(data.get('title'))
         content_type = _safe_str(data.get('content_type'), 'videos')
 
+        # نطاق المشرف: مشرف الكلية/التخصص لا يضيف إلا ضمن نطاقه،
+        # والمشرف الأعلى يختار الكلية من النموذج (الافتراضي: كلية الهندسة).
+        if user.role == 'college_supervisor':
+            college_value = user.supervisor_college or 'كلية الهندسة'
+        elif user.role == 'specialization_supervisor':
+            college_value = user.supervisor_college or 'كلية الهندسة'
+            subject_name = user.supervisor_specialization or subject_name
+        else:
+            college_value = _safe_str(data.get('college')) or 'كلية الهندسة'
+        if not College.query.filter_by(name=college_value).first():
+            db.session.add(College(name=college_value))
+
         if not year or not term or not subject_name or not title:
             return jsonify({"status": "error", "message": "السنة والترم واسم المادة والعنوان حقول مطلوبة"}), 400
         if content_type not in ('videos', 'files', 'quiz'):
@@ -825,7 +975,7 @@ def add_custom_content():
         lesson = CustomLesson(
             year=year,
             term=term,
-            college=_safe_str(data.get('college')),
+            college=college_value,
             subject_name=subject_name,
             chapter_name=_safe_str(data.get('chapter_name'), 'عام') or 'عام',
             content_type=content_type,
@@ -852,6 +1002,8 @@ def get_custom_content():
     try:
         if user.role == 'admin':
             lessons = CustomLesson.query.order_by(CustomLesson.created_at.desc()).all()
+        elif user.role in SUPERVISOR_ROLES:
+            lessons = _scope_query(CustomLesson.query, user, CustomLesson).order_by(CustomLesson.created_at.desc()).all()
         else:
             lessons = CustomLesson.query.filter((CustomLesson.created_by == user.id) | (CustomLesson.status == 'approved')).order_by(CustomLesson.created_at.desc()).all()
         return jsonify([l.to_dict() for l in lessons])
@@ -866,13 +1018,25 @@ def edit_custom_content(content_id):
         user = get_current_user()
         item = CustomLesson.query.get_or_404(content_id)
 
-        if user.role != 'admin' and item.created_by != user.id:
+        if user.role == 'admin':
+            pass
+        elif user.role in SUPERVISOR_ROLES:
+            if not _in_scope(user, item.college, item.subject_name):
+                return jsonify({"status": "error", "message": "غير مصرح لك بتعديل محتوى خارج نطاقك"}), 403
+        elif item.created_by != user.id:
             return jsonify({"status": "error", "message": "غير مصرح لك بتعديل محتوى الآخرين"}), 403
 
         data = request.get_json(silent=True) or request.form or {}
         item.year = _safe_str(data.get('year'), item.year)
         item.term = _safe_str(data.get('term'), item.term)
+        item.college = _safe_str(data.get('college'), item.college)
         item.subject_name = _safe_str(data.get('subject_name'), item.subject_name)
+        # المشرف لا ينقل المحتوى خارج نطاقه
+        if user.role == 'college_supervisor':
+            item.college = user.supervisor_college or item.college
+        elif user.role == 'specialization_supervisor':
+            item.college = user.supervisor_college or item.college
+            item.subject_name = user.supervisor_specialization or item.subject_name
         item.chapter_name = _safe_str(data.get('chapter_name'), item.chapter_name)
         item.content_type = _safe_str(data.get('content_type'), item.content_type)
         item.title = _safe_str(data.get('title'), item.title)
@@ -892,10 +1056,13 @@ def edit_custom_content(content_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/delete-content/<int:content_id>', methods=['POST'])
-@admin_required
+@can_manage_content
 def delete_custom_content(content_id):
     try:
+        user = get_current_user()
         item = CustomLesson.query.get_or_404(content_id)
+        if user.role != 'admin' and not _in_scope(user, item.college, item.subject_name):
+            return jsonify({"status": "error", "message": "غير مصرح لك بحذف محتوى خارج نطاقك"}), 403
         # حذف المرتبطات أولاً لتفادي مخالفة المفتاح الأجنبي، وفصل المهام عن الدرس المحذوف
         Favorite.query.filter_by(lesson_id=content_id).delete(synchronize_session=False)
         Progress.query.filter_by(lesson_id=content_id).delete(synchronize_session=False)
@@ -908,11 +1075,12 @@ def delete_custom_content(content_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/review-queue', methods=['GET'])
-@admin_required
+@admin_or_supervisor_required
 def get_review_queue():
     try:
-        lessons = CustomLesson.query.filter_by(status='pending_review').all()
-        quizzes = QuizQuestion.query.filter_by(status='pending_review').all()
+        user = get_current_user()
+        lessons = _scope_query(CustomLesson.query.filter_by(status='pending_review'), user, CustomLesson).all()
+        quizzes = _scope_query(QuizQuestion.query.filter_by(status='pending_review'), user, QuizQuestion).all()
         return jsonify({
             "lessons": [l.to_dict() for l in lessons],
             "quizzes": [q.to_dict() for q in quizzes]
@@ -942,6 +1110,95 @@ def approve_content(content_type, item_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
+# الكليات والمشرفون (المشرف الأعلى فقط)
+# ==========================================
+
+@app.route('/admin/colleges', methods=['GET'])
+@admin_required
+def get_colleges():
+    try:
+        return jsonify([c.to_dict() for c in College.query.order_by(College.id).all()])
+    except Exception:
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/add-college', methods=['POST'])
+@admin_required
+def add_college():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        name = _safe_str(data.get('name'))
+        if not name:
+            return jsonify({"status": "error", "message": "اسم الكلية مطلوب"}), 400
+        if College.query.filter_by(name=name).first():
+            return jsonify({"status": "error", "message": "هذه الكلية موجودة بالفعل"}), 400
+        db.session.add(College(name=name))
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت إضافة الكلية بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/supervisors', methods=['GET'])
+@admin_required
+def get_supervisors():
+    try:
+        sups = Student.query.filter(Student.role.in_(list(SUPERVISOR_ROLES))).order_by(Student.created_at.desc()).all()
+        return jsonify([s.to_dict() for s in sups])
+    except Exception:
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/add-supervisor', methods=['POST'])
+@admin_required
+def add_supervisor():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = _safe_str(data.get('username'))
+        role = _safe_str(data.get('role'))
+        college = _safe_str(data.get('college'))
+        specialization = _safe_str(data.get('specialization'))
+        if not username or role not in SUPERVISOR_ROLES:
+            return jsonify({"status": "error", "message": "اسم المستخدم والدور حقول مطلوبة"}), 400
+        if not college:
+            return jsonify({"status": "error", "message": "الكلية مطلوبة"}), 400
+        if role == 'specialization_supervisor' and not specialization:
+            return jsonify({"status": "error", "message": "التخصص مطلوب لمشرف التخصص"}), 400
+        if not College.query.filter_by(name=college).first():
+            return jsonify({"status": "error", "message": "الكلية غير موجودة — أضفها أولاً"}), 400
+        student = Student.query.filter_by(username=username).first()
+        if not student:
+            return jsonify({"status": "error", "message": "لا يوجد حساب بهذا الاسم"}), 404
+        if student.role == 'admin':
+            return jsonify({"status": "error", "message": "هذا الحساب مشرف أعلى بالفعل"}), 400
+        student.role = role
+        student.supervisor_college = college
+        student.supervisor_specialization = specialization if role == 'specialization_supervisor' else None
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تعيين المشرف بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/remove-supervisor', methods=['POST'])
+@admin_required
+def remove_supervisor():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        username = _safe_str(data.get('username'))
+        student = Student.query.filter_by(username=username).first()
+        if not student:
+            return jsonify({"status": "error", "message": "لا يوجد حساب بهذا الاسم"}), 404
+        student.role = 'student'
+        student.supervisor_college = None
+        student.supervisor_specialization = None
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت إزالة صلاحية الإشراف"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
 # نظام بنك الأسئلة والاختبارات وفصل XP
 # ==========================================
 
@@ -954,9 +1211,12 @@ def get_quiz():
     try:
         # ترتيب ثابت حسب id: بدون ORDER BY كان Postgres يعيد الصفوف بترتيب غير
         # مضمون يتغير بين الطلبات، فتظهر أسئلة الاختبار بترتيب مختلف في كل محاولة.
+        college_name = request.args.get('college')
         query = QuizQuestion.query.order_by(QuizQuestion.id)
         if chapter_name:
             query = query.filter_by(chapter_name=chapter_name)
+        if college_name:
+            query = query.filter_by(college=college_name)
         # لا نفلتر بالسنة/الترم: نصوصهما قد تختلف بين صفوف الدروس والأسئلة
         # (مثلاً خطأ إملائي في "السنة الاولئ") فيعيد الفلتر صفر سؤال رغم وجود أسئلة.
         if subject_name:
@@ -1033,6 +1293,7 @@ def import_questions():
         stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
         reader = csv.DictReader(stream)
         count = 0
+        skipped = 0
         for row in reader:
             qt = (row.get('question_text') or '').strip()
             oa = (row.get('option_a') or '').strip()
@@ -1058,10 +1319,15 @@ def import_questions():
                     if 0 < _idx < len(orig_opts):
                         ca = orig_opts[_idx]
                 qt, oa, ob, oc, od, oe = oa, ob, oc, od, oe, ""
+            _row_college = (row.get('college') or '').strip() or 'كلية الهندسة'
+            _row_subject = (row.get('subject_name') or 'عام').strip()
+            if user.role in SUPERVISOR_ROLES and not _in_scope(user, _row_college, _row_subject):
+                skipped += 1
+                continue
             q = QuizQuestion(
                 year=row.get('year', 'السنة الأولى'),
                 term=row.get('term', 'الترم الأول'),
-                college=row.get('college', ''),
+                college=_row_college,
                 subject_name=row.get('subject_name', 'عام'),
                 chapter_name=row.get('chapter_name', 'عام'),
                 question_text=qt,
@@ -1079,7 +1345,10 @@ def import_questions():
                 db.session.add(q)
                 count += 1
         db.session.commit()
-        return jsonify({"status": "success", "message": f"تم استيراد {count} سؤال بنجاح كـ ({status})"})
+        _msg = f"تم استيراد {count} سؤال بنجاح كـ ({status})"
+        if skipped:
+            _msg += f" — تم تخطي {skipped} سؤالاً خارج نطاقك"
+        return jsonify({"status": "success", "message": _msg})
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": f"خطأ في قراءة الملف: {str(e)}"}), 500
@@ -1120,7 +1389,11 @@ def submit_question():
 @can_manage_content
 def get_pending_questions():
     try:
-        return jsonify([q.to_dict() for q in LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()])
+        user = get_current_user()
+        qs = LessonQuestion.query.filter_by(is_answered=False).order_by(LessonQuestion.created_at.desc()).all()
+        if user and user.role in SUPERVISOR_ROLES:
+            qs = [q for q in qs if _question_in_scope(q, user)]
+        return jsonify([q.to_dict() for q in qs])
     except Exception:
         db.session.rollback()
         return jsonify([])
@@ -1131,6 +1404,8 @@ def reply_question(question_id):
     try:
         user = get_current_user()
         q = LessonQuestion.query.get_or_404(question_id)
+        if user.role in SUPERVISOR_ROLES and not _question_in_scope(q, user):
+            return jsonify({"status": "error", "message": "غير مصرح لك بالرد على سؤال خارج نطاقك"}), 403
         data = request.get_json(silent=True) or request.form or {}
         ans = (data.get('answer_text') or '').strip()
 
@@ -1540,7 +1815,8 @@ def get_all_lessons():
                 "chapter_name": l.chapter_name,
                 "content_type": l.content_type,
                 "year": l.year,
-                "term": l.term
+                "term": l.term,
+                "college": l.college or "كلية الهندسة"
             })
         return jsonify(result)
     except Exception as e:

@@ -1205,7 +1205,8 @@ async function loadSupervisorsTab() {
         try {
             const res = await fetch('/admin/colleges'); const list = await res.json();
             cl.innerHTML = (!list || list.length === 0) ? '<div style="text-align:center; padding:10px;">لا توجد كليات بعد.</div>' :
-                list.map(c => `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-weight:800;">${escapeText(c.name)}</span><button data-id="${c.id}" data-name="${escapeText(c.name)}" onclick="removeCollege(this.dataset.id, this.dataset.name)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button></div>`).join('');
+                list.map(c => `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-weight:800;">${escapeText(c.name)}</span><button data-id="${c.id}" data-name="${escapeText(c.name)}" class="college-delete-btn" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button></div>`).join('');
+            cl.querySelectorAll('.college-delete-btn').forEach(b => b.addEventListener('click', () => removeCollege(b.dataset.id, b.dataset.name, b)));
         } catch(e) { cl.innerHTML = 'خطأ في تحميل الكليات.'; }
     }
     const sl = document.getElementById('supervisorsList');
@@ -1268,14 +1269,29 @@ async function removeSupervisor(username) {
     } catch(e) { alert('خطأ أثناء الإزالة.'); }
 }
 
-async function removeCollege(id, name) {
-    if (!confirm('هل أنت متأكد من حذف الكلية "' + name + '"؟ لا يمكن حذف كلية فيها مقررات أو مشرفون.')) return;
+let pendingCollegeDeleteId = null;
+let pendingCollegeDeleteTimer = null;
+function disarmCollegeDelete() {
+    pendingCollegeDeleteId = null;
+    clearTimeout(pendingCollegeDeleteTimer);
+    document.querySelectorAll('#collegesList button[data-armed="1"]').forEach(b => { b.textContent = 'حذف'; delete b.dataset.armed; });
+}
+async function removeCollege(id, name, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الحذف
+    if (String(pendingCollegeDeleteId) !== String(id)) {
+        disarmCollegeDelete();
+        pendingCollegeDeleteId = id;
+        if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; }
+        pendingCollegeDeleteTimer = setTimeout(disarmCollegeDelete, 6000);
+        return;
+    }
+    disarmCollegeDelete();
     try {
         const res = await fetch('/admin/remove-college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id) }) });
         const data = await res.json();
         if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
-        else alert(data.message);
-    } catch(e) { alert('خطأ أثناء حذف الكلية.'); }
+        else showToast(data.message, 'error');
+    } catch(e) { showToast('خطأ أثناء حذف الكلية.', 'error'); }
 }
 
 async function uploadQuizCSV() {

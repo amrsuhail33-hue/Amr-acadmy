@@ -624,6 +624,12 @@
             
             <div id="result-view" class="hidden" style="text-align:center;">
                 <div id="quizFailMsg" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:12px; padding:16px; font-weight:800; margin-bottom:30px;">لم تحقق نسبة النجاح هذه المرة — راجع الدرس وحاول مجدداً.</div>
+                <div id="quizResultSummary" style="background:var(--bg-card-inner); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px;">
+                    <div style="font-size:2.2rem; font-weight:900; line-height:1.2;" id="resultPercent"></div>
+                    <div id="resultGrade" style="font-weight:bold; font-size:1.1rem; padding:6px 20px; border-radius:50px; display:inline-block; margin-top:8px;"></div>
+                    <div id="resultScore" style="margin-top:10px; font-weight:800; color:var(--text-muted);"></div>
+                    <div id="resultXp" style="margin-top:6px; font-weight:800; color:var(--text-muted);">النقاط المكتسبة: 0 XP</div>
+                </div>
                 <div id="certificateCard" style="background:linear-gradient(135deg, #0f172a, #1e293b); border:2px solid var(--warning); border-radius:24px; padding:30px; text-align:center; color:white; margin-bottom:30px;">
                     <div style="color:var(--warning); font-size:1.2rem; font-weight:900; margin-bottom:20px;">Amr Suhail Academy</div>
                     <div id="certStudentName" style="font-size:1.8rem; font-weight:900; margin-bottom:15px;"></div>
@@ -1409,6 +1415,19 @@ async function showQuizResult() {
     document.getElementById('certPercent').style.color = color;
     document.getElementById('certGrade').innerHTML = `${icon} تقدير: ${grade}`; 
     document.getElementById('certGrade').style.color = color;
+    // ملخص النتيجة يظهر دائماً (نجاحاً أو رسوباً)؛ الشهادة وزر تحميلها فقط عند النجاح
+    const summaryPercent = document.getElementById('resultPercent');
+    if (summaryPercent) { summaryPercent.innerText = perc.toFixed(0) + "%"; summaryPercent.style.color = color; }
+    const summaryGrade = document.getElementById('resultGrade');
+    if (summaryGrade) {
+        summaryGrade.innerHTML = `${icon} تقدير: ${grade}`;
+        summaryGrade.style.color = color;
+        summaryGrade.style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : '239,68,68'}, 0.15)`;
+    }
+    const summaryScore = document.getElementById('resultScore');
+    if (summaryScore) summaryScore.innerText = `إجابات صحيحة: ${score} من ${quizState.questions.length}`;
+    const summaryXp = document.getElementById('resultXp');
+    if (summaryXp) summaryXp.innerText = perc >= 50 ? 'النقاط المكتسبة: بانتظار الحفظ...' : 'النقاط المكتسبة: 0 XP';
     document.getElementById('certGrade').style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : '239,68,68'}, 0.15)`;
     
     // إظهار الشهادة وزر التحميل فقط عند النجاح (50% فأكثر)، وإلا إظهار رسالة الفشل
@@ -1436,7 +1455,8 @@ async function showQuizResult() {
                 })
             });
             const data = await res.json();
-            if(data.xp_awarded) { showToast('+20 نقطة XP لإتمام الاختبار بنجاح!', 'success'); loadProfile(); }
+            if(data.xp_awarded) { showToast('+20 نقطة XP لإتمام الاختبار بنجاح!', 'success'); loadProfile(); if (summaryXp) summaryXp.innerText = 'النقاط المكتسبة: +20 XP'; }
+            else if (perc >= 50 && summaryXp) summaryXp.innerText = 'النقاط المكتسبة: 0 XP (مُنحت في محاولة سابقة)';
         } catch(e) {}
     }
 }

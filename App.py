@@ -470,45 +470,6 @@ with app.app_context():
 
         db.session.commit()
 
-        # --- تصحيح لمرة واحدة (Dev): إجابات مخزنة خاطئة في أسئلة إلكترونك، الشبتر السادس ---
-        # القيم الصحيحة تم التحقق منها مقابل نصوص خيارات كل سؤال عبر /api/quiz.
-        # يطبّق التصحيح مرة واحدة فقط (على الصفوف التي ما زالت تحمل القيمة الخاطئة)
-        # ثم يُحذف هذا الكتلة في التزام تنظيف لاحق.
-        # ملاحظة: عمود correct_answer في قاعدة البيانات الحية varchar(50) بينما النموذج
-        # String(100)، وبعض الإجابات الصحيحة أطول من 50 حرفاً؛ لذا نوسّع العمود أولاً.
-        # الكتلة كلها معزولة: أي خطأ فيها يُسجَّل فقط ولا يُسقط تشغيل التطبيق.
-        try:
-            if "sqlite" not in db_url:
-                db.session.execute(text(
-                    "ALTER TABLE quiz_questions ALTER COLUMN correct_answer TYPE VARCHAR(200)"
-                ))
-                db.session.commit()
-            # الحرف يشير إلى عمود الخيار في الصف نفسه؛ نأخذ نص الخيار من الصف
-            # مباشرة فلا تعتمد المطابقة على نص مكتوب يدوياً (قد يختلف بمسافة خفية).
-            # التحقق اليدوي من /api/quiz: الإجابة الصحيحة لكل سؤال هي الخيار المذكور.
-            _QUIZ_ANSWER_LETTERS = {
-                1: "c", 2: "b", 3: "d", 4: "b", 5: "c",
-                6: "c", 7: "c", 8: "c", 9: "c", 10: "c",
-            }
-            _fixed_count = 0
-            for _qid, _letter in _QUIZ_ANSWER_LETTERS.items():
-                _q = QuizQuestion.query.filter_by(
-                    id=_qid, subject_name="إلكترونك", chapter_name="الشبتر السادس"
-                ).first()
-                if not _q:
-                    continue
-                _correct = getattr(_q, "option_" + _letter, None)
-                if _correct and str(_correct).strip():
-                    _correct = str(_correct).strip()
-                    if _q.correct_answer != _correct:
-                        _q.correct_answer = _correct
-                        _fixed_count += 1
-            if _fixed_count:
-                db.session.commit()
-                print(f"تم تصحيح {_fixed_count} من إجابات اختبار إلكترونك (الشبتر السادس)", flush=True)
-        except Exception as _fix_err:
-            db.session.rollback()
-            print(f"تعذّر تصحيح إجابات الاختبار لمرة واحدة: {_fix_err}", flush=True)
     except Exception as e:
         db.session.rollback()
         # لا تبتلع الخطأ بصمت: اطبعه ثم أعد رفعه ليفشل التشغيل بسرعة بدل العمل بجداول ناقصة

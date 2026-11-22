@@ -478,25 +478,6 @@ with app.app_context():
         print(f"خطأ فادح عند إنشاء جداول قاعدة البيانات: {e}", flush=True)
         raise
 
-# --- تصحيح لمرة واحدة (يُحذف بعد تطبيقه): إضافة خيار خامس للسؤال 60 ---
-# السؤال 60 (الشبتر الثامن، إلكترونك) إجابته المخزنة "جميع ما سبق صحيح" لا تطابق
-# أي خيار من خياراته الثلاثة، فيستحيل الإجابة عنه بشكل صحيح. نضيف العمود option_e
-# (Postgres فقط) ونضع فيه هذا الخيار لهذا السؤال فقط.
-with app.app_context():
-    try:
-        if db.engine.dialect.name == 'postgresql':
-            db.session.execute(text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS option_e TEXT"))
-            db.session.commit()
-        q60 = QuizQuestion.query.filter_by(id=60, subject_name='إلكترونك', chapter_name='الشابتر الثامن').first()
-        if q60 is not None and not (q60.option_e or '').strip():
-            q60.option_e = 'جميع ما سبق صحيح'
-            q60.correct_answer = 'جميع ما سبق صحيح'
-            db.session.commit()
-            print('Q60 one-time fix applied: option_e set', flush=True)
-    except Exception as _q60_err:
-        db.session.rollback()
-        print(f'Q60 one-time fix skipped: {_q60_err}', flush=True)
-
 
 # ==========================================
 # Helpers & Auth Decorators

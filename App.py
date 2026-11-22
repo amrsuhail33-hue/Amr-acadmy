@@ -426,7 +426,7 @@ class QuizQuestion(db.Model):
         # فقط، دون تغيير البيانات المخزنة أو إزاحة الحقول.
         display_q = q_text
         display_opts = cleaned_opts
-        if q_text in ("اختيار", "إختيار") and cleaned_opts:
+        if _is_placeholder_question_title(q_text) and cleaned_opts:
             display_q = cleaned_opts[0]
             display_opts = cleaned_opts[1:]
 
@@ -779,6 +779,15 @@ def student_logout():
 # نظام إدارة المحتوى والمراجعة (Workflow)
 # ==========================================
 
+def _is_placeholder_question_title(text):
+    """هل نص السؤال مجرد كلمة "اختيار" بدل السؤال الحقيقي؟
+    الملفات المستوردة كتبت الكلمة بأشكال مختلفة للألف، فنوحّدها قبل المقارنة
+    (الألف المهموزة \u0623 والألف المكسورة \u0625 والألف الممدودة \u0622
+    كلها تصبح ألفاً عادية \u0627)."""
+    t = (text or "").strip()
+    t = t.replace("\u0623", "\u0627").replace("\u0625", "\u0627").replace("\u0622", "\u0627")
+    return t == "اختيار"
+
 def _safe_str(value, default=""):
     """نص آمن: يعيد القيمة الافتراضية عند None، وإلا النص بعد إزالة المسافات."""
     if value is None:
@@ -1027,7 +1036,7 @@ def import_questions():
             # ملفات CSV القديمة كانت تضع كلمة "اختيار" في question_text والسؤال
             # الحقيقي في option_a؛ نعيد ترتيب الحقول عند الاستيراد حتى لا تتكرر
             # المشكلة: نص السؤال في question_text والإجابات في option_a..option_e.
-            if qt in ("اختيار", "إختيار", "") and oa:
+            if (_is_placeholder_question_title(qt) or qt == "") and oa:
                 # حرف/رقم الإجابة الصحيحة كان يشير إلى أعمدة الملف الأصلية
                 # (option_a = نص السؤال)، فنحوّله إلى نص الإجابة قبل الإزاحة.
                 # المؤشر 0 يشير إلى نص السؤال نفسه فلا يُحلّ (لا إجابة هناك).

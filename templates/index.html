@@ -1205,7 +1205,7 @@ async function loadSupervisorsTab() {
         try {
             const res = await fetch('/admin/colleges'); const list = await res.json();
             cl.innerHTML = (!list || list.length === 0) ? '<div style="text-align:center; padding:10px;">لا توجد كليات بعد.</div>' :
-                list.map(c => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-weight:800;">${escapeText(c.name)}</span></div>`).join('');
+                list.map(c => `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-weight:800;">${escapeText(c.name)}</span><button data-id="${c.id}" data-name="${escapeText(c.name)}" onclick="removeCollege(this.dataset.id, this.dataset.name)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button></div>`).join('');
         } catch(e) { cl.innerHTML = 'خطأ في تحميل الكليات.'; }
     }
     const sl = document.getElementById('supervisorsList');
@@ -1266,6 +1266,16 @@ async function removeSupervisor(username) {
         if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
         else alert(data.message);
     } catch(e) { alert('خطأ أثناء الإزالة.'); }
+}
+
+async function removeCollege(id, name) {
+    if (!confirm('هل أنت متأكد من حذف الكلية "' + name + '"؟ لا يمكن حذف كلية فيها مقررات أو مشرفون.')) return;
+    try {
+        const res = await fetch('/admin/remove-college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id) }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
+        else alert(data.message);
+    } catch(e) { alert('خطأ أثناء حذف الكلية.'); }
 }
 
 async function uploadQuizCSV() {

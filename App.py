@@ -155,6 +155,10 @@ class UserProfile(db.Model):
             self.streak_days += 1
         elif self.last_active != today:
             self.streak_days = 1
+        elif (self.streak_days or 0) == 0:
+            # أول نشاط في اليوم نفسه الذي أُنشئ فيه الملف (last_active == today):
+            # يجب أن يبدأ التتابع من 1 بدل البقاء صفراً رغم النشاط.
+            self.streak_days = 1
         self.last_active = today
 
         db.session.commit()
@@ -463,6 +467,36 @@ with app.app_context():
             if not UserProfile.query.filter_by(student_id=s.id).first():
                 profile = UserProfile(student_id=s.id)
                 db.session.add(profile)
+
+        # --- تصحيح لمرة واحدة (Dev): إجابات مخزنة خاطئة في أسئلة إلكترونك، الشبتر السادس ---
+        # القيم الصحيحة تم التحقق منها مقابل نصوص خيارات كل سؤال عبر /api/quiz؛
+        # يطبّق التصحيح مرة واحدة فقط (على الصفوف التي ما زالت تحمل القيمة الخاطئة)
+        # ثم يُحذف هذا الكتلة في التزام تنظيف لاحق.
+        _QUIZ_ANSWER_FIXES = {
+            1: "0.7V",
+            2: "40.60%",
+            3: "100Hz",
+            4: "Vm",
+            5: "0.48",
+            6: "عند توصيله انحياز عكسي في منطقة الانهيار (Breakdown Region)",
+            7: "Capacitor Filter",
+            8: "إنتاج جهد مستمر يعادل ضعفي القيمة العظمى لجهد الدخل (2 Vm)",
+            9: "دايودان على التوالي",
+            10: "ينصهر فيوز الحماية في الدخل (Primary Fuse Blows)",
+        }
+        _fixed_count = 0
+        for _qid, _correct in _QUIZ_ANSWER_FIXES.items():
+            _q = QuizQuestion.query.filter_by(
+                id=_qid, subject_name="إلكترونك", chapter_name="الشبتر السادس"
+            ).first()
+            if _q and _q.correct_answer != _correct:
+                _options = [str(o).strip() for o in
+                            [_q.option_a, _q.option_b, _q.option_c, _q.option_d] if o]
+                if _correct in _options:
+                    _q.correct_answer = _correct
+                    _fixed_count += 1
+        if _fixed_count:
+            print(f"تم تصحيح {_fixed_count} من إجابات اختبار إلكترونك (الشبتر السادس)", flush=True)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -1577,8 +1611,12 @@ def get_profile():
             db.session.add(profile)
             db.session.commit()
 
-        completed_tasks = UnifiedTask.query.filter_by(student_id=student_id, completed=True).count()
-        total_tasks = UnifiedTask.query.filter_by(student_id=student_id).count()
+        # الدروس المكتملة تُحتسب ضمن المهام: إكمال درس لا ينشئ UnifiedTask،
+        # فكان عدّاد «مهام مكتملة» ونسبة الإنجاز يبقيان صفراً رغم إكمال الدروس.
+        completed_lessons = Progress.query.filter_by(student_id=student_id, progress_percent=100).count()
+        total_lessons = Progress.query.filter_by(student_id=student_id).count()
+        completed_tasks = UnifiedTask.query.filter_by(student_id=student_id, completed=True).count() + completed_lessons
+        total_tasks = UnifiedTask.query.filter_by(student_id=student_id).count() + total_lessons
         recent_transactions = PointTransaction.query.filter_by(student_id=student_id).order_by(PointTransaction.created_at.desc()).limit(10).all()
 
         return jsonify({

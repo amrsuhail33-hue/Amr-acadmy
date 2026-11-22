@@ -1116,6 +1116,35 @@ def _safe_str(value, default=""):
         return default
     return str(value).strip()
 
+# القيم القياسية للسنة والترم (تطبيع الإدخال):
+# أي صيغة مقبولة (رقم أو اسم مختصر أو كامل) تُطبع إلى القيمة القياسية عند
+# إنشاء مادة أو إضافة/تعديل محتوى أو استيراد أسئلة، حتى لا تنشأ مواد مخفية
+# عن الصفحة الرئيسية أو بطاقات سنة مكررة بسبب اختلاف صياغة النص الحر.
+# القيم غير القابلة للتطبيع تُرفض برسالة 400 تذكر القيم المقبولة.
+CANONICAL_YEARS = {
+    '1': 'السنة الأولى', 'الأولى': 'السنة الأولى', 'السنة الأولى': 'السنة الأولى',
+    'الاولى': 'السنة الأولى', 'السنة الاولى': 'السنة الأولى', 'السنة الاولئ': 'السنة الأولى',
+    '2': 'السنة الثانية', 'الثانية': 'السنة الثانية', 'السنة الثانية': 'السنة الثانية',
+    '3': 'السنة الثالثة', 'الثالثة': 'السنة الثالثة', 'السنة الثالثة': 'السنة الثالثة',
+    '4': 'السنة الرابعة', 'الرابعة': 'السنة الرابعة', 'السنة الرابعة': 'السنة الرابعة',
+    '5': 'السنة الخامسة', 'الخامسة': 'السنة الخامسة', 'السنة الخامسة': 'السنة الخامسة',
+    '6': 'السنة السادسة', 'السادسة': 'السنة السادسة', 'السنة السادسة': 'السنة السادسة',
+}
+CANONICAL_TERMS = {
+    '1': 'الترم الأول', 'الأول': 'الترم الأول', 'الترم الأول': 'الترم الأول', 'الفصل الأول': 'الترم الأول',
+    '2': 'الترم الثاني', 'الثاني': 'الترم الثاني', 'الترم الثاني': 'الترم الثاني', 'الفصل الثاني': 'الترم الثاني',
+}
+_YEAR_VALUES_TEXT = '، '.join(['السنة الأولى', 'السنة الثانية', 'السنة الثالثة', 'السنة الرابعة', 'السنة الخامسة', 'السنة السادسة'])
+_TERM_VALUES_TEXT = 'الترم الأول، الترم الثاني'
+
+def _normalize_year(value):
+    """تطبيع سنة دراسية إلى قيمتها القياسية، أو None إن لم تُطابق أي صيغة مقبولة."""
+    return CANONICAL_YEARS.get(_safe_str(value))
+
+def _normalize_term(value):
+    """تطبيع فصل دراسي إلى قيمته القياسية، أو None إن لم تُطابق أي صيغة مقبولة."""
+    return CANONICAL_TERMS.get(_safe_str(value))
+
 @app.route('/admin/add-content', methods=['POST'])
 @can_manage_content
 def add_custom_content():
@@ -1147,8 +1176,15 @@ def add_custom_content():
             subject_name = subject.name
         else:
             # مسار التوافق: بلا subject_id يُقبل الاسم فقط إن طابق مادة موجودة.
-            year = _safe_str(data.get('year'))
-            term = _safe_str(data.get('term'))
+            # السنة والترم يُطبَّعان إلى القيم القياسية حتى يطابقا صف المادة.
+            _raw_year = _safe_str(data.get('year'))
+            _raw_term = _safe_str(data.get('term'))
+            year = _normalize_year(_raw_year) if _raw_year else None
+            term = _normalize_term(_raw_term) if _raw_term else None
+            if _raw_year and not year:
+                return jsonify({"status": "error", "message": "السنة الدراسية غير صالحة — القيم المقبولة: " + _YEAR_VALUES_TEXT}), 400
+            if _raw_term and not term:
+                return jsonify({"status": "error", "message": "الفصل الدراسي غير صالح — القيم المقبولة: " + _TERM_VALUES_TEXT}), 400
             subject_name = _safe_str(data.get('subject_name'))
             # نطاق المشرف: مشرف الكلية/التخصص لا يضيف إلا ضمن نطاقه،
             # والمشرف الأعلى يختار الكلية من النموذج (الافتراضي: كلية الهندسة).
@@ -1250,8 +1286,20 @@ def edit_custom_content(content_id):
             item.term = _target.term
             item.college = _target.college
         else:
-            item.year = _safe_str(data.get('year'), item.year)
-            item.term = _safe_str(data.get('term'), item.term)
+            # قيمة سنة/ترم مرسلة تُطبَّع إلى القيم القياسية؛ قيمة غير قابلة
+            # للتطبيع تُرفض بدل كتابة نص حر يفك ارتباط الدرس بمادته.
+            _raw_year = _safe_str(data.get('year'))
+            _raw_term = _safe_str(data.get('term'))
+            if _raw_year:
+                _ny = _normalize_year(_raw_year)
+                if not _ny:
+                    return jsonify({"status": "error", "message": "السنة الدراسية غير صالحة — القيم المقبولة: " + _YEAR_VALUES_TEXT}), 400
+                item.year = _ny
+            if _raw_term:
+                _nt = _normalize_term(_raw_term)
+                if not _nt:
+                    return jsonify({"status": "error", "message": "الفصل الدراسي غير صالح — القيم المقبولة: " + _TERM_VALUES_TEXT}), 400
+                item.term = _nt
             item.college = _safe_str(data.get('college'), item.college)
             item.subject_name = _safe_str(data.get('subject_name'), item.subject_name)
         # المشرف لا ينقل المحتوى خارج نطاقه
@@ -1451,14 +1499,22 @@ def add_subject():
             return jsonify({"status": "error", "message": "مشرف التخصص لا يمكنه إضافة مواد — المادة الخاصة بك موجودة بالفعل"}), 403
         data = request.get_json(silent=True) or request.form or {}
         name = _safe_str(data.get('name'))
-        year = _safe_str(data.get('year'))
-        term = _safe_str(data.get('term'))
+        raw_year = _safe_str(data.get('year'))
+        raw_term = _safe_str(data.get('term'))
         if user.role == 'college_supervisor':
             college = user.supervisor_college or 'كلية الهندسة'
         else:
             college = _safe_str(data.get('college')) or 'كلية الهندسة'
-        if not name or not year or not term:
+        if not name or not raw_year or not raw_term:
             return jsonify({"status": "error", "message": "اسم المادة والسنة والترم حقول مطلوبة"}), 400
+        # السنة والترم يُطبَّعان إلى القيم القياسية (رقم أو مختصر أو كامل)؛
+        # قيمة لا تُطابق أي صيغة مقبولة تُرفض بدل إنشاء مادة مخفية عن الموقع.
+        year = _normalize_year(raw_year)
+        if not year:
+            return jsonify({"status": "error", "message": "السنة الدراسية غير صالحة — القيم المقبولة: " + _YEAR_VALUES_TEXT}), 400
+        term = _normalize_term(raw_term)
+        if not term:
+            return jsonify({"status": "error", "message": "الفصل الدراسي غير صالح — القيم المقبولة: " + _TERM_VALUES_TEXT}), 400
         if not College.query.filter_by(name=college).first():
             db.session.add(College(name=college))
         if Subject.query.filter_by(college=college, year=year, term=term, name=name).first():
@@ -1727,6 +1783,7 @@ def import_questions():
         reader = csv.DictReader(stream)
         count = 0
         skipped = 0
+        skipped_invalid = 0
         for row in reader:
             qt = (row.get('question_text') or '').strip()
             oa = (row.get('option_a') or '').strip()
@@ -1761,8 +1818,13 @@ def import_questions():
             else:
                 _row_college = (row.get('college') or '').strip() or 'كلية الهندسة'
                 _row_subject = (row.get('subject_name') or 'عام').strip()
-                _row_year = row.get('year', 'السنة الأولى')
-                _row_term = row.get('term', 'الترم الأول')
+                # سنة/ترم الملف تُطبَّعان إلى القيم القياسية؛ صف بسنة أو ترم
+                # غير صالحين يُتخطى بدل إنشاء سؤال مرتبط بمادة مخفية.
+                _row_year = _normalize_year((row.get('year') or '').strip() or 'السنة الأولى')
+                _row_term = _normalize_term((row.get('term') or '').strip() or 'الترم الأول')
+                if not _row_year or not _row_term:
+                    skipped_invalid += 1
+                    continue
                 if user.role in SUPERVISOR_ROLES and not _in_scope(user, _row_college, _row_subject):
                     skipped += 1
                     continue
@@ -1793,6 +1855,8 @@ def import_questions():
         _msg = f"تم استيراد {count} سؤال بنجاح كـ ({status})"
         if skipped:
             _msg += f" — تم تخطي {skipped} سؤالاً خارج نطاقك"
+        if skipped_invalid:
+            _msg += f" — تم تخطي {skipped_invalid} سؤالاً بسبب سنة أو ترم غير صالحين (المقبول: {_YEAR_VALUES_TEXT} / {_TERM_VALUES_TEXT})"
         return jsonify({"status": "success", "message": _msg})
     except Exception as e:
         app.logger.exception("فشل استيراد الأسئلة")

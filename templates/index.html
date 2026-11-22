@@ -499,8 +499,18 @@
                 <input type="text" id="new_subject_name" placeholder="اسم المادة (مثال: إلكترونك)" class="qa-input-field">
                 <select id="new_subject_college" class="qa-input-field"></select>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <input type="text" id="new_subject_year" placeholder="السنة الدراسية" class="qa-input-field" style="margin-bottom:0;">
-                    <input type="text" id="new_subject_term" placeholder="الفصل الدراسي" class="qa-input-field" style="margin-bottom:0;">
+                    <select id="new_subject_year" class="qa-input-field" style="margin-bottom:0;">
+                        <option value="السنة الأولى">السنة الأولى</option>
+                        <option value="السنة الثانية">السنة الثانية</option>
+                        <option value="السنة الثالثة">السنة الثالثة</option>
+                        <option value="السنة الرابعة">السنة الرابعة</option>
+                        <option value="السنة الخامسة">السنة الخامسة</option>
+                        <option value="السنة السادسة">السنة السادسة</option>
+                    </select>
+                    <select id="new_subject_term" class="qa-input-field" style="margin-bottom:0;">
+                        <option value="الترم الأول">الترم الأول</option>
+                        <option value="الترم الثاني">الترم الثاني</option>
+                    </select>
                 </div>
                 <button onclick="submitNewSubject()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-plus"></i> إضافة المادة</button>
                 <div id="subjectMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
@@ -1531,7 +1541,7 @@ async function submitNewSubject() {
     try {
         const res = await fetch('/admin/add-subject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, college, year, term }) });
         const data = await res.json();
-        if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('new_subject_name').value = ''; document.getElementById('new_subject_year').value = ''; document.getElementById('new_subject_term').value = ''; loadSubjectsTab(); }
+        if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('new_subject_name').value = ''; const _ys = document.getElementById('new_subject_year'); if (_ys) _ys.selectedIndex = 0; const _ts = document.getElementById('new_subject_term'); if (_ts) _ts.selectedIndex = 0; loadSubjectsTab(); }
         else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ أثناء إضافة المادة. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } }
 }

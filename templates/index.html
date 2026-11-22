@@ -660,7 +660,7 @@
         <div class="list-item">
             <div class="item-info">
                 <label class="custom-checkbox">
-                    <input type="checkbox" class="lesson-check" data-lesson-id="{{ item.id }}" onchange="calculateStudentProgress()">
+                    <input type="checkbox" class="lesson-check" data-lesson-id="{{ item.id }}" onchange="calculateStudentProgress(this)">
                     <span class="checkmark"></span>
                 </label>
                 <div class="item-icon-box" style="width:40px; height:40px; font-size:1.1rem;">
@@ -1546,27 +1546,27 @@ function updateProgressUI() {
     if(bar) bar.style.width = pct + '%'; if(txt) txt.innerText = pct + '%';
 }
 
-async function calculateStudentProgress() {
-    const checks = document.querySelectorAll('.lesson-check');
-    if (checks.length === 0) return;
+async function calculateStudentProgress(chk) {
+    // نحفظ فقط الدرس الذي تغيّرت حالته: النسخة السابقة كانت ترسل طلب حفظ لكل
+    // دروس الصفحة (حتى غير المبدوءة بنسبة 0%) فينشئ الباك إند صفوف تقدم صفرية
+    // تُحتسب ضمن «إجمالي المهام» في الملف الشخصي فتضخّم المقام دون أي إنجاز.
     updateProgressUI();
     if (!isStudentLoggedIn()) return;
-    for (const chk of checks) {
-        const lessonId = chk.getAttribute('data-lesson-id');
-        if (!lessonId) continue;
-        const wasChecked = chk.checked;
-        try {
-            const res = await fetch('/api/progress', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lesson_id: parseInt(lessonId), status: chk.checked ? 'completed' : 'not_started', progress_percent: chk.checked ? 100 : 0 })
-            });
-            const data = await res.json();
-            if (!res.ok || data.status !== 'success') throw new Error('save failed');
-        } catch(e) {
-            chk.checked = !wasChecked;
-            updateProgressUI();
-            showToast('تعذر حفظ التقدّم، حاول مجدداً.', 'error');
-        }
+    if (!chk) return;
+    const lessonId = chk.getAttribute('data-lesson-id');
+    if (!lessonId) return;
+    const wasChecked = chk.checked;
+    try {
+        const res = await fetch('/api/progress', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lesson_id: parseInt(lessonId), status: chk.checked ? 'completed' : 'not_started', progress_percent: chk.checked ? 100 : 0 })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error('save failed');
+    } catch(e) {
+        chk.checked = !wasChecked;
+        updateProgressUI();
+        showToast('تعذر حفظ التقدّم، حاول مجدداً.', 'error');
     }
 }
 

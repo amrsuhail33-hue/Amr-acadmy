@@ -92,6 +92,7 @@ class Student(db.Model):
     college = db.Column(db.String(150), nullable=True)
     supervisor_college = db.Column(db.String(150), nullable=True)  # نطاق المشرف: اسم الكلية التي يشرف عليها
     supervisor_specialization = db.Column(db.String(150), nullable=True)  # نطاق مشرف التخصص: اسم المادة
+    supervisor_subject_id = db.Column(db.Integer, nullable=True)  # نطاق مشرف التخصص الدقيق: معرّف المادة (Q4)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -115,6 +116,7 @@ class Student(db.Model):
             "college": self.college or '',
             "supervisor_college": self.supervisor_college or '',
             "supervisor_specialization": self.supervisor_specialization or '',
+            "supervisor_subject_id": self.supervisor_subject_id,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
@@ -128,6 +130,32 @@ class College(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+class Subject(db.Model):
+    """المادة ككيان مستقل: الاسم + الكلية + السنة + الترم.
+    قبل هذا كانت «المادة» مجرد نص subject_name على كل درس/سؤال، فتعديل
+    اسمها كان يعدّل صفاً واحداً فقط وتظهر مادة مكررة. الآن إعادة التسمية
+    تحدّث الكيان وكل صفوفه المرتبطة دفعة واحدة."""
+    __tablename__ = 'subjects'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    college = db.Column(db.String(150), nullable=False)
+    year = db.Column(db.String(100), nullable=False)
+    term = db.Column(db.String(100), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (db.UniqueConstraint('college', 'year', 'term', 'name',
+                                           name='uq_subject_college_year_term_name'),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "college": self.college,
+            "year": self.year,
+            "term": self.term,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
@@ -370,6 +398,7 @@ class CustomLesson(db.Model):
     term = db.Column(db.String(100), nullable=False)
     college = db.Column(db.String(150), nullable=True)
     subject_name = db.Column(db.String(150), nullable=False)
+    subject_id = db.Column(db.Integer, nullable=True)  # رابط المادة ككيان (جدول subjects)؛ subject_name يبقى نصاً منسوخاً للتوافق
     chapter_name = db.Column(db.String(150), nullable=False)
     content_type = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
@@ -389,6 +418,7 @@ class CustomLesson(db.Model):
             "term": self.term,
             "college": self.college or "",
             "subject_name": self.subject_name,
+            "subject_id": self.subject_id,
             "chapter_name": self.chapter_name,
             "content_type": self.content_type,
             "title": self.title,
@@ -407,6 +437,7 @@ class QuizQuestion(db.Model):
     term = db.Column(db.String(100), nullable=False)
     college = db.Column(db.String(150), nullable=True)
     subject_name = db.Column(db.String(150), nullable=False)
+    subject_id = db.Column(db.Integer, nullable=True)  # رابط المادة ككيان (جدول subjects)؛ subject_name يبقى نصاً منسوخاً للتوافق
     chapter_name = db.Column(db.String(150), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
     option_a = db.Column(db.Text, nullable=True)
@@ -459,6 +490,7 @@ class QuizQuestion(db.Model):
             "term": self.term,
             "college": self.college or "",
             "subject_name": self.subject_name,
+            "subject_id": self.subject_id,
             "chapter_name": self.chapter_name,
             "question_text": display_q,
             "option_a": display_opts[0] if len(display_opts) > 0 else "",
@@ -507,6 +539,10 @@ with app.app_context():
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_specialization VARCHAR(150)"))
             db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
             db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
+            # أعمدة ربط المواد ككيانات: create_all لا يضيف أعمدة لجداول موجودة
+            db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
+            db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_subject_id INTEGER"))
             # توسيع عمود الدور إلى VARCHAR(50): قيمة specialization_supervisor طولها 25 حرفاً
             # فلا تتسع في VARCHAR(20) وكان الحفظ يفشل بخطأ 500. يُتخطى على SQLite، وآمن عند
             # إعادة التشغيل لأن تعيين نفس النوع مجدداً لا يغيّر شيئاً.
@@ -566,6 +602,49 @@ with app.app_context():
     except Exception as e:
         db.session.rollback()
         print(f"تعذر بذر الكليات وربط المحتوى القديم: {e}", flush=True)
+
+# بذر المواد من المحتوى الحالي وربط الدروس والأسئلة بها.
+# قبل هذا كانت المادة مجرد نص على كل صف؛ الآن كل (كلية، سنة، ترم، اسم مادة)
+# مميز يصبح صفاً في جدول subjects، وتربط الصفوف به عبر subject_id.
+# الدروس بلا اسم مادة تربط بمادة «عام» (Q3). كتلة مستقلة محمية بـ try/except
+# حتى لا يُسقط أي خطأ بياناتٍ التشغيل أبداً، وهي خاملة (idempotent) عند إعادة التشغيل.
+with app.app_context():
+    try:
+        _subject_keys = set()
+        for _model in (CustomLesson, QuizQuestion):
+            for _college, _year, _term, _sname in db.session.query(
+                    _model.college, _model.year, _model.term, _model.subject_name).distinct().all():
+                _college = (_college or '').strip() or 'كلية الهندسة'
+                _year = (_year or '').strip()
+                _term = (_term or '').strip()
+                _sname = (_sname or '').strip() or 'عام'
+                if not _year or not _term:
+                    continue
+                _key = (_college, _year, _term, _sname)
+                if _key in _subject_keys:
+                    continue
+                _subject_keys.add(_key)
+                if not Subject.query.filter_by(college=_college, year=_year, term=_term, name=_sname).first():
+                    db.session.add(Subject(name=_sname, college=_college, year=_year, term=_term))
+        db.session.commit()
+        # ربط الصفوف التي بلا subject_id بمادتها المطابقة
+        for _model in (CustomLesson, QuizQuestion):
+            for _row in _model.query.filter(_model.subject_id == None).all():
+                _college = (_row.college or '').strip() or 'كلية الهندسة'
+                _year = (_row.year or '').strip()
+                _term = (_row.term or '').strip()
+                _sname = (_row.subject_name or '').strip() or 'عام'
+                if not _year or not _term:
+                    continue
+                _subj = Subject.query.filter_by(college=_college, year=_year, term=_term, name=_sname).first()
+                if _subj:
+                    _row.subject_id = _subj.id
+        db.session.commit()
+        print("تم بذر المواد وربط الدروس والأسئلة بها", flush=True)
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception("تعذر بذر المواد وربطها")
+        print(f"تعذر بذر المواد وربطها: {e}", flush=True)
 
 
 # ==========================================

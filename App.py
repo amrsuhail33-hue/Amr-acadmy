@@ -483,27 +483,24 @@ with app.app_context():
                     "ALTER TABLE quiz_questions ALTER COLUMN correct_answer TYPE VARCHAR(200)"
                 ))
                 db.session.commit()
-            _QUIZ_ANSWER_FIXES = {
-                1: "0.7V",
-                2: "40.60%",
-                3: "100Hz",
-                4: "Vm",
-                5: "0.48",
-                6: "عند توصيله انحياز عكسي في منطقة الانهيار (Breakdown Region)",
-                7: "Capacitor Filter",
-                8: "إنتاج جهد مستمر يعادل ضعفي القيمة العظمى لجهد الدخل (2 Vm)",
-                9: "دايودان على التوالي",
-                10: "ينصهر فيوز الحماية في الدخل (Primary Fuse Blows)",
+            # الحرف يشير إلى عمود الخيار في الصف نفسه؛ نأخذ نص الخيار من الصف
+            # مباشرة فلا تعتمد المطابقة على نص مكتوب يدوياً (قد يختلف بمسافة خفية).
+            # التحقق اليدوي من /api/quiz: الإجابة الصحيحة لكل سؤال هي الخيار المذكور.
+            _QUIZ_ANSWER_LETTERS = {
+                1: "c", 2: "b", 3: "d", 4: "b", 5: "c",
+                6: "c", 7: "c", 8: "c", 9: "c", 10: "c",
             }
             _fixed_count = 0
-            for _qid, _correct in _QUIZ_ANSWER_FIXES.items():
+            for _qid, _letter in _QUIZ_ANSWER_LETTERS.items():
                 _q = QuizQuestion.query.filter_by(
                     id=_qid, subject_name="إلكترونك", chapter_name="الشبتر السادس"
                 ).first()
-                if _q and _q.correct_answer != _correct:
-                    _options = [str(o).strip() for o in
-                                [_q.option_a, _q.option_b, _q.option_c, _q.option_d] if o]
-                    if _correct in _options:
+                if not _q:
+                    continue
+                _correct = getattr(_q, "option_" + _letter, None)
+                if _correct and str(_correct).strip():
+                    _correct = str(_correct).strip()
+                    if _q.correct_answer != _correct:
                         _q.correct_answer = _correct
                         _fixed_count += 1
             if _fixed_count:

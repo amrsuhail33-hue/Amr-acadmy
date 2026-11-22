@@ -687,6 +687,15 @@ async function loadTasks() {
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
+            // Tasks from the server are already saved: mark them synced.
+            // Without this, the 30s re-sync treats every server task as
+            // unsynced and re-POSTs it as a new row on every reload.
+            tasks = tasks.map(t => ({ ...t, synced: true }));
+            // Keep local tasks created offline that are not on the server yet.
+            const localUnsynced = JSON.parse(localStorage.getItem('unified_tasks') || '[]')
+                .filter(t => t.synced === false);
+            const serverIds = new Set(tasks.map(t => t.id));
+            localUnsynced.forEach(t => { if (!serverIds.has(t.id)) tasks.push(t); });
             localStorage.setItem('unified_tasks', JSON.stringify(tasks));
         } catch(e) {
             tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
@@ -761,6 +770,7 @@ async function toggleTaskComplete(taskId, isChecked) {
         tasks[index].completed = isChecked;
         tasks[index].synced = false;
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+        updateProgress(tasks); // تحديث فوري لشريط التقدم دون انتظار الخادم
     }
     if (isStudentLoggedIn()) {
         try {

@@ -342,7 +342,7 @@
                 <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد حركات نقاط مسجلة بعد</div>
             </div>
         </div>
-        <button onclick="logoutStudent()" class="btn-calc-outline" style="margin-top:20px; color:var(--danger); border-color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+        <button onclick="logoutStudent(this)" class="btn-calc-outline" style="margin-top:20px; color:var(--danger); border-color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
 </div>
 
@@ -434,6 +434,7 @@
                 </div>
             </div>
             <div id="adminCustomContentList"></div>
+            <div id="contentDeleteMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
         </div>
         
         <div id="adminTab_quiz_import" style="display:none;">
@@ -654,7 +655,7 @@
                 <div class="progress-container"><div id="quizProgressBar" class="progress-bar"></div></div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-weight:800;">
                     <span id="qCount" style="color:var(--primary);"></span>
-                    <button onclick="confirmEndQuiz()" style="color:var(--danger); background:rgba(239,68,68,0.1); padding:6px 14px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">إنهاء <i class="fa-solid fa-right-from-bracket"></i></button>
+                    <button onclick="confirmEndQuiz(this)" style="color:var(--danger); background:rgba(239,68,68,0.1); padding:6px 14px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">إنهاء <i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
                 <div id="qText" class="quiz-question-text"></div>
                 <div id="qOptions"></div>
@@ -758,7 +759,7 @@
                 <div style="background:var(--bg-body); border-radius:14px; padding:15px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                         <strong style="color:var(--text-main);"><i class="fa-solid fa-user-circle" style="color:var(--primary);"></i> {{ q.student_name }}</strong>
-                        {% if is_admin %}<button onclick="deleteQuestionDirect({{ q.id }})" style="color:var(--danger); background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>{% endif %}
+                        {% if is_admin %}<button onclick="deleteQuestionDirect({{ q.id }}, this)" style="color:var(--danger); background:none; border:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>{% endif %}
                     </div>
                     <p style="margin:0 0 10px; line-height:1.5;">{{ q.question_text }}</p>
                     {% if q.is_answered %}
@@ -1025,8 +1026,18 @@ async function studentRegister() {
     } catch(e) { alert('خطأ في الاتصال.'); }
 }
 
-async function logoutStudent() {
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+let pendingLogoutTimer = null;
+async function logoutStudent(btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الخروج
+    if (btn && !btn.dataset.armed) {
+        btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تأكيد تسجيل الخروج؟';
+        btn.dataset.armed = '1';
+        clearTimeout(pendingLogoutTimer);
+        pendingLogoutTimer = setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج'; delete btn.dataset.armed; }, 6000);
+        return;
+    }
+    clearTimeout(pendingLogoutTimer);
+    if (btn) delete btn.dataset.armed;
     try {
         const res = await fetch('/student/logout', { method: 'POST' });
         if (res.ok) { sessionStorage.clear(); location.href = '/'; }
@@ -1081,7 +1092,7 @@ async function loadCustomContentList() {
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button onclick="editCustomContentForm(${item.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
-                    ${(IS_ADMIN || IS_SUPERVISOR) ? `<button onclick="deleteAdminContent(${item.id})" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    ${(IS_ADMIN || IS_SUPERVISOR) ? `<button onclick="deleteAdminContent(${item.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -1129,10 +1140,30 @@ async function submitNewContent() {
     } catch(e) { alert("خطأ أثناء حفظ المحتوى."); }
 }
 
-async function deleteAdminContent(id) {
-    if (!confirm("هل أنت متأكد من حذف هذا المحتوى نهائياً؟")) return;
-    await fetch(`/admin/delete-content/${id}`, { method: 'POST' }); 
-    loadCustomContentList();
+let pendingContentDeleteId = null;
+let pendingContentDeleteTimer = null;
+function disarmContentDelete() {
+    pendingContentDeleteId = null;
+    clearTimeout(pendingContentDeleteTimer);
+    document.querySelectorAll('#adminCustomContentList button[data-armed="1"]').forEach(b => { b.innerHTML = '<i class="fa-solid fa-trash"></i>'; delete b.dataset.armed; });
+}
+async function deleteAdminContent(id, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الحذف
+    const cdm0 = document.getElementById('contentDeleteMsg'); if (cdm0) cdm0.style.display = 'none';
+    if (String(pendingContentDeleteId) !== String(id)) {
+        disarmContentDelete();
+        pendingContentDeleteId = id;
+        if (btn) { btn.innerHTML = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; }
+        pendingContentDeleteTimer = setTimeout(disarmContentDelete, 6000);
+        return;
+    }
+    disarmContentDelete();
+    try {
+        const res = await fetch(`/admin/delete-content/${id}`, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (data.status === 'success') { showToast('تم حذف المحتوى بنجاح', 'success', 5000); loadCustomContentList(); }
+        else { const msg = data.message || 'تعذر حذف المحتوى.'; showToast(msg, 'error', 5000); const cdm = document.getElementById('contentDeleteMsg'); if (cdm) { cdm.textContent = msg; cdm.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء حذف المحتوى.'; showToast(msg, 'error', 5000); const cdm = document.getElementById('contentDeleteMsg'); if (cdm) { cdm.textContent = msg; cdm.style.display = 'block'; } }
 }
 
 async function loadReviewQueue() {
@@ -1223,7 +1254,7 @@ async function loadSupervisorsTab() {
                 return `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div><div style="font-weight:bold;">${escapeText(s.name)} (@${escapeText(s.username)})</div>
                     <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(scope)}</div></div>
-                    <button data-username="${escapeText(s.username)}" onclick="removeSupervisor(this.dataset.username)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">إزالة</button>
+                    <button data-username="${escapeText(s.username)}" onclick="removeSupervisor(this.dataset.username, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">إزالة</button>
                 </div>`;
             }).join('');
         } catch(e) { sl.innerHTML = 'خطأ في تحميل المشرفين.'; }
@@ -1264,14 +1295,30 @@ async function submitNewSupervisor() {
     } catch(e) { const msg = 'خطأ أثناء تعيين المشرف. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = msg; supMsg.style.display = 'block'; } }
 }
 
-async function removeSupervisor(username) {
-    if (!confirm('هل أنت متأكد من إزالة صلاحية الإشراف عن ' + username + '؟')) return;
+let pendingSupervisorRemoveName = null;
+let pendingSupervisorRemoveTimer = null;
+function disarmSupervisorRemove() {
+    pendingSupervisorRemoveName = null;
+    clearTimeout(pendingSupervisorRemoveTimer);
+    document.querySelectorAll('#supervisorsList button[data-armed="1"]').forEach(b => { b.textContent = 'إزالة'; delete b.dataset.armed; });
+}
+async function removeSupervisor(username, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا تتم الإزالة
+    const supMsg0 = document.getElementById('supervisorMsg'); if (supMsg0) supMsg0.style.display = 'none';
+    if (String(pendingSupervisorRemoveName) !== String(username)) {
+        disarmSupervisorRemove();
+        pendingSupervisorRemoveName = username;
+        if (btn) { btn.textContent = 'تأكيد الإزالة؟'; btn.dataset.armed = '1'; }
+        pendingSupervisorRemoveTimer = setTimeout(disarmSupervisorRemove, 6000);
+        return;
+    }
+    disarmSupervisorRemove();
     try {
         const res = await fetch('/admin/remove-supervisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
         const data = await res.json();
-        if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
-        else alert(data.message);
-    } catch(e) { alert('خطأ أثناء الإزالة.'); }
+        if (data.status === 'success') { const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = ''; supMsg.style.display = 'none'; } showToast(data.message, 'success'); loadSupervisorsTab(); }
+        else { showToast(data.message, 'error', 5000); const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = data.message; supMsg.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء الإزالة.'; showToast(msg, 'error', 5000); const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = msg; supMsg.style.display = 'block'; } }
 }
 
 let pendingCollegeDeleteId = null;
@@ -1344,8 +1391,23 @@ async function submitInlineReply(qId) {
     location.reload();
 }
 
-async function deleteQuestionDirect(qId) {
-    if(!confirm("حذف هذا السؤال نهائياً؟")) return;
+let pendingQuestionDeleteId = null;
+let pendingQuestionDeleteTimer = null;
+function disarmQuestionDelete() {
+    pendingQuestionDeleteId = null;
+    clearTimeout(pendingQuestionDeleteTimer);
+    document.querySelectorAll('button[data-armed="1"][data-qdel="1"]').forEach(b => { b.innerHTML = '<i class="fa-solid fa-trash"></i>'; delete b.dataset.armed; delete b.dataset.qdel; });
+}
+async function deleteQuestionDirect(qId, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الحذف
+    if (String(pendingQuestionDeleteId) !== String(qId)) {
+        disarmQuestionDelete();
+        pendingQuestionDeleteId = qId;
+        if (btn) { btn.innerHTML = 'تأكيد؟'; btn.dataset.armed = '1'; btn.dataset.qdel = '1'; }
+        pendingQuestionDeleteTimer = setTimeout(disarmQuestionDelete, 6000);
+        return;
+    }
+    disarmQuestionDelete();
     await fetch(`/admin/delete-question/${qId}`, { method: 'POST' });
     location.reload();
 }
@@ -1571,7 +1633,19 @@ function nextQuestion() {
     if(quizState.currentQ < quizState.questions.length - 1) { quizState.currentQ++; loadQuestion(); } 
     else showQuizResult(); 
 }
-function confirmEndQuiz() { if(confirm("إنهاء الاختبار الآن وحساب النتيجة؟")) showQuizResult(); }
+let pendingEndQuizTimer = null;
+function confirmEndQuiz(btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يُنهى الاختبار
+    if (btn && !btn.dataset.armed) {
+        btn.innerHTML = 'تأكيد الإنهاء؟ <i class="fa-solid fa-right-from-bracket"></i>';
+        btn.dataset.armed = '1';
+        clearTimeout(pendingEndQuizTimer);
+        pendingEndQuizTimer = setTimeout(() => { btn.innerHTML = 'إنهاء <i class="fa-solid fa-right-from-bracket"></i>'; delete btn.dataset.armed; }, 6000);
+        return;
+    }
+    clearTimeout(pendingEndQuizTimer);
+    showQuizResult();
+}
 
 async function showQuizResult() {
     document.getElementById('quiz-view').classList.add('hidden'); 

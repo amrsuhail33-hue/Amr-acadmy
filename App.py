@@ -14,7 +14,7 @@ from flask import (
     make_response
 )
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Uuid
+from sqlalchemy import CheckConstraint, Uuid
 from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -76,6 +76,12 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 
 class Student(db.Model):
     __tablename__ = 'students'
+    __table_args__ = (
+        CheckConstraint(
+            "role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor')",
+            name='students_role_check',
+        ),
+    )
     id = db.Column(db.Integer, primary_key=True)
     # نوع Uuid الأصلي: يظهر كـ UUID في Postgres (مطابق للعمود الموجود فلا حاجة لـ migration) وكـ CHAR في SQLite
     auth_user_id = db.Column(Uuid, nullable=True)
@@ -507,6 +513,28 @@ with app.app_context():
             if "sqlite" not in db_url:
                 db.session.execute(db.text("ALTER TABLE students ALTER COLUMN role TYPE VARCHAR(50)"))
             db.session.commit()
+            # تحديث قيد فحص الدور: القيد القديم students_role_check يسمح فقط بالأدوار
+            # القديمة ويرفض college_supervisor وspecialization_supervisor (خطأ 23514
+            # عند تعيين مشرف). يُتخطى على SQLite، وآمن عند إعادة التشغيل لأن
+            # DROP IF EXISTS ثم ADD من جديد يعيدان إنشاء القيد في كل مرة.
+            if "sqlite" not in db_url:
+                try:
+                    db.session.execute(db.text("ALTER TABLE students DROP CONSTRAINT IF EXISTS students_role_check"))
+                    db.session.commit()
+                    print("تم حذف قيد الدور القديم students_role_check", flush=True)
+                except Exception as _role_drop_e:
+                    db.session.rollback()
+                    print(f"تعذر حذف قيد الدور القديم (تجاهل): {_role_drop_e}", flush=True)
+                try:
+                    db.session.execute(db.text(
+                        "ALTER TABLE students ADD CONSTRAINT students_role_check "
+                        "CHECK (role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor'))"
+                    ))
+                    db.session.commit()
+                    print("تم تحديث قيد الدور students_role_check ليشمل أدوار المشرفين", flush=True)
+                except Exception as _role_add_e:
+                    db.session.rollback()
+                    print(f"تعذر تحديث قيد الدور (تجاهل): {_role_add_e}", flush=True)
         except Exception as _mig_e:
             db.session.rollback()
             print(f"تعذر ترحيل الأعمدة الجديدة (تجاهل — قد تكون قاعدة بيانات محلية): {_mig_e}", flush=True)

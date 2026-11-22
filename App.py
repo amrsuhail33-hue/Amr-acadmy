@@ -1790,7 +1790,7 @@ def complete_task(task_id):
         app.logger.exception("complete_task: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/tasks', methods=['GET', 'POST'])
+@app.route('/api/tasks', methods=['GET', 'POST', 'DELETE'])
 @student_required
 def manage_unified_tasks():
     student_id = session.get('student_id')
@@ -1802,6 +1802,17 @@ def manage_unified_tasks():
                 query = query.filter_by(source=source)
             tasks = query.order_by(UnifiedTask.planned_date).all()
             return jsonify([t.to_dict() for t in tasks])
+
+        if request.method == 'DELETE':
+            # Bulk clear-all: delete every task of this student in one
+            # transaction. The old frontend deleted tasks one by one
+            # (24+ sequential DELETEs, ~75s on the free tier) with no
+            # visible progress, so users re-clicked or reloaded mid-loop
+            # and tasks survived; overlapping loops also raced each other
+            # (same id DELETE'd 2-3 times, 200 then 404).
+            deleted = UnifiedTask.query.filter_by(student_id=student_id).delete(synchronize_session=False)
+            db.session.commit()
+            return jsonify({"status": "success", "deleted": deleted})
 
         data = request.get_json(silent=True) or {}
         title = (data.get('title') or '').strip()

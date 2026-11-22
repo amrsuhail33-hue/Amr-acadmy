@@ -406,17 +406,29 @@ class QuizQuestion(db.Model):
             if o and o.strip() and o.strip() != q_text:
                 cleaned_opts.append(o.strip())
 
-        # قد تُستورد correct_answer كحرف (A-D) أو رقم (1-4) بدل نص الخيار؛
+        # قد تُستورد correct_answer كحرف (A-E) أو رقم (1-5) بدل نص الخيار؛
         # نحوّلها إلى نص الخيار المطابق حتى تقارنها الواجهة بشكل صحيح.
+        # ملاحظة: التحويل يتم على cleaned_opts بترتيب الأعمدة المخزنة الأصلي
+        # (المؤشر 0 = option_a)، لأن بعض الصفوف كُتبت حروفها على هذا الأساس.
         correct = (self.correct_answer or "").strip()
-        if len(correct) == 1 and correct.upper() in "ABCD":
-            idx = "ABCD".index(correct.upper())
+        if len(correct) == 1 and correct.upper() in "ABCDE":
+            idx = "ABCDE".index(correct.upper())
             if idx < len(cleaned_opts):
                 correct = cleaned_opts[idx]
-        elif len(correct) == 1 and correct in "1234":
+        elif len(correct) == 1 and correct in "12345":
             idx = int(correct) - 1
             if idx < len(cleaned_opts):
                 correct = cleaned_opts[idx]
+
+        # خلل الاستيراد القديم: كل الأسئلة المستوردة تحمل question_text = "اختيار"
+        # ونص السؤال الحقيقي في option_a، فتظهر الواجهة "اختيار" عنواناً والسؤال
+        # نفسه زر إجابة أول. نعرض نص السؤال الحقيقي عنواناً والخيارات الحقيقية
+        # فقط، دون تغيير البيانات المخزنة أو إزاحة الحقول.
+        display_q = q_text
+        display_opts = cleaned_opts
+        if q_text in ("اختيار", "إختيار") and cleaned_opts:
+            display_q = cleaned_opts[0]
+            display_opts = cleaned_opts[1:]
 
         return {
             "id": self.id,
@@ -425,12 +437,12 @@ class QuizQuestion(db.Model):
             "college": self.college or "",
             "subject_name": self.subject_name,
             "chapter_name": self.chapter_name,
-            "question_text": q_text,
-            "option_a": cleaned_opts[0] if len(cleaned_opts) > 0 else (self.option_a or ""),
-            "option_b": cleaned_opts[1] if len(cleaned_opts) > 1 else (self.option_b or ""),
-            "option_c": cleaned_opts[2] if len(cleaned_opts) > 2 else (self.option_c or ""),
-            "option_d": cleaned_opts[3] if len(cleaned_opts) > 3 else (self.option_d or ""),
-            "option_e": cleaned_opts[4] if len(cleaned_opts) > 4 else (self.option_e or ""),
+            "question_text": display_q,
+            "option_a": display_opts[0] if len(display_opts) > 0 else "",
+            "option_b": display_opts[1] if len(display_opts) > 1 else "",
+            "option_c": display_opts[2] if len(display_opts) > 2 else "",
+            "option_d": display_opts[3] if len(display_opts) > 3 else "",
+            "option_e": display_opts[4] if len(display_opts) > 4 else "",
             "correct_answer": correct,
             "explanation": self.explanation or "",
             "status": self.status or 'approved'
@@ -1005,19 +1017,43 @@ def import_questions():
         reader = csv.DictReader(stream)
         count = 0
         for row in reader:
+            qt = (row.get('question_text') or '').strip()
+            oa = (row.get('option_a') or '').strip()
+            ob = (row.get('option_b') or '').strip()
+            oc = (row.get('option_c') or '').strip()
+            od = (row.get('option_d') or '').strip()
+            oe = (row.get('option_e') or '').strip()
+            ca = (row.get('correct_answer') or '').strip()
+            # ملفات CSV القديمة كانت تضع كلمة "اختيار" في question_text والسؤال
+            # الحقيقي في option_a؛ نعيد ترتيب الحقول عند الاستيراد حتى لا تتكرر
+            # المشكلة: نص السؤال في question_text والإجابات في option_a..option_e.
+            if qt in ("اختيار", "إختيار", "") and oa:
+                # حرف/رقم الإجابة الصحيحة كان يشير إلى أعمدة الملف الأصلية
+                # (option_a = نص السؤال)، فنحوّله إلى نص الإجابة قبل الإزاحة.
+                # المؤشر 0 يشير إلى نص السؤال نفسه فلا يُحلّ (لا إجابة هناك).
+                orig_opts = [o for o in (oa, ob, oc, od, oe) if o]
+                if len(ca) == 1 and ca.upper() in "ABCDE":
+                    _idx = "ABCDE".index(ca.upper())
+                    if 0 < _idx < len(orig_opts):
+                        ca = orig_opts[_idx]
+                elif len(ca) == 1 and ca in "12345":
+                    _idx = int(ca) - 1
+                    if 0 < _idx < len(orig_opts):
+                        ca = orig_opts[_idx]
+                qt, oa, ob, oc, od, oe = oa, ob, oc, od, oe, ""
             q = QuizQuestion(
                 year=row.get('year', 'السنة الأولى'),
                 term=row.get('term', 'الترم الأول'),
                 college=row.get('college', ''),
                 subject_name=row.get('subject_name', 'عام'),
                 chapter_name=row.get('chapter_name', 'عام'),
-                question_text=row.get('question_text', '').strip(),
-                option_a=row.get('option_a', '').strip(),
-                option_b=row.get('option_b', '').strip(),
-                option_c=row.get('option_c', '').strip(),
-                option_d=row.get('option_d', '').strip(),
-                option_e=row.get('option_e', '').strip(),
-                correct_answer=row.get('correct_answer', '').strip(),
+                question_text=qt,
+                option_a=oa,
+                option_b=ob,
+                option_c=oc,
+                option_d=od,
+                option_e=oe,
+                correct_answer=ca,
                 explanation=row.get('explanation', '').strip(),
                 status=status,
                 created_by=user.id

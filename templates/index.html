@@ -24,6 +24,9 @@
         if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark-mode');
         const IS_ADMIN = {% if is_admin %}true{% else %}false{% endif %};
         const IS_ASSISTANT = {% if is_assistant %}true{% else %}false{% endif %};
+        const IS_SUPERVISOR = {% if is_supervisor %}true{% else %}false{% endif %};
+        const SUPERVISOR_COLLEGE = {{ supervisor_college|tojson }};
+        const SUPERVISOR_SPECIALIZATION = {{ supervisor_specialization|tojson }};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
@@ -397,6 +400,7 @@
             {% if is_admin %}
             <button onclick="switchAdminTab('review', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--warning); color:var(--warning);">طابور المراجعة <i class="fa-solid fa-shield-halved"></i></button>
             <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn">نشر إعلان</button>
+            <button onclick="switchAdminTab('supervisors', event)" class="btn-calc-outline admin-tab-btn">المشرفون والكليات</button>
             {% endif %}
         </div>
         
@@ -410,6 +414,7 @@
                     <input type="text" id="add_year" placeholder="السنة الدراسية" class="qa-input-field" style="margin-bottom:0;">
                     <input type="text" id="add_term" placeholder="الفصل الدراسي" class="qa-input-field" style="margin-bottom:0;">
                 </div>
+                <select id="add_college" class="qa-input-field" style="margin-top:12px;"></select>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                     <input type="text" id="add_subject" placeholder="المادة" class="qa-input-field" style="margin-bottom:0;">
                     <input type="text" id="add_chapter" placeholder="الفصل / الشابتر" class="qa-input-field" style="margin-bottom:0;">
@@ -435,7 +440,7 @@
              <div class="file-upload-box" onclick="document.getElementById('csvFileInput').click()">
                  <i class="fa-solid fa-file-csv" style="font-size:3rem; color:var(--primary); margin-bottom:15px;"></i>
                  <h3 style="margin:0 0 10px; color:var(--text-main);">اضغط لرفع ملف الأسئلة دفعة واحدة (CSV)</h3>
-                 <p style="margin:0; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">يجب أن يحتوي الملف على الأعمدة التالية:<br><code>year, term, subject_name, chapter_name, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, explanation</code><br>ملاحظة: ضع نص السؤال نفسه في question_text، والإجابات في option_a إلى option_e.</p>
+                 <p style="margin:0; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">يجب أن يحتوي الملف على الأعمدة التالية:<br><code>year, term, college, subject_name, chapter_name, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, explanation</code><br>ملاحظة: ضع نص السؤال نفسه في question_text، والإجابات في option_a إلى option_e.</p>
                  <input type="file" id="csvFileInput" accept=".csv" onchange="uploadQuizCSV()">
              </div>
         </div>
@@ -449,6 +454,28 @@
             <input type="text" id="new_update_tag" placeholder="الوسم (مثال: هام)" value="إعلان عام" class="qa-input-field">
             <textarea id="new_update_desc" rows="4" placeholder="نص الإعلان..." class="qa-input-field"></textarea>
             <button onclick="publishNewUpdate()" class="btn-calc-action" style="background:#8b5cf6;"><i class="fa-solid fa-paper-plane"></i> نشر الإعلان</button>
+        </div>
+        <div id="adminTab_supervisors" style="display:none;">
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+                <div style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-building-columns"></i> إضافة كلية:</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <input type="text" id="new_college_name" placeholder="اسم الكلية (مثال: كلية الطب)" class="qa-input-field" style="flex:2; margin-bottom:0;">
+                    <button onclick="submitNewCollege()" class="btn-calc-action" style="background:var(--primary); flex:1;"><i class="fa-solid fa-plus"></i> إضافة الكلية</button>
+                </div>
+                <div id="collegesList" style="margin-top:15px;">جاري جلب الكليات...</div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+                <div style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-user-tie"></i> إضافة مشرف:</div>
+                <input type="text" id="sup_username" placeholder="اسم مستخدم حساب الطالب" class="qa-input-field">
+                <select id="sup_role" class="qa-input-field" onchange="toggleSupSpecialization()">
+                    <option value="college_supervisor">مشرف كلية</option>
+                    <option value="specialization_supervisor">مشرف تخصص</option>
+                </select>
+                <select id="sup_college" class="qa-input-field"></select>
+                <input type="text" id="sup_specialization" placeholder="التخصص / اسم المادة" class="qa-input-field" style="display:none;">
+                <button onclick="submitNewSupervisor()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-solid fa-user-plus"></i> تعيين مشرف</button>
+            </div>
+            <div id="supervisorsList">جاري جلب المشرفين...</div>
         </div>
         {% endif %}
     </div>
@@ -479,7 +506,7 @@
 <!-- MAIN CONTENT AREA -->
 <!-- ========================================================== -->
 <div class="main-content">
-    {% if view != 'years' %}
+    {% if view not in ['years', 'colleges'] %}
     <div class="nav-buttons-container">
         <a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>
         {% if view in ['subjects', 'chapters', 'select_type', 'content', 'terms'] %}
@@ -488,7 +515,7 @@
     </div>
     {% endif %}
 
-    {% if view == 'years' %}
+    {% if view == 'years' or view == 'colleges' %}
     <section class="hero-section">
         <div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>
         <h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>
@@ -510,25 +537,40 @@
     </div>
 
     <div id="catalogResults" class="grid-container" aria-live="polite"></div>
-    <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
+    {% if view == 'colleges' %}
+    <div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>
     <div class="grid-container">
-        {% for id, year in data.items() %}
-            <a href="/?year={{ id|urlencode }}" class="card green year-card">
+        {% for c in colleges %}
+            <a href="/?college={{ c.name|urlencode }}" class="card green year-card">
+                <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
+                <h3 class="card-title year-card-title">{{ c.name }}</h3>
+                <div class="card-subtitle">جميع سنوات ومواد الكلية</div>
+                <div class="card-btn">استعرض الكلية</div>
+            </a>
+        {% else %}<p role="status">{{ "تعذر تحميل الكليات. حاول تحديث الصفحة." if catalog_error else "ستظهر الكليات هنا عند إضافة أول كلية." }}</p>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — {{ college_name }}</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
+    <div class="grid-container">
+        {% for id, year in years.items() %}
+            <a href="/?college={{ college_name|urlencode }}&year={{ id|urlencode }}" class="card green year-card">
                 <div class="card-icon-wrapper"></div>
                 <h3 class="card-title year-card-title">{{ year.name }}</h3>
                 <div class="card-subtitle">جميع مواد ومحتوى السنة</div>
                 <div class="card-btn">استعرض المواد</div>
             </a>
-        {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "ستظهر السنوات هنا عند نشر أول مقرر." }}</p>
+        {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "لا توجد سنوات بعد في " + college_name + ". سيتم إضافة المقررات قريباً." }}</p>
         {% endfor %}
     </div>
     {% endif %}
+    {% endif %}
 
     {% if view == 'terms' %}
-    <div class="section-header"><h2>اختر الفصل الدراسي</h2></div>
+    <div class="section-header"><h2>اختر الفصل الدراسي</h2><p>{{ college_name }}</p></div>
     <div class="grid-container">
         {% for t_id, term_data in terms.items() %}
-        <a href="/?year={{ y_id|urlencode }}&term={{ t_id|urlencode }}" class="card">
+        <a href="/?college={{ college_name|urlencode }}&year={{ y_id|urlencode }}&term={{ t_id|urlencode }}" class="card">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
             <h3 class="card-title">{{ term_data.name }}</h3>
             <div class="card-btn">تصفح الفصل</div>
@@ -738,7 +780,7 @@
 </div>
 
 <!-- الزر العائم (FAB) -->
-{% if view == 'years' %}
+{% if view in ['years', 'colleges'] %}
 <div class="fab-container" id="fabMenu">
     <div class="fab-main" onclick="toggleFabMenu()" title="أدوات المنصة">
         <svg id="fabMainIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
@@ -877,10 +919,11 @@ function searchItems() {
             link.href = '/?' + new URLSearchParams(params);
             results.append(link);
         };
-        for (const year of Object.values(catalog))
+        for (const college of Object.values(catalog))
+            for (const year of Object.values(college.years))
             for (const semester of Object.values(year.terms))
                 for (const subject of semester.subjects) {
-                    const label = [subject.name, year.name, semester.name].join(' · ');
+                    const label = [subject.name, year.name, semester.name, college.name].join(' · ');
                     if (label.toLowerCase().includes(term)) add(label, {subject:subject.id});
                     for (const [type, content] of Object.entries(subject.types))
                         for (const chapter of content.chapters)
@@ -992,7 +1035,7 @@ function showLoginForm() { document.getElementById('loginForm').style.display='b
 
 // 6. لوحة التحكم للمشرفين
 function openAdminDashboard() {
-    if (IS_ADMIN || IS_ASSISTANT) {
+    if (IS_ADMIN || IS_ASSISTANT || IS_SUPERVISOR) {
         togglePopup('adminBox');
         if (IS_ADMIN) { switchAdminTab('review', null); loadReviewQueue(); }
         else { switchAdminTab('content', null); }
@@ -1004,13 +1047,14 @@ function openAdminDashboard() {
 function switchAdminTab(tab, evt) {
     document.querySelectorAll('#adminBox .admin-tab-btn').forEach(b => { b.style.color=''; b.style.borderColor=''; });
     if(evt && evt.currentTarget) { evt.currentTarget.style.color='var(--primary)'; evt.currentTarget.style.borderColor='var(--primary)'; }
-    ['qa', 'content', 'quiz_import', 'review', 'updates'].forEach(t => {
+    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors'].forEach(t => {
         const el = document.getElementById('adminTab_' + t);
         if(el) el.style.display = (t === tab) ? 'block' : 'none';
     });
     if(tab === 'qa') loadAdminQuestions();
-    if(tab === 'content') loadCustomContentList();
+    if(tab === 'content') { loadCustomContentList(); loadCollegeOptions(); }
     if(tab === 'review' && IS_ADMIN) loadReviewQueue();
+    if(tab === 'supervisors' && IS_ADMIN) loadSupervisorsTab();
 }
 
 async function loadCustomContentList() {
@@ -1030,11 +1074,11 @@ async function loadCustomContentList() {
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <div style="font-weight:bold;">${escapeText(item.title)} ${statusBadge}</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${escapeText(item.subject_name)} (${escapeText(item.chapter_name)})</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${item.college ? escapeText(item.college) + ' · ' : ''}${escapeText(item.subject_name)} (${escapeText(item.chapter_name)})</div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button onclick="editCustomContentForm(${item.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
-                    ${IS_ADMIN ? `<button onclick="deleteAdminContent(${item.id})" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    ${(IS_ADMIN || IS_SUPERVISOR) ? `<button onclick="deleteAdminContent(${item.id})" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -1045,6 +1089,9 @@ function editCustomContentForm(id) {
     const i = window.cachedCustomList.find(c => c.id === id); if(!i) return;
     document.getElementById('edit_content_id').value = i.id;
     document.getElementById('add_year').value = i.year; document.getElementById('add_term').value = i.term;
+    const _colSel = document.getElementById('add_college');
+    if (_colSel && i.college && ![..._colSel.options].some(o => o.value === i.college)) { const _o = document.createElement('option'); _o.value = i.college; _o.textContent = i.college; _colSel.appendChild(_o); }
+    if (_colSel) _colSel.value = i.college || '';
     document.getElementById('add_subject').value = i.subject_name; document.getElementById('add_chapter').value = i.chapter_name;
     document.getElementById('add_type').value = i.content_type; document.getElementById('add_title').value = i.title;
     document.getElementById('add_url').value = i.url; document.getElementById('add_download').value = i.download_url; document.getElementById('add_notes').value = i.notes;
@@ -1053,6 +1100,8 @@ function editCustomContentForm(id) {
 }
 
 function resetContentForm() {
+    const _colSel = document.getElementById('add_college');
+    if (_colSel && _colSel.options.length) _colSel.value = _colSel.options[0].value;
     document.getElementById('edit_content_id').value = ''; document.getElementById('add_subject').value = ''; document.getElementById('add_chapter').value = '';
     document.getElementById('add_title').value = ''; document.getElementById('add_url').value = ''; document.getElementById('add_download').value = ''; document.getElementById('add_notes').value = '';
     document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> حفظ`;
@@ -1064,6 +1113,7 @@ async function submitNewContent() {
     const payload = {
         year: document.getElementById('add_year').value, term: document.getElementById('add_term').value,
         subject_name: document.getElementById('add_subject').value, chapter_name: document.getElementById('add_chapter').value,
+        college: document.getElementById('add_college') ? document.getElementById('add_college').value : '',
         content_type: document.getElementById('add_type').value, title: document.getElementById('add_title').value,
         url: document.getElementById('add_url').value, download_url: document.getElementById('add_download').value, notes: document.getElementById('add_notes').value
     };
@@ -1084,6 +1134,7 @@ async function deleteAdminContent(id) {
 
 async function loadReviewQueue() {
     const c = document.getElementById('reviewQueueList'); if(!c) return;
+    const canApprove = IS_ADMIN;
     c.innerHTML = `<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري جلب طابور المراجعة...</div>`;
     try {
         const res = await fetch('/admin/review-queue'); const data = await res.json();
@@ -1094,20 +1145,20 @@ async function loadReviewQueue() {
             html += `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
                 <div style="font-weight:bold; color:var(--primary);"><i class="fa-solid fa-play"></i> محتوى: ${escapeText(l.title)}</div>
                 <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${escapeText(l.subject_name)} | ${escapeText(l.chapter_name)}</div>
-                <div style="display:flex; gap:10px;">
+                ${canApprove ? `<div style="display:flex; gap:10px;">
                     <button onclick="approveQueueItem('lesson', ${l.id}, 'approve')" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">اعتماد</button>
                     <button onclick="approveQueueItem('lesson', ${l.id}, 'reject')" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">رفض</button>
-                </div>
+                </div>` : '<div style="font-size:0.85rem; color:var(--text-muted);">الاعتماد من صلاحية المشرف الأعلى فقط.</div>'}
             </div>`;
         });
         data.quizzes.forEach(q => {
             html += `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
                 <div style="font-weight:bold; color:var(--warning);"><i class="fa-solid fa-question"></i> سؤال: ${escapeText(q.question_text.substring(0,50))}...</div>
                 <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">${escapeText(q.subject_name)} | ${escapeText(q.chapter_name)}</div>
-                <div style="display:flex; gap:10px;">
+                ${canApprove ? `<div style="display:flex; gap:10px;">
                     <button onclick="approveQueueItem('quiz', ${q.id}, 'approve')" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">اعتماد</button>
                     <button onclick="approveQueueItem('quiz', ${q.id}, 'reject')" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">رفض</button>
-                </div>
+                </div>` : '<div style="font-size:0.85rem; color:var(--text-muted);">الاعتماد من صلاحية المشرف الأعلى فقط.</div>'}
             </div>`;
         });
         c.innerHTML = html;
@@ -1121,6 +1172,100 @@ async function approveQueueItem(type, id, action) {
         });
         if((await res.json()).status === 'success') { showToast('تم التحديث بنجاح', 'success'); loadReviewQueue(); }
     } catch(e) { showToast('خطأ في الاعتماد', 'error'); }
+}
+
+async function loadCollegeOptions() {
+    const sel = document.getElementById('add_college');
+    const supSel = document.getElementById('sup_college');
+    try {
+        const res = await fetch('/admin/colleges');
+        const list = await res.json();
+        const names = (list || []).map(c => c.name);
+        if (sel) {
+            sel.replaceChildren();
+            if (IS_SUPERVISOR && SUPERVISOR_COLLEGE) {
+                const o = document.createElement('option'); o.value = SUPERVISOR_COLLEGE; o.textContent = SUPERVISOR_COLLEGE; sel.appendChild(o);
+                sel.disabled = true;
+            } else {
+                names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+                sel.disabled = false;
+            }
+        }
+        if (supSel) {
+            supSel.replaceChildren();
+            names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; supSel.appendChild(o); });
+        }
+    } catch(e) { /* تبقى القوائم فارغة عند فشل الجلب */ }
+}
+
+async function loadSupervisorsTab() {
+    await loadCollegeOptions();
+    const cl = document.getElementById('collegesList');
+    if (cl) {
+        try {
+            const res = await fetch('/admin/colleges'); const list = await res.json();
+            cl.innerHTML = (!list || list.length === 0) ? '<div style="text-align:center; padding:10px;">لا توجد كليات بعد.</div>' :
+                list.map(c => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);"><span style="font-weight:800;">${escapeText(c.name)}</span></div>`).join('');
+        } catch(e) { cl.innerHTML = 'خطأ في تحميل الكليات.'; }
+    }
+    const sl = document.getElementById('supervisorsList');
+    if (sl) {
+        try {
+            const res = await fetch('/admin/supervisors'); const list = await res.json();
+            if (!list || list.length === 0) { sl.innerHTML = '<div style="text-align:center; padding:20px;">لا يوجد مشرفون بعد.</div>'; return; }
+            sl.innerHTML = list.map(s => {
+                const scope = s.role === 'college_supervisor' ? ('مشرف كلية · ' + (s.supervisor_college || '')) : ('مشرف تخصص · ' + (s.supervisor_college || '') + ' / ' + (s.supervisor_specialization || ''));
+                return `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div><div style="font-weight:bold;">${escapeText(s.name)} (@${escapeText(s.username)})</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(scope)}</div></div>
+                    <button data-username="${escapeText(s.username)}" onclick="removeSupervisor(this.dataset.username)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">إزالة</button>
+                </div>`;
+            }).join('');
+        } catch(e) { sl.innerHTML = 'خطأ في تحميل المشرفين.'; }
+    }
+}
+
+async function submitNewCollege() {
+    const name = document.getElementById('new_college_name').value.trim();
+    if (!name) return alert('يرجى إدخال اسم الكلية.');
+    try {
+        const res = await fetch('/admin/add-college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success'); document.getElementById('new_college_name').value = ''; loadSupervisorsTab(); }
+        else alert(data.message);
+    } catch(e) { alert('خطأ أثناء إضافة الكلية.'); }
+}
+
+function toggleSupSpecialization() {
+    const role = document.getElementById('sup_role').value;
+    document.getElementById('sup_specialization').style.display = role === 'specialization_supervisor' ? 'block' : 'none';
+}
+
+async function submitNewSupervisor() {
+    const payload = {
+        username: document.getElementById('sup_username').value.trim(),
+        role: document.getElementById('sup_role').value,
+        college: document.getElementById('sup_college').value,
+        specialization: document.getElementById('sup_specialization').value.trim()
+    };
+    if (!payload.username) return alert('يرجى إدخال اسم المستخدم.');
+    if (payload.role === 'specialization_supervisor' && !payload.specialization) return alert('يرجى إدخال التخصص.');
+    try {
+        const res = await fetch('/admin/add-supervisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success'); document.getElementById('sup_username').value = ''; document.getElementById('sup_specialization').value = ''; loadSupervisorsTab(); }
+        else alert(data.message);
+    } catch(e) { alert('خطأ أثناء تعيين المشرف.'); }
+}
+
+async function removeSupervisor(username) {
+    if (!confirm('هل أنت متأكد من إزالة صلاحية الإشراف عن ' + username + '؟')) return;
+    try {
+        const res = await fetch('/admin/remove-supervisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
+        else alert(data.message);
+    } catch(e) { alert('خطأ أثناء الإزالة.'); }
 }
 
 async function uploadQuizCSV() {
@@ -1296,7 +1441,7 @@ async function startQuiz(chapter) {
     quizState.studentName = name; quizState.chapterName = chapter; quizState.currentQ = 0;
     document.getElementById('startQuizBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...';
     try {
-        const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}&subject=${encodeURIComponent(CURRENT_SUBJECT)}&year=${encodeURIComponent({{ (subject.year if subject else "")|tojson }})}&term=${encodeURIComponent({{ (subject.term if subject else "")|tojson }})}`);
+        const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}&subject=${encodeURIComponent(CURRENT_SUBJECT)}&year=${encodeURIComponent({{ (subject.year if subject else "")|tojson }})}&term=${encodeURIComponent({{ (subject.term if subject else "")|tojson }})}&college=${encodeURIComponent({{ (subject.college if subject else "")|tojson }})}`);
         if (!res.ok) {
             alert("خطأ في جلب بيانات الاختبار.");
             document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>';

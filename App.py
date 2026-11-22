@@ -667,8 +667,9 @@ def admin_required(f):
 
 SUPERVISOR_ROLES = ('college_supervisor', 'specialization_supervisor')
 
-def _in_scope(user, college, subject_name=None):
-    """هل هذا العنصر (كلية/تخصص) ضمن نطاق المستخدم؟ المشرف الأعلى يرى كل شيء."""
+def _in_scope(user, college, subject_name=None, subject_id=None):
+    """هل هذا العنصر (كلية/تخصص) ضمن نطاق المستخدم؟ المشرف الأعلى يرى كل شيء.
+    لمشرف التخصص: إن وُجد supervisor_subject_id يُقارن به بدقة، وإلا يُقارن بالاسم."""
     if not user:
         return False
     if user.role == 'admin':
@@ -676,6 +677,8 @@ def _in_scope(user, college, subject_name=None):
     if user.role == 'college_supervisor':
         return (user.supervisor_college or '') == (college or '')
     if user.role == 'specialization_supervisor':
+        if subject_id is not None and getattr(user, 'supervisor_subject_id', None):
+            return user.supervisor_subject_id == subject_id
         return ((user.supervisor_college or '') == (college or '')
                 and (user.supervisor_specialization or '') == (subject_name or ''))
     return False
@@ -688,6 +691,8 @@ def _scope_query(query, user, model):
     if user.role == 'college_supervisor':
         return query.filter(model.college == (user.supervisor_college or ''))
     if user.role == 'specialization_supervisor':
+        if getattr(user, 'supervisor_subject_id', None):
+            return query.filter(model.subject_id == user.supervisor_subject_id)
         return query.filter(model.college == (user.supervisor_college or ''),
                             model.subject_name == (user.supervisor_specialization or ''))
     return query
@@ -1293,6 +1298,141 @@ def remove_college():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ==========================================
+# المواد ككيانات (Flow A: إضافة مادة مستقلة)
+# ==========================================
+
+def _subject_has_lessons(subj):
+    """هل توجد دروس مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
+    if CustomLesson.query.filter_by(subject_id=subj.id).first():
+        return True
+    return CustomLesson.query.filter(
+        CustomLesson.subject_id == None,
+        CustomLesson.college == subj.college,
+        CustomLesson.year == subj.year,
+        CustomLesson.term == subj.term,
+        CustomLesson.subject_name == subj.name).first() is not None
+
+def _subject_has_questions(subj):
+    """هل توجد أسئلة اختبار مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
+    if QuizQuestion.query.filter_by(subject_id=subj.id).first():
+        return True
+    return QuizQuestion.query.filter(
+        QuizQuestion.subject_id == None,
+        QuizQuestion.college == subj.college,
+        QuizQuestion.year == subj.year,
+        QuizQuestion.term == subj.term,
+        QuizQuestion.subject_name == subj.name).first() is not None
+
+@app.route('/admin/subjects', methods=['GET'])
+@admin_or_supervisor_required
+def get_subjects():
+    user = get_current_user()
+    try:
+        query = Subject.query
+        if user.role == 'college_supervisor':
+            query = query.filter_by(college=(user.supervisor_college or ''))
+        elif user.role == 'specialization_supervisor':
+            if getattr(user, 'supervisor_subject_id', None):
+                query = query.filter_by(id=user.supervisor_subject_id)
+            else:
+                query = query.filter_by(college=(user.supervisor_college or ''),
+                                        name=(user.supervisor_specialization or ''))
+        return jsonify([s.to_dict() for s in query.order_by(Subject.college, Subject.year, Subject.term, Subject.name).all()])
+    except Exception:
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/add-subject', methods=['POST'])
+@admin_or_supervisor_required
+def add_subject():
+    try:
+        user = get_current_user()
+        if user.role == 'specialization_supervisor':
+            return jsonify({"status": "error", "message": "مشرف التخصص لا يمكنه إضافة مواد — المادة الخاصة بك موجودة بالفعل"}), 403
+        data = request.get_json(silent=True) or request.form or {}
+        name = _safe_str(data.get('name'))
+        year = _safe_str(data.get('year'))
+        term = _safe_str(data.get('term'))
+        if user.role == 'college_supervisor':
+            college = user.supervisor_college or 'كلية الهندسة'
+        else:
+            college = _safe_str(data.get('college')) or 'كلية الهندسة'
+        if not name or not year or not term:
+            return jsonify({"status": "error", "message": "اسم المادة والسنة والترم حقول مطلوبة"}), 400
+        if not College.query.filter_by(name=college).first():
+            db.session.add(College(name=college))
+        if Subject.query.filter_by(college=college, year=year, term=term, name=name).first():
+            return jsonify({"status": "error", "message": "هذه المادة موجودة بالفعل في نفس الكلية والسنة والترم"}), 400
+        subj = Subject(name=name, college=college, year=year, term=term, created_by=user.id)
+        db.session.add(subj)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت إضافة المادة بنجاح", "subject": subj.to_dict()})
+    except Exception as e:
+        app.logger.exception("فشل إضافة مادة")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/edit-subject/<int:subject_id>', methods=['POST'])
+@admin_or_supervisor_required
+def edit_subject(subject_id):
+    try:
+        user = get_current_user()
+        subj = Subject.query.get_or_404(subject_id)
+        if user.role == 'specialization_supervisor':
+            return jsonify({"status": "error", "message": "مشرف التخصص لا يمكنه إعادة تسمية المواد"}), 403
+        if user.role == 'college_supervisor' and (user.supervisor_college or '') != (subj.college or ''):
+            return jsonify({"status": "error", "message": "غير مصرح لك بتعديل مادة خارج كليتك"}), 403
+        data = request.get_json(silent=True) or request.form or {}
+        new_name = _safe_str(data.get('name'))
+        if not new_name:
+            return jsonify({"status": "error", "message": "اسم المادة مطلوب"}), 400
+        if new_name == subj.name:
+            return jsonify({"status": "success", "message": "تم تحديث المادة بنجاح", "subject": subj.to_dict()})
+        dup = Subject.query.filter_by(college=subj.college, year=subj.year, term=subj.term, name=new_name).first()
+        if dup:
+            return jsonify({"status": "error", "message": "يوجد مادة بهذا الاسم بالفعل في نفس الكلية والسنة والترم"}), 400
+        subj.name = new_name
+        # إعادة التسمية تحدّث كل الصفوف المرتبطة دفعة واحدة (دروس + أسئلة)
+        CustomLesson.query.filter_by(subject_id=subj.id).update({"subject_name": new_name}, synchronize_session=False)
+        QuizQuestion.query.filter_by(subject_id=subj.id).update({"subject_name": new_name}, synchronize_session=False)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث المادة بنجاح", "subject": subj.to_dict()})
+    except Exception as e:
+        app.logger.exception("فشل إعادة تسمية مادة: subject_id=%s", subject_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/remove-subject', methods=['POST'])
+@admin_required
+def remove_subject():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        subject_id = data.get('id')
+        subj = None
+        if subject_id:
+            try:
+                subj = Subject.query.get(int(subject_id))
+            except (TypeError, ValueError):
+                subj = None
+        if not subj:
+            return jsonify({"status": "error", "message": "المادة غير موجودة"}), 404
+        if _subject_has_lessons(subj):
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها دروس — انقل الدروس أو احذفها أولاً"}), 400
+        if _subject_has_questions(subj):
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها أسئلة اختبار — احذف الأسئلة أولاً"}), 400
+        if Student.query.filter(Student.role == 'specialization_supervisor', Student.supervisor_subject_id == subj.id).first():
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة لديها مشرف تخصص — أزل المشرف أولاً"}), 400
+        if Student.query.filter(Student.role == 'specialization_supervisor', Student.supervisor_subject_id == None, Student.supervisor_college == subj.college, Student.supervisor_specialization == subj.name).first():
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة لديها مشرف تخصص — أزل المشرف أولاً"}), 400
+        db.session.delete(subj)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف المادة بنجاح"})
+    except Exception as e:
+        app.logger.exception("فشل حذف مادة")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/supervisors', methods=['GET'])
 @admin_required
 def get_supervisors():
@@ -1326,9 +1466,29 @@ def add_supervisor():
             return jsonify({"status": "error", "message": "لا يوجد حساب بهذا الاسم"}), 404
         if student.role == 'admin':
             return jsonify({"status": "error", "message": "هذا الحساب مشرف أعلى بالفعل"}), 400
+        subject = None
+        if role == 'specialization_supervisor':
+            subject_id = data.get('subject_id')
+            if subject_id:
+                try:
+                    subject = Subject.query.get(int(subject_id))
+                except (TypeError, ValueError):
+                    subject = None
+                if not subject:
+                    return jsonify({"status": "error", "message": "المادة المختارة غير موجودة"}), 400
+                if subject.college != college:
+                    return jsonify({"status": "error", "message": "المادة المختارة ليست في الكلية المحددة"}), 400
+                specialization = subject.name
+                college = subject.college
+            elif specialization:
+                # توافق: حلّ الاسم إلى مادة محددة إن وُجدت مطابقة واحدة
+                matches = Subject.query.filter_by(college=college, name=specialization).all()
+                if len(matches) == 1:
+                    subject = matches[0]
         student.role = role
         student.supervisor_college = college
         student.supervisor_specialization = specialization if role == 'specialization_supervisor' else None
+        student.supervisor_subject_id = subject.id if (role == 'specialization_supervisor' and subject) else None
         db.session.commit()
         return jsonify({"status": "success", "message": "تم تعيين المشرف بنجاح", "supervisor": student.to_dict()})
     except Exception as e:
@@ -1349,6 +1509,7 @@ def remove_supervisor():
         student.role = 'student'
         student.supervisor_college = None
         student.supervisor_specialization = None
+        student.supervisor_subject_id = None
         db.session.commit()
         return jsonify({"status": "success", "message": "تمت إزالة صلاحية الإشراف"})
     except Exception as e:

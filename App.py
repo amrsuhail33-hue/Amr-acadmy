@@ -1753,6 +1753,11 @@ def reschedule_plan():
 def complete_task(task_id):
     try:
         student_id = session['student_id']
+        # ids outside Postgres INTEGER range (e.g. a frontend Date.now()
+        # temp id) can never be a real row — answer 404 JSON instead of
+        # letting the lookup raise 22003.
+        if not (-(2 ** 31) <= task_id <= 2 ** 31 - 1):
+            return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
         task = UnifiedTask.query.get(task_id)
         if not task:
             return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
@@ -1811,12 +1816,19 @@ def manage_unified_tasks():
         # Idempotency guard (dedupe by unique id): the planner re-syncs
         # unsynced local tasks; if the task id already exists for this
         # student, return the existing row instead of creating a duplicate.
+        # NOTE: the frontend creates new tasks with a local temp id of
+        # Date.now() (13 digits, e.g. 1795367806512) which is far outside
+        # Postgres INTEGER range (max 2147483647). Binding it as INTEGER
+        # raises 22003, so the task was never saved and every later PUT /
+        # DELETE / complete on that id failed too. An out-of-range id can
+        # never be a real row: skip the lookup and create the task, and
+        # the frontend swaps in the real server id from the response.
         existing_id = data.get('id')
         try:
             existing_id = int(existing_id) if existing_id is not None else None
         except (TypeError, ValueError):
             existing_id = None
-        if existing_id:
+        if existing_id and -(2 ** 31) <= existing_id <= 2 ** 31 - 1:
             existing = UnifiedTask.query.filter_by(id=existing_id, student_id=student_id).first()
             if existing:
                 return jsonify({"status": "success", "task": existing.to_dict()})
@@ -1853,13 +1865,21 @@ def manage_unified_tasks():
 @student_required
 def handle_single_task(task_id):
     student_id = session['student_id']
-    task = UnifiedTask.query.get(task_id)
-    if not task:
+    # ids outside Postgres INTEGER range (e.g. a frontend Date.now()
+    # temp id) can never be a real row — answer 404 JSON instead of
+    # letting the lookup raise 22003 as an uncaught HTML 500, and keep
+    # the lookup inside the try so any DB error returns JSON with a
+    # logged traceback instead of a bare failure page.
+    if not (-(2 ** 31) <= task_id <= 2 ** 31 - 1):
         return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
-    if task.student_id != student_id:
-        return jsonify({"status": "error", "message": "غير مصرح لك"}), 403
 
     try:
+        task = UnifiedTask.query.get(task_id)
+        if not task:
+            return jsonify({"status": "error", "message": "المهمة غير موجودة"}), 404
+        if task.student_id != student_id:
+            return jsonify({"status": "error", "message": "غير مصرح لك"}), 403
+
         if request.method == 'DELETE':
             db.session.delete(task)
             db.session.commit()

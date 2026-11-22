@@ -789,6 +789,10 @@ def _is_placeholder_question_title(text):
     t = (text or "").strip()
     for _alef in ("\u0623", "\u0625", "\u0622", "\u0671"):
         t = t.replace(_alef, "\u0627")
+    # توحيد الياء والكاف: الياء الفارسية \u06cc والألف المقصورة \u0649
+    # والكاف الفارسية \u06a9 تُكتب أحياناً بدل نظيراتها العربية في النصوص
+    # المنسوخة، وتبدو مطابقة لها مع أنها رموز مختلفة.
+    t = t.replace("\u06cc", "\u064a").replace("\u0649", "\u064a").replace("\u06a9", "\u0643")
     t = "".join(ch for ch in t if ch.isalpha())
     return t == "اختيار"
 

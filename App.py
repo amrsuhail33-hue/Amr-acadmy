@@ -1700,11 +1700,13 @@ def generate_plan():
                 return jsonify({"status": "success", "plan": plan_data})
             except Exception as e:
                 db.session.rollback()
+                app.logger.exception("generate_plan: failed to save generated tasks")
                 return jsonify({"error": f"Error saving tasks: {str(e)}"}), 500
 
         return jsonify({"status": "success", "plan": plan_data})
 
     except Exception as e:
+        app.logger.exception("generate_plan: failed")
         return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
@@ -1743,6 +1745,7 @@ def reschedule_plan():
         plan_data = json.loads(reply_text)
         return jsonify({"status": "success", "plan": plan_data})
     except Exception as e:
+        app.logger.exception("reschedule_plan: failed")
         return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
 
 @app.route('/api/tasks/complete/<int:task_id>', methods=['POST'])
@@ -1779,6 +1782,7 @@ def complete_task(task_id):
         })
     except Exception as e:
         db.session.rollback()
+        app.logger.exception("complete_task: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
@@ -1803,6 +1807,19 @@ def manage_unified_tasks():
         description = data.get('description', '')
         allocated_hours = data.get('allocated_hours', 1.0)
         is_wird = data.get('is_wird', False)
+
+        # Idempotency guard (dedupe by unique id): the planner re-syncs
+        # unsynced local tasks; if the task id already exists for this
+        # student, return the existing row instead of creating a duplicate.
+        existing_id = data.get('id')
+        try:
+            existing_id = int(existing_id) if existing_id is not None else None
+        except (TypeError, ValueError):
+            existing_id = None
+        if existing_id:
+            existing = UnifiedTask.query.filter_by(id=existing_id, student_id=student_id).first()
+            if existing:
+                return jsonify({"status": "success", "task": existing.to_dict()})
 
         if not title or not planned_date:
             return jsonify({"status": "error", "message": "العنوان والتاريخ مطلوبان"}), 400
@@ -1829,6 +1846,7 @@ def manage_unified_tasks():
         return jsonify({"status": "success", "task": task.to_dict()})
     except Exception as e:
         db.session.rollback()
+        app.logger.exception("manage_unified_tasks: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/tasks/<int:task_id>', methods=['PUT', 'DELETE'])
@@ -1878,6 +1896,7 @@ def handle_single_task(task_id):
         return jsonify({"status": "success", "task": task.to_dict()})
     except Exception as e:
         db.session.rollback()
+        app.logger.exception("handle_single_task: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/lessons', methods=['GET'])
@@ -1978,6 +1997,7 @@ def generate_exam_plan():
 
     except Exception as e:
         db.session.rollback()
+        app.logger.exception("generate_exam_plan: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ==========================================
@@ -2020,6 +2040,7 @@ def get_profile():
             "recent_transactions": [t.to_dict() for t in recent_transactions]
         })
     except Exception as e:
+        app.logger.exception("get_profile: failed")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/profile/visibility', methods=['POST'])

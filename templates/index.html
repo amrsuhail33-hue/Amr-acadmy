@@ -211,6 +211,30 @@
         .file-upload-box { border: 2px dashed var(--border); border-radius: 16px; padding: 30px; text-align: center; margin-bottom: 20px; transition: 0.3s; background: var(--bg-card); cursor: pointer; }
         .file-upload-box:hover { border-color: var(--primary); background: var(--primary-light); }
         .file-upload-box input[type="file"] { display: none; }
+
+        /* تحسينات الجوال */
+        @media (max-width: 600px) {
+            html, body { overflow-x: hidden; }
+            img, video { max-width: 100%; }
+            .navbar { padding: 10px 12px; }
+            .nav-title { font-size: 1rem; }
+            .main-content { padding: 16px 12px 60px; }
+            .hero-section { padding: 20px 5px 15px; }
+            .hero-title { font-size: 1.6rem; }
+            .hero-subtitle { font-size: 0.95rem; }
+            .hero-desc { font-size: 0.95rem; }
+            .grid-container, .features-grid { grid-template-columns: 1fr; }
+            .card { padding: 20px 16px; }
+            .quiz-question-text { font-size: 1.05rem; }
+            .quiz-opt { font-size: 0.95rem; padding: 12px 14px; }
+            #searchInput, .qa-input-field { font-size: 16px; }
+            .btn-calc-action, .btn-calc-outline, .hero-btn-primary, .navbar-contact { min-height: 44px; }
+            .nav-btn { min-width: 44px; min-height: 44px; }
+            .action-btn { min-width: 44px; min-height: 44px; }
+            #certificateCard { padding: 20px 14px; }
+            #certStudentName { font-size: 1.4rem; }
+            #certPercent { font-size: 2.2rem; }
+        }
     </style>
 </head>
 <body>
@@ -558,6 +582,8 @@
                 <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}</span>
                 <i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i>
             </a>
+        {% else %}
+            <p style="text-align:center; color:var(--text-muted); font-weight:700; padding:30px 20px; grid-column:1 / -1;">لا توجد فصول متاحة لهذا النوع بعد.</p>
         {% endfor %}
     </div>
     {% endif %}
@@ -597,6 +623,7 @@
             </div>
             
             <div id="result-view" class="hidden" style="text-align:center;">
+                <div id="quizFailMsg" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:12px; padding:16px; font-weight:800; margin-bottom:30px;">لم تحقق نسبة النجاح هذه المرة — راجع الدرس وحاول مجدداً.</div>
                 <div id="certificateCard" style="background:linear-gradient(135deg, #0f172a, #1e293b); border:2px solid var(--warning); border-radius:24px; padding:30px; text-align:center; color:white; margin-bottom:30px;">
                     <div style="color:var(--warning); font-size:1.2rem; font-weight:900; margin-bottom:20px;">Amr Suhail Academy</div>
                     <div id="certStudentName" style="font-size:1.8rem; font-weight:900; margin-bottom:15px;"></div>
@@ -605,7 +632,7 @@
                     <div id="certGrade" style="font-weight:bold; font-size:1.1rem; background:rgba(16,185,129,0.1); padding:6px 20px; border-radius:50px; display:inline-block;"></div>
                 </div>
                 <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
-                    <button class="btn-calc-action" style="background:var(--accent); flex:1; min-width:200px;" onclick="downloadCertificate()"><i class="fa-solid fa-download"></i> حفظ الشهادة</button>
+                    <button id="downloadCertBtn" class="btn-calc-action" style="background:var(--accent); flex:1; min-width:200px;" onclick="downloadCertificate()"><i class="fa-solid fa-download"></i> حفظ الشهادة</button>
                     <button class="btn-calc-outline" style="flex:1; min-width:200px;" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> إعادة الاختبار</button>
                 </div>
             </div>
@@ -1241,6 +1268,19 @@ async function sendAIMessage() {
     b.scrollTop = b.scrollHeight;
 }
 
+// تطبيع نصوص الإجابات قبل المقارنة (أرقام عربية/إنجليزية، أشكال الألف، ة/ه، ى/ي، مسافات)
+function normAns(s) {
+    return String(s ?? '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+        .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+        .replace(/[أإآٱ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي');
+}
+function ansEqual(a, b) { return normAns(a) === normAns(b); }
+
 // 9. نظام الاختبارات MCQ المحدث بدقة
 let quizState = { currentQ: 0, studentName: "", chapterName: "", questions: [] };
 
@@ -1251,6 +1291,11 @@ async function startQuiz(chapter) {
     document.getElementById('startQuizBtn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...';
     try {
         const res = await fetch(`/api/quiz?chapter=${encodeURIComponent(chapter)}&subject=${encodeURIComponent(CURRENT_SUBJECT)}&year=${encodeURIComponent({{ (subject.year if subject else "")|tojson }})}&term=${encodeURIComponent({{ (subject.term if subject else "")|tojson }})}`);
+        if (!res.ok) {
+            alert("خطأ في جلب بيانات الاختبار.");
+            document.getElementById('startQuizBtn').innerHTML = 'بدء الاختبار <i class="fa-solid fa-rocket"></i>';
+            return;
+        }
         const data = await res.json();
         if(!data || data.length === 0) { 
             alert("لا توجد أسئلة معتمدة متاحة لهذا الفصل حالياً."); 
@@ -1302,7 +1347,7 @@ function loadQuestion() {
         
         if (q.status === 'answered') {
             b.disabled = true;
-            if (String(opt).trim() === q.ans_text) {
+            if (ansEqual(opt, q.ans_text)) {
                 b.classList.add('correct');
                 b.innerHTML = `<span>${escapeText(opt)}</span> <i class="fa-solid fa-circle-check"></i>`;
             } else if (idx === q.selectedOpt) {
@@ -1318,7 +1363,7 @@ function loadQuestion() {
     });
     
     const expBox = document.getElementById('quizExplanation');
-    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>توضيح:</b> ${q.explain || 'لا يوجد توضيح متاح لهذا السؤال.'}`;
+    expBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> <b>الإجابة الصحيحة:</b> ${escapeText(q.ans_text)}<br><b>توضيح:</b> ${q.explain ? escapeText(q.explain) : 'لا يوجد توضيح إضافي لهذا السؤال.'}`;
     expBox.style.display = q.status === 'answered' ? 'block' : 'none';
     
     document.getElementById('btnPrev').style.display = quizState.currentQ > 0 ? 'flex' : 'none';
@@ -1333,7 +1378,7 @@ function selectOption(idx) {
     q.selectedOpt = idx;
     q.status = 'answered';
     loadQuestion();
-    if(String(q.opts[idx]).trim() === q.ans_text) showToast('إجابة صحيحة!', 'success'); else showToast('إجابة خاطئة', 'error');
+    if(ansEqual(q.opts[idx], q.ans_text)) showToast('إجابة صحيحة!', 'success'); else showToast('إجابة خاطئة', 'error');
 }
 
 function showHint() { document.getElementById('quizExplanation').style.display = 'block'; }
@@ -1349,7 +1394,7 @@ async function showQuizResult() {
     document.getElementById('quiz-view').classList.add('hidden'); 
     document.getElementById('result-view').classList.remove('hidden');
     
-    const score = quizState.questions.filter(q => q.status === 'answered' && String(q.opts[q.selectedOpt]).trim() === q.ans_text).length;
+    const score = quizState.questions.filter(q => q.status === 'answered' && ansEqual(q.opts[q.selectedOpt], q.ans_text)).length;
     const perc = (score / quizState.questions.length) * 100;
     
     let grade = 'راسب', color = 'var(--danger)', icon = '<i class="fa-solid fa-xmark"></i>';
@@ -1365,6 +1410,15 @@ async function showQuizResult() {
     document.getElementById('certGrade').innerHTML = `${icon} تقدير: ${grade}`; 
     document.getElementById('certGrade').style.color = color;
     document.getElementById('certGrade').style.background = `rgba(${color === 'var(--accent)' ? '16,185,129' : color === 'var(--primary)' ? '37,99,235' : color === 'var(--warning)' ? '245,158,11' : '239,68,68'}, 0.15)`;
+    
+    // إظهار الشهادة وزر التحميل فقط عند النجاح (50% فأكثر)، وإلا إظهار رسالة الفشل
+    const passed = perc >= 50;
+    const certCard = document.getElementById('certificateCard');
+    const dlBtn = document.getElementById('downloadCertBtn');
+    const failMsg = document.getElementById('quizFailMsg');
+    if (certCard) certCard.style.display = passed ? '' : 'none';
+    if (dlBtn) dlBtn.style.display = passed ? '' : 'none';
+    if (failMsg) failMsg.style.display = passed ? 'none' : 'block';
     
     if(perc >= 50 && typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
     
@@ -1401,18 +1455,21 @@ async function toggleFavorite(btn) {
     const lessonId = btn.getAttribute('data-lesson-id');
     if (!lessonId) return;
     if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول أولاً لإضافة المفضلة.');
-    const isFav = btn.classList.contains('fav-active');
+    const wasFav = btn.classList.contains('fav-active');
+    btn.classList.toggle('fav-active');
+    btn.innerHTML = wasFav ? '<i class="fa-regular fa-heart"></i>' : '<i class="fa-solid fa-heart" style="color:var(--danger);"></i>';
     try {
         const res = await fetch('/api/favorites', {
-            method: isFav ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lesson_id: lessonId })
+            method: wasFav ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lesson_id: parseInt(lessonId) })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-            btn.classList.toggle('fav-active');
-            btn.innerHTML = isFav ? '<i class="fa-regular fa-heart"></i>' : '<i class="fa-solid fa-heart" style="color:var(--danger);"></i>';
-            renderFavLists();
-        }
-    } catch (e) {}
+        if (!res.ok || data.status !== 'success') throw new Error('save failed');
+        renderFavLists();
+    } catch (e) {
+        btn.classList.toggle('fav-active');
+        btn.innerHTML = wasFav ? '<i class="fa-solid fa-heart" style="color:var(--danger);"></i>' : '<i class="fa-regular fa-heart"></i>';
+        showToast('تعذر حفظ المفضلة، حاول مجدداً.', 'error');
+    }
 }
 
 async function renderFavLists() {
@@ -1460,23 +1517,36 @@ async function initFavoriteButtons() {
     } catch(e) {}
 }
 
-async function calculateStudentProgress() {
+function updateProgressUI() {
     const checks = document.querySelectorAll('.lesson-check');
     if (checks.length === 0) return;
     let completed = 0; checks.forEach(chk => { if (chk.checked) completed++; });
     const pct = Math.round((completed / checks.length) * 100);
     const bar = document.getElementById('studentProgressBar'), txt = document.getElementById('progressPercent');
     if(bar) bar.style.width = pct + '%'; if(txt) txt.innerText = pct + '%';
+}
+
+async function calculateStudentProgress() {
+    const checks = document.querySelectorAll('.lesson-check');
+    if (checks.length === 0) return;
+    updateProgressUI();
     if (!isStudentLoggedIn()) return;
     for (const chk of checks) {
         const lessonId = chk.getAttribute('data-lesson-id');
         if (!lessonId) continue;
+        const wasChecked = chk.checked;
         try {
-            await fetch('/api/progress', {
+            const res = await fetch('/api/progress', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lesson_id: lessonId, status: chk.checked ? 'completed' : 'not_started', progress_percent: chk.checked ? 100 : 0 })
+                body: JSON.stringify({ lesson_id: parseInt(lessonId), status: chk.checked ? 'completed' : 'not_started', progress_percent: chk.checked ? 100 : 0 })
             });
-        } catch(e) {}
+            const data = await res.json();
+            if (!res.ok || data.status !== 'success') throw new Error('save failed');
+        } catch(e) {
+            chk.checked = !wasChecked;
+            updateProgressUI();
+            showToast('تعذر حفظ التقدّم، حاول مجدداً.', 'error');
+        }
     }
 }
 
@@ -1488,7 +1558,7 @@ async function loadStudentProgress() {
             const prog = progressData.find(p => p.lesson_id == chk.getAttribute('data-lesson-id'));
             if (prog && prog.status === 'completed') chk.checked = true;
         });
-        calculateStudentProgress();
+        updateProgressUI();
     } catch(e) {}
 }
 
@@ -1566,3 +1636,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+

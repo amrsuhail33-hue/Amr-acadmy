@@ -809,22 +809,42 @@ async function toggleTaskComplete(taskId, isChecked) {
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
         updateProgress(tasks); // تحديث فوري لشريط التقدم دون انتظار الخادم
     }
+    // عند تسجيل الدخول يجب أن ينجح الحفظ على الخادم فعلاً قبل الاحتفال:
+    // فشل الحفظ الصامت سابقاً كان يترك المهمة مكتملة محلياً فقط دون
+    // نقاط، فبدا الإكمال ناجحاً بينما لم يصل للخادم أبداً.
+    let serverOk = true;
     if (isStudentLoggedIn()) {
         try {
             const res = await fetch(`/api/tasks/${taskId}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completed: isChecked })
             });
-            const data = await res.json();
-            if (data.status === 'success') {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.status === 'success') {
                 updateSyncStatus(taskId, true);
                 if(isChecked) {
                     showToast('✅ تم إكمال المهمة وإضافة النقاط', 'success');
                     await loadProfileBadge();
                 }
+            } else {
+                serverOk = false;
+                showPlannerError(data.message || 'تعذر حفظ حالة الإكمال على الخادم — حاول مجدداً.');
             }
-        } catch(e) {}
+        } catch(e) {
+            serverOk = false;
+            showPlannerError('خطأ في الاتصال بالخادم — لم يُحفظ الإكمال.');
+        }
     }
-    if (isChecked) {
+    if (!serverOk) {
+        // التراجع عن التحديث المتفائل حتى لا تبدو المهمة مكتملة دون حفظ
+        let tasksNow = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        const idx = tasksNow.findIndex(t => String(t.id) === String(taskId));
+        if (idx > -1) {
+            tasksNow[idx].completed = !isChecked;
+            tasksNow[idx].synced = false;
+            localStorage.setItem('unified_tasks', JSON.stringify(tasksNow));
+            updateProgress(tasksNow);
+        }
+    } else if (isChecked) {
         confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
         document.getElementById('success-modal').style.display = 'flex';
     }
@@ -864,6 +884,7 @@ async function deleteTask(taskId, btn) {
         tasks = tasks.filter(t => String(t.id) !== String(taskId));
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
         showToast('تم حذف المهمة', 'success');
+        loadProfileBadge();
         loadTasks();
     } catch(e) { showPlannerError('خطأ أثناء حذف المهمة.'); }
 }
@@ -940,6 +961,7 @@ async function addManualTask() {
 // ==========================================
 // LOAD PROFILE BADGE
 // ==========================================
+let _badgeRetryPending = false;
 async function loadProfileBadge() {
     if (!isStudentLoggedIn()) return;
     try {
@@ -949,8 +971,16 @@ async function loadProfileBadge() {
             const p = data.profile;
             if(document.getElementById('navLevelBadge')) document.getElementById('navLevelBadge').innerText = p.level;
             if(document.getElementById('navPoints')) document.getElementById('navPoints').innerText = p.points;
+            _badgeRetryPending = false;
+        } else if (!_badgeRetryPending) {
+            // إعادة محاولة واحدة: فشل الجلب الصامت كان يترك الشارة على
+            // قيمتها الافتراضية 0 حتى بعد أن تصبح النقاط 80 فعلاً
+            _badgeRetryPending = true;
+            setTimeout(loadProfileBadge, 3000);
         }
-    } catch(e) {}
+    } catch(e) {
+        if (!_badgeRetryPending) { _badgeRetryPending = true; setTimeout(loadProfileBadge, 3000); }
+    }
 }
 
 // ==========================================
@@ -1176,6 +1206,7 @@ async function confirmClearAll(btn) {
             localStorage.removeItem('unified_tasks');
             showToast('تم مسح جميع المهام محلياً', 'info');
         }
+        loadProfileBadge();
         loadTasks();
     } catch(e) { showPlannerError('خطأ أثناء مسح المهام.'); }
 }

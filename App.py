@@ -14,6 +14,7 @@ from flask import (
     make_response
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Uuid
 from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -76,8 +77,8 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
-    # UUID نصي (String) يعمل على SQLite وPostgres معاً، بدل نوع Postgres الخاص الذي كان يكسر SQLite
-    auth_user_id = db.Column(db.String(36), nullable=True)
+    # نوع Uuid الأصلي: يظهر كـ UUID في Postgres (مطابق للعمود الموجود فلا حاجة لـ migration) وكـ CHAR في SQLite
+    auth_user_id = db.Column(Uuid, nullable=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -1744,5 +1745,6 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
 
 

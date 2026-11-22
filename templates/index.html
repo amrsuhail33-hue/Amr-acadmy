@@ -1579,8 +1579,8 @@ function startRenameSubject(id, btn) {
             const data = await res.json();
             const sm = document.getElementById('subjectMsg');
             if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); loadSubjectsTab(); }
-            else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } loadSubjectsTab(); }
-        } catch(e) { const msg = 'خطأ أثناء إعادة التسمية.'; showToast(msg, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } loadSubjectsTab(); }
+            else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } /* لا نعيد تحميل القائمة هنا: loadSubjectsTab() تخفي #subjectMsg فوراً، ويبقى المحرر مفتوحاً ليصحح المستخدم الاسم */ }
+        } catch(e) { const msg = 'خطأ أثناء إعادة التسمية.'; showToast(msg, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } /* المحرر يبقى مفتوحاً ليحاول المستخدم مجدداً */ }
     };
 }
 

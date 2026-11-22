@@ -27,6 +27,7 @@
         const IS_SUPERVISOR = {% if is_supervisor %}true{% else %}false{% endif %};
         const SUPERVISOR_COLLEGE = {{ supervisor_college|tojson }};
         const SUPERVISOR_SPECIALIZATION = {{ supervisor_specialization|tojson }};
+        const USER_ROLE = {{ user_role|tojson }};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
@@ -402,6 +403,9 @@
             <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn">نشر إعلان</button>
             <button onclick="switchAdminTab('supervisors', event)" class="btn-calc-outline admin-tab-btn">المشرفون والكليات</button>
             {% endif %}
+            {% if is_admin or is_supervisor %}
+            <button onclick="switchAdminTab('subjects', event)" class="btn-calc-outline admin-tab-btn">المواد</button>
+            {% endif %}
         </div>
         
         <div id="adminTab_qa"><div id="adminQuestionsList">جاري جلب الأسئلة...</div></div>
@@ -416,7 +420,7 @@
                 </div>
                 <select id="add_college" class="qa-input-field" style="margin-top:12px;"></select>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
-                    <input type="text" id="add_subject" placeholder="المادة" class="qa-input-field" style="margin-bottom:0;">
+                    <select id="add_subject_id" class="qa-input-field" style="margin-bottom:0;" onchange="onSubjectSelect()"></select>
                     <input type="text" id="add_chapter" placeholder="الفصل / الشابتر" class="qa-input-field" style="margin-bottom:0;">
                 </div>
                 <select id="add_type" class="qa-input-field" style="margin-top:12px;">
@@ -432,6 +436,7 @@
                     <button id="btn_save_content" onclick="submitNewContent()" class="btn-calc-action" style="background:var(--accent); flex:2;"><i class="fa-solid fa-cloud-arrow-up"></i> حفظ المحتوى</button>
                     <button id="btn_cancel_edit" onclick="resetContentForm()" class="btn-calc-outline" style="display:none; flex:1; border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-ban"></i> إلغاء</button>
                 </div>
+                <div id="contentFormMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
             <div id="adminCustomContentList"></div>
             <div id="contentDeleteMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
@@ -443,6 +448,11 @@
                  <h3 style="margin:0 0 10px; color:var(--text-main);">اضغط لرفع ملف الأسئلة دفعة واحدة (CSV)</h3>
                  <p style="margin:0; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">يجب أن يحتوي الملف على الأعمدة التالية:<br><code>year, term, college, subject_name, chapter_name, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, explanation</code><br>ملاحظة: ضع نص السؤال نفسه في question_text، والإجابات في option_a إلى option_e.</p>
                  <input type="file" id="csvFileInput" accept=".csv" onchange="uploadQuizCSV()">
+             </div>
+             <div style="margin-top:15px;">
+                 <label style="font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">المادة (اختياري — عند اختيار مادة تُستورد كل الأسئلة إليها وتُتجاهل أعمدة المادة والكلية والسنة والترم في الملف):</label>
+                 <select id="import_subject_id" class="qa-input-field"></select>
+                 <div id="importMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
              </div>
         </div>
         
@@ -475,10 +485,27 @@
                 </select>
                 <select id="sup_college" class="qa-input-field"></select>
                 <input type="text" id="sup_specialization" placeholder="التخصص / اسم المادة" class="qa-input-field" style="display:none;">
+                <select id="sup_subject_id" class="qa-input-field" style="display:none;" onchange="onSupSubjectSelect()"></select>
                 <button onclick="submitNewSupervisor()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-solid fa-user-plus"></i> تعيين مشرف</button>
                 <div id="supervisorMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
             <div id="supervisorsList">جاري جلب المشرفين...</div>
+        </div>
+        {% endif %}
+        {% if is_admin or is_supervisor %}
+        <div id="adminTab_subjects" style="display:none;">
+            <div id="subject_add_box" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+                <div style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-book"></i> إضافة مادة:</div>
+                <input type="text" id="new_subject_name" placeholder="اسم المادة (مثال: إلكترونك)" class="qa-input-field">
+                <select id="new_subject_college" class="qa-input-field"></select>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <input type="text" id="new_subject_year" placeholder="السنة الدراسية" class="qa-input-field" style="margin-bottom:0;">
+                    <input type="text" id="new_subject_term" placeholder="الفصل الدراسي" class="qa-input-field" style="margin-bottom:0;">
+                </div>
+                <button onclick="submitNewSubject()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-plus"></i> إضافة المادة</button>
+                <div id="subjectMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            </div>
+            <div id="adminSubjectsList">جاري جلب المواد...</div>
         </div>
         {% endif %}
     </div>
@@ -592,6 +619,9 @@
         {% for subject in subjects %}
             <a href="/?subject={{ subject.id|urlencode }}" class="card" style="justify-content:center; align-items:center; text-align:center; padding:45px 20px;">
                 <h3 class="card-title" style="margin:0 0 25px 0; font-size:1.6rem;">{{ subject.name }}</h3>
+                {% if subject.lesson_count == 0 and not subject.types.quiz.chapters %}
+                <div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>
+                {% endif %}
                 <div class="card-btn" style="max-width:200px; margin:0 auto;">دخول للمادة</div>
             </a>
         {% endfor %}
@@ -1061,14 +1091,16 @@ function openAdminDashboard() {
 function switchAdminTab(tab, evt) {
     document.querySelectorAll('#adminBox .admin-tab-btn').forEach(b => { b.style.color=''; b.style.borderColor=''; });
     if(evt && evt.currentTarget) { evt.currentTarget.style.color='var(--primary)'; evt.currentTarget.style.borderColor='var(--primary)'; }
-    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors'].forEach(t => {
+    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors', 'subjects'].forEach(t => {
         const el = document.getElementById('adminTab_' + t);
         if(el) el.style.display = (t === tab) ? 'block' : 'none';
     });
     if(tab === 'qa') loadAdminQuestions();
-    if(tab === 'content') { loadCustomContentList(); loadCollegeOptions(); }
+    if(tab === 'content') { loadCustomContentList(); loadCollegeOptions(); loadSubjectOptions(); }
+    if(tab === 'quiz_import') loadImportSubjectOptions();
     if(tab === 'review' && IS_ADMIN) loadReviewQueue();
     if(tab === 'supervisors' && IS_ADMIN) loadSupervisorsTab();
+    if(tab === 'subjects') loadSubjectsTab();
 }
 
 async function loadCustomContentList() {
@@ -1106,27 +1138,41 @@ function editCustomContentForm(id) {
     const _colSel = document.getElementById('add_college');
     if (_colSel && i.college && ![..._colSel.options].some(o => o.value === i.college)) { const _o = document.createElement('option'); _o.value = i.college; _o.textContent = i.college; _colSel.appendChild(_o); }
     if (_colSel) _colSel.value = i.college || '';
-    document.getElementById('add_subject').value = i.subject_name; document.getElementById('add_chapter').value = i.chapter_name;
+    const _subSel = document.getElementById('add_subject_id');
+    if (_subSel) {
+        if (i.subject_id && ![..._subSel.options].some(o => o.value === String(i.subject_id))) { const _o = document.createElement('option'); _o.value = i.subject_id; _o.textContent = i.subject_name + ' · ' + (i.college || '') + ' · ' + i.year + ' · ' + i.term; _o.dataset.college = i.college || ''; _o.dataset.year = i.year; _o.dataset.term = i.term; _o.dataset.name = i.subject_name; _subSel.appendChild(_o); }
+        if (i.subject_id) _subSel.value = String(i.subject_id);
+    }
+    document.getElementById('add_chapter').value = i.chapter_name;
     document.getElementById('add_type').value = i.content_type; document.getElementById('add_title').value = i.title;
     document.getElementById('add_url').value = i.url; document.getElementById('add_download').value = i.download_url; document.getElementById('add_notes').value = i.notes;
     document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> تحديث`;
     document.getElementById('btn_cancel_edit').style.display = "flex";
+    onSubjectSelect();
 }
 
 function resetContentForm() {
     const _colSel = document.getElementById('add_college');
     if (_colSel && _colSel.options.length) _colSel.value = _colSel.options[0].value;
-    document.getElementById('edit_content_id').value = ''; document.getElementById('add_subject').value = ''; document.getElementById('add_chapter').value = '';
+    const _subSel = document.getElementById('add_subject_id');
+    if (_subSel) {
+        if (USER_ROLE === 'specialization_supervisor' && cachedSubjects.length === 1) _subSel.value = String(cachedSubjects[0].id);
+        else _subSel.value = '';
+    }
+    document.getElementById('edit_content_id').value = ''; document.getElementById('add_chapter').value = '';
     document.getElementById('add_title').value = ''; document.getElementById('add_url').value = ''; document.getElementById('add_download').value = ''; document.getElementById('add_notes').value = '';
     document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> حفظ`;
     document.getElementById('btn_cancel_edit').style.display = "none";
+    onSubjectSelect();
 }
 
 async function submitNewContent() {
     const editId = document.getElementById('edit_content_id').value;
+    const formMsg = document.getElementById('contentFormMsg');
+    const showFormError = (msg) => { showToast(msg, 'error', 5000); if (formMsg) { formMsg.textContent = msg; formMsg.style.display = 'block'; } };
     const payload = {
         year: document.getElementById('add_year').value, term: document.getElementById('add_term').value,
-        subject_name: document.getElementById('add_subject').value, chapter_name: document.getElementById('add_chapter').value,
+        subject_id: document.getElementById('add_subject_id') ? document.getElementById('add_subject_id').value : '', chapter_name: document.getElementById('add_chapter').value,
         college: document.getElementById('add_college') ? document.getElementById('add_college').value : '',
         content_type: document.getElementById('add_type').value, title: document.getElementById('add_title').value,
         url: document.getElementById('add_url').value, download_url: document.getElementById('add_download').value, notes: document.getElementById('add_notes').value
@@ -1135,9 +1181,9 @@ async function submitNewContent() {
         const url = editId ? `/admin/edit-content/${editId}` : '/admin/add-content';
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.status === 'success') { showToast(data.message, 'success'); resetContentForm(); loadCustomContentList(); }
-        else alert(data.message);
-    } catch(e) { alert("خطأ أثناء حفظ المحتوى."); }
+        if (data.status === 'success') { if (formMsg) { formMsg.textContent = ''; formMsg.style.display = 'none'; } showToast(data.message, 'success'); resetContentForm(); loadCustomContentList(); }
+        else showFormError(data.message || 'تعذر حفظ المحتوى.');
+    } catch(e) { showFormError('خطأ أثناء حفظ المحتوى. تحقق من الاتصال وحاول مجدداً.'); }
 }
 
 let pendingContentDeleteId = null;
@@ -1211,6 +1257,7 @@ async function approveQueueItem(type, id, action) {
 async function loadCollegeOptions() {
     const sel = document.getElementById('add_college');
     const supSel = document.getElementById('sup_college');
+    const newSubSel = document.getElementById('new_subject_college');
     try {
         const res = await fetch('/admin/colleges');
         const list = await res.json();
@@ -1223,6 +1270,16 @@ async function loadCollegeOptions() {
             } else {
                 names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
                 sel.disabled = false;
+            }
+        }
+        if (newSubSel) {
+            newSubSel.replaceChildren();
+            if (IS_SUPERVISOR && SUPERVISOR_COLLEGE) {
+                const o = document.createElement('option'); o.value = SUPERVISOR_COLLEGE; o.textContent = SUPERVISOR_COLLEGE; newSubSel.appendChild(o);
+                newSubSel.disabled = true;
+            } else {
+                names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; newSubSel.appendChild(o); });
+                newSubSel.disabled = false;
             }
         }
         if (supSel) {
@@ -1263,18 +1320,22 @@ async function loadSupervisorsTab() {
 
 async function submitNewCollege() {
     const name = document.getElementById('new_college_name').value.trim();
-    if (!name) return alert('يرجى إدخال اسم الكلية.');
+    if (!name) return showToast('يرجى إدخال اسم الكلية.', 'error', 5000);
     try {
         const res = await fetch('/admin/add-college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
         const data = await res.json();
         if (data.status === 'success') { showToast(data.message, 'success'); document.getElementById('new_college_name').value = ''; loadSupervisorsTab(); }
-        else alert(data.message);
-    } catch(e) { alert('خطأ أثناء إضافة الكلية.'); }
+        else showToast(data.message, 'error', 5000);
+    } catch(e) { showToast('خطأ أثناء إضافة الكلية.', 'error', 5000); }
 }
 
 function toggleSupSpecialization() {
     const role = document.getElementById('sup_role').value;
-    document.getElementById('sup_specialization').style.display = role === 'specialization_supervisor' ? 'block' : 'none';
+    const show = role === 'specialization_supervisor';
+    document.getElementById('sup_specialization').style.display = show ? 'block' : 'none';
+    const subSel = document.getElementById('sup_subject_id');
+    if (subSel) subSel.style.display = show ? 'block' : 'none';
+    if (show) loadSupSubjectOptions();
 }
 
 async function submitNewSupervisor() {
@@ -1282,15 +1343,18 @@ async function submitNewSupervisor() {
         username: document.getElementById('sup_username').value.trim(),
         role: document.getElementById('sup_role').value,
         college: document.getElementById('sup_college').value,
-        specialization: document.getElementById('sup_specialization').value.trim()
+        specialization: document.getElementById('sup_specialization').value.trim(),
+        subject_id: document.getElementById('sup_subject_id') ? document.getElementById('sup_subject_id').value : ''
     };
-    if (!payload.username) return alert('يرجى إدخال اسم المستخدم.');
-    if (payload.role === 'specialization_supervisor' && !payload.specialization) return alert('يرجى إدخال التخصص.');
+    const supMsg0 = document.getElementById('supervisorMsg');
+    const showSupError = (msg) => { showToast(msg, 'error', 5000); if (supMsg0) { supMsg0.textContent = msg; supMsg0.style.display = 'block'; } };
+    if (!payload.username) return showSupError('يرجى إدخال اسم المستخدم.');
+    if (payload.role === 'specialization_supervisor' && !payload.specialization) return showSupError('يرجى إدخال التخصص أو اختيار المادة.');
     try {
         const res = await fetch('/admin/add-supervisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
         const supMsg = document.getElementById('supervisorMsg');
-        if (data.status === 'success') { if (supMsg) { supMsg.textContent = ''; supMsg.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('sup_username').value = ''; document.getElementById('sup_specialization').value = ''; loadSupervisorsTab(); }
+        if (data.status === 'success') { if (supMsg) { supMsg.textContent = ''; supMsg.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('sup_username').value = ''; document.getElementById('sup_specialization').value = ''; const _ss = document.getElementById('sup_subject_id'); if (_ss) _ss.value = ''; loadSupervisorsTab(); }
         else { showToast(data.message, 'error', 5000); if (supMsg) { supMsg.textContent = data.message; supMsg.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ أثناء تعيين المشرف. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = msg; supMsg.style.display = 'block'; } }
 }
@@ -1347,18 +1411,201 @@ async function removeCollege(id, name, btn) {
     } catch(e) { showToast('خطأ أثناء حذف الكلية.', 'error', 5000); }
 }
 
+// 6b. المواد ككيانات (Flow A: إضافة مادة مستقلة / Flow B: محتوى داخل مادة)
+function fillSubjectSelect(sel, list, placeholder) {
+    if (!sel) return;
+    const prev = sel.value;
+    sel.replaceChildren();
+    const ph = document.createElement('option'); ph.value = ''; ph.textContent = placeholder; sel.appendChild(ph);
+    (list || []).forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.name + ' · ' + s.college + ' · ' + s.year + ' · ' + s.term;
+        o.dataset.college = s.college; o.dataset.year = s.year; o.dataset.term = s.term; o.dataset.name = s.name;
+        sel.appendChild(o);
+    });
+    if (prev && [...sel.options].some(o => o.value === String(prev))) sel.value = prev;
+}
+
+let cachedSubjects = [];
+async function loadSubjectOptions() {
+    const sel = document.getElementById('add_subject_id');
+    if (!sel) return;
+    try {
+        const res = await fetch('/admin/subjects');
+        const list = await res.json();
+        cachedSubjects = list || [];
+        fillSubjectSelect(sel, cachedSubjects, '— اختر المادة —');
+        if (USER_ROLE === 'specialization_supervisor' && cachedSubjects.length === 1) {
+            sel.value = String(cachedSubjects[0].id);
+            sel.disabled = true;
+        } else {
+            sel.disabled = false;
+        }
+        onSubjectSelect();
+    } catch(e) { /* تبقى القائمة فارغة عند فشل الجلب */ }
+}
+
+function onSubjectSelect() {
+    const sel = document.getElementById('add_subject_id');
+    const opt = sel && sel.selectedOptions ? sel.selectedOptions[0] : null;
+    const colSel = document.getElementById('add_college');
+    const yearEl = document.getElementById('add_year');
+    const termEl = document.getElementById('add_term');
+    if (opt && opt.value) {
+        // الكلية/السنة/الترم تُؤخذ من المادة المختارة وتُعطَّل
+        if (colSel) {
+            if (![...colSel.options].some(o => o.value === opt.dataset.college)) { const o = document.createElement('option'); o.value = opt.dataset.college; o.textContent = opt.dataset.college; colSel.appendChild(o); }
+            colSel.value = opt.dataset.college;
+        }
+        if (yearEl) yearEl.value = opt.dataset.year;
+        if (termEl) termEl.value = opt.dataset.term;
+        if (colSel) colSel.disabled = true;
+        if (yearEl) yearEl.disabled = true;
+        if (termEl) termEl.disabled = true;
+    } else {
+        if (colSel) colSel.disabled = (IS_SUPERVISOR && !!SUPERVISOR_COLLEGE);
+        if (yearEl) yearEl.disabled = false;
+        if (termEl) termEl.disabled = false;
+    }
+}
+
+async function loadImportSubjectOptions() {
+    const sel = document.getElementById('import_subject_id');
+    if (!sel) return;
+    try {
+        const res = await fetch('/admin/subjects');
+        const list = await res.json();
+        fillSubjectSelect(sel, list, '— استيراد حسب أعمدة الملف (بدون مادة محددة) —');
+    } catch(e) { /* تبقى القائمة فارغة عند فشل الجلب */ }
+}
+
+async function loadSupSubjectOptions() {
+    const sel = document.getElementById('sup_subject_id');
+    if (!sel) return;
+    try {
+        const res = await fetch('/admin/subjects');
+        const list = await res.json();
+        fillSubjectSelect(sel, list, '— اختر المادة —');
+    } catch(e) { /* تبقى القائمة فارغة عند فشل الجلب */ }
+}
+
+function onSupSubjectSelect() {
+    const sel = document.getElementById('sup_subject_id');
+    const opt = sel && sel.selectedOptions ? sel.selectedOptions[0] : null;
+    const nameEl = document.getElementById('sup_specialization');
+    if (opt && opt.value && nameEl) nameEl.value = opt.dataset.name || '';
+}
+
+async function loadSubjectsTab() {
+    const sm = document.getElementById('subjectMsg'); if (sm) sm.style.display = 'none';
+    const addBox = document.getElementById('subject_add_box');
+    if (addBox) addBox.style.display = (USER_ROLE === 'specialization_supervisor') ? 'none' : 'block';
+    await loadCollegeOptions();
+    const sl = document.getElementById('adminSubjectsList');
+    if (!sl) return;
+    try {
+        const res = await fetch('/admin/subjects'); const list = await res.json();
+        if (!list || list.length === 0) { sl.innerHTML = '<div style="text-align:center; padding:20px;">لا توجد مواد بعد — أضف أول مادة من النموذج أعلاه.</div>'; return; }
+        sl.innerHTML = list.map(s => `
+            <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <div style="font-weight:bold;" data-subject-name="${escapeText(s.name)}">${escapeText(s.name)}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(s.college)} · ${escapeText(s.year)} · ${escapeText(s.term)}</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    ${(USER_ROLE === 'admin' || USER_ROLE === 'college_supervisor') ? `<button onclick="startRenameSubject(${s.id}, this)" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>` : ''}
+                    ${USER_ROLE === 'admin' ? `<button data-id="${s.id}" data-name="${escapeText(s.name)}" onclick="removeSubject(this.dataset.id, this.dataset.name, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>` : ''}
+                </div>
+            </div>`).join('');
+    } catch(e) { sl.innerHTML = 'خطأ في تحميل المواد.'; }
+}
+
+async function submitNewSubject() {
+    const name = document.getElementById('new_subject_name').value.trim();
+    const college = document.getElementById('new_subject_college') ? document.getElementById('new_subject_college').value : '';
+    const year = document.getElementById('new_subject_year').value.trim();
+    const term = document.getElementById('new_subject_term').value.trim();
+    const sm = document.getElementById('subjectMsg');
+    if (!name || !year || !term) { const msg = 'اسم المادة والسنة والترم حقول مطلوبة.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } return; }
+    try {
+        const res = await fetch('/admin/add-subject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, college, year, term }) });
+        const data = await res.json();
+        if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('new_subject_name').value = ''; document.getElementById('new_subject_year').value = ''; document.getElementById('new_subject_term').value = ''; loadSubjectsTab(); }
+        else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء إضافة المادة. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } }
+}
+
+function startRenameSubject(id, btn) {
+    const actions = btn.parentElement;
+    const row = actions ? actions.parentElement : null;
+    const nameEl = row ? row.querySelector('[data-subject-name]') : null;
+    if (!nameEl) return;
+    const current = nameEl.getAttribute('data-subject-name') || nameEl.textContent;
+    const input = document.createElement('input');
+    input.type = 'text'; input.value = current; input.className = 'qa-input-field'; input.style.cssText = 'margin:0; padding:8px 12px; max-width:220px;';
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'حفظ'; saveBtn.style.cssText = 'background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'إلغاء'; cancelBtn.style.cssText = 'background:var(--bg-body); color:var(--text-main); border:1px solid var(--border); padding:6px 12px; border-radius:8px; cursor:pointer;';
+    nameEl.replaceWith(input);
+    actions.replaceChildren(saveBtn, cancelBtn);
+    input.focus(); input.select();
+    cancelBtn.onclick = () => loadSubjectsTab();
+    saveBtn.onclick = async () => {
+        const newName = input.value.trim();
+        if (!newName || newName === current) { loadSubjectsTab(); return; }
+        try {
+            const res = await fetch(`/admin/edit-subject/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+            const data = await res.json();
+            const sm = document.getElementById('subjectMsg');
+            if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); loadSubjectsTab(); }
+            else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } loadSubjectsTab(); }
+        } catch(e) { const msg = 'خطأ أثناء إعادة التسمية.'; showToast(msg, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } loadSubjectsTab(); }
+    };
+}
+
+let pendingSubjectDeleteId = null;
+let pendingSubjectDeleteTimer = null;
+function disarmSubjectDelete() {
+    pendingSubjectDeleteId = null;
+    clearTimeout(pendingSubjectDeleteTimer);
+    document.querySelectorAll('#adminSubjectsList button[data-armed="1"]').forEach(b => { b.textContent = 'حذف'; delete b.dataset.armed; });
+}
+async function removeSubject(id, name, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الحذف
+    const sm0 = document.getElementById('subjectMsg'); if (sm0) sm0.style.display = 'none';
+    if (String(pendingSubjectDeleteId) !== String(id)) {
+        disarmSubjectDelete();
+        pendingSubjectDeleteId = id;
+        if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; }
+        pendingSubjectDeleteTimer = setTimeout(disarmSubjectDelete, 6000);
+        return;
+    }
+    disarmSubjectDelete();
+    try {
+        const res = await fetch('/admin/remove-subject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id) }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadSubjectsTab(); }
+        else { showToast(data.message, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء حذف المادة.'; showToast(msg, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } }
+}
+
 async function uploadQuizCSV() {
     const fileInput = document.getElementById('csvFileInput');
     if(!fileInput.files.length) return;
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
+    const impSub = document.getElementById('import_subject_id');
+    if (impSub && impSub.value) formData.append('subject_id', impSub.value);
+    const impMsg = document.getElementById('importMsg');
     showToast('جاري رفع واستيراد الأسئلة...', 'info');
     try {
         const res = await fetch('/admin/import-questions', { method: 'POST', body: formData });
         const data = await res.json();
-        if(data.status==='success') { showToast(data.message, 'success'); fileInput.value=''; }
-        else alert(data.message);
-    } catch(e) { alert("خطأ في الاتصال بالخادم."); }
+        if(data.status==='success') { if (impMsg) { impMsg.textContent = ''; impMsg.style.display = 'none'; } showToast(data.message, 'success'); fileInput.value=''; }
+        else { showToast(data.message, 'error', 5000); if (impMsg) { impMsg.textContent = data.message; impMsg.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ في الاتصال بالخادم.'; showToast(msg, 'error', 5000); if (impMsg) { impMsg.textContent = msg; impMsg.style.display = 'block'; } }
 }
 
 // 7. إدارة الاستفسارات وتحديثات المنصة

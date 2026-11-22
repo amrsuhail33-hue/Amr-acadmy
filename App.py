@@ -451,16 +451,6 @@ with app.app_context():
             if not UserProfile.query.filter_by(student_id=s.id).first():
                 profile = UserProfile(student_id=s.id)
                 db.session.add(profile)
-        # ترقية لمرة واحدة: منح المستخدم a0mr1 صلاحية الأدمن (يُزال هذا الكود بعد الترقية)
-        promo_user = Student.query.filter(db.func.lower(Student.username) == "a0mr1").first()
-        if promo_user:
-            if promo_user.role != 'admin':
-                promo_user.role = 'admin'
-                app.logger.info("Promoted a0mr1 to admin")
-            else:
-                app.logger.info("a0mr1 is already admin")
-        else:
-            app.logger.warning("Promotion user a0mr1 not found")
         db.session.commit()
     except Exception as e:
         db.session.rollback()

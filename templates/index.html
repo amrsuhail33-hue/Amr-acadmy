@@ -811,7 +811,7 @@
 <!-- ========================================================== -->
 <script>
 // 1. نظام الإشعارات والأدوار
-function showToast(msg, type='info') {
+function showToast(msg, type='info', duration=3000) {
     const c = document.getElementById('toastContainer');
     if (!c) return;
     const t = document.createElement('div'); 
@@ -822,7 +822,7 @@ function showToast(msg, type='info') {
     setTimeout(() => { 
         t.classList.remove('show'); 
         setTimeout(() => t.remove(), 500); 
-    }, 3000);
+    }, duration);
 }
 
 function isStudentLoggedIn() { return STUDENT_ID !== null; }
@@ -1289,9 +1289,9 @@ async function removeCollege(id, name, btn) {
     try {
         const res = await fetch('/admin/remove-college', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id) }) });
         const data = await res.json();
-        if (data.status === 'success') { showToast(data.message, 'success'); loadSupervisorsTab(); }
-        else showToast(data.message, 'error');
-    } catch(e) { showToast('خطأ أثناء حذف الكلية.', 'error'); }
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadSupervisorsTab(); }
+        else showToast(data.message, 'error', 5000);
+    } catch(e) { showToast('خطأ أثناء حذف الكلية.', 'error', 5000); }
 }
 
 async function uploadQuizCSV() {

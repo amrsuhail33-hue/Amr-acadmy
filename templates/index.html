@@ -454,6 +454,15 @@
                  <select id="import_subject_id" class="qa-input-field"></select>
                  <div id="importMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
              </div>
+             <div style="margin-top:25px; border-top:1px solid var(--border); padding-top:15px;">
+                 <div style="font-weight:900; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-list-check"></i> الأسئلة المستوردة:</div>
+                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                     <select id="quiz_questions_subject_id" class="qa-input-field" style="flex:2; margin-bottom:0;" onchange="loadQuizQuestions()"></select>
+                     <button onclick="loadQuizQuestions()" class="btn-calc-action" style="background:var(--primary); flex:0 0 auto; padding:8px 14px;"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                 </div>
+                 <div id="quizQuestionsMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+                 <div id="quizQuestionsList" style="margin-top:10px;">اختر مادة لعرض أسئلتها.</div>
+             </div>
         </div>
         
         {% if is_admin %}
@@ -1107,7 +1116,7 @@ function switchAdminTab(tab, evt) {
     });
     if(tab === 'qa') loadAdminQuestions();
     if(tab === 'content') { loadCustomContentList(); loadCollegeOptions(); loadSubjectOptions(); }
-    if(tab === 'quiz_import') loadImportSubjectOptions();
+    if(tab === 'quiz_import') { loadImportSubjectOptions(); loadQuizQuestionsFilter(); loadQuizQuestions(); }
     if(tab === 'review' && IS_ADMIN) loadReviewQueue();
     if(tab === 'supervisors' && IS_ADMIN) loadSupervisorsTab();
     if(tab === 'subjects') loadSubjectsTab();
@@ -1613,9 +1622,64 @@ async function uploadQuizCSV() {
     try {
         const res = await fetch('/admin/import-questions', { method: 'POST', body: formData });
         const data = await res.json();
-        if(data.status==='success') { if (impMsg) { impMsg.textContent = ''; impMsg.style.display = 'none'; } showToast(data.message, 'success'); fileInput.value=''; }
+        if(data.status==='success') { if (impMsg) { impMsg.textContent = ''; impMsg.style.display = 'none'; } showToast(data.message, 'success'); fileInput.value=''; loadQuizQuestions(); }
         else { showToast(data.message, 'error', 5000); if (impMsg) { impMsg.textContent = data.message; impMsg.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ في الاتصال بالخادم.'; showToast(msg, 'error', 5000); if (impMsg) { impMsg.textContent = msg; impMsg.style.display = 'block'; } }
+}
+
+// 6c. إدارة الأسئلة المستوردة (حذف سؤال معتمد — المشرف الأعلى فقط)
+let pendingQuizQuestionDeleteId = null;
+let pendingQuizQuestionDeleteTimer = null;
+function disarmQuizQuestionDelete() {
+    pendingQuizQuestionDeleteId = null;
+    clearTimeout(pendingQuizQuestionDeleteTimer);
+    document.querySelectorAll('#quizQuestionsList button[data-armed="1"]').forEach(b => { b.textContent = 'حذف'; delete b.dataset.armed; });
+}
+async function loadQuizQuestionsFilter() {
+    const sel = document.getElementById('quiz_questions_subject_id');
+    if (!sel) return;
+    try {
+        const res = await fetch('/admin/subjects');
+        const list = await res.json();
+        fillSubjectSelect(sel, list, '— كل المواد —');
+    } catch(e) { /* تبقى القائمة فارغة عند فشل الجلب */ }
+}
+async function loadQuizQuestions() {
+    const listEl = document.getElementById('quizQuestionsList'); if (!listEl) return;
+    const sel = document.getElementById('quiz_questions_subject_id');
+    const subjectId = sel && sel.value ? sel.value : '';
+    listEl.innerHTML = '<div style="text-align:center; padding:15px;">جاري جلب الأسئلة...</div>';
+    try {
+        const url = subjectId ? ('/admin/quiz-questions?subject_id=' + encodeURIComponent(subjectId)) : '/admin/quiz-questions';
+        const res = await fetch(url); const list = await res.json();
+        if (!list || list.length === 0) { listEl.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد أسئلة مستوردة هنا.</div>'; return; }
+        listEl.innerHTML = list.map(q => `
+            <div style="background:var(--bg-body); border-radius:12px; padding:12px 15px; border:1px solid var(--border); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="flex:1; min-width:200px;">
+                    <div style="font-weight:bold;">${escapeText(q.question_text)}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(q.subject_name)} · ${escapeText(q.chapter_name)}${q.college ? ' · ' + escapeText(q.college) : ''}</div>
+                </div>
+                ${USER_ROLE === 'admin' ? `<button data-id="${q.id}" onclick="deleteQuizQuestion(${q.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>` : ''}
+            </div>`).join('');
+    } catch(e) { listEl.innerHTML = '<div style="text-align:center; padding:15px; color:var(--danger);">خطأ في تحميل الأسئلة.</div>'; }
+}
+async function deleteQuizQuestion(id, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — نفس نمط حذف المادة
+    const qm0 = document.getElementById('quizQuestionsMsg'); if (qm0) qm0.style.display = 'none';
+    if (String(pendingQuizQuestionDeleteId) !== String(id)) {
+        disarmQuizQuestionDelete();
+        pendingQuizQuestionDeleteId = id;
+        if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; }
+        pendingQuizQuestionDeleteTimer = setTimeout(disarmQuizQuestionDelete, 6000);
+        return;
+    }
+    disarmQuizQuestionDelete();
+    try {
+        const res = await fetch(`/admin/delete-quiz-question/${id}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadQuizQuestions(); }
+        else { showToast(data.message, 'error', 5000); const qm = document.getElementById('quizQuestionsMsg'); if (qm) { qm.textContent = data.message; qm.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء حذف السؤال.'; showToast(msg, 'error', 5000); const qm = document.getElementById('quizQuestionsMsg'); if (qm) { qm.textContent = msg; qm.style.display = 'block'; } }
 }
 
 // 7. إدارة الاستفسارات وتحديثات المنصة

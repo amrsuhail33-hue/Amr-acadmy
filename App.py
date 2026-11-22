@@ -1588,6 +1588,43 @@ def remove_subject():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/admin/quiz-questions', methods=['GET'])
+@admin_or_supervisor_required
+def get_quiz_questions():
+    """قائمة أسئلة الاختبار المستوردة (لإدارتها وحذفها): المشرف الأعلى يرى
+    الكل، ومشرف الكلية يرى كليته فقط، ومشرف التخصص يرى مادته فقط.
+    ملاحظة: الاسم مختلف عن /admin/questions الموجود (استفسارات الطلاب)."""
+    try:
+        user = get_current_user()
+        subject_id = request.args.get('subject_id', type=int)
+        query = QuizQuestion.query
+        if subject_id:
+            query = query.filter(QuizQuestion.subject_id == subject_id)
+        query = _scope_query(query, user, QuizQuestion)
+        qs = query.order_by(QuizQuestion.subject_name, QuizQuestion.chapter_name, QuizQuestion.id).all()
+        return jsonify([q.to_dict() for q in qs])
+    except Exception:
+        app.logger.exception("فشل جلب أسئلة الاختبار")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/delete-quiz-question/<int:question_id>', methods=['POST'])
+@admin_required
+def delete_quiz_question(question_id):
+    """حذف سؤال اختبار معتمد — المشرف الأعلى فقط (الحذف النهائي له وحده).
+    بدونه تبقى المادة التي فيها أسئلة مستوردة غير قابلة للحذف من الواجهة."""
+    try:
+        q = QuizQuestion.query.get(question_id)
+        if not q:
+            return jsonify({"status": "error", "message": "السؤال غير موجود"}), 404
+        db.session.delete(q)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف السؤال بنجاح"})
+    except Exception as e:
+        app.logger.exception("فشل حذف سؤال اختبار: question_id=%s", question_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/supervisors', methods=['GET'])
 @admin_required
 def get_supervisors():

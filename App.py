@@ -1838,8 +1838,7 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "database": "connected" if db.engine else "disconnected",
-        "version": "title-fix-baddde06"
+        "database": "connected" if db.engine else "disconnected"
     })
 
 if __name__ == '__main__':

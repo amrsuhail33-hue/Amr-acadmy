@@ -477,6 +477,79 @@ with app.app_context():
         raise
 
 # ==========================================
+# تصحيح لمرة واحدة: إجابات اختبار إلكترونك — الشابتر الثامن
+# الإجابات المخزنة كانت خاطئة (مستوردة بقيم مزاحة)، فتُصحَّح هنا إلى نص
+# الخيار الصحيح بعد التحقق من كل سؤال. يُحذف هذا الكود بعد تطبيقه.
+# س60 غير مشمول: خياراته الثلاثة كلها مزايا صحيحة ولا إجابة وحيدة يمكن التحقق منها.
+# س12 يُخزن بالحرف C لأن نص إجابته «2» وحرفاً واحداً سيساء فهمه كمرجع رقمي
+# في QuizQuestion.to_dict (2 تعني الخيار الثاني = «1»)، بينما C يُحل إلى «2».
+with app.app_context():
+    try:
+        _ch8_fixes = {
+            11: 'وصلتان',
+            12: 'C',
+            13: 'مطعمة بكثافة خفيفة جداً ورقيقة',
+            14: 'المجمع (Collector)',
+            15: 'الفجوات (Holes)',
+            16: 'معتدلة (Moderately)',
+            17: 'التيار (Current-operated)',
+            18: 'الفجوات (Holes)',
+            19: 'عالية جداً (Heavily)',
+            20: 'أقل من 5% من تيار الباعث',
+            21: 'منحازة أمامياً ومقاومتها منخفضة',
+            22: 'منخفضة جداً',
+            23: 'IE = IC + IB',
+            24: 'أقل من 1 (بين 0.9 و 0.99)',
+            25: 'IC = α IE + ICBO',
+            26: '200',
+            27: '10.1 mA',
+            28: 'β = α / (1 - α)',
+            29: '20 إلى 500',
+            30: 'الباعث المشترك (Common Emitter)',
+            31: 'عالية جداً (~750 kΩ)',
+            32: 'القاعدة المشتركة (Common Base)',
+            33: '180º',
+            34: '0º',
+            35: 'الباعث المشترك (CE)',
+            36: 'أقل من الواحد دائماً (< 1)',
+            37: 'تنخفض',
+            38: 'IC = β IB + ICEO',
+            39: 'ICEO = (β + 1) ICBO',
+            40: 'السيليكون',
+            41: '9',
+            42: 'اتجاه تيار الفجوات التقليدي عند الباعث',
+            43: 'أكبر منه بكثير',
+            44: 'منع الارتفاع المفرط لدرجة الحرارة',
+            45: 'السيليكون',
+            46: 'منحازة عكسياً دائماً',
+            47: 'دائرة ذات مقاومة منخفضة إلى عالية',
+            48: 'مواءمة المعاوقة (Impedance Matching)',
+            49: 'IC و VCE في غياب إشارة الدخل (d.c.)',
+            50: 'جهد VCE مساوياً لجهد التغذية VCC تقريباً',
+            51: 'مفتاحاً مغلقاً (Closed Switch)',
+            52: 'ثنائي الباعث OFF وثنائي المجمع OFF',
+            53: 'ثنائي الباعث ON وثنائي المجمع ON',
+            54: 'PD(max) = VCE × IC',
+            55: '5 mA',
+            56: 'مقاومة منخفضة (100 Ω - 1 kΩ)',
+            57: '0.7 V',
+            58: 'VCC و (VCC / RC)',
+            59: '100',
+        }
+        _fixed = 0
+        for _qid, _ans in _ch8_fixes.items():
+            _q = QuizQuestion.query.filter_by(id=_qid, subject_name='إلكترونك', chapter_name='الشابتر الثامن').first()
+            if _q is not None and (_q.correct_answer or '').strip() != _ans:
+                _q.correct_answer = _ans
+                _fixed += 1
+        if _fixed:
+            db.session.commit()
+        print(f"تم تصحيح {_fixed} من إجابات اختبار إلكترونك الشابتر الثامن", flush=True)
+    except Exception as _e:
+        db.session.rollback()
+        print(f"تعذر تصحيح إجابات الشابتر الثامن (تجاهل آمن): {_e}", flush=True)
+
+# ==========================================
 # Helpers & Auth Decorators
 # ==========================================
 def get_current_user():
@@ -920,7 +993,9 @@ def get_quiz():
     user = get_current_user()
 
     try:
-        query = QuizQuestion.query
+        # ترتيب ثابت حسب id: بدون ORDER BY كان Postgres يعيد الصفوف بترتيب غير
+        # مضمون يتغير بين الطلبات، فتظهر أسئلة الاختبار بترتيب مختلف في كل محاولة.
+        query = QuizQuestion.query.order_by(QuizQuestion.id)
         if chapter_name:
             query = query.filter_by(chapter_name=chapter_name)
         # لا نفلتر بالسنة/الترم: نصوصهما قد تختلف بين صفوف الدروس والأسئلة
@@ -1586,7 +1661,10 @@ def get_profile():
         # الدروس المكتملة تُحتسب ضمن المهام: إكمال درس لا ينشئ UnifiedTask،
         # فكان عدّاد «مهام مكتملة» ونسبة الإنجاز يبقيان صفراً رغم إكمال الدروس.
         completed_lessons = Progress.query.filter_by(student_id=student_id, progress_percent=100).count()
-        total_lessons = Progress.query.filter_by(student_id=student_id).count()
+        # تُحتسب فقط الدروس التي بدأها الطالب فعلاً (progress_percent > 0):
+        # صفوف 0% كانت تُنشأ عند حفظ حالة أي درس آخر في الصفحة ولا تعني مهمة
+        # بدأها الطالب، فكان تضمينها يضخّم «إجمالي المهام» ويهبط بنسبة الإنجاز.
+        total_lessons = Progress.query.filter(Progress.student_id == student_id, Progress.progress_percent > 0).count()
         completed_tasks = UnifiedTask.query.filter_by(student_id=student_id, completed=True).count() + completed_lessons
         total_tasks = UnifiedTask.query.filter_by(student_id=student_id).count() + total_lessons
         recent_transactions = PointTransaction.query.filter_by(student_id=student_id).order_by(PointTransaction.created_at.desc()).limit(10).all()
@@ -1699,6 +1777,10 @@ def manage_progress():
             return jsonify({"status":"error","message":"بيانات الدرس غير صالحة"}), 400
         prog = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
         if not prog:
+            # لا ننشئ صفاً لدرس لم يبدأه الطالب (0%): صفوف 0% كانت تُحتسب
+            # ضمن «إجمالي المهام» في الملف الشخصي فتضخّم المقام دون إنجاز.
+            if progress_percent == 0:
+                return jsonify({"status": "success"})
             prog = Progress(student_id=student_id, lesson_id=lesson_id)
             db.session.add(prog)
 

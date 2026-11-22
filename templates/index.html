@@ -475,6 +475,7 @@
                 <select id="sup_college" class="qa-input-field"></select>
                 <input type="text" id="sup_specialization" placeholder="التخصص / اسم المادة" class="qa-input-field" style="display:none;">
                 <button onclick="submitNewSupervisor()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-solid fa-user-plus"></i> تعيين مشرف</button>
+                <div id="supervisorMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
             <div id="supervisorsList">جاري جلب المشرفين...</div>
         </div>
@@ -1257,9 +1258,10 @@ async function submitNewSupervisor() {
     try {
         const res = await fetch('/admin/add-supervisor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.status === 'success') { showToast(data.message, 'success'); document.getElementById('sup_username').value = ''; document.getElementById('sup_specialization').value = ''; loadSupervisorsTab(); }
-        else alert(data.message);
-    } catch(e) { alert('خطأ أثناء تعيين المشرف.'); }
+        const supMsg = document.getElementById('supervisorMsg');
+        if (data.status === 'success') { if (supMsg) { supMsg.textContent = ''; supMsg.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('sup_username').value = ''; document.getElementById('sup_specialization').value = ''; loadSupervisorsTab(); }
+        else { showToast(data.message, 'error', 5000); if (supMsg) { supMsg.textContent = data.message; supMsg.style.display = 'block'; } }
+    } catch(e) { const msg = 'خطأ أثناء تعيين المشرف. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); const supMsg = document.getElementById('supervisorMsg'); if (supMsg) { supMsg.textContent = msg; supMsg.style.display = 'block'; } }
 }
 
 async function removeSupervisor(username) {

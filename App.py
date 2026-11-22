@@ -82,7 +82,7 @@ class Student(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='student')  # student, assistant, admin, college_supervisor, specialization_supervisor
+    role = db.Column(db.String(50), default='student')  # student, assistant, admin, college_supervisor, specialization_supervisor (الأطول 25 حرفاً — كان String(20) فيفشل حفظه)
     college = db.Column(db.String(150), nullable=True)
     supervisor_college = db.Column(db.String(150), nullable=True)  # نطاق المشرف: اسم الكلية التي يشرف عليها
     supervisor_specialization = db.Column(db.String(150), nullable=True)  # نطاق مشرف التخصص: اسم المادة
@@ -501,6 +501,11 @@ with app.app_context():
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_specialization VARCHAR(150)"))
             db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
             db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
+            # توسيع عمود الدور إلى VARCHAR(50): قيمة specialization_supervisor طولها 25 حرفاً
+            # فلا تتسع في VARCHAR(20) وكان الحفظ يفشل بخطأ 500. يُتخطى على SQLite، وآمن عند
+            # إعادة التشغيل لأن تعيين نفس النوع مجدداً لا يغيّر شيئاً.
+            if "sqlite" not in db_url:
+                db.session.execute(db.text("ALTER TABLE students ALTER COLUMN role TYPE VARCHAR(50)"))
             db.session.commit()
         except Exception as _mig_e:
             db.session.rollback()
@@ -1194,6 +1199,7 @@ def get_supervisors():
 @app.route('/admin/add-supervisor', methods=['POST'])
 @admin_required
 def add_supervisor():
+    username = role = college = specialization = ""
     try:
         data = request.get_json(silent=True) or request.form or {}
         username = _safe_str(data.get('username'))
@@ -1217,14 +1223,16 @@ def add_supervisor():
         student.supervisor_college = college
         student.supervisor_specialization = specialization if role == 'specialization_supervisor' else None
         db.session.commit()
-        return jsonify({"status": "success", "message": "تم تعيين المشرف بنجاح"})
+        return jsonify({"status": "success", "message": "تم تعيين المشرف بنجاح", "supervisor": student.to_dict()})
     except Exception as e:
+        app.logger.exception("فشل تعيين مشرف: username=%s role=%s college=%s", username, role, college)
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin/remove-supervisor', methods=['POST'])
 @admin_required
 def remove_supervisor():
+    username = ""
     try:
         data = request.get_json(silent=True) or request.form or {}
         username = _safe_str(data.get('username'))
@@ -1237,6 +1245,7 @@ def remove_supervisor():
         db.session.commit()
         return jsonify({"status": "success", "message": "تمت إزالة صلاحية الإشراف"})
     except Exception as e:
+        app.logger.exception("فشل إزالة مشرف: username=%s", username)
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 

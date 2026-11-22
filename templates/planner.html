@@ -241,7 +241,7 @@
                     <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
                     <span style="font-weight:400; font-size:0.75rem; margin-right:4px;">⭐ <span id="navPoints">0</span></span>
                 </span>
-                <button onclick="logoutStudent()" class="logout-btn">
+                <button onclick="logoutStudent(this)" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> خروج
                 </button>
             {% else %}
@@ -284,8 +284,10 @@
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px;">
             <button class="btn btn-purple" style="flex:1;" onclick="rescheduleTasks(event)"><i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع غير المكتملة</button>
             <button class="btn btn-outline" style="flex:1;" onclick="exportFullPlan()"><i class="fa-solid fa-image"></i> تصدير كصورة</button>
-            <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll()"><i class="fa-solid fa-trash-can"></i> مسح الكل</button>
+            <button class="btn btn-danger" style="flex:1;" onclick="confirmClearAll(this)"><i class="fa-solid fa-trash-can"></i> مسح الكل</button>
         </div>
+
+        <div id="plannerMsg" style="display:none; margin-top:12px; color:var(--danger); font-weight:700; background:var(--danger-glow); border-radius:12px; padding:10px 14px;"></div>
     </div>
 
     <!-- ========================================================== -->
@@ -321,6 +323,8 @@
                     </div>
                 </label>
             </div>
+
+            <div id="planFormMsg" style="display:none; margin-bottom:15px; color:var(--danger); font-weight:700; background:var(--danger-glow); border-radius:12px; padding:10px 14px;"></div>
 
             <!-- Planner Form -->
             <div id="planner-form" style="display:none; animation: viewIn 0.3s;">
@@ -514,24 +518,51 @@ function formatDate(dateStr) {
 }
 function isStudentLoggedIn() { return STUDENT_ID !== null; }
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.textContent = message;
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => toast.classList.add('show'), 100); // احتياط: إظهار التوست حتى لو لم يُنتج أي إطار رسم (rAF) — مسار الرفض لا يعيد رسم الصفحة فيبقى التوست مخفياً
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 500);
-    }, 3000);
+    }, duration);
+}
+
+// رسالة خطأ ثابتة داخل الصفحة (تبقى ظاهرة حتى المحاولة التالية) — التوست وحده قد يختفي دون أن يُرى
+function showPlannerError(msg) {
+    showToast(msg, 'error', 5000);
+    const el = document.getElementById('plannerMsg');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+    const el2 = document.getElementById('planFormMsg');
+    if (el2) { el2.textContent = msg; el2.style.display = 'block'; }
+}
+function clearPlannerMsg() {
+    const el = document.getElementById('plannerMsg');
+    if (el) { el.textContent = ''; el.style.display = 'none'; }
+    const el2 = document.getElementById('planFormMsg');
+    if (el2) { el2.textContent = ''; el2.style.display = 'none'; }
 }
 
 // ==========================================
 // LOGOUT
 // ==========================================
-async function logoutStudent() {
-    if (!confirm('تسجيل الخروج؟')) return;
+let pendingLogoutTimer = null;
+async function logoutStudent(btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الخروج
+    if (btn && !btn.dataset.armed) {
+        btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تأكيد تسجيل الخروج؟';
+        btn.dataset.armed = '1';
+        clearTimeout(pendingLogoutTimer);
+        pendingLogoutTimer = setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> خروج'; delete btn.dataset.armed; }, 6000);
+        return;
+    }
+    clearTimeout(pendingLogoutTimer);
+    if (btn) delete btn.dataset.armed;
     try {
         const res = await fetch('/student/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
         if (res.ok) {
@@ -541,10 +572,10 @@ async function logoutStudent() {
             showToast('✅ تم تسجيل الخروج بنجاح', 'success');
             window.location.href = '/';
         } else {
-            const data = await res.json();
-            showToast(data.message || 'حدث خطأ في تسجيل الخروج', 'error');
+            const data = await res.json().catch(() => ({}));
+            showPlannerError(data.message || 'حدث خطأ في تسجيل الخروج');
         }
-    } catch(e) { showToast('خطأ في الاتصال بالخادم', 'error'); }
+    } catch(e) { showPlannerError('خطأ في الاتصال بالخادم'); }
 }
 
 // ==========================================
@@ -749,8 +780,14 @@ async function loadTasks() {
                     </div>
                     <div class="task-actions">
                         <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTaskComplete(${task.id}, this.checked)">
+                        ${String(editingDateTaskId) === String(task.id) ? `
+                        <input type="date" id="edit-date-input" value="${task.planned_date || ''}" style="width:auto; padding:6px 8px; font-size:0.85rem;">
+                        <button onclick="saveTaskDate(${task.id})" title="حفظ التاريخ" style="color:var(--success);"><i class="fa-solid fa-check"></i></button>
+                        <button onclick="cancelEditTaskDate()" title="إلغاء" style="color:var(--danger);"><i class="fa-solid fa-xmark"></i></button>
+                        ` : `
                         <button onclick="editTaskDate(${task.id})" title="تعديل التاريخ"><i class="fa-regular fa-calendar-pen"></i></button>
-                        <button class="del-btn" onclick="deleteTask(${task.id})" title="حذف"><i class="fa-solid fa-trash-can"></i></button>
+                        <button class="del-btn" onclick="deleteTask(${task.id}, this)" title="حذف"><i class="fa-solid fa-trash-can"></i></button>
+                        `}
                     </div>
                 </div>
             </div>
@@ -796,39 +833,76 @@ async function toggleTaskComplete(taskId, isChecked) {
 
 function closeSuccessModal() { document.getElementById('success-modal').style.display = 'none'; }
 
-async function deleteTask(taskId) {
-    if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
-    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-    tasks = tasks.filter(t => t.id !== taskId);
-    localStorage.setItem('unified_tasks', JSON.stringify(tasks));
-    if (isStudentLoggedIn()) {
-        try { await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' }); } catch(e) {}
+let pendingTaskDeleteId = null;
+let pendingTaskDeleteTimer = null;
+function disarmTaskDelete() {
+    pendingTaskDeleteId = null;
+    clearTimeout(pendingTaskDeleteTimer);
+    document.querySelectorAll('#tasks-container button[data-armed="1"]').forEach(b => { b.innerHTML = '<i class="fa-solid fa-trash-can"></i>'; delete b.dataset.armed; });
+}
+async function deleteTask(taskId, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا يتم الحذف
+    clearPlannerMsg();
+    if (String(pendingTaskDeleteId) !== String(taskId)) {
+        disarmTaskDelete();
+        pendingTaskDeleteId = taskId;
+        if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; }
+        pendingTaskDeleteTimer = setTimeout(disarmTaskDelete, 6000);
+        return;
     }
-    showToast('تم حذف المهمة', 'info');
-    loadTasks();
+    disarmTaskDelete();
+    try {
+        if (isStudentLoggedIn()) {
+            const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                showPlannerError(data.message || 'تعذر حذف المهمة.');
+                return;
+            }
+        }
+        let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        tasks = tasks.filter(t => String(t.id) !== String(taskId));
+        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+        showToast('تم حذف المهمة', 'success');
+        loadTasks();
+    } catch(e) { showPlannerError('خطأ أثناء حذف المهمة.'); }
 }
 
-async function editTaskDate(taskId) {
-    const newDate = prompt('أدخل التاريخ الجديد (YYYY-MM-DD):', getToday());
-    if (!newDate) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return alert('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD');
-    let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-    const index = tasks.findIndex(t => t.id === taskId);
-    if (index > -1) {
-        tasks[index].planned_date = newDate;
-        tasks[index].synced = false;
-        localStorage.setItem('unified_tasks', JSON.stringify(tasks));
-    }
-    if (isStudentLoggedIn()) {
-        try {
-            await fetch(`/api/tasks/${taskId}`, {
+let editingDateTaskId = null;
+function editTaskDate(taskId) {
+    // محرر تاريخ داخل البطاقة بدل نافذة prompt() — النافذة كانت تُبتلع فلا يظهر شيء ولا يتم التعديل
+    editingDateTaskId = taskId;
+    clearPlannerMsg();
+    loadTasks();
+    setTimeout(() => { const inp = document.getElementById('edit-date-input'); if (inp) inp.focus(); }, 100);
+}
+function cancelEditTaskDate() { editingDateTaskId = null; loadTasks(); }
+async function saveTaskDate(taskId) {
+    const inp = document.getElementById('edit-date-input');
+    const newDate = inp ? inp.value : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) { showPlannerError('صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD'); return; }
+    try {
+        if (isStudentLoggedIn()) {
+            const res = await fetch(`/api/tasks/${taskId}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planned_date: newDate })
             });
-            updateSyncStatus(taskId, true);
-        } catch(e) {}
-    }
-    showToast('تم تحديث التاريخ', 'success');
-    loadTasks();
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                showPlannerError(data.message || 'تعذر تحديث التاريخ.');
+                return;
+            }
+        }
+        let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+        const index = tasks.findIndex(t => String(t.id) === String(taskId));
+        if (index > -1) {
+            tasks[index].planned_date = newDate;
+            tasks[index].synced = true;
+            localStorage.setItem('unified_tasks', JSON.stringify(tasks));
+        }
+        editingDateTaskId = null;
+        showToast('تم تحديث التاريخ', 'success');
+        loadTasks();
+    } catch(e) { showPlannerError('خطأ أثناء تحديث التاريخ.'); }
 }
 
 // ==========================================
@@ -839,8 +913,8 @@ async function addManualTask() {
     const date = document.getElementById('manual_date').value;
     const desc = document.getElementById('manual_desc').value.trim();
     const priority = parseInt(document.getElementById('manual_priority').value);
-    if (!title) return alert('يرجى إدخال عنوان المهمة.');
-    if (!date) return alert('يرجى تحديد التاريخ.');
+    if (!title) { showPlannerError('يرجى إدخال عنوان المهمة.'); return; }
+    if (!date) { showPlannerError('يرجى تحديد التاريخ.'); return; }
     const taskData = { 
         id: Date.now(), 
         title, 
@@ -896,11 +970,12 @@ async function generatePlannerPlan(event) {
     const quran = document.getElementById('quran').checked;
     const quranPages = document.getElementById('quran_pages').value || 1;
 
-    if (!subjects || !targetDate) return alert('يرجى ملء المواد وتاريخ الهدف.');
+    if (!subjects || !targetDate) { showPlannerError('يرجى ملء المواد وتاريخ الهدف.'); return; }
 
     const btn = event ? event.currentTarget : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
 
+    clearPlannerMsg();
     try {
         const payload = {
             current_date: getToday(), subjects, target_date: targetDate, discipline,
@@ -910,13 +985,17 @@ async function generatePlannerPlan(event) {
         const res = await fetch('/generate_plan', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (data.status === 'success') {
             showToast('✅ تم توليد الخطة بنجاح!', 'success');
             await loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
-        } else alert('حدث خطأ: ' + (data.error || 'غير معروف'));
-    } catch(e) { alert('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.'); } 
+        } else {
+            let msg = data.error || 'غير معروف';
+            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            showPlannerError('حدث خطأ: ' + msg);
+        }
+    } catch(e) { showPlannerError('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.'); } 
     finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة'; } }
 }
 
@@ -964,19 +1043,20 @@ async function generateExamPlan(event) {
     const examDate = document.getElementById('exam_date').value;
     const lessonIds = selectedLessonIds;
 
-    if (!planName) return alert('يرجى إدخال اسم الاختبار.');
-    if (!examDate) return alert('يرجى تحديد تاريخ الاختبار.');
-    if (lessonIds.length === 0) return alert('يرجى اختيار درس واحد على الأقل.');
+    if (!planName) { showPlannerError('يرجى إدخال اسم الاختبار.'); return; }
+    if (!examDate) { showPlannerError('يرجى تحديد تاريخ الاختبار.'); return; }
+    if (lessonIds.length === 0) { showPlannerError('يرجى اختيار درس واحد على الأقل.'); return; }
 
     const btn = event ? event.currentTarget : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التوليد...'; }
 
+    clearPlannerMsg();
     try {
         const res = await fetch('/api/generate-exam-plan', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ plan_name: planName, exam_date: examDate, lesson_ids: lessonIds })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (data.status === 'success') {
             showToast('✅ تم توليد خطة الاختبارات وحفظها!', 'success');
             document.getElementById('exam_name').value = '';
@@ -985,30 +1065,45 @@ async function generateExamPlan(event) {
             loadLessonsForExam();
             await loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
-        } else alert('حدث خطأ: ' + (data.message || 'غير معروف'));
-    } catch(e) { alert('خطأ في الاتصال بالخادم.'); } 
+        } else {
+            let msg = data.message || data.error || 'غير معروف';
+            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            showPlannerError('حدث خطأ: ' + msg);
+        }
+    } catch(e) { showPlannerError('خطأ في الاتصال بالخادم.'); } 
     finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات'; } }
 }
 
 // ==========================================
 // RESCHEDULE TASKS
 // ==========================================
+let pendingRescheduleTimer = null;
 async function rescheduleTasks(event) {
-    if (!isStudentLoggedIn()) return alert('يرجى تسجيل الدخول لإعادة التوزيع.');
+    if (!isStudentLoggedIn()) { showPlannerError('يرجى تسجيل الدخول لإعادة التوزيع.'); return; }
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const incomplete = tasks.filter(t => !t.completed);
     if (incomplete.length === 0) return showToast('🎉 جميع المهام مكتملة!', 'success');
-    if (!confirm(`لديك ${incomplete.length} مهام غير مكتملة. إعادة توزيعها على الأيام القادمة؟`)) return;
-
     const btn = event ? event.currentTarget : null;
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا تتم إعادة التوزيع
+    if (btn && !btn.dataset.armed) {
+        btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> تأكيد إعادة توزيع ${incomplete.length} مهمة؟`;
+        btn.dataset.armed = '1';
+        clearTimeout(pendingRescheduleTimer);
+        pendingRescheduleTimer = setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع غير المكتملة'; delete btn.dataset.armed; } }, 6000);
+        return;
+    }
+    clearTimeout(pendingRescheduleTimer);
+    if (btn) delete btn.dataset.armed;
+
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إعادة التوزيع...'; }
 
+    clearPlannerMsg();
     try {
         const res = await fetch('/reschedule_plan', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ missed_tasks: incomplete.map(t => ({ title: t.title, allocated_hours: t.allocated_hours || 1.5 })), remaining_plans: [] })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (data.status === 'success') {
             const newPlans = data.plan?.plans || [];
             if (newPlans.length > 0) {
@@ -1019,14 +1114,20 @@ async function rescheduleTasks(event) {
                             const oldTask = incomplete[taskIndex];
                             const taskId = oldTask.id;
                             const newDate = day.date || getToday();
-                            let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
-                            const idx = localTasks.findIndex(t => t.id === taskId);
-                            if (idx > -1) {
-                                localTasks[idx].planned_date = newDate;
-                                localTasks[idx].synced = false;
-                                localStorage.setItem('unified_tasks', JSON.stringify(localTasks));
-                            }
-                            try { await fetch(`/api/tasks/${taskId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planned_date: newDate }) }); } catch(e) {}
+                            // نحدّث الخادم أولاً، ثم النسخة المحلية فقط عند نجاح الحفظ —
+                            // وضع synced=false قبل الحفظ كان يعيد إرسال المهمة كصف جديد مكرر
+                            try {
+                                const putRes = await fetch(`/api/tasks/${taskId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planned_date: newDate }) });
+                                if (putRes.ok) {
+                                    let localTasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
+                                    const idx = localTasks.findIndex(t => String(t.id) === String(taskId));
+                                    if (idx > -1) {
+                                        localTasks[idx].planned_date = newDate;
+                                        localTasks[idx].synced = true;
+                                        localStorage.setItem('unified_tasks', JSON.stringify(localTasks));
+                                    }
+                                }
+                            } catch(e) {}
                             taskIndex++;
                         }
                     }
@@ -1034,31 +1135,49 @@ async function rescheduleTasks(event) {
                 showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
                 await loadTasks();
             } else showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
-        } else alert('حدث خطأ في إعادة التوزيع.');
-    } catch(e) { alert('خطأ في الاتصال بالخادم.'); } 
+        } else {
+            let msg = data.error || 'حدث خطأ في إعادة التوزيع.';
+            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            showPlannerError(msg);
+        }
+    } catch(e) { showPlannerError('خطأ في الاتصال بالخادم.'); } 
     finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة توزيع المهام غير المكتملة'; } }
 }
 
 // ==========================================
 // CLEAR ALL
 // ==========================================
-function confirmClearAll() {
-    if (!confirm('⚠️ هل أنت متأكد من مسح جميع المهام نهائياً؟ لا يمكن التراجع.')) return;
-    if (!confirm('تأكيد نهائي: مسح كل المهام؟')) return;
-    localStorage.removeItem('unified_tasks');
-    if (isStudentLoggedIn()) {
-        (async () => {
-            try {
-                const res = await fetch('/api/tasks'); const tasks = await res.json();
-                for (const task of tasks) { await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' }); }
-                showToast('تم مسح جميع المهام', 'info');
-                loadTasks();
-            } catch(e) {}
-        })();
-    } else {
-        showToast('تم مسح جميع المهام محلياً', 'info');
-        loadTasks();
+let pendingClearAllTimer = null;
+async function confirmClearAll(btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذتي confirm() — النوافذ كانت تُبتلع فلا يظهر تأكيد ولا يتم المسح
+    if (btn && !btn.dataset.armed) {
+        btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> تأكيد مسح الكل؟';
+        btn.dataset.armed = '1';
+        clearTimeout(pendingClearAllTimer);
+        pendingClearAllTimer = setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> مسح الكل'; delete btn.dataset.armed; } }, 6000);
+        return;
     }
+    clearTimeout(pendingClearAllTimer);
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> مسح الكل'; delete btn.dataset.armed; }
+    clearPlannerMsg();
+    try {
+        if (isStudentLoggedIn()) {
+            const res = await fetch('/api/tasks');
+            const tasks = await res.json();
+            let failed = 0;
+            for (const task of tasks) {
+                const r = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+                if (!r.ok) failed++;
+            }
+            localStorage.removeItem('unified_tasks');
+            if (failed > 0) showPlannerError(`تم المسح مع ${failed} أخطاء — بعض المهام قد تكون باقية.`);
+            else showToast('تم مسح جميع المهام', 'success');
+        } else {
+            localStorage.removeItem('unified_tasks');
+            showToast('تم مسح جميع المهام محلياً', 'info');
+        }
+        loadTasks();
+    } catch(e) { showPlannerError('خطأ أثناء مسح المهام.'); }
 }
 
 // ==========================================

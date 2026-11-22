@@ -1970,10 +1970,13 @@ def generate_exam_plan():
         if delta < 1:
             return jsonify({"status": "error", "message": "تاريخ الاختبار يجب أن يكون في المستقبل"}), 400
 
+        last_study_day = exam_date_obj - timedelta(days=1)
         prompt = f"""
         أنت مخطط أكاديمي ذكي. وزع الدروس التالية على {delta} يوماً باعتدال وبدون إرهاق (1-2 درس يومياً بحد أقصى ساعة ونصف يومياً).
+        تاريخ اليوم: {today.isoformat()}، وتاريخ الاختبار: {exam_date_obj.isoformat()}.
+        أيام المذاكرة هي من {today.isoformat()} إلى {last_study_day.isoformat()} فقط — يجب أن يكون حقل "day" في كل يوم أحد هذه التواريخ، ولا تستخدم أي تاريخ آخر.
         الدروس: {json.dumps(lessons_info, ensure_ascii=False)}
-        أخرج فقط JSON: {{"plan": [{{"day": "2026-08-20", "tasks": [{{"lesson_id": 1, "title": "مقدمة", "priority": "متوسط", "allocated_hours": 1.0}}]}}]}}
+        أخرج فقط JSON: {{"plan": [{{"day": "{today.isoformat()}", "tasks": [{{"lesson_id": 1, "title": "مقدمة", "priority": "متوسط", "allocated_hours": 1.0}}]}}]}}
         """
 
         response = groq_client.chat.completions.create(
@@ -1989,11 +1992,19 @@ def generate_exam_plan():
         plan_data = json.loads(response.choices[0].message.content)
         priority_map = {"عال": 1, "متوسط": 2, "منخفض": 3}
 
-        for day_obj in plan_data.get('plan', []):
-            day_date_str = day_obj.get('day')
-            if not day_date_str: continue
-            try: day_date = datetime.strptime(day_date_str, '%Y-%m-%d').date()
-            except ValueError: continue
+        # Never trust the model's dates: derive them deterministically from
+        # the exam date. Study days run from today through the day before
+        # the exam (exactly `delta` days), so tasks can never land in the
+        # past or on/after the exam. The model's day order is kept; only
+        # the calendar dates are replaced (and written back into the
+        # returned plan so the response matches what was stored).
+        study_days = [today + timedelta(days=i) for i in range(delta)]
+        plan_days = plan_data.get('plan') or []
+        if not isinstance(plan_days, list):
+            plan_days = []
+        for day_index, day_obj in enumerate(plan_days):
+            day_date = study_days[min(day_index, len(study_days) - 1)]
+            day_obj['day'] = day_date.isoformat()
 
             for task in day_obj.get('tasks', []):
                 lesson_id = task.get('lesson_id')

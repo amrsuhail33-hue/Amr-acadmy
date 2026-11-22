@@ -1151,6 +1151,36 @@ def add_college():
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/admin/remove-college', methods=['POST'])
+@admin_required
+def remove_college():
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        college_id = data.get('id')
+        college = None
+        if college_id:
+            try:
+                college = College.query.get(int(college_id))
+            except (TypeError, ValueError):
+                college = None
+        if not college and _safe_str(data.get('name')):
+            college = College.query.filter_by(name=_safe_str(data.get('name'))).first()
+        if not college:
+            return jsonify({"status": "error", "message": "الكلية غير موجودة"}), 404
+        name = college.name
+        if CustomLesson.query.filter_by(college=name).first():
+            return jsonify({"status": "error", "message": "لا يمكن حذف كلية فيها مقررات — انقل المقررات أو احذفها أولاً"}), 400
+        if QuizQuestion.query.filter_by(college=name).first():
+            return jsonify({"status": "error", "message": "لا يمكن حذف كلية فيها أسئلة اختبار — احذف الأسئلة أولاً"}), 400
+        if Student.query.filter(Student.role.in_(list(SUPERVISOR_ROLES)), Student.supervisor_college == name).first():
+            return jsonify({"status": "error", "message": "لا يمكن حذف كلية لديها مشرفون — أزل المشرفين أولاً"}), 400
+        db.session.delete(college)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف الكلية بنجاح"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/admin/supervisors', methods=['GET'])
 @admin_required
 def get_supervisors():

@@ -707,7 +707,10 @@ window.addEventListener('beforeunload', async () => {
 // ==========================================
 // LOAD TASKS (منع التكرار)
 // ==========================================
+// Sequence guard: only the latest loadTasks() invocation may render.
+let loadTasksSeq = 0;
 async function loadTasks() {
+    const mySeq = ++loadTasksSeq;
     const container = document.getElementById('tasks-container');
     container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--text-muted);">جاري التحميل...</p></div>';
 
@@ -718,6 +721,9 @@ async function loadTasks() {
             const data = await res.json();
             if (Array.isArray(data)) tasks = data;
             else if (data.status === 'success' && data.tasks) tasks = data.tasks;
+            // A newer loadTasks() started while this fetch was in flight:
+            // drop this stale result instead of writing/rendering it.
+            if (mySeq !== loadTasksSeq) return;
             // Tasks from the server are already saved: mark them synced.
             // Without this, the 30s re-sync treats every server task as
             // unsynced and re-POSTs it as a new row on every reload.
@@ -734,6 +740,10 @@ async function loadTasks() {
     } else {
         tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     }
+
+    // A newer loadTasks() started while this one was in flight: drop this
+    // stale render instead of repainting the list with old data.
+    if (mySeq !== loadTasksSeq) return;
 
     let filtered = tasks;
     if (currentFilter === 'completed') filtered = tasks.filter(t => t.completed);
@@ -885,7 +895,7 @@ async function deleteTask(taskId, btn) {
         localStorage.setItem('unified_tasks', JSON.stringify(tasks));
         showToast('تم حذف المهمة', 'success');
         loadProfileBadge();
-        loadTasks();
+        await loadTasks();
     } catch(e) { showPlannerError('خطأ أثناء حذف المهمة.'); }
 }
 
@@ -1178,8 +1188,18 @@ async function rescheduleTasks(event) {
 // CLEAR ALL
 // ==========================================
 let pendingClearAllTimer = null;
+let clearAllRunning = false;
+// Render the empty state at once (optimistic clear-all feedback).
+// Same markup as the empty branch of loadTasks().
+function renderEmptyTaskList() {
+    const container = document.getElementById('tasks-container');
+    if (!container) return;
+    container.innerHTML = `<div class="empty-state"><i class="fa-regular fa-circle-check"></i><div style="font-weight:700;font-size:1.1rem;">لا توجد مهام</div><div style="font-size:0.9rem;color:var(--text-muted);">أضف مهام جديدة من تبويب "خطة جديدة"</div></div>`;
+    updateProgress([]);
+}
 async function confirmClearAll(btn) {
     // تأكيد داخل الصفحة بخطوتين بدل نافذتي confirm() — النوافذ كانت تُبتلع فلا يظهر تأكيد ولا يتم المسح
+    if (clearAllRunning) { showToast('جاري مسح المهام...', 'info'); return; }
     if (btn && !btn.dataset.armed) {
         btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> تأكيد مسح الكل؟';
         btn.dataset.armed = '1';
@@ -1188,27 +1208,41 @@ async function confirmClearAll(btn) {
         return;
     }
     clearTimeout(pendingClearAllTimer);
-    if (btn) { btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> مسح الكل'; delete btn.dataset.armed; }
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> جاري المسح...'; delete btn.dataset.armed; }
     clearPlannerMsg();
+    clearAllRunning = true;
+    if (btn) btn.disabled = true;
     try {
         if (isStudentLoggedIn()) {
-            const res = await fetch('/api/tasks');
-            const tasks = await res.json();
-            let failed = 0;
-            for (const task of tasks) {
-                const r = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
-                if (!r.ok) failed++;
+            // Optimistic empty render FIRST: the old code deleted tasks one
+            // by one (24+ sequential requests, ~75s on the free tier) with
+            // no visible progress, so users re-clicked or reloaded mid-loop
+            // and tasks survived. Show the empty list at once, then confirm
+            // on the server with a single bulk DELETE.
+            localStorage.setItem('unified_tasks', JSON.stringify([]));
+            renderEmptyTaskList();
+            const res = await fetch('/api/tasks', { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.status === 'error') {
+                showPlannerError(data.message || 'تعذر مسح المهام — لم يُحذف شيء.');
+                await loadTasks(); // revert: re-render the true server list
+            } else {
+                showToast('تم مسح جميع المهام', 'success');
+                await loadTasks(); // re-sync: confirm the server list is empty
             }
-            localStorage.removeItem('unified_tasks');
-            if (failed > 0) showPlannerError(`تم المسح مع ${failed} أخطاء — بعض المهام قد تكون باقية.`);
-            else showToast('تم مسح جميع المهام', 'success');
         } else {
-            localStorage.removeItem('unified_tasks');
+            localStorage.setItem('unified_tasks', JSON.stringify([]));
+            renderEmptyTaskList();
             showToast('تم مسح جميع المهام محلياً', 'info');
         }
         loadProfileBadge();
-        loadTasks();
-    } catch(e) { showPlannerError('خطأ أثناء مسح المهام.'); }
+    } catch(e) {
+        showPlannerError('خطأ أثناء مسح المهام.');
+        await loadTasks(); // revert on connection failure too
+    } finally {
+        clearAllRunning = false;
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> مسح الكل'; }
+    }
 }
 
 // ==========================================

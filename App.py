@@ -495,6 +495,9 @@ def student_required(f):
 # ==========================================
 # Platform Structured Data
 # ==========================================
+# تصحيح أسماء سنوات مخزنة بإملاء خاطئ في البيانات (تعرض كما هي في الواجهة)
+YEAR_NAME_FIXES = {"السنة الاولئ": "السنة الأولى"}
+
 def get_platform_data(user):
     data = {}
     try:
@@ -513,6 +516,7 @@ def get_platform_data(user):
         quiz_groups = quiz_query.with_entities(QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name, QuizQuestion.chapter_name).distinct().all()
         for item in [*lessons, *quiz_groups]:
             year = (item.year or '').strip()
+            year = YEAR_NAME_FIXES.get(year, year)
             term = (item.term or '').strip()
             subject = (item.subject_name or '').strip()
             chapter = (item.chapter_name or 'عام').strip() or 'عام'
@@ -698,6 +702,7 @@ def student_login():
             "role": student.role or 'student'
         })
     except Exception as e:
+        app.logger.exception("student_login failed")
         db.session.rollback()
         return jsonify({"status": "error", "message": f"خطأ بالسيرفر: {str(e)}"}), 500
 
@@ -727,6 +732,7 @@ def student_register():
 
         return jsonify({"status": "success", "message": "تم التسجيل بنجاح"})
     except Exception as e:
+        app.logger.exception("student_register failed")
         db.session.rollback()
         return jsonify({"status": "error", "message": "تعذر إنشاء الحساب. حاول مرة أخرى."}), 500
 
@@ -1738,4 +1744,5 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
 

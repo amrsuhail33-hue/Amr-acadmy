@@ -445,7 +445,10 @@ class QuizQuestion(db.Model):
             "option_e": display_opts[4] if len(display_opts) > 4 else "",
             "correct_answer": correct,
             "explanation": self.explanation or "",
-            "status": self.status or 'approved'
+            "status": self.status or 'approved',
+            # تشخيص مؤقت: ما القيمة المخزنة الفعلية لـ question_text؟
+            "debug_qtext_cps": [hex(ord(c)) for c in (self.question_text or "")],
+            "debug_is_placeholder": _is_placeholder_question_title(q_text)
         }
 
 class QuizAttempt(db.Model):
@@ -789,10 +792,6 @@ def _is_placeholder_question_title(text):
     t = (text or "").strip()
     for _alef in ("\u0623", "\u0625", "\u0622", "\u0671"):
         t = t.replace(_alef, "\u0627")
-    # توحيد الياء والكاف: الياء الفارسية \u06cc والألف المقصورة \u0649
-    # والكاف الفارسية \u06a9 تُكتب أحياناً بدل نظيراتها العربية في النصوص
-    # المنسوخة، وتبدو مطابقة لها مع أنها رموز مختلفة.
-    t = t.replace("\u06cc", "\u064a").replace("\u0649", "\u064a").replace("\u06a9", "\u0643")
     t = "".join(ch for ch in t if ch.isalpha())
     return t == "اختيار"
 

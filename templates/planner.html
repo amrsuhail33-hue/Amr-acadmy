@@ -451,7 +451,7 @@
                         <option value="3">منخفضة</option>
                     </select>
                 </div>
-                <button class="btn btn-primary" onclick="addManualTask()"><i class="fa-solid fa-plus-circle"></i> إضافة المهمة</button>
+                <button id="manual-add-btn" class="btn btn-primary" onclick="addManualTask()"><i class="fa-solid fa-plus-circle"></i> إضافة المهمة</button>
             </div>
         </div>
     </div>
@@ -939,7 +939,13 @@ async function saveTaskDate(taskId) {
 // ==========================================
 // ADD MANUAL TASK
 // ==========================================
+// حارس إرسال مزدوج: ضغطة ثانية أثناء حفظ جارٍ تُتجاهل. بدون الحارس كل
+// ضغطة كانت تنشئ مهمة محلية بمعرّف مؤقت مختلف (Date.now) وتPOST صفاً
+// مستقلاً، فتظهر المهمة مرتين — حارس عدم التكرار الخلفي (حسب المعرّف)
+// لا يمنع ذلك لأن المعرّفين مختلفان.
+let addManualTaskRunning = false;
 async function addManualTask() {
+    if (addManualTaskRunning) return;
     const title = document.getElementById('manual_title').value.trim();
     const date = document.getElementById('manual_date').value;
     const desc = document.getElementById('manual_desc').value.trim();
@@ -958,13 +964,25 @@ async function addManualTask() {
         completed: false, 
         lesson_id: null 
     };
-    const result = await autoSaveTask(taskData);
-    if (result) {
-        document.getElementById('manual_title').value = '';
-        document.getElementById('manual_desc').value = '';
-        document.getElementById('manual_date').value = '';
-        loadTasks();
-        document.querySelector('[data-tab="my-plans"]').click();
+    addManualTaskRunning = true;
+    const btn = document.getElementById('manual-add-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الحفظ...'; }
+    try {
+        const result = await autoSaveTask(taskData);
+        if (result) {
+            document.getElementById('manual_title').value = '';
+            document.getElementById('manual_desc').value = '';
+            document.getElementById('manual_date').value = '';
+            loadTasks();
+            document.querySelector('[data-tab="my-plans"]').click();
+        } else {
+            // فشل الحفظ على الخادم: المهمة محفوظة محلياً وستُزامَن تلقائياً،
+            // لكن نُظهر خطأً ثابتاً بدل ابتلاع الفشل بصمت.
+            showPlannerError('تعذر حفظ المهمة على الخادم — حُفظت محلياً وستُزامَن تلقائياً.');
+        }
+    } finally {
+        addManualTaskRunning = false;
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus-circle"></i> إضافة المهمة'; }
     }
 }
 

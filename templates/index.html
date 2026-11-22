@@ -435,7 +435,7 @@
              <div class="file-upload-box" onclick="document.getElementById('csvFileInput').click()">
                  <i class="fa-solid fa-file-csv" style="font-size:3rem; color:var(--primary); margin-bottom:15px;"></i>
                  <h3 style="margin:0 0 10px; color:var(--text-main);">اضغط لرفع ملف الأسئلة دفعة واحدة (CSV)</h3>
-                 <p style="margin:0; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">يجب أن يحتوي الملف على الأعمدة التالية:<br><code>year, term, subject_name, chapter_name, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation</code></p>
+                 <p style="margin:0; font-size:0.9rem; color:var(--text-muted); line-height:1.6;">يجب أن يحتوي الملف على الأعمدة التالية:<br><code>year, term, subject_name, chapter_name, question_text, option_a, option_b, option_c, option_d, option_e, correct_answer, explanation</code></p>
                  <input type="file" id="csvFileInput" accept=".csv" onchange="uploadQuizCSV()">
              </div>
         </div>
@@ -1311,7 +1311,7 @@ async function startQuiz(chapter) {
         
         quizState.questions = data.map(q => {
             const questionTitle = q.question_text || q.title || "سؤال";
-            const rawOpts = [q.option_a, q.option_b, q.option_c, q.option_d];
+            const rawOpts = [q.option_a, q.option_b, q.option_c, q.option_d, q.option_e];
             const cleanOpts = rawOpts.filter(opt => opt && String(opt).trim() !== "" && String(opt).trim() !== questionTitle.trim());
 
             return {

@@ -390,6 +390,7 @@ class QuizQuestion(db.Model):
     option_b = db.Column(db.Text, nullable=True)
     option_c = db.Column(db.Text, nullable=True)
     option_d = db.Column(db.Text, nullable=True)
+    option_e = db.Column(db.Text, nullable=True)
     correct_answer = db.Column(db.String(200), nullable=True)
     explanation = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='approved')
@@ -399,7 +400,7 @@ class QuizQuestion(db.Model):
 
     def to_dict(self):
         q_text = (self.question_text or '').strip()
-        opts = [self.option_a, self.option_b, self.option_c, self.option_d]
+        opts = [self.option_a, self.option_b, self.option_c, self.option_d, self.option_e]
         cleaned_opts = []
         for o in opts:
             if o and o.strip() and o.strip() != q_text:
@@ -429,6 +430,7 @@ class QuizQuestion(db.Model):
             "option_b": cleaned_opts[1] if len(cleaned_opts) > 1 else (self.option_b or ""),
             "option_c": cleaned_opts[2] if len(cleaned_opts) > 2 else (self.option_c or ""),
             "option_d": cleaned_opts[3] if len(cleaned_opts) > 3 else (self.option_d or ""),
+            "option_e": cleaned_opts[4] if len(cleaned_opts) > 4 else (self.option_e or ""),
             "correct_answer": correct,
             "explanation": self.explanation or "",
             "status": self.status or 'approved'
@@ -475,6 +477,25 @@ with app.app_context():
         # لا تبتلع الخطأ بصمت: اطبعه ثم أعد رفعه ليفشل التشغيل بسرعة بدل العمل بجداول ناقصة
         print(f"خطأ فادح عند إنشاء جداول قاعدة البيانات: {e}", flush=True)
         raise
+
+# --- تصحيح لمرة واحدة (يُحذف بعد تطبيقه): إضافة خيار خامس للسؤال 60 ---
+# السؤال 60 (الشبتر الثامن، إلكترونك) إجابته المخزنة "جميع ما سبق صحيح" لا تطابق
+# أي خيار من خياراته الثلاثة، فيستحيل الإجابة عنه بشكل صحيح. نضيف العمود option_e
+# (Postgres فقط) ونضع فيه هذا الخيار لهذا السؤال فقط.
+with app.app_context():
+    try:
+        if db.engine.dialect.name == 'postgresql':
+            db.session.execute(text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS option_e TEXT"))
+            db.session.commit()
+        q60 = QuizQuestion.query.filter_by(id=60, subject_name='إلكترونك', chapter_name='الشابتر الثامن').first()
+        if q60 is not None and not (q60.option_e or '').strip():
+            q60.option_e = 'جميع ما سبق صحيح'
+            q60.correct_answer = 'جميع ما سبق صحيح'
+            db.session.commit()
+            print('Q60 one-time fix applied: option_e set', flush=True)
+    except Exception as _q60_err:
+        db.session.rollback()
+        print(f'Q60 one-time fix skipped: {_q60_err}', flush=True)
 
 
 # ==========================================
@@ -1014,6 +1035,7 @@ def import_questions():
                 option_b=row.get('option_b', '').strip(),
                 option_c=row.get('option_c', '').strip(),
                 option_d=row.get('option_d', '').strip(),
+                option_e=row.get('option_e', '').strip(),
                 correct_answer=row.get('correct_answer', '').strip(),
                 explanation=row.get('explanation', '').strip(),
                 status=status,

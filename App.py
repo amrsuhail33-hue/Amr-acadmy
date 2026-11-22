@@ -493,6 +493,18 @@ class QuizAttempt(db.Model):
 with app.app_context():
     try:
         db.create_all()
+        # ترحيل أعمدة جديدة لجداول قائمة: create_all() ينشئ الجداول الناقصة فقط
+        # ولا يضيف أعمدة لجداول موجودة، فأي استعلام على Student كان سيسقط التشغيل
+        # (خطأ: column students.supervisor_college does not exist).
+        try:
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_college VARCHAR(150)"))
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_specialization VARCHAR(150)"))
+            db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
+            db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS college VARCHAR(150)"))
+            db.session.commit()
+        except Exception as _mig_e:
+            db.session.rollback()
+            print(f"تعذر ترحيل الأعمدة الجديدة (تجاهل — قد تكون قاعدة بيانات محلية): {_mig_e}", flush=True)
         students = Student.query.all()
         for s in students:
             if not UserProfile.query.filter_by(student_id=s.id).first():

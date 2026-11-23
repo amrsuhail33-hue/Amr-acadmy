@@ -1,6 +1,7 @@
 import os
 import io
 import csv
+import re
 import time
 import json
 import ssl
@@ -78,7 +79,7 @@ class Student(db.Model):
     __tablename__ = 'students'
     __table_args__ = (
         CheckConstraint(
-            "role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor')",
+            "role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor', 'store_manager')",
             name='students_role_check',
         ),
     )
@@ -88,7 +89,7 @@ class Student(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(50), default='student')  # student, assistant, admin, college_supervisor, specialization_supervisor (الأطول 25 حرفاً — كان String(20) فيفشل حفظه)
+    role = db.Column(db.String(50), default='student')  # student, assistant, admin, college_supervisor, specialization_supervisor, store_manager (الأطول 25 حرفاً — كان String(20) فيفشل حفظه)
     college = db.Column(db.String(150), nullable=True)
     supervisor_college = db.Column(db.String(150), nullable=True)  # نطاق المشرف: اسم الكلية التي يشرف عليها
     supervisor_specialization = db.Column(db.String(150), nullable=True)  # نطاق مشرف التخصص: اسم المادة
@@ -215,6 +216,57 @@ class DoctorOpinionVote(db.Model):
     value = db.Column(db.Integer, nullable=False)  # 1 = لايك، -1 = ديسلايك
     __table_args__ = (db.UniqueConstraint('opinion_id', 'student_id',
                                            name='uq_opinion_vote'),)
+
+class Store(db.Model):
+    """متجر داخل «خدمات»: اسم + وصف + رقم واتساب + مدير + حالة.
+    المتجر الموقوف (paused) لا يظهر للمتسوقين. مدير المتجر دوره store_manager."""
+    __tablename__ = 'stores'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    whatsapp_number = db.Column(db.String(30), nullable=False)
+    status = db.Column(db.String(20), default='active')  # active / paused
+    manager_id = db.Column(db.Integer, nullable=True)
+    created_by = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        manager = Student.query.get(self.manager_id) if self.manager_id else None
+        product_count = Product.query.filter_by(store_id=self.id).count()
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description or "",
+            "whatsapp_number": self.whatsapp_number,
+            "status": self.status or 'active',
+            "manager_id": self.manager_id,
+            "manager_name": manager.name if manager else None,
+            "manager_username": manager.username if manager else None,
+            "product_count": product_count,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+class Product(db.Model):
+    """منتج في متجر: اسم + سعر بالريال اليمني (عدد صحيح) + رابط صورة + تفاصيل اختيارية."""
+    __tablename__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    store_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.String(500), nullable=True)
+    details = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "store_id": self.store_id,
+            "name": self.name,
+            "price": self.price,
+            "image_url": self.image_url or "",
+            "details": self.details or "",
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
 
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
@@ -621,10 +673,10 @@ with app.app_context():
                 try:
                     db.session.execute(db.text(
                         "ALTER TABLE students ADD CONSTRAINT students_role_check "
-                        "CHECK (role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor'))"
+                        "CHECK (role IN ('student', 'assistant', 'admin', 'college_supervisor', 'specialization_supervisor', 'store_manager'))"
                     ))
                     db.session.commit()
-                    print("تم تحديث قيد الدور students_role_check ليشمل أدوار المشرفين", flush=True)
+                    print("تم تحديث قيد الدور students_role_check ليشمل أدوار المشرفين ومدير المتجر", flush=True)
                 except Exception as _role_add_e:
                     db.session.rollback()
                     print(f"تعذر تحديث قيد الدور (تجاهل): {_role_add_e}", flush=True)
@@ -788,6 +840,37 @@ def can_manage_content(f):
             return jsonify({"status": "error", "message": "غير مصرح لك بإدارة المحتوى"}), 403
         return f(*args, **kwargs)
     return decorated_function
+
+def store_manager_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user or user.role not in ('admin', 'store_manager'):
+            return jsonify({"status": "error", "message": "غير مصرح لك (مطلوب مدير متجر)"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def _can_manage_store(user, store):
+    """هل يستطيع هذا المستخدم إدارة هذا المتجر؟ الأدمن كل شيء، ومدير المتجر متجره فقط."""
+    if not user or not store:
+        return False
+    if user.role == 'admin':
+        return True
+    if user.role == 'store_manager':
+        return store.manager_id == user.id
+    return False
+
+def normalize_whatsapp(raw):
+    """تطبيع رقم واتساب لـ wa.me: إزالة + والمسافات والشرطات، ثم بادئة اليمن 967.
+    0xxxxxxxxx -> 967xxxxxxxxx ، 7xxxxxxxx -> 9677xxxxxxxx ، 00967... -> 967..."""
+    digits = re.sub(r'[^0-9]', '', (raw or '').strip())
+    if digits.startswith('00'):
+        digits = digits[2:]
+    if digits.startswith('0'):
+        digits = '967' + digits[1:]
+    elif digits.startswith('7'):
+        digits = '967' + digits
+    return digits
 
 def student_required(f):
     @wraps(f)
@@ -974,6 +1057,7 @@ def home():
     is_admin = (user.role == 'admin') if user else False
     is_assistant = (user.role == 'assistant') if user else False
     is_supervisor = (user.role in SUPERVISOR_ROLES) if user else False
+    is_store_manager = (user.role == 'store_manager') if user else False
 
     try:
         colleges = [c.to_dict() for c in College.query.order_by(College.id).all()]
@@ -995,6 +1079,7 @@ def home():
         'is_admin': is_admin,
         'is_assistant': is_assistant,
         'is_supervisor': is_supervisor,
+        'is_store_manager': is_store_manager,
         'user_role': user.role if user else '',
         'supervisor_college': (user.supervisor_college or '') if user else '',
         'supervisor_specialization': (user.supervisor_specialization or '') if user else '',
@@ -2387,6 +2472,343 @@ def guide():
         colleges = [{"id": 0, "name": "كلية الهندسة"}]
     return render_template('guide.html', student_id=user.id if user else None,
                            student_name=user.name if user else None, colleges=colleges)
+
+# ==========================================
+# نظام «خدمات» — متاجر داخل الأكاديمية
+# ==========================================
+# متجر: اسم + وصف + رقم واتساب + مدير + حالة (active/paused).
+# منتج: اسم + سعر بالريال + رابط صورة + تفاصيل اختيارية.
+# التسوق مفتوح دون تسجيل دخول؛ الطلب يفتح wa.me برسالة جاهزة.
+# الجدولان الجديدان (stores/products) ينشئهما db.create_all() — لا حاجة لـ ALTER TABLE.
+
+@app.route('/services')
+def services():
+    """صفحة «خدمات»: قائمة المتاجر الظاهرة + منتجات المتجر المختار.
+    التسوق مفتوح للجميع دون تسجيل دخول."""
+    user = get_current_user()
+    return render_template('services.html', student_id=user.id if user else None,
+                           student_name=user.name if user else None)
+
+@app.route('/api/stores', methods=['GET'])
+def get_public_stores():
+    """المتاجر الظاهرة للعموم مع عدد المنتجات."""
+    try:
+        stores = Store.query.filter_by(status='active').order_by(Store.id).all()
+        return jsonify([s.to_dict() for s in stores])
+    except Exception:
+        app.logger.exception("فشل جلب المتاجر العامة")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/api/stores/<int:store_id>/products', methods=['GET'])
+def get_store_products(store_id):
+    """منتجات متجر ظاهر (للعموم)."""
+    try:
+        store = Store.query.get(store_id)
+        if not store or store.status != 'active':
+            return jsonify({"status": "error", "message": "المتجر غير موجود أو موقوف"}), 404
+        products = Product.query.filter_by(store_id=store_id).order_by(Product.id).all()
+        return jsonify([p.to_dict() for p in products])
+    except Exception:
+        app.logger.exception("فشل جلب منتجات المتجر: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/api/stores/<int:store_id>/products', methods=['POST'])
+@store_manager_required
+def add_store_product(store_id):
+    """مدير المتجر (أو الأدمن) يضيف منتجاً لمتجره."""
+    try:
+        user = get_current_user()
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        if not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المتجر ليس من متاجرك"}), 403
+        data = request.get_json(silent=True) or {}
+        name = _safe_str(data.get('name'))
+        image_url = _safe_str(data.get('image_url'))
+        details = _safe_str(data.get('details'))
+        try:
+            price = int(data.get('price'))
+        except (TypeError, ValueError):
+            price = 0
+        if not name:
+            return jsonify({"status": "error", "message": "اسم المنتج مطلوب"}), 400
+        if not price or price <= 0:
+            return jsonify({"status": "error", "message": "السعر يجب أن يكون رقماً صحيحاً أكبر من صفر"}), 400
+        product = Product(store_id=store_id, name=name, price=price,
+                          image_url=image_url or None, details=details or None)
+        db.session.add(product)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تمت إضافة المنتج بنجاح", "product": product.to_dict()})
+    except Exception:
+        app.logger.exception("فشل إضافة منتج: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر إضافة المنتج"}), 500
+
+@app.route('/api/products/<int:product_id>/delete', methods=['POST'])
+@store_manager_required
+def delete_store_product(product_id):
+    """مدير متجره (أو الأدمن) يحذف منتجاً."""
+    try:
+        user = get_current_user()
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({"status": "error", "message": "المنتج غير موجود"}), 404
+        store = Store.query.get(product.store_id)
+        if not store or not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المنتج ليس في متجرك"}), 403
+        db.session.delete(product)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف المنتج بنجاح"})
+    except Exception:
+        app.logger.exception("فشل حذف منتج: product_id=%s", product_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حذف المنتج"}), 500
+
+@app.route('/api/stores/<int:store_id>/whatsapp', methods=['POST'])
+@store_manager_required
+def update_store_whatsapp(store_id):
+    """مدير المتجر (أو الأدمن) يعدّل رقم واتساب متجره — مع التطبيع."""
+    try:
+        user = get_current_user()
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        if not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المتجر ليس من متاجرك"}), 403
+        data = request.get_json(silent=True) or {}
+        number = normalize_whatsapp(data.get('whatsapp_number'))
+        if not number:
+            return jsonify({"status": "error", "message": "رقم الواتساب مطلوب"}), 400
+        store.whatsapp_number = number
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث رقم الواتساب", "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تحديث واتساب المتجر: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تحديث الرقم"}), 500
+
+@app.route('/admin/stores', methods=['GET'])
+@admin_required
+def get_stores_admin():
+    """كل المتاجر مع الحالة والمدير وعدد المنتجات (للمشرف الأعلى)."""
+    try:
+        stores = Store.query.order_by(Store.id).all()
+        return jsonify([s.to_dict() for s in stores])
+    except Exception:
+        app.logger.exception("فشل جلب المتاجر للإدارة")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/add-store', methods=['POST'])
+@admin_required
+def add_store():
+    name = ""
+    try:
+        user = get_current_user()
+        data = request.get_json(silent=True) or {}
+        name = _safe_str(data.get('name'))
+        description = _safe_str(data.get('description'))
+        whatsapp = normalize_whatsapp(data.get('whatsapp_number'))
+        manager_id = data.get('manager_id')
+        if not name:
+            return jsonify({"status": "error", "message": "اسم المتجر مطلوب"}), 400
+        if not whatsapp:
+            return jsonify({"status": "error", "message": "رقم واتساب المتجر مطلوب"}), 400
+        manager = None
+        if manager_id:
+            try:
+                manager = Student.query.get(int(manager_id))
+            except (TypeError, ValueError):
+                manager = None
+            if not manager:
+                return jsonify({"status": "error", "message": "المدير المختار غير موجود"}), 400
+            if manager.role == 'admin':
+                return jsonify({"status": "error", "message": "هذا الحساب مشرف أعلى بالفعل"}), 400
+        store = Store(name=name, description=description or None, whatsapp_number=whatsapp,
+                      status='active', manager_id=manager.id if manager else None,
+                      created_by=user.id if user else None)
+        db.session.add(store)
+        if manager:
+            manager.role = 'store_manager'
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم إنشاء المتجر بنجاح", "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل إنشاء متجر: name=%s", name)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر إنشاء المتجر"}), 500
+
+@app.route('/admin/edit-store/<int:store_id>', methods=['POST'])
+@admin_required
+def edit_store(store_id):
+    """تعديل اسم/وصف/رقم واتساب متجر (المدير يُعيَّن من مسار منفصل)."""
+    name = ""
+    try:
+        data = request.get_json(silent=True) or {}
+        name = _safe_str(data.get('name'))
+        description = _safe_str(data.get('description'))
+        whatsapp = normalize_whatsapp(data.get('whatsapp_number'))
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        if not name:
+            return jsonify({"status": "error", "message": "اسم المتجر مطلوب"}), 400
+        if not whatsapp:
+            return jsonify({"status": "error", "message": "رقم واتساب المتجر مطلوب"}), 400
+        store.name = name
+        store.description = description or None
+        store.whatsapp_number = whatsapp
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حفظ تعديلات المتجر", "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تعديل متجر: store_id=%s name=%s", store_id, name)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تعديل المتجر"}), 500
+
+@app.route('/admin/remove-store', methods=['POST'])
+@admin_required
+def remove_store():
+    """حذف متجر فارغ فقط — يُرفض إن كان فيه منتجات (نفس نمط المواد والكليات)."""
+    store_id = None
+    try:
+        data = request.get_json(silent=True) or request.form or {}
+        store_id = data.get('store_id')
+        try:
+            store_id = int(store_id)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "معرّف المتجر غير صحيح"}), 400
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        product_count = Product.query.filter_by(store_id=store_id).count()
+        if product_count:
+            return jsonify({"status": "error", "message": f"لا يمكن حذف متجر فيه منتجات — احذف المنتجات أولاً ({product_count} منتج)"}), 400
+        manager_id = store.manager_id
+        db.session.delete(store)
+        db.session.commit()
+        # إن لم يعد المدير يدير أي متجر آخر أعد دوره إلى طالب
+        if manager_id:
+            manager = Student.query.get(manager_id)
+            if manager and manager.role == 'store_manager':
+                remaining = Store.query.filter_by(manager_id=manager_id).count()
+                if not remaining:
+                    manager.role = 'student'
+                    db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف المتجر بنجاح"})
+    except Exception:
+        app.logger.exception("فشل حذف متجر: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حذف المتجر"}), 500
+
+@app.route('/admin/pause-store/<int:store_id>', methods=['POST'])
+@admin_required
+def pause_store(store_id):
+    """تبديل حالة متجر بين ظاهر وموقوف مؤقتاً."""
+    try:
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        store.status = 'paused' if store.status == 'active' else 'active'
+        db.session.commit()
+        msg = "تم إيقاف المتجر مؤقتاً" if store.status == 'paused' else "تم إظهار المتجر من جديد"
+        return jsonify({"status": "success", "message": msg, "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تبديل حالة متجر: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تغيير حالة المتجر"}), 500
+
+@app.route('/admin/assign-store-manager', methods=['POST'])
+@admin_required
+def assign_store_manager():
+    """تعيين مدير لمتجر من قائمة الطلاب، أو إزالته (student_id فارغ).
+    عند التعيين يصبح الطالب store_manager، وعند إزالته من كل متاجره يعود student."""
+    store_id = student_id = None
+    try:
+        data = request.get_json(silent=True) or {}
+        store_id = data.get('store_id')
+        student_id = data.get('student_id')
+        try:
+            store_id = int(store_id)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "معرّف المتجر غير صحيح"}), 400
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        previous_manager_id = store.manager_id
+        new_manager = None
+        if student_id:
+            try:
+                new_manager = Student.query.get(int(student_id))
+            except (TypeError, ValueError):
+                new_manager = None
+            if not new_manager:
+                return jsonify({"status": "error", "message": "الطالب المختار غير موجود"}), 400
+            if new_manager.role == 'admin':
+                return jsonify({"status": "error", "message": "هذا الحساب مشرف أعلى بالفعل"}), 400
+        store.manager_id = new_manager.id if new_manager else None
+        if new_manager:
+            new_manager.role = 'store_manager'
+        db.session.commit()
+        if previous_manager_id and previous_manager_id != (new_manager.id if new_manager else None):
+            prev = Student.query.get(previous_manager_id)
+            if prev and prev.role == 'store_manager':
+                remaining = Store.query.filter_by(manager_id=previous_manager_id).count()
+                if not remaining:
+                    prev.role = 'student'
+                    db.session.commit()
+        return jsonify({"status": "success", "message": "تم تعيين مدير المتجر بنجاح" if new_manager else "تمت إزالة مدير المتجر", "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تعيين مدير متجر: store_id=%s student_id=%s", store_id, student_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تعيين المدير"}), 500
+
+@app.route('/admin/students', methods=['GET'])
+@admin_required
+def get_students_for_admin():
+    """كل الطلاب (id وusername وname والدور) لقائمة اختيار مدير المتجر المنسدلة."""
+    try:
+        students = Student.query.order_by(Student.name).all()
+        return jsonify([{"id": s.id, "username": s.username, "name": s.name, "role": s.role or 'student'} for s in students])
+    except Exception:
+        app.logger.exception("فشل جلب قائمة الطلاب للإدارة")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/my-stores', methods=['GET'])
+@store_manager_required
+def get_my_stores():
+    """متاجر مدير المتجر فقط (الأدمن يرى كل المتاجر من /admin/stores)."""
+    try:
+        user = get_current_user()
+        if user.role == 'admin':
+            stores = Store.query.order_by(Store.id).all()
+        else:
+            stores = Store.query.filter_by(manager_id=user.id).order_by(Store.id).all()
+        return jsonify([s.to_dict() for s in stores])
+    except Exception:
+        app.logger.exception("فشل جلب متاجر المدير")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/my-stores/<int:store_id>/products', methods=['GET'])
+@store_manager_required
+def get_my_store_products(store_id):
+    """منتجات متجر للمدير (حتى لو كان موقوفاً — لا تُعرض للعموم): مديره فقط أو الأدمن."""
+    try:
+        user = get_current_user()
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        if not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المتجر ليس من متاجرك"}), 403
+        products = Product.query.filter_by(store_id=store_id).order_by(Product.id).all()
+        return jsonify([p.to_dict() for p in products])
+    except Exception:
+        app.logger.exception("فشل جلب منتجات متجر المدير: store_id=%s", store_id)
+        db.session.rollback()
+        return jsonify([])
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():

@@ -161,6 +161,61 @@ class Subject(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
+class DoctorOpinion(db.Model):
+    """رأي طالب عن دكتور (دليل الطالب): لا يظهر للطلاب إلا بعد موافقة
+    المشرف الأعلى. المعلق قد يخفي اسمه فيظهر «مجهول» بدل اسمه."""
+    __tablename__ = 'doctor_opinions'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, nullable=False)
+    doctor_name = db.Column(db.String(150), nullable=False)
+    subject = db.Column(db.String(150), nullable=False)
+    college = db.Column(db.String(150), nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    anonymous = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default='pending')  # pending / approved / rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self, viewer_id=None, include_real_author=False):
+        likes = DoctorOpinionVote.query.filter_by(opinion_id=self.id, value=1).count()
+        dislikes = DoctorOpinionVote.query.filter_by(opinion_id=self.id, value=-1).count()
+        user_vote = 0
+        if viewer_id:
+            v = DoctorOpinionVote.query.filter_by(opinion_id=self.id, student_id=viewer_id).first()
+            user_vote = v.value if v else 0
+        author = None
+        if not self.anonymous:
+            s = Student.query.get(self.student_id)
+            author = s.name if s else None
+        result = {
+            "id": self.id,
+            "doctor_name": self.doctor_name,
+            "subject": self.subject,
+            "college": self.college,
+            "comment": self.comment,
+            "author_name": author or "مجهول",
+            "anonymous": bool(self.anonymous),
+            "status": self.status,
+            "likes": likes,
+            "dislikes": dislikes,
+            "user_vote": user_vote,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+        if include_real_author:
+            s = Student.query.get(self.student_id)
+            result["student_name"] = s.name if s else ""
+            result["student_username"] = s.username if s else ""
+        return result
+
+class DoctorOpinionVote(db.Model):
+    """صوت طالب على رأي: +1 لايك / -1 ديسلايك — صوت واحد لكل طالب على كل رأي."""
+    __tablename__ = 'doctor_opinion_votes'
+    id = db.Column(db.Integer, primary_key=True)
+    opinion_id = db.Column(db.Integer, nullable=False)
+    student_id = db.Column(db.Integer, nullable=False)
+    value = db.Column(db.Integer, nullable=False)  # 1 = لايك، -1 = ديسلايك
+    __table_args__ = (db.UniqueConstraint('opinion_id', 'student_id',
+                                           name='uq_opinion_vote'),)
+
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
     id = db.Column(db.Integer, primary_key=True)
@@ -1709,6 +1764,151 @@ def delete_quiz_question(question_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ==========================================
+# دليل الطالب — آراء الطلاب عن الدكاترة
+# ==========================================
+
+@app.route('/api/doctor-opinions', methods=['GET'])
+def list_doctor_opinions():
+    """الآراء المعتمدة فقط (قراءة مفتوحة للجميع): فلتر اختياري بالكلية،
+    وبحث جزئي باسم الدكتور عبر q. تعيد العدّادات + صوت الطالب الحالي."""
+    try:
+        college = _safe_str(request.args.get('college'))
+        q = _safe_str(request.args.get('q'))
+        query = DoctorOpinion.query.filter_by(status='approved')
+        if college:
+            query = query.filter_by(college=college)
+        if q:
+            query = query.filter(DoctorOpinion.doctor_name.ilike(f"%{q}%"))
+        viewer_id = session.get('student_id')
+        opinions = query.order_by(DoctorOpinion.created_at.desc()).all()
+        return jsonify([o.to_dict(viewer_id=viewer_id) for o in opinions])
+    except Exception:
+        app.logger.exception("فشل جلب آراء الدكاترة")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/api/doctor-opinions', methods=['POST'])
+@student_required
+def add_doctor_opinion():
+    """إضافة رأي جديد: كل الحقول مطلوبة، والحالة pending حتى يوافق
+    المشرف الأعلى — لا يظهر الرأي للطلاب قبل الاعتماد."""
+    try:
+        student_id = session.get('student_id')
+        data = request.get_json(silent=True) or {}
+        doctor_name = _safe_str(data.get('doctor_name'))
+        subject = _safe_str(data.get('subject'))
+        college = _safe_str(data.get('college'))
+        comment = _safe_str(data.get('comment'))
+        anonymous = bool(data.get('anonymous'))
+        if not doctor_name or not subject or not college or not comment:
+            return jsonify({"status": "error", "message": "كل الحقول مطلوبة: اسم الدكتور والمادة والكلية والتعليق"}), 400
+        if len(doctor_name) > 150 or len(subject) > 150 or len(college) > 150:
+            return jsonify({"status": "error", "message": "اسم الدكتور أو المادة أو الكلية أطول من المسموح (150 حرفاً)"}), 400
+        op = DoctorOpinion(student_id=student_id, doctor_name=doctor_name, subject=subject,
+                           college=college, comment=comment, anonymous=anonymous, status='pending')
+        db.session.add(op)
+        db.session.commit()
+        return jsonify({"status": "success",
+                        "message": "تم إرسال رأيك للمراجعة، وسيظهر بعد موافقة المشرف الأعلى",
+                        "opinion": op.to_dict(viewer_id=student_id)})
+    except Exception:
+        app.logger.exception("فشل إضافة رأي عن دكتور")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر إرسال رأيك. حاول مجدداً."}), 500
+
+@app.route('/api/doctor-opinions/<int:opinion_id>/vote', methods=['POST'])
+@student_required
+def vote_doctor_opinion(opinion_id):
+    """التصويت على رأي معتمد: 1 = لايك، -1 = ديسلايك. صوت واحد لكل طالب؛
+    الضغط على نفس الصوت مرة ثانية يلغيه، والضغط على الصوت الآخر يبدّله."""
+    try:
+        student_id = session.get('student_id')
+        data = request.get_json(silent=True) or {}
+        try:
+            value = int(data.get('value'))
+        except (TypeError, ValueError):
+            value = 0
+        if value not in (1, -1):
+            return jsonify({"status": "error", "message": "قيمة التصويت غير صالحة"}), 400
+        op = DoctorOpinion.query.get_or_404(opinion_id)
+        if op.status != 'approved':
+            return jsonify({"status": "error", "message": "التصويت متاح فقط على الآراء المعتمدة"}), 400
+        existing = DoctorOpinionVote.query.filter_by(opinion_id=opinion_id, student_id=student_id).first()
+        if existing and existing.value == value:
+            db.session.delete(existing)
+        elif existing:
+            existing.value = value
+        else:
+            db.session.add(DoctorOpinionVote(opinion_id=opinion_id, student_id=student_id, value=value))
+        db.session.commit()
+        return jsonify({"status": "success", "opinion": op.to_dict(viewer_id=student_id)})
+    except Exception:
+        app.logger.exception("فشل التصويت على رأي: opinion_id=%s", opinion_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حفظ تصويتك. حاول مجدداً."}), 500
+
+@app.route('/admin/doctor-opinions', methods=['GET'])
+@admin_required
+def get_doctor_opinions_admin():
+    """إدارة آراء الدكاترة (المشرف الأعلى فقط): المعلّقة أولاً، مع فلتر
+    ?status= اختياري (pending/approved/rejected)."""
+    try:
+        user = get_current_user()
+        status = _safe_str(request.args.get('status'))
+        query = DoctorOpinion.query
+        if status in ('pending', 'approved', 'rejected'):
+            query = query.filter_by(status=status)
+        opinions = query.order_by(
+            db.case((DoctorOpinion.status == 'pending', 0), else_=1),
+            DoctorOpinion.created_at.desc()).all()
+        return jsonify([o.to_dict(viewer_id=user.id, include_real_author=True) for o in opinions])
+    except Exception:
+        app.logger.exception("فشل جلب آراء الدكاترة للإدارة")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/doctor-opinions/<int:opinion_id>/approve', methods=['POST'])
+@admin_required
+def approve_doctor_opinion(opinion_id):
+    try:
+        op = DoctorOpinion.query.get_or_404(opinion_id)
+        op.status = 'approved'
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم اعتماد الرأي وسيظهر للطلاب"})
+    except Exception:
+        app.logger.exception("فشل اعتماد رأي: opinion_id=%s", opinion_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر اعتماد الرأي. حاول مجدداً."}), 500
+
+@app.route('/admin/doctor-opinions/<int:opinion_id>/reject', methods=['POST'])
+@admin_required
+def reject_doctor_opinion(opinion_id):
+    try:
+        op = DoctorOpinion.query.get_or_404(opinion_id)
+        op.status = 'rejected'
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم رفض الرأي ولن يظهر للطلاب"})
+    except Exception:
+        app.logger.exception("فشل رفض رأي: opinion_id=%s", opinion_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر رفض الرأي. حاول مجدداً."}), 500
+
+@app.route('/admin/doctor-opinions/<int:opinion_id>/delete', methods=['POST'])
+@admin_required
+def delete_doctor_opinion(opinion_id):
+    """حذف رأي نهائياً مع كل أصواته — المشرف الأعلى فقط."""
+    try:
+        op = DoctorOpinion.query.get_or_404(opinion_id)
+        DoctorOpinionVote.query.filter_by(opinion_id=opinion_id).delete(synchronize_session=False)
+        db.session.delete(op)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حذف الرأي"})
+    except Exception:
+        app.logger.exception("فشل حذف رأي: opinion_id=%s", opinion_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حذف الرأي. حاول مجدداً."}), 500
+
 @app.route('/admin/supervisors', methods=['GET'])
 @admin_required
 def get_supervisors():
@@ -2172,6 +2372,21 @@ def simulators():
 def planner():
     user = get_current_user()
     return render_template('planner.html', student_id=user.id if user else None, student_name=user.name if user else None)
+
+@app.route('/guide')
+def guide():
+    """صفحة دليل الطالب (آراء الطلاب عن الدكاترة): قراءة الآراء المعتمدة
+    مفتوحة للجميع، وإضافة رأي أو التصويت تتطلب تسجيل دخول."""
+    user = get_current_user()
+    try:
+        colleges = [c.to_dict() for c in College.query.order_by(College.id).all()]
+    except Exception:
+        db.session.rollback()
+        colleges = []
+    if not colleges:
+        colleges = [{"id": 0, "name": "كلية الهندسة"}]
+    return render_template('guide.html', student_id=user.id if user else None,
+                           student_name=user.name if user else None, colleges=colleges)
 
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():

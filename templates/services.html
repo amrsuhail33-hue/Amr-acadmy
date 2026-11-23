@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>خدمات | أكاديمية عمرو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{--bg:#07111f;--panel:#0e1d31;--panel2:#132640;--line:#223a59;--text:#e9f1ff;--muted:#93a9c5;--blue:#56a7ff;--cyan:#35d5d0;--gold:#ffc857;--pink:#ff719a;--green:#65e6a4;--red:#ff6b6b;--shadow:0 24px 70px #02091480}*{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% -10%,#163a64 0,transparent 34%),radial-gradient(circle at 10% 30%,#0b3140 0,transparent 28%),var(--bg);color:var(--text);font-family:Tajawal,system-ui,sans-serif;min-height:100vh}.shell{max-width:1240px;margin:auto;padding:0 20px 120px}.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:calc(14px + env(safe-area-inset-top)) 0 14px;background:#07111fe8;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}.brand{display:flex;align-items:center;gap:12px}.brandmark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),#6d5cff);box-shadow:0 10px 30px #438dff45;font-size:1.2rem}.brand h1{font-size:1.05rem;margin:0;font-weight:900}.brand small{display:block;color:var(--muted);font-size:.73rem;margin-top:2px}.top-actions{display:flex;gap:8px}.link-btn{border:1px solid var(--line);background:#ffffff08;color:var(--text);border-radius:12px;cursor:pointer;font:inherit;padding:10px 13px;text-decoration:none;font-weight:800;font-size:.86rem}.link-btn:hover{border-color:var(--blue);background:#3186ed25}.hero{padding:56px 0 28px;display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}.eyebrow{color:var(--cyan);font-weight:900;letter-spacing:.8px}.hero h2{font-size:clamp(2.1rem,5vw,4.2rem);line-height:1.08;margin:12px 0}.hero h2 span{color:var(--blue)}.hero p{color:var(--muted);font-size:1.08rem;line-height:1.9;max-width:620px}.hero-art{min-height:250px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(145deg,#14345a,#0b1729);display:grid;place-items:center;box-shadow:var(--shadow);position:relative;overflow:hidden}.hero-art:after{content:'';position:absolute;width:220px;height:220px;border:1px solid #56a7ff55;border-radius:50%;box-shadow:0 0 0 22px #56a7ff0b,0 0 0 44px #56a7ff08}.hero-orb{width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,#1763c2 55%,#111bff);box-shadow:0 0 45px var(--cyan);z-index:1}.workspace{background:#ffffff05;border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:var(--shadow)}.footer-note{color:var(--muted);text-align:center;margin:24px 0;font-size:.85rem}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}.store-card{background:#081524;border:1px solid var(--line);border-radius:20px;padding:20px;cursor:pointer;transition:.2s}.store-card:hover{border-color:var(--blue);transform:translateY(-2px)}.store-card h3{margin:0 0 6px;font-size:1.2rem;font-weight:900}.store-card p{color:var(--muted);line-height:1.8;margin:0 0 12px}.store-meta{font-size:.85rem;color:var(--muted);display:flex;gap:14px;align-items:center}.store-meta i{color:var(--blue)}.open-store-btn{margin-top:14px;border:0;border-radius:12px;padding:11px 16px;background:linear-gradient(135deg,var(--blue),#6972ff);color:#fff;font:800 .95rem Tajawal;cursor:pointer;width:100%}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}.product-card{background:#081524;border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}.product-img{width:100%;height:170px;object-fit:cover;background:#0d2035}.product-img-fallback{width:100%;height:170px;display:grid;place-items:center;background:#0d2035;color:var(--muted);font-size:2.2rem}.product-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}.product-name{font-weight:900;font-size:1.05rem}.product-price{color:var(--gold);font-weight:900;font-size:1.05rem}.product-actions{display:flex;gap:8px;align-items:center;margin-top:auto}.details-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#ffffff08;color:var(--text);font:900 1.05rem Tajawal;cursor:pointer;flex:0 0 auto}.details-btn:hover{border-color:var(--blue);color:var(--blue)}.qty-box{display:none;align-items:center;gap:10px;margin-right:auto}.qty-box.on{display:flex}.qty-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#ffffff08;color:var(--text);font:900 1.1rem Tajawal;cursor:pointer}.qty-num{font-weight:900;min-width:22px;text-align:center}.shop-btn{border:0;border-radius:12px;padding:12px 20px;background:linear-gradient(135deg,var(--blue),#6972ff);color:#fff;font:800 1rem Tajawal;cursor:pointer}.shop-btn.off{background:#ffffff10;border:1px solid var(--line);color:var(--text)}.cart-bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:50;display:none;align-items:center;gap:14px;background:#0e1d31;border:1px solid var(--line);border-radius:16px;padding:12px 18px;box-shadow:0 10px 40px rgba(0,0,0,.45);max-width:94vw;flex-wrap:wrap;justify-content:center}.cart-bar.on{display:flex}.cart-info{font-weight:800}.cart-info b{color:var(--gold)}.checkout-btn{border:0;border-radius:12px;padding:11px 18px;background:#25d366;color:#fff;font:800 .95rem Tajawal;cursor:pointer;display:flex;gap:8px;align-items:center}.checkout-btn:disabled{opacity:.5;cursor:default}.modal-overlay{position:fixed;inset:0;background:#020914cc;z-index:60;display:none;align-items:center;justify-content:center;padding:16px}.modal-overlay.on{display:flex}.modal-box{background:#0e1d31;border:1px solid var(--line);border-radius:20px;padding:22px;max-width:520px;width:100%;max-height:80vh;overflow:auto}.modal-box h3{margin:0 0 10px;font-size:1.2rem;font-weight:900}.modal-box p{line-height:1.9;color:var(--text);margin:0}.modal-close{margin-top:16px;border:0;border-radius:12px;padding:11px 18px;background:linear-gradient(135deg,var(--blue),#6972ff);color:#fff;font:800 .95rem Tajawal;cursor:pointer;width:100%}.form-msg{display:none;margin-top:10px;font-weight:700;line-height:1.8}.form-msg.error{color:var(--red)}.toast-container{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}.toast{background:#0e1d31;color:var(--text);padding:12px 24px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.2);border:1px solid var(--line);font-weight:700;font-size:.95rem;transition:.3s;opacity:0;transform:translateY(10px);pointer-events:auto;max-width:90vw;text-align:center}.toast.show{opacity:1;transform:none}.toast.success{border-color:var(--green);color:var(--green)}.toast.error{border-color:var(--red);color:var(--red)}.toast.info{border-color:var(--blue);color:var(--blue)}
+@media(max-width:800px){.hero{grid-template-columns:1fr;padding-top:32px}.hero-art{min-height:180px}.topbar{align-items:flex-start}.top-actions{flex-wrap:wrap;justify-content:flex-end}.workspace{padding:14px}.shell{padding:0 12px 120px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><i class="fa-solid fa-bag-shopping"></i></div><div><h1>أكاديمية عمرو</h1><small>خدمات — متاجر الأكاديمية</small></div></a><div class="top-actions"><a class="link-btn" href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>{% if student_id %}<a class="link-btn" href="/#profile"><i class="fa-solid fa-user"></i> حسابي</a>{% endif %}</div></header>
+<section class="hero"><div><div class="eyebrow">تسوّق من متاجر الأكاديمية</div><h2>خدمات<br><span>المتاجر</span></h2><p>اختر متجراً وتصفح منتجاته، حدّد الكميات التي تريدها، ثم اضغط «انتقال» فيُفتح واتساب المتجر برسالة جاهزة فيها طلبك والسعر الكلي. التسوق لا يحتاج تسجيل دخول.</p></div><div class="hero-art"><div class="hero-orb"></div></div></section>
+
+<main class="workspace" id="storesView">
+<h3 style="margin:0 0 16px;"><i class="fa-solid fa-store"></i> المتاجر المتاحة</h3>
+<div id="storesMsg" class="form-msg error"></div>
+<div id="storesList"><div style="text-align:center;color:var(--muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div></div>
+</main>
+
+<main class="workspace" id="storeView" style="display:none; margin-top:18px;">
+<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+<button class="link-btn" onclick="showStoresList()"><i class="fa-solid fa-arrow-right"></i> كل المتاجر</button>
+<div style="flex:1; min-width:200px;"><h3 id="storeTitle" style="margin:0;"></h3><div id="storeDesc" style="color:var(--muted); line-height:1.8;"></div></div>
+<button class="shop-btn" id="shopModeBtn" onclick="toggleShopMode()"><i class="fa-solid fa-basket-shopping"></i> تسوق</button>
+</div>
+<div id="productsMsg" class="form-msg error"></div>
+<div id="productsList"><div style="text-align:center;color:var(--muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div></div>
+</main>
+<p class="footer-note">الطلب يُرسل عبر واتساب إلى رقم المتجر — لا تُحفظ بياناتك هنا.</p>
+</div>
+
+<div class="cart-bar" id="cartBar">
+<span class="cart-info"><i class="fa-solid fa-basket-shopping"></i> <span id="cartCount">0</span> منتج · الإجمالي <b id="cartTotal">0 ريال</b></span>
+<button class="checkout-btn" id="checkoutBtn" onclick="checkoutViaWhatsapp()"><i class="fa-brands fa-whatsapp"></i> انتقال إلى واتساب</button>
+</div>
+
+<div class="modal-overlay" id="detailsModal" onclick="if(event.target===this) closeDetails()">
+<div class="modal-box">
+<h3 id="detailsTitle"></h3>
+<p id="detailsBody"></p>
+<button class="modal-close" onclick="closeDetails()">إغلاق</button>
+</div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+// ============================================================
+//  خدمات — متاجر الأكاديمية + سلة + طلب عبر واتساب
+//  التسوق مفتوح دون تسجيل دخول. السلة تُحفظ في localStorage لكل متجر.
+// ============================================================
+const $ = id => document.getElementById(id);
+let stores = [];
+let currentStore = null;
+let products = [];
+let shopMode = false;
+let cart = {}; // product_id -> quantity
+
+function showToast(msg, type='info', duration=3000) {
+    const c = $('toastContainer');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = msg;
+    c.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => t.classList.add('show'), 100); // احتياط: إظهار التوست حتى لو لم يُنتج أي إطار رسم (rAF)
+    setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 500);
+    }, duration);
+}
+
+function esc(value) {
+    const span = document.createElement('span');
+    span.textContent = value ?? '';
+    return span.innerHTML;
+}
+
+function showStoresError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = $('storesMsg');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+function showProductsError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = $('productsMsg');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+
+function normalizeWhatsapp(raw) {
+    // نفس قواعد الخادم: إزالة + والمسافات والشرطات، ثم بادئة اليمن 967
+    const digits = String(raw || '').replace(/[^0-9]/g, '');
+    if (digits.startsWith('00')) return digits.slice(2);
+    if (digits.startsWith('0')) return '967' + digits.slice(1);
+    if (digits.startsWith('7')) return '967' + digits;
+    return digits;
+}
+
+function cartKey(storeId) { return 'services_cart_' + storeId; }
+function loadCart(storeId) {
+    try { cart = JSON.parse(localStorage.getItem(cartKey(storeId)) || '{}') || {}; }
+    catch (e) { cart = {}; }
+    Object.keys(cart).forEach(k => { if (!Number.isInteger(cart[k]) || cart[k] <= 0) delete cart[k]; });
+}
+function saveCart() {
+    if (!currentStore) return;
+    try { localStorage.setItem(cartKey(currentStore.id), JSON.stringify(cart)); } catch (e) {}
+}
+
+async function loadStores() {
+    const list = $('storesList');
+    try {
+        const res = await fetch('/api/stores');
+        stores = await res.json() || [];
+        if (!stores.length) {
+            list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">لا توجد متاجر متاحة حالياً — عُد لاحقاً.</div>';
+            return;
+        }
+        list.innerHTML = '<div class="store-grid">' + stores.map(s => `
+            <div class="store-card" onclick="openStore(${s.id})">
+                <h3><i class="fa-solid fa-store" style="color:var(--blue);"></i> ${esc(s.name)}</h3>
+                ${s.description ? `<p>${esc(s.description)}</p>` : ''}
+                <div class="store-meta"><span><i class="fa-solid fa-box-open"></i> ${s.product_count} منتج</span><span><i class="fa-brands fa-whatsapp"></i> طلب عبر واتساب</span></div>
+                <button class="open-store-btn" onclick="event.stopPropagation(); openStore(${s.id})">تصفح المنتجات</button>
+            </div>`).join('') + '</div>';
+    } catch (e) {
+        showStoresError('خطأ في تحميل المتاجر.');
+        list.innerHTML = '<div style="text-align:center;color:var(--red);padding:20px;">تعذر تحميل المتاجر — حدّث الصفحة وحاول مجدداً.</div>';
+    }
+}
+
+function showStoresList() {
+    currentStore = null;
+    products = [];
+    cart = {};
+    shopMode = false;
+    updateShopModeBtn();
+    $('storeView').style.display = 'none';
+    $('storesView').style.display = 'block';
+    $('cartBar').classList.remove('on');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function openStore(storeId) {
+    const s = stores.find(x => String(x.id) === String(storeId));
+    if (!s) return;
+    currentStore = s;
+    loadCart(s.id);
+    $('storesView').style.display = 'none';
+    $('storeView').style.display = 'block';
+    $('storeTitle').textContent = s.name;
+    $('storeDesc').textContent = s.description || '';
+    const list = $('productsList');
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
+    try {
+        const res = await fetch('/api/stores/' + s.id + '/products');
+        if (!res.ok) throw new Error('store unavailable');
+        products = await res.json() || [];
+        renderProducts();
+    } catch (e) {
+        showProductsError('خطأ في تحميل منتجات المتجر.');
+        list.innerHTML = '<div style="text-align:center;color:var(--red);padding:20px;">تعذر تحميل المنتجات — حدّث الصفحة وحاول مجدداً.</div>';
+    }
+    updateCartBar();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderProducts() {
+    const list = $('productsList');
+    if (!products.length) {
+        list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">لا توجد منتجات في هذا المتجر بعد.</div>';
+        return;
+    }
+    list.innerHTML = '<div class="product-grid">' + products.map(p => `
+        <div class="product-card">
+            ${p.image_url ? `<img class="product-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" onerror="this.outerHTML='<div class=&quot;product-img-fallback&quot;><i class=&quot;fa-solid fa-image&quot;></i></div>'">` : '<div class="product-img-fallback"><i class="fa-solid fa-image"></i></div>'}
+            <div class="product-body">
+                <div class="product-name">${esc(p.name)}</div>
+                <div class="product-price">${p.price} ريال</div>
+                <div class="product-actions">
+                    <button class="details-btn" title="تفاصيل المنتج" onclick="showDetails(${p.id})">!</button>
+                    <div class="qty-box ${shopMode ? 'on' : ''}" data-qty-box="${p.id}">
+                        <button class="qty-btn" onclick="changeQty(${p.id}, -1)">−</button>
+                        <span class="qty-num" data-qty-num="${p.id}">${cart[p.id] || 0}</span>
+                        <button class="qty-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('') + '</div>';
+}
+
+function toggleShopMode() {
+    shopMode = !shopMode;
+    updateShopModeBtn();
+    document.querySelectorAll('[data-qty-box]').forEach(el => el.classList.toggle('on', shopMode));
+    if (shopMode) {
+        showToast('وضع التسوق مفعّل — حدّد الكمية لكل منتج ثم اضغط «انتقال».', 'info', 4000);
+    }
+    updateCartBar();
+}
+function updateShopModeBtn() {
+    const b = $('shopModeBtn');
+    if (!b) return;
+    b.classList.toggle('off', !shopMode);
+    b.innerHTML = shopMode
+        ? '<i class="fa-solid fa-xmark"></i> إيقاف التسوق'
+        : '<i class="fa-solid fa-basket-shopping"></i> تسوق';
+}
+
+function changeQty(productId, delta) {
+    if (!shopMode) return;
+    const q = (cart[productId] || 0) + delta;
+    if (q <= 0) delete cart[productId];
+    else cart[productId] = q;
+    saveCart();
+    const num = document.querySelector('[data-qty-num="' + productId + '"]');
+    if (num) num.textContent = cart[productId] || 0;
+    updateCartBar();
+}
+
+function cartTotals() {
+    let count = 0, total = 0;
+    products.forEach(p => {
+        const q = cart[p.id] || 0;
+        count += q;
+        total += q * p.price;
+    });
+    return { count, total };
+}
+function updateCartBar() {
+    const bar = $('cartBar');
+    if (!bar) return;
+    const t = cartTotals();
+    $('cartCount').textContent = t.count;
+    $('cartTotal').textContent = t.total + ' ريال';
+    $('checkoutBtn').disabled = t.count === 0;
+    bar.classList.toggle('on', shopMode && t.count > 0);
+}
+
+function showDetails(productId) {
+    const p = products.find(x => String(x.id) === String(productId));
+    if (!p) return;
+    $('detailsTitle').textContent = p.name;
+    $('detailsBody').textContent = (p.details && p.details.trim()) ? p.details : 'لا توجد تفاصيل لهذا المنتج';
+    $('detailsModal').classList.add('on');
+}
+function closeDetails() {
+    $('detailsModal').classList.remove('on');
+}
+
+function checkoutViaWhatsapp() {
+    if (!currentStore) return;
+    const t = cartTotals();
+    if (t.count === 0) { showToast('السلة فارغة — حدّد الكمية لمنتج واحد على الأقل.', 'info', 4000); return; }
+    const lines = ['السلام عليكم، أريد طلب المنتجات التالية من متجر ' + currentStore.name + ':'];
+    products.forEach(p => {
+        const q = cart[p.id] || 0;
+        if (q > 0) lines.push('• ' + p.name + ' × ' + q + ' — ' + (p.price * q) + ' ريال');
+    });
+    lines.push('الإجمالي: ' + t.total + ' ريال');
+    const number = normalizeWhatsapp(currentStore.whatsapp_number);
+    if (!number) { showProductsError('رقم واتساب المتجر غير متوفر.'); return; }
+    const url = 'https://wa.me/' + number + '?text=' + encodeURIComponent(lines.join('\n'));
+    window.open(url, '_blank');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetails(); });
+loadStores();
+</script>
+</body>
+</html>

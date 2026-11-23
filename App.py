@@ -1566,30 +1566,76 @@ def add_subject():
 @app.route('/admin/edit-subject/<int:subject_id>', methods=['POST'])
 @admin_or_supervisor_required
 def edit_subject(subject_id):
+    """تعديل مادة: إعادة التسمية و/أو النقل إلى كلية/سنة/ترم آخر.
+    النقل يحدّث المادة وكل صفوفها المرتبطة (دروس + أسئلة) دفعة واحدة
+    في نفس المعاملة — الحقول المنسوخة (college/year/term/subject_name)
+    على الصفوف المرتبطة بـ subject_id وكذلك الصفوف القديمة بلا
+    subject_id المطابقة للاسم القديم — حتى لا يظهر المحتوى تحت
+    السنة/الترم القديمين. subject_id نفسه لا يتغير، فلا تتأثر
+    Progress/Favorites. الصلاحيات: المشرف الأعلى لأي كلية، مشرف الكلية
+    داخل كليته فقط (المصدر والهدف)، مشرف التخصص لا يعدّل المواد."""
     try:
         user = get_current_user()
         subj = Subject.query.get_or_404(subject_id)
         if user.role == 'specialization_supervisor':
-            return jsonify({"status": "error", "message": "مشرف التخصص لا يمكنه إعادة تسمية المواد"}), 403
+            return jsonify({"status": "error", "message": "مشرف التخصص لا يمكنه تعديل المواد"}), 403
         if user.role == 'college_supervisor' and (user.supervisor_college or '') != (subj.college or ''):
             return jsonify({"status": "error", "message": "غير مصرح لك بتعديل مادة خارج كليتك"}), 403
         data = request.get_json(silent=True) or request.form or {}
         new_name = _safe_str(data.get('name'))
         if not new_name:
             return jsonify({"status": "error", "message": "اسم المادة مطلوب"}), 400
-        if new_name == subj.name:
+        # الكلية الهدف: إن لم تُرسل تُبقى الحالية. مشرف الكلية لا ينقل
+        # خارج كليته — طلب كلية أخرى يُرفض 403 برسالة واضحة.
+        new_college = _safe_str(data.get('college')) or subj.college
+        if user.role == 'college_supervisor':
+            if new_college != (user.supervisor_college or ''):
+                return jsonify({"status": "error", "message": "غير مصرح لك بنقل مادة إلى كلية أخرى — النقل داخل كليتك فقط"}), 403
+            new_college = user.supervisor_college or subj.college
+        # السنة: تُطبَّع إن طابقت صيغة معروفة، وإلا تُقبل كما كُتبت كسنة
+        # مخصصة (مثل add-subject) طالما كانت ضمن طول العمود (100).
+        raw_year = _safe_str(data.get('year'))
+        if raw_year:
+            new_year = _normalize_year(raw_year)
+            if not new_year:
+                new_year = raw_year.strip()
+                if not new_year or len(new_year) > 100:
+                    return jsonify({"status": "error", "message": "السنة الدراسية غير صالحة — اختر سنة من القائمة أو اكتب سنة مخصصة (100 حرف كحد أقصى)"}), 400
+        else:
+            new_year = subj.year
+        # الترم: قياسي فقط.
+        raw_term = _safe_str(data.get('term'))
+        if raw_term:
+            new_term = _normalize_term(raw_term)
+            if not new_term:
+                return jsonify({"status": "error", "message": "الفصل الدراسي غير صالح — القيم المقبولة: " + _TERM_VALUES_TEXT}), 400
+        else:
+            new_term = subj.term
+        if (new_name, new_college, new_year, new_term) == (subj.name, subj.college, subj.year, subj.term):
             return jsonify({"status": "success", "message": "تم تحديث المادة بنجاح", "subject": subj.to_dict()})
-        dup = Subject.query.filter_by(college=subj.college, year=subj.year, term=subj.term, name=new_name).first()
-        if dup:
-            return jsonify({"status": "error", "message": "يوجد مادة بهذا الاسم بالفعل في نفس الكلية والسنة والترم"}), 400
+        dup = Subject.query.filter_by(college=new_college, year=new_year, term=new_term, name=new_name).first()
+        if dup and dup.id != subj.id:
+            return jsonify({"status": "error", "message": "يوجد مادة بهذا الاسم بالفعل في %s — %s — %s" % (new_college, new_year, new_term)}), 400
+        old = (subj.college, subj.year, subj.term, subj.name)
         subj.name = new_name
-        # إعادة التسمية تحدّث كل الصفوف المرتبطة دفعة واحدة (دروس + أسئلة)
-        CustomLesson.query.filter_by(subject_id=subj.id).update({"subject_name": new_name}, synchronize_session=False)
-        QuizQuestion.query.filter_by(subject_id=subj.id).update({"subject_name": new_name}, synchronize_session=False)
+        subj.college = new_college
+        subj.year = new_year
+        subj.term = new_term
+        _moved = {"subject_name": new_name, "college": new_college, "year": new_year, "term": new_term}
+        CustomLesson.query.filter_by(subject_id=subj.id).update(_moved, synchronize_session=False)
+        CustomLesson.query.filter(
+            CustomLesson.subject_id == None,
+            CustomLesson.college == old[0], CustomLesson.year == old[1],
+            CustomLesson.term == old[2], CustomLesson.subject_name == old[3]).update(_moved, synchronize_session=False)
+        QuizQuestion.query.filter_by(subject_id=subj.id).update(_moved, synchronize_session=False)
+        QuizQuestion.query.filter(
+            QuizQuestion.subject_id == None,
+            QuizQuestion.college == old[0], QuizQuestion.year == old[1],
+            QuizQuestion.term == old[2], QuizQuestion.subject_name == old[3]).update(_moved, synchronize_session=False)
         db.session.commit()
         return jsonify({"status": "success", "message": "تم تحديث المادة بنجاح", "subject": subj.to_dict()})
     except Exception as e:
-        app.logger.exception("فشل إعادة تسمية مادة: subject_id=%s", subject_id)
+        app.logger.exception("فشل تعديل مادة: subject_id=%s", subject_id)
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 

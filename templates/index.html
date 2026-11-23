@@ -1664,13 +1664,13 @@ async function loadSubjectsTab() {
         populateContentFilters();
         if (!list || list.length === 0) { sl.innerHTML = '<div style="text-align:center; padding:20px;">لا توجد مواد بعد — أضف أول مادة من النموذج أعلاه.</div>'; return; }
         sl.innerHTML = list.map(s => `
-            <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div data-college="${escapeText(s.college)}" data-year="${escapeText(s.year)}" data-term="${escapeText(s.term)}" style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <div style="font-weight:bold;" data-subject-name="${escapeText(s.name)}">${escapeText(s.name)}</div>
                     <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(s.college)} · ${escapeText(s.year)} · ${escapeText(s.term)} · ${(s.lesson_count || 0)} درس · ${(s.question_count || 0)} سؤال</div>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    ${(USER_ROLE === 'admin' || USER_ROLE === 'college_supervisor') ? `<button onclick="startRenameSubject(${s.id}, this)" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>` : ''}
+                    ${(USER_ROLE === 'admin' || USER_ROLE === 'college_supervisor') ? `<button onclick="startEditSubject(${s.id}, this)" title="تعديل / نقل المادة" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>` : ''}
                     ${USER_ROLE === 'admin' ? `<button data-id="${s.id}" data-name="${escapeText(s.name)}" onclick="removeSubject(this.dataset.id, this.dataset.name, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>` : ''}
                 </div>
             </div>`).join('');
@@ -1703,32 +1703,86 @@ async function submitNewSubject() {
     } catch(e) { const msg = 'خطأ أثناء إضافة المادة. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } }
 }
 
-function startRenameSubject(id, btn) {
+const EDIT_SUBJECT_YEARS = ['السنة الأولى', 'السنة الثانية', 'السنة الثالثة', 'السنة الرابعة', 'السنة الخامسة', 'السنة السادسة'];
+const EDIT_SUBJECT_TERMS = ['الترم الأول', 'الترم الثاني'];
+
+function startEditSubject(id, btn) {
+    // محرر مضمّن لتعديل المادة ونقلها: الاسم + الكلية + السنة + الترم.
+    // النقل من هنا يحدّث المادة وكل دروسها وأسئلتها دفعة واحدة في الخادم.
     const actions = btn.parentElement;
     const row = actions ? actions.parentElement : null;
     const nameEl = row ? row.querySelector('[data-subject-name]') : null;
-    if (!nameEl) return;
+    if (!nameEl || !row) return;
     const current = nameEl.getAttribute('data-subject-name') || nameEl.textContent;
-    const input = document.createElement('input');
-    input.type = 'text'; input.value = current; input.className = 'qa-input-field'; input.style.cssText = 'margin:0; padding:8px 12px; max-width:220px;';
+    const curCollege = row.getAttribute('data-college') || '';
+    const curYear = row.getAttribute('data-year') || '';
+    const curTerm = row.getAttribute('data-term') || '';
+    const editor = document.createElement('div');
+    editor.style.cssText = 'display:flex; flex-direction:column; gap:8px; flex:1; min-width:260px;';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.value = current; nameInput.className = 'qa-input-field'; nameInput.style.cssText = 'margin:0; padding:8px 12px;';
+    nameInput.placeholder = 'اسم المادة';
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;';
+    const collegeSel = document.createElement('select');
+    collegeSel.className = 'qa-input-field'; collegeSel.style.cssText = 'margin:0; padding:8px 12px;';
+    const yearSel = document.createElement('select');
+    yearSel.className = 'qa-input-field'; yearSel.style.cssText = 'margin:0; padding:8px 12px;';
+    const termSel = document.createElement('select');
+    termSel.className = 'qa-input-field'; termSel.style.cssText = 'margin:0; padding:8px 12px;';
+    EDIT_SUBJECT_YEARS.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; yearSel.appendChild(o); });
+    const customOpt = document.createElement('option'); customOpt.value = '__custom__'; customOpt.textContent = 'سنة مخصصة…'; yearSel.appendChild(customOpt);
+    EDIT_SUBJECT_TERMS.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; termSel.appendChild(o); });
+    const yearCustom = document.createElement('input');
+    yearCustom.type = 'text'; yearCustom.placeholder = 'اكتب السنة المخصصة (مثال: سنة تحضيرية)'; yearCustom.className = 'qa-input-field'; yearCustom.style.cssText = 'margin:0; padding:8px 12px; display:none;';
+    if (EDIT_SUBJECT_YEARS.includes(curYear)) { yearSel.value = curYear; }
+    else { yearSel.value = '__custom__'; yearCustom.value = curYear; yearCustom.style.display = 'block'; }
+    termSel.value = curTerm;
+    yearSel.onchange = () => {
+        const custom = yearSel.value === '__custom__';
+        yearCustom.style.display = custom ? 'block' : 'none';
+        if (custom) yearCustom.focus(); else yearCustom.value = '';
+    };
+    grid.appendChild(collegeSel); grid.appendChild(yearSel); grid.appendChild(termSel);
+    editor.appendChild(nameInput); editor.appendChild(grid); editor.appendChild(yearCustom);
+    // خيارات الكلية: مشرف الكلية ثابت على كليته ومعطّل، والمشرف الأعلى يرى كل الكليات.
+    (async () => {
+        try {
+            if (IS_SUPERVISOR && SUPERVISOR_COLLEGE) {
+                const o = document.createElement('option'); o.value = SUPERVISOR_COLLEGE; o.textContent = SUPERVISOR_COLLEGE; collegeSel.appendChild(o);
+                collegeSel.value = SUPERVISOR_COLLEGE; collegeSel.disabled = true;
+            } else {
+                const res = await fetch('/admin/colleges');
+                const list = await res.json();
+                (list || []).forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; collegeSel.appendChild(o); });
+                _ensureSelectOption(collegeSel, curCollege);
+                collegeSel.value = curCollege;
+            }
+        } catch(e) { _ensureSelectOption(collegeSel, curCollege); collegeSel.value = curCollege; }
+    })();
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'حفظ'; saveBtn.style.cssText = 'background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;';
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'إلغاء'; cancelBtn.style.cssText = 'background:var(--bg-body); color:var(--text-main); border:1px solid var(--border); padding:6px 12px; border-radius:8px; cursor:pointer;';
-    nameEl.replaceWith(input);
+    nameEl.replaceWith(editor);
     actions.replaceChildren(saveBtn, cancelBtn);
-    input.focus(); input.select();
+    nameInput.focus(); nameInput.select();
     cancelBtn.onclick = () => loadSubjectsTab();
     saveBtn.onclick = async () => {
-        const newName = input.value.trim();
-        if (!newName || newName === current) { loadSubjectsTab(); return; }
+        const newName = nameInput.value.trim();
+        const newCollege = collegeSel.value;
+        let newYear = yearSel.value;
+        if (newYear === '__custom__') newYear = yearCustom.value.trim();
+        const newTerm = termSel.value;
+        const sm = document.getElementById('subjectMsg');
+        if (!newName || !newYear || !newTerm) { const msg = 'اسم المادة والسنة والترم حقول مطلوبة.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } return; }
+        if (newName === current && newCollege === curCollege && newYear === curYear && newTerm === curTerm) { loadSubjectsTab(); return; }
         try {
-            const res = await fetch(`/admin/edit-subject/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }) });
+            const res = await fetch(`/admin/edit-subject/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName, college: newCollege, year: newYear, term: newTerm }) });
             const data = await res.json();
-            const sm = document.getElementById('subjectMsg');
             if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); loadSubjectsTab(); }
-            else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } /* لا نعيد تحميل القائمة هنا: loadSubjectsTab() تخفي #subjectMsg فوراً، ويبقى المحرر مفتوحاً ليصحح المستخدم الاسم */ }
-        } catch(e) { const msg = 'خطأ أثناء إعادة التسمية.'; showToast(msg, 'error', 5000); const sm = document.getElementById('subjectMsg'); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } /* المحرر يبقى مفتوحاً ليحاول المستخدم مجدداً */ }
+            else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } /* لا نعيد تحميل القائمة هنا: loadSubjectsTab() تخفي #subjectMsg فوراً، ويبقى المحرر مفتوحاً ليصحح المستخدم القيم */ }
+        } catch(e) { const msg = 'خطأ أثناء تعديل المادة.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } /* المحرر يبقى مفتوحاً ليحاول المستخدم مجدداً */ }
     };
 }
 

@@ -1205,6 +1205,13 @@ def get_platform_data(user):
             elif c_type == "files":
                 lesson_dict["file"] = item.url or item.download_url or ""
                 lesson_dict["download"] = item.download_url or ""
+            if lesson_dict["vip_locked"]:
+                # الروابط نفسها لا تظهر أبداً في الصفحة للدرس المقفل — الكتالوج
+                # كاملاً مضمّن JSON في الصفحة للبحث، فأي رابط باقٍ فيه يُستخرج
+                # من مصدر الصفحة ويفتح المحتوى المدفوع دون منح.
+                lesson_dict["video"] = ""
+                lesson_dict["file"] = ""
+                lesson_dict["download"] = ""
 
             subj_data["types"][c_type]["chapters"][chapter]["lessons"].append(lesson_dict)
             subj_data["lesson_count"] = subj_data.get("lesson_count", 0) + 1
@@ -3163,9 +3170,13 @@ def get_admin_accounts():
             like = f"%{q}%"
             query = query.filter(db.or_(Student.username.ilike(like), Student.name.ilike(like)))
         students = query.order_by(Student.created_at.desc()).all()
+        # XP/المستوى من جدول واحد لكل الحسابات دفعة واحدة (لا استعلام
+        # لكل طالب — كان البحث في تبويب VIP بطيئاً بسبب N+1).
+        _ids = [s.id for s in students]
+        _profiles = {p.student_id: p for p in UserProfile.query.filter(UserProfile.student_id.in_(_ids)).all()} if _ids else {}
         result = []
         for s in students:
-            profile = UserProfile.query.filter_by(student_id=s.id).first()
+            profile = _profiles.get(s.id)
             d = s.to_dict()
             d["xp"] = profile.points if profile else 0
             d["level"] = profile.level if profile else 1

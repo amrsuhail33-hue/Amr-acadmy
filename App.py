@@ -1865,8 +1865,20 @@ def import_questions():
                 if user.role in SUPERVISOR_ROLES and not _in_scope(user, _row_college, _row_subject):
                     skipped += 1
                     continue
+                # الاستيراد بلا مادة مختارة ينشئ سجل المادة تلقائياً (get-or-create)
+                # حتى تظهر في قوائم الإدارة («المواد»، محدد الاستيراد، مرشح
+                # الأسئلة) وتقبل إعادة التسمية والحذف؛ بلا ذلك تبقى الأسئلة
+                # بلا subject_id وتظهر المادة في الصفحة الرئيسية فقط عبر
+                # تجميع النص الاحتياطي. النطاق فُحص أعلاه قبل الوصول هنا،
+                # فمشرف التخصص لا ينشئ إلا مادته، ومشرف الكلية إلا في كليته.
                 _matched = Subject.query.filter_by(college=_row_college, year=_row_year, term=_row_term, name=_row_subject).first()
-                _row_subject_id = _matched.id if _matched else None
+                if _matched is None:
+                    if not College.query.filter_by(name=_row_college).first():
+                        db.session.add(College(name=_row_college))
+                    _matched = Subject(name=_row_subject, college=_row_college, year=_row_year, term=_row_term, created_by=user.id)
+                    db.session.add(_matched)
+                    db.session.flush()  # يمنح الصف id قبل ربط الأسئلة به
+                _row_subject_id = _matched.id
             q = QuizQuestion(
                 year=_row_year,
                 term=_row_term,

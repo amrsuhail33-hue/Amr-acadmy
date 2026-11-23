@@ -32,6 +32,10 @@
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
+        // نظام VIP: الخدمات المغلقة حالياً + الخدمات التي يملك المستخدم منحاً عليها
+        const VIP_CLOSED_SERVICES = {{ vip_closed_services|tojson }};
+        const MY_VIP_SERVICES = {{ my_vip_services|tojson }};
+        const TERMINATED_REASON = {{ terminated_reason|tojson }};
     </script>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -168,6 +172,10 @@
         .fab-container.open .fab-item:nth-child(10) { transition-delay: 0.45s; }
         .fab-container.open .fab-item:nth-child(11) { transition-delay: 0.5s; }
         .fab-badge-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-card); }
+        /* شارة VIP الذهبية — فوق المحتوى/الخدمة المدفوعة عند الطرف */
+        .vip-badge { position: absolute; top: -7px; left: -7px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 999px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 2; }
+        .fab-item { position: relative; }
+        .vip-badge-inline { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.7rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
         
         .chat-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2009; opacity: 0; visibility: hidden; transition: 0.3s; }
         .chat-overlay.active { opacity: 1; visibility: visible; }
@@ -341,6 +349,22 @@
             <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.9rem;" id="leaderboardToggle">إظهار في الترتيب</button>
             <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.9rem;"><i class="fa-solid fa-ranking-star"></i> المتصدرين</button>
         </div>
+
+        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-crown" style="color:var(--warning); margin-left:6px;"></i> منح VIP الخاصة بي</div>
+            <div id="myVipGrants">جاري التحميل...</div>
+        </div>
+
+        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-user-pen" style="color:var(--primary); margin-left:6px;"></i> تعديل بياناتي</div>
+            <input type="text" id="edit_profile_name" placeholder="الاسم" class="qa-input-field">
+            <input type="text" id="edit_profile_username" placeholder="اسم المستخدم" class="qa-input-field">
+            <input type="password" id="edit_profile_current_pw" placeholder="كلمة المرور الحالية (مطلوبة فقط عند تغيير كلمة السر)" class="qa-input-field" autocomplete="current-password">
+            <input type="password" id="edit_profile_new_pw" placeholder="كلمة المرور الجديدة (اتركها فارغة إن لم تغيّرها)" class="qa-input-field" autocomplete="new-password">
+            <input type="password" id="edit_profile_confirm_pw" placeholder="تأكيد كلمة المرور الجديدة" class="qa-input-field" autocomplete="new-password">
+            <button onclick="submitProfileUpdate()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
+            <div id="profileEditMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+        </div>
         
         <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
             <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط المكتسبة</div>
@@ -349,6 +373,17 @@
             </div>
         </div>
         <button onclick="logoutStudent(this)" class="btn-calc-outline" style="margin-top:20px; color:var(--danger); border-color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </div>
+</div>
+
+<!-- VIP Pay Popup -->
+<div class="popup-box" id="vipPayBox">
+    <div class="popup-header"><div><i class="fa-solid fa-crown header-icon" style="color:var(--warning);"></i> محتوى مدفوع</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="popup-body" style="text-align:center;">
+        <div style="width:64px; height:64px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 14px;"><i class="fa-solid fa-lock"></i></div>
+        <p style="font-weight:800; font-size:1.05rem; margin:0 0 6px;">هذا المحتوى مدفوع، للفتح تواصل معنا</p>
+        <p id="vipPayTarget" style="color:var(--text-muted); font-weight:700; margin:0 0 20px;"></p>
+        <a id="vipPayWhatsBtn" href="https://wa.me/967774485611" target="_blank" class="btn-calc-action" style="background:#25D366; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fa-brands fa-whatsapp"></i> تواصل عبر واتساب</a>
     </div>
 </div>
 
@@ -409,6 +444,8 @@
             <button onclick="switchAdminTab('supervisors', event)" class="btn-calc-outline admin-tab-btn">المشرفون والكليات</button>
             <button onclick="switchAdminTab('opinions', event)" class="btn-calc-outline admin-tab-btn">آراء الدكاترة</button>
             <button onclick="switchAdminTab('stores', event)" class="btn-calc-outline admin-tab-btn">المتاجر والخدمات</button>
+            <button onclick="switchAdminTab('accounts', event)" class="btn-calc-outline admin-tab-btn">الحسابات</button>
+            <button onclick="switchAdminTab('vip', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--warning); color:var(--warning);">VIP <i class="fa-solid fa-crown"></i></button>
             {% endif %}
             {% if is_store_manager %}
             <button onclick="switchAdminTab('my_stores', event)" class="btn-calc-outline admin-tab-btn">متجري</button>
@@ -442,6 +479,7 @@
                 <input type="url" id="add_url" placeholder="رابط العرض المباشر" class="qa-input-field">
                 <input type="url" id="add_download" placeholder="رابط التحميل" class="qa-input-field">
                 <textarea id="add_notes" rows="2" placeholder="ملاحظات توضيحية..." class="qa-input-field"></textarea>
+                <label style="display:flex; align-items:center; gap:8px; font-weight:800; color:var(--warning); cursor:pointer; margin-bottom:12px;"><input type="checkbox" id="add_is_vip" style="width:18px; height:18px; accent-color:var(--warning);"> <i class="fa-solid fa-crown"></i> محتوى VIP؟ (مدفوع — مغلق لمن ليس لديه منح)</label>
                 <div style="display:flex; gap:12px; flex-wrap:wrap;">
                     <button id="btn_save_content" onclick="submitNewContent()" class="btn-calc-action" style="background:var(--accent); flex:2;"><i class="fa-solid fa-cloud-arrow-up"></i> حفظ المحتوى</button>
                     <button id="btn_cancel_edit" onclick="resetContentForm()" class="btn-calc-outline" style="display:none; flex:1; border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-ban"></i> إلغاء</button>
@@ -582,6 +620,56 @@
                 <div id="subjectMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
             <div id="adminSubjectsList">جاري جلب المواد...</div>
+        </div>
+        <div id="adminTab_accounts" style="display:none;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:15px;">
+                <input type="text" id="accounts_search" placeholder="ابحث باليوزر أو الاسم..." class="qa-input-field" style="flex:2; margin-bottom:0;" oninput="loadAccountsTab()">
+                <button onclick="loadAccountsTab()" class="btn-calc-action" style="background:var(--primary); flex:0 0 auto; padding:8px 14px;"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+            <div id="accountsMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            <div id="accountsList">جاري جلب الحسابات...</div>
+        </div>
+        <div id="adminTab_vip" style="display:none;">
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+                <div style="font-weight:900; color:var(--warning); margin-bottom:15px;"><i class="fa-solid fa-crown"></i> منح VIP لمستخدم:</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+                    <input type="text" id="vip_search" placeholder="اسم المستخدم (مثال: stu1)" class="qa-input-field" style="flex:2; margin-bottom:0;">
+                    <button onclick="searchVipUser()" class="btn-calc-action" style="background:var(--primary); flex:0 0 auto; padding:8px 14px;"><i class="fa-solid fa-magnifying-glass"></i> بحث</button>
+                </div>
+                <div id="vipUserCard" style="margin-bottom:12px;"></div>
+                <div id="vipGrantForm" style="display:none;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <select id="vip_scope_type" class="qa-input-field" style="margin-bottom:0;" onchange="onVipScopeTypeChange()">
+                            <option value="subject">مادة</option>
+                            <option value="content">محتوى (درس VIP)</option>
+                            <option value="service">خدمة</option>
+                        </select>
+                        <select id="vip_scope_key" class="qa-input-field" style="margin-bottom:0;"></select>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <select id="vip_duration" class="qa-input-field" style="margin-bottom:0;" onchange="document.getElementById('vip_days').style.display = this.value === 'days' ? 'block' : 'none';">
+                            <option value="month">شهر (30 يوماً)</option>
+                            <option value="year">سنة (365 يوماً)</option>
+                            <option value="days">عدد أيام محدد</option>
+                            <option value="forever">أبدي</option>
+                        </select>
+                        <input type="number" id="vip_days" placeholder="عدد الأيام" min="1" max="3650" class="qa-input-field" style="margin-bottom:0; display:none;">
+                    </div>
+                    <button onclick="submitVipGrant()" class="btn-calc-action" style="background:var(--warning); color:#fff;"><i class="fa-solid fa-crown"></i> منح VIP</button>
+                    <div id="vipGrantMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+                </div>
+            </div>
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+                <div style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-lock"></i> إغلاق الخدمات كـ VIP:</div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 12px; line-height:1.6;">الخدمة المغلقة تظهر بشارة VIP في الفقاعة ولا تفتح إلا لمن لديه منح خدمة عليها. عند إيقاف الإغلاق تعود الخدمة مجانية للجميع فوراً. (خدمات المتاجر تبقى عامة دائماً.)</p>
+                <div id="vipServicesList">جاري جلب الخدمات...</div>
+                <div id="vipServiceMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            </div>
+            <div>
+                <div style="font-weight:900; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-list"></i> كل المنح النشطة:</div>
+                <div id="vipAllGrantsList">جاري جلب المنح...</div>
+                <div id="vipRevokeMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -729,8 +817,8 @@
     <div class="section-header"><h2>الفصول والمواضيع</h2></div>
     <div class="grid-container">
         {% for chapter in chapters %}
-            <a href="/?subject={{ subject.id|urlencode }}&type={{ content_type|urlencode }}&chapter={{ chapter.name|urlencode }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px;">
-                <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}</span>
+            <a href="/?subject={{ subject.id|urlencode }}&type={{ content_type|urlencode }}&chapter={{ chapter.name|urlencode }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px; position:relative;">
+                <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}{% if chapter.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}</span>
                 <i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i>
             </a>
         {% else %}
@@ -750,6 +838,15 @@
     
     {% if content_type == 'quiz' %}
         <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px 20px; margin-top:25px;">
+            {% if chapter_vip_locked %}
+            <div style="text-align:center;">
+                <span class="vip-badge-inline" style="font-size:0.85rem; padding:5px 14px;"><i class="fa-solid fa-crown"></i> VIP</span>
+                <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:18px auto 15px;"><i class="fa-solid fa-lock"></i></div>
+                <h3 style="margin-bottom:12px; font-size:1.4rem; font-weight:900;">هذا المحتوى مدفوع، للفتح تواصل معنا</h3>
+                <p style="color:var(--text-muted); font-weight:700; margin-bottom:20px;">اختبار «{{ chapter.name }}» من المحتوى المدفوع — تواصل معنا عبر واتساب لتفعيله.</p>
+                <a href="https://wa.me/967774485611?text={{ ('أريد تفعيل أسئلة ' + chapter.name)|urlencode }}" target="_blank" class="btn-calc-action" style="background:#25D366; max-width:320px; margin:0 auto; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fa-brands fa-whatsapp"></i> تواصل عبر واتساب</a>
+            </div>
+            {% else %}
             <div id="quiz-start" style="text-align:center;">
                 <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 15px;"><i class="fa-solid fa-award"></i></div>
                 <h3 style="margin-bottom:12px; font-size:1.4rem; font-weight:900;">تقييم فهمك للفصل</h3>
@@ -793,6 +890,7 @@
                     <button class="btn-calc-outline" style="flex:1; min-width:200px;" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> إعادة الاختبار</button>
                 </div>
             </div>
+            {% endif %}
         </div>
     {% else %}
     
@@ -818,7 +916,8 @@
                     {% if content_type == 'videos' %}<i class="fa-solid fa-circle-play"></i>{% else %}<i class="fa-solid fa-file-pdf" style="color:var(--danger);"></i>{% endif %}
                 </div>
                 <div class="item-text">
-                    <h4 class="item-title">{{ item.title }} 
+                    <h4 class="item-title">{{ item.title }}
+                        {% if item.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}
                         {% if is_admin or is_assistant %}
                             {% if item.status == 'pending_review' %}<span class="status-badge status-pending">قيد المراجعة</span>{% endif %}
                             {% if item.status == 'rejected' %}<span class="status-badge status-rejected">مرفوض</span>{% endif %}
@@ -830,11 +929,15 @@
             <div class="item-actions">
                 <button class="action-btn fav-btn" data-lesson-id="{{ item.id }}" onclick="toggleFavorite(this)" title="مفضلة"><i class="fa-regular fa-heart"></i></button>
                 <a href="/planner" target="_blank" class="action-btn plan-btn" title="خطة"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
+                {% if item.vip_locked %}
+                    <button class="action-btn view" onclick="showVipPayPopup({{ item.title|tojson }})" title="محتوى مدفوع" style="color:var(--warning);"><i class="fa-solid fa-lock"></i></button>
+                {% else %}
                 {% if item.video or item.file %}
                     <a href="{{ item.video or item.file }}" target="_blank" class="action-btn view">{% if content_type == 'videos' %}<i class="fa-solid fa-play"></i>{% else %}<i class="fa-regular fa-eye"></i>{% endif %}</a>
                 {% endif %}
                 {% if item.download %}
                     <a href="{{ item.download }}" target="_blank" class="action-btn download"><i class="fa-solid fa-cloud-arrow-down"></i></a>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -900,11 +1003,11 @@
     <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي"><i class="fa-solid fa-heart" style="color:var(--primary);"></i></div>
     <a href="https://wa.me/967774485611" target="_blank" class="fab-item" title="الدعم الفني"><i class="fa-solid fa-headset" style="color:var(--accent);"></i></a>
     <div class="fab-item" onclick="openWhatsNewModal()" title="التحديثات"><i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadStarDot" style="display:none; top:0; right:0;"></span></div>
-    <a href="/simulators" class="fab-item" aria-label="المحاكيات" title="المحاكيات"><i class="fa-solid fa-flask"></i></a>
-    <a href="/planner" target="_blank" class="fab-item" title="الخطة الدراسية"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
-    <div class="fab-item" onclick="togglePopup('calcBox')" title="حاسبة المعدل"><i class="fa-solid fa-calculator"></i></div>
-    <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i></div>
-    <a href="/guide" class="fab-item" title="دليل الطالب"><i class="fa-solid fa-user-graduate" style="color:#8b5cf6;"></i></a>
+    <a href="/simulators" class="fab-item" aria-label="المحاكيات" title="المحاكيات" onclick="return guardVipService('simulator', 'المختبر', event)"><i class="fa-solid fa-flask"></i><span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span></a>
+    <a href="/planner" target="_blank" class="fab-item" title="الخطة الدراسية" onclick="return guardVipService('planner', 'الخطة الدراسية', event)"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i><span class="vip-badge" data-vip-badge="planner" style="display:none;">VIP</span></a>
+    <div class="fab-item" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox')" title="حاسبة المعدل"><i class="fa-solid fa-calculator"></i><span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span></div>
+    <div class="fab-item" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i><span class="vip-badge" data-vip-badge="bot" style="display:none;">VIP</span></div>
+    <a href="/guide" class="fab-item" title="دليل الطالب" onclick="return guardVipService('guide', 'دليل الطالب', event)"><i class="fa-solid fa-user-graduate" style="color:#8b5cf6;"></i><span class="vip-badge" data-vip-badge="guide" style="display:none;">VIP</span></a>
     <a href="/services" class="fab-item" title="خدمات"><i class="fa-solid fa-bag-shopping" style="color:#0ea5e9;"></i></a>
 </div>
 {% endif %}
@@ -1170,7 +1273,7 @@ function openAdminDashboard() {
 function switchAdminTab(tab, evt) {
     document.querySelectorAll('#adminBox .admin-tab-btn').forEach(b => { b.style.color=''; b.style.borderColor=''; });
     if(evt && evt.currentTarget) { evt.currentTarget.style.color='var(--primary)'; evt.currentTarget.style.borderColor='var(--primary)'; }
-    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors', 'subjects', 'opinions', 'stores', 'my_stores'].forEach(t => {
+    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors', 'subjects', 'opinions', 'stores', 'my_stores', 'accounts', 'vip'].forEach(t => {
         const el = document.getElementById('adminTab_' + t);
         if(el) el.style.display = (t === tab) ? 'block' : 'none';
     });
@@ -1183,6 +1286,376 @@ function switchAdminTab(tab, evt) {
     if(tab === 'opinions' && IS_ADMIN) loadDoctorOpinions();
     if(tab === 'stores' && IS_ADMIN) loadStoresTab();
     if(tab === 'my_stores' && IS_STORE_MANAGER) loadMyStoresTab();
+    if(tab === 'accounts' && IS_ADMIN) loadAccountsTab();
+    if(tab === 'vip' && IS_ADMIN) loadVipTab();
+}
+
+// ==========================================
+// نظام VIP — حارس الخدمات + نافذة الدفع
+// ==========================================
+const VIP_SERVICE_NAMES = { calculator: 'حاسبة المعدل', bot: 'المساعد الذكي', planner: 'الخطة الدراسية', simulator: 'المختبر', guide: 'دليل الطالب' };
+
+function isVipServiceLocked(key) {
+    if (!VIP_CLOSED_SERVICES || !VIP_CLOSED_SERVICES.includes(key)) return false;
+    if (IS_ADMIN || IS_ASSISTANT) return false;
+    return !(MY_VIP_SERVICES || []).includes(key);
+}
+
+function showVipPayPopup(title) {
+    const t = document.getElementById('vipPayTarget');
+    if (t) t.textContent = title ? '«' + title + '»' : '';
+    const btn = document.getElementById('vipPayWhatsBtn');
+    if (btn) btn.href = 'https://wa.me/967774485611?text=' + encodeURIComponent('أريد تفعيل ' + (title || ''));
+    togglePopup('vipPayBox');
+}
+
+function guardVipService(key, name, evt) {
+    if (isVipServiceLocked(key)) { if (evt) evt.preventDefault(); showVipPayPopup(name); return false; }
+    return true;
+}
+
+function guardVipPopup(key, name, boxId) {
+    if (isVipServiceLocked(key)) { showVipPayPopup(name); return; }
+    togglePopup(boxId);
+}
+
+function refreshVipBadges() {
+    document.querySelectorAll('[data-vip-badge]').forEach(el => {
+        el.style.display = isVipServiceLocked(el.dataset.vipBadge) ? 'inline-flex' : 'none';
+    });
+}
+
+// ==========================================
+// إدارة الحسابات (المشرف الأعلى فقط)
+// ==========================================
+const ACCOUNT_ROLE_LABELS = { student: 'طالب', assistant: 'مساعد', admin: 'مشرف أعلى', college_supervisor: 'مشرف كلية', specialization_supervisor: 'مشرف تخصص', store_manager: 'مدير متجر' };
+let cachedAccounts = [];
+let pendingBanId = null, pendingBanTimer = null;
+let pendingDeleteAccountId = null, pendingDeleteAccountTimer = null;
+
+function showAccountsError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = document.getElementById('accountsMsg');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+
+async function loadAccountsTab() {
+    const c = document.getElementById('accountsList'); if (!c) return;
+    const q = (document.getElementById('accounts_search') || {}).value || '';
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
+    try {
+        const res = await fetch('/admin/accounts?q=' + encodeURIComponent(q));
+        cachedAccounts = await res.json() || [];
+        if (!cachedAccounts.length) { c.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد حسابات مطابقة.</div>'; return; }
+        c.innerHTML = cachedAccounts.map(accountCardHtml).join('');
+    } catch (e) {
+        c.innerHTML = '<div style="text-align:center; padding:15px; color:var(--danger);">خطأ في تحميل الحسابات.</div>';
+    }
+}
+
+function accountCardHtml(a) {
+    const isSelf = a.id === STUDENT_ID;
+    const isRoot = a.username === 'a0mr1';
+    const statusBadge = a.is_active ? '<span class="status-badge status-approved">نشط</span>' : '<span class="status-badge status-rejected">محظور</span>';
+    return `
+    <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+                <div style="font-weight:900;">${escapeText(a.name)} <span style="color:var(--text-muted); font-weight:700;">@${escapeText(a.username)}</span> ${statusBadge}</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${ACCOUNT_ROLE_LABELS[a.role] || escapeText(a.role)} · ⭐ ${a.xp || 0} XP · المستوى ${a.level || 1} · سُجّل ${escapeText(a.created_at || '')}</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="toggleResetPasswordForm(${a.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-key"></i> كلمة سر جديدة</button>
+                ${(!isSelf) ? `<button onclick="toggleAccountBan(${a.id}, this)" style="background:${a.is_active ? 'var(--warning)' : 'var(--accent)'}; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-ban"></i> ${a.is_active ? 'حظر' : 'فك الحظر'}</button>` : ''}
+                ${(!isSelf && !isRoot) ? `<button onclick="deleteAccount(${a.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>` : ''}
+            </div>
+        </div>
+        <div id="reset_pw_${a.id}" style="display:none; margin-top:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">تعيين كلمة سر جديدة لـ @${escapeText(a.username)} — كلمة السر الحالية لا تُعرض لأنها مشفّرة</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <input type="password" id="reset_pw_new_${a.id}" placeholder="كلمة السر الجديدة" class="qa-input-field" style="flex:1; margin-bottom:0; min-width:160px;" autocomplete="new-password">
+                <input type="password" id="reset_pw_confirm_${a.id}" placeholder="تأكيد كلمة السر" class="qa-input-field" style="flex:1; margin-bottom:0; min-width:160px;" autocomplete="new-password">
+                <button onclick="submitResetPassword(${a.id})" class="btn-calc-action" style="background:var(--accent); flex:0 0 auto; padding:8px 14px;">حفظ</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function toggleResetPasswordForm(id) {
+    const box = document.getElementById('reset_pw_' + id);
+    if (!box) return;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitResetPassword(id) {
+    const np = document.getElementById('reset_pw_new_' + id);
+    const cp = document.getElementById('reset_pw_confirm_' + id);
+    if (!np || !np.value || np.value.length < 4) { showAccountsError('كلمة المرور الجديدة قصيرة جداً (4 أحرف على الأقل)'); return; }
+    if (np.value !== cp.value) { showAccountsError('تأكيد كلمة المرور غير مطابق'); return; }
+    try {
+        const res = await fetch('/admin/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: id, new_password: np.value }) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            np.value = ''; cp.value = '';
+            const box = document.getElementById('reset_pw_' + id); if (box) box.style.display = 'none';
+        } else showAccountsError(data.message || 'تعذر إعادة تعيين كلمة السر.');
+    } catch (e) { showAccountsError('خطأ أثناء إعادة تعيين كلمة السر.'); }
+}
+
+function disarmAccountBan() {
+    pendingBanId = null; clearTimeout(pendingBanTimer);
+    document.querySelectorAll('#accountsList button[data-armed-ban="1"]').forEach(b => { b.innerHTML = b.dataset.origLabel || 'حظر'; delete b.dataset.armedBan; delete b.dataset.origLabel; });
+}
+
+async function toggleAccountBan(id, btn) {
+    const m0 = document.getElementById('accountsMsg'); if (m0) m0.style.display = 'none';
+    if (String(pendingBanId) !== String(id)) {
+        disarmAccountBan();
+        pendingBanId = id;
+        const acc = cachedAccounts.find(x => String(x.id) === String(id));
+        if (btn) { btn.dataset.origLabel = btn.innerHTML; btn.innerHTML = (acc && !acc.is_active) ? 'تأكيد فك الحظر؟' : 'تأكيد الحظر؟'; btn.dataset.armedBan = '1'; }
+        pendingBanTimer = setTimeout(disarmAccountBan, 15000);
+        return;
+    }
+    disarmAccountBan();
+    try {
+        const res = await fetch('/admin/ban-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: id }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadAccountsTab(); }
+        else showAccountsError(data.message || 'تعذر تبديل الحظر.');
+    } catch (e) { showAccountsError('خطأ أثناء تبديل الحظر.'); }
+}
+
+function disarmAccountDelete() {
+    pendingDeleteAccountId = null; clearTimeout(pendingDeleteAccountTimer);
+    document.querySelectorAll('#accountsList button[data-armed-del="1"]').forEach(b => { b.innerHTML = '<i class="fa-solid fa-trash"></i> حذف'; delete b.dataset.armedDel; });
+}
+
+async function deleteAccount(id, btn) {
+    const m0 = document.getElementById('accountsMsg'); if (m0) m0.style.display = 'none';
+    if (String(pendingDeleteAccountId) !== String(id)) {
+        disarmAccountDelete();
+        pendingDeleteAccountId = id;
+        if (btn) { btn.innerHTML = 'تأكيد الحذف؟'; btn.dataset.armedDel = '1'; }
+        pendingDeleteAccountTimer = setTimeout(disarmAccountDelete, 15000);
+        return;
+    }
+    disarmAccountDelete();
+    try {
+        const res = await fetch('/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: id }) });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadAccountsTab(); }
+        else showAccountsError(data.message || 'تعذر حذف الحساب.');
+    } catch (e) { showAccountsError('خطأ أثناء حذف الحساب.'); }
+}
+
+// ==========================================
+// قسم VIP في لوحة الإدارة
+// ==========================================
+let vipSelectedUser = null;
+let pendingVipRevokeId = null, pendingVipRevokeTimer = null;
+
+function loadVipTab() {
+    loadVipServices();
+    loadAllVipGrants();
+    onVipScopeTypeChange();
+}
+
+async function onVipScopeTypeChange() {
+    const typeEl = document.getElementById('vip_scope_type');
+    const sel = document.getElementById('vip_scope_key');
+    if (!typeEl || !sel) return;
+    const type = typeEl.value;
+    sel.innerHTML = '<option value="">جاري التحميل...</option>';
+    try {
+        if (type === 'subject') {
+            const res = await fetch('/admin/subjects'); const list = await res.json();
+            sel.innerHTML = (list || []).map(s => `<option value="${s.id}">${escapeText(s.name)} — ${escapeText(s.college || '')} · ${escapeText(s.year || '')} · ${escapeText(s.term || '')}</option>`).join('') || '<option value="">لا توجد مواد</option>';
+        } else if (type === 'content') {
+            const res = await fetch('/admin/vip-content'); const list = await res.json();
+            sel.innerHTML = (list || []).map(l => `<option value="${l.id}">${escapeText(l.title)} — ${escapeText(l.subject_name)} (${escapeText(l.chapter_name)})</option>`).join('') || '<option value="">لا يوجد محتوى VIP بعد — علّم محتوى كـ VIP أولاً من إدارة المحتوى</option>';
+        } else {
+            sel.innerHTML = Object.entries(VIP_SERVICE_NAMES).map(([k, v]) => `<option value="${k}">${escapeText(v)}</option>`).join('');
+        }
+    } catch (e) {
+        sel.innerHTML = '<option value="">خطأ في التحميل</option>';
+    }
+}
+
+async function searchVipUser() {
+    const qEl = document.getElementById('vip_search');
+    const q = qEl ? qEl.value.trim() : '';
+    const card = document.getElementById('vipUserCard');
+    const form = document.getElementById('vipGrantForm');
+    if (!q) { showToast('اكتب اسم المستخدم أولاً', 'error'); return; }
+    if (card) card.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري البحث...</div>';
+    try {
+        const res = await fetch('/admin/accounts?q=' + encodeURIComponent(q));
+        const list = await res.json() || [];
+        const u = list.find(x => x.username.toLowerCase() === q.toLowerCase()) || list[0];
+        if (!u) { if (card) card.innerHTML = '<div style="color:var(--danger); font-weight:700;">لا يوجد مستخدم بهذا الاسم.</div>'; if (form) form.style.display = 'none'; vipSelectedUser = null; return; }
+        vipSelectedUser = u;
+        if (form) form.style.display = 'block';
+        await renderVipUserGrants(u);
+    } catch (e) {
+        if (card) card.innerHTML = '<div style="color:var(--danger); font-weight:700;">خطأ في البحث.</div>';
+    }
+}
+
+function vipGrantRowHtml(g) {
+    const label = g.scope_type === 'subject' ? 'مادة' : g.scope_type === 'content' ? 'محتوى' : 'خدمة';
+    const exp = g.is_active ? (g.is_forever ? 'أبدي' : 'حتى ' + (g.expires_at || '')) : 'منتهية';
+    return `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.9rem;">
+        <span><b>${label}:</b> ${escapeText(g.scope_label)} · ${exp}${g.is_active ? '' : ' <span class="status-badge status-rejected">منتهية</span>'}</span>
+        <button onclick="revokeVipGrant(${g.id}, this)" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px; cursor:pointer;">إلغاء</button>
+    </div>`;
+}
+
+async function renderVipUserGrants(u) {
+    const card = document.getElementById('vipUserCard');
+    if (!card) return;
+    try {
+        const res = await fetch('/admin/vip-grants?student_id=' + u.id);
+        const grants = await res.json() || [];
+        card.innerHTML = `
+        <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="font-weight:900;">${escapeText(u.name)} <span style="color:var(--text-muted);">@${escapeText(u.username)}</span> — ${ACCOUNT_ROLE_LABELS[u.role] || escapeText(u.role)}</div>
+            <div style="margin-top:10px; font-weight:800; font-size:0.9rem;">منح VIP الحالية:</div>
+            ${grants.length ? grants.map(vipGrantRowHtml).join('') : '<div style="color:var(--text-muted); font-size:0.9rem; margin-top:6px;">لا توجد منح بعد.</div>'}
+        </div>`;
+    } catch (e) {
+        card.innerHTML = '<div style="color:var(--danger); font-weight:700;">خطأ في جلب المنح.</div>';
+    }
+}
+
+async function submitVipGrant() {
+    const msgEl = document.getElementById('vipGrantMsg');
+    const showErr = (msg) => { showToast(msg, 'error', 5000); if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; } };
+    if (!vipSelectedUser) { showErr('ابحث عن مستخدم أولاً'); return; }
+    const payload = { student_id: vipSelectedUser.id, scope_type: document.getElementById('vip_scope_type').value, scope_key: document.getElementById('vip_scope_key').value, duration: document.getElementById('vip_duration').value };
+    if (payload.duration === 'days') payload.days = parseInt((document.getElementById('vip_days') || {}).value || '0', 10);
+    if (!payload.scope_key) { showErr('اختر الهدف أولاً'); return; }
+    try {
+        const res = await fetch('/admin/vip-grant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            if (msgEl) msgEl.style.display = 'none';
+            await renderVipUserGrants(vipSelectedUser);
+            loadAllVipGrants();
+        } else showErr(data.message || 'تعذر منح VIP.');
+    } catch (e) { showErr('خطأ أثناء منح VIP.'); }
+}
+
+function disarmVipRevoke() {
+    pendingVipRevokeId = null; clearTimeout(pendingVipRevokeTimer);
+    document.querySelectorAll('#adminTab_vip button[data-armed-vip="1"]').forEach(b => { b.textContent = 'إلغاء'; delete b.dataset.armedVip; });
+}
+
+async function revokeVipGrant(id, btn) {
+    const m0 = document.getElementById('vipRevokeMsg'); if (m0) m0.style.display = 'none';
+    if (String(pendingVipRevokeId) !== String(id)) {
+        disarmVipRevoke();
+        pendingVipRevokeId = id;
+        if (btn) { btn.textContent = 'تأكيد الإلغاء؟'; btn.dataset.armedVip = '1'; }
+        pendingVipRevokeTimer = setTimeout(disarmVipRevoke, 15000);
+        return;
+    }
+    disarmVipRevoke();
+    try {
+        const res = await fetch('/admin/vip-revoke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grant_id: id }) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            if (vipSelectedUser) renderVipUserGrants(vipSelectedUser);
+            loadAllVipGrants();
+        } else {
+            const msg = data.message || 'تعذر إلغاء المنح.';
+            showToast(msg, 'error', 5000);
+            const m = document.getElementById('vipRevokeMsg'); if (m) { m.textContent = msg; m.style.display = 'block'; }
+        }
+    } catch (e) { showToast('خطأ أثناء إلغاء المنح.', 'error', 5000); }
+}
+
+async function loadVipServices() {
+    const c = document.getElementById('vipServicesList'); if (!c) return;
+    c.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
+    try {
+        const res = await fetch('/admin/vip-services');
+        const states = await res.json() || {};
+        c.innerHTML = Object.entries(VIP_SERVICE_NAMES).map(([key, name]) => {
+            const on = !!states[key];
+            return `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);">
+                <span style="font-weight:800;">${escapeText(name)} ${on ? '<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>' : '<span class="status-badge status-approved">مجانية</span>'}</span>
+                <button onclick="toggleVipService('${key}', ${!on})" style="background:${on ? 'var(--accent)' : 'var(--warning)'}; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer;">${on ? 'إيقاف الإغلاق (إرجاعها مجانية)' : 'إغلاق كـ VIP'}</button>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        c.innerHTML = '<div style="color:var(--danger); font-weight:700;">خطأ في تحميل الخدمات.</div>';
+    }
+}
+
+async function toggleVipService(key, isVip) {
+    const msgEl = document.getElementById('vipServiceMsg');
+    try {
+        const res = await fetch('/admin/vip-service', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service_key: key, is_vip: isVip }) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            if (isVip) { if (!VIP_CLOSED_SERVICES.includes(key)) VIP_CLOSED_SERVICES.push(key); }
+            else { const ix = VIP_CLOSED_SERVICES.indexOf(key); if (ix >= 0) VIP_CLOSED_SERVICES.splice(ix, 1); }
+            refreshVipBadges();
+            loadVipServices();
+        } else {
+            const msg = data.message || 'تعذر تحديث الخدمة.';
+            showToast(msg, 'error', 5000);
+            if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; }
+        }
+    } catch (e) { showToast('خطأ أثناء تحديث الخدمة.', 'error', 5000); }
+}
+
+async function loadAllVipGrants() {
+    const c = document.getElementById('vipAllGrantsList'); if (!c) return;
+    c.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
+    try {
+        const res = await fetch('/admin/vip-grants');
+        const grants = await res.json() || [];
+        const active = grants.filter(g => g.is_active);
+        if (!active.length) { c.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد منح نشطة.</div>'; return; }
+        c.innerHTML = active.map(g => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.9rem;">
+            <span><b>${escapeText(g.student_name || '')}</b> <span style="color:var(--text-muted);">@${escapeText(g.student_username || '')}</span> — ${g.scope_type === 'subject' ? 'مادة' : g.scope_type === 'content' ? 'محتوى' : 'خدمة'}: ${escapeText(g.scope_label)} · ${g.is_forever ? 'أبدي' : 'حتى ' + (g.expires_at || '')}</span>
+            <button onclick="revokeVipGrant(${g.id}, this)" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px; cursor:pointer;">إلغاء</button>
+        </div>`).join('');
+    } catch (e) {
+        c.innerHTML = '<div style="color:var(--danger); font-weight:700;">خطأ في تحميل المنح.</div>';
+    }
+}
+
+// ==========================================
+// الملف الشخصي — تعديل بياناتي
+// ==========================================
+async function submitProfileUpdate() {
+    const msgEl = document.getElementById('profileEditMsg');
+    const showErr = (msg) => { showToast(msg, 'error', 5000); if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; } };
+    const payload = {
+        name: (document.getElementById('edit_profile_name') || {}).value ? document.getElementById('edit_profile_name').value.trim() : '',
+        username: (document.getElementById('edit_profile_username') || {}).value ? document.getElementById('edit_profile_username').value.trim() : '',
+        current_password: (document.getElementById('edit_profile_current_pw') || {}).value || '',
+        new_password: (document.getElementById('edit_profile_new_pw') || {}).value || '',
+        confirm_password: (document.getElementById('edit_profile_confirm_pw') || {}).value || ''
+    };
+    if (!payload.name && !payload.username && !payload.new_password) { showErr('لا يوجد شيء لتحديثه'); return; }
+    try {
+        const res = await fetch('/api/profile/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            if (msgEl) msgEl.style.display = 'none';
+            ['edit_profile_current_pw', 'edit_profile_new_pw', 'edit_profile_confirm_pw'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            loadProfile();
+        } else showErr(data.message || 'تعذر تحديث البيانات.');
+    } catch (e) { showErr('خطأ أثناء تحديث البيانات.'); }
 }
 
 async function loadCustomContentList() {
@@ -1207,7 +1680,7 @@ function renderCustomContentList(list) {
             return `
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
-                    <div style="font-weight:bold;">${escapeText(item.title)} ${statusBadge}</div>
+                    <div style="font-weight:bold;">${escapeText(item.title)} ${statusBadge}${item.is_vip ? ' <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>' : ''}</div>
                     <div style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-folder-open"></i> ${item.college ? escapeText(item.college) + ' · ' : ''}${escapeText(item.subject_name)} (${escapeText(item.chapter_name)})</div>
                 </div>
                 <div style="display:flex; gap:8px;">
@@ -1235,6 +1708,7 @@ function editCustomContentForm(id) {
     document.getElementById('add_chapter').value = i.chapter_name;
     document.getElementById('add_type').value = i.content_type; document.getElementById('add_title').value = i.title;
     document.getElementById('add_url').value = i.url; document.getElementById('add_download').value = i.download_url; document.getElementById('add_notes').value = i.notes;
+    const _vipEl = document.getElementById('add_is_vip'); if (_vipEl) _vipEl.checked = !!i.is_vip;
     document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> تحديث`;
     document.getElementById('btn_cancel_edit').style.display = "flex";
     onSubjectSelect();
@@ -1250,6 +1724,7 @@ function resetContentForm() {
     }
     document.getElementById('edit_content_id').value = ''; document.getElementById('add_chapter').value = '';
     document.getElementById('add_title').value = ''; document.getElementById('add_url').value = ''; document.getElementById('add_download').value = ''; document.getElementById('add_notes').value = '';
+    const _vipEl2 = document.getElementById('add_is_vip'); if (_vipEl2) _vipEl2.checked = false;
     document.getElementById('btn_save_content').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> حفظ`;
     document.getElementById('btn_cancel_edit').style.display = "none";
     onSubjectSelect();
@@ -1264,7 +1739,8 @@ async function submitNewContent() {
         subject_id: document.getElementById('add_subject_id') ? document.getElementById('add_subject_id').value : '', chapter_name: document.getElementById('add_chapter').value,
         college: document.getElementById('add_college') ? document.getElementById('add_college').value : '',
         content_type: document.getElementById('add_type').value, title: document.getElementById('add_title').value,
-        url: document.getElementById('add_url').value, download_url: document.getElementById('add_download').value, notes: document.getElementById('add_notes').value
+        url: document.getElementById('add_url').value, download_url: document.getElementById('add_download').value, notes: document.getElementById('add_notes').value,
+        is_vip: document.getElementById('add_is_vip') ? document.getElementById('add_is_vip').checked : false
     };
     try {
         const url = editId ? `/admin/edit-content/${editId}` : '/admin/add-content';
@@ -2969,6 +3445,16 @@ async function loadProfile() {
                         <span style="font-weight:900; color:${t.points > 0 ? 'var(--accent)' : 'var(--danger)'};">${t.points > 0 ? '+' : ''}${t.points} XP</span>
                     </div>`).join('');
             }
+
+            // تعبئة حقول «تعديل بياناتي» (دون مسح ما يكتبه المستخدم أثناء التحرير)
+            const _en = document.getElementById('edit_profile_name'); if (_en && !_en.value) _en.value = data.student.name || '';
+            const _eu = document.getElementById('edit_profile_username'); if (_eu && !_eu.value) _eu.value = data.student.username || '';
+            // منح VIP النشطة للمستخدم
+            const vg = document.getElementById('myVipGrants');
+            if (vg) {
+                const grants = (data.vip_grants || []).filter(g => g.is_active);
+                vg.innerHTML = grants.length ? grants.map(g => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;"><span style="font-weight:700;">${g.scope_type === 'subject' ? 'مادة' : g.scope_type === 'content' ? 'محتوى' : 'خدمة'}: ${escapeText(g.scope_label)}</span><span style="color:var(--text-muted);">${g.is_forever ? 'أبدي' : 'حتى ' + (g.expires_at || '')}</span></div>`).join('') : '<div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد منح VIP نشطة</div>';
+            }
         }
     } catch(e) {}
 }
@@ -3003,6 +3489,10 @@ async function toggleLeaderboardVisibility() {
 window.addEventListener('DOMContentLoaded', () => {
     updateThemeIcon();
     applyYearBadges();
+    refreshVipBadges();
+    // إن أُنهيت الجلسة (حظر/حذف) يُعرض السبب مرة واحدة بعد الخروج
+    if (TERMINATED_REASON === 'banned') showToast('تم حظر هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
+    else if (TERMINATED_REASON === 'deleted') showToast('تم حذف هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
     if (!sessionStorage.getItem('visited')) {
         const splash = document.getElementById('splash-screen');
         if (splash) splash.classList.remove('hidden');

@@ -156,6 +156,8 @@ class Subject(db.Model):
             "college": self.college,
             "year": self.year,
             "term": self.term,
+            "lesson_count": _subject_lesson_count(self),
+            "question_count": _subject_question_count(self),
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
@@ -1449,27 +1451,53 @@ def remove_college():
 # المواد ككيانات (Flow A: إضافة مادة مستقلة)
 # ==========================================
 
-def _subject_has_lessons(subj):
-    """هل توجد دروس مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
-    if CustomLesson.query.filter_by(subject_id=subj.id).first():
-        return True
-    return CustomLesson.query.filter(
+def _subject_lesson_count(subj):
+    """عدد الدروس المرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)."""
+    n = CustomLesson.query.filter_by(subject_id=subj.id).count()
+    n += CustomLesson.query.filter(
         CustomLesson.subject_id == None,
         CustomLesson.college == subj.college,
         CustomLesson.year == subj.year,
         CustomLesson.term == subj.term,
-        CustomLesson.subject_name == subj.name).first() is not None
+        CustomLesson.subject_name == subj.name).count()
+    return n
 
-def _subject_has_questions(subj):
-    """هل توجد أسئلة اختبار مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
-    if QuizQuestion.query.filter_by(subject_id=subj.id).first():
-        return True
-    return QuizQuestion.query.filter(
+def _subject_question_count(subj):
+    """عدد أسئلة الاختبار المرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)."""
+    n = QuizQuestion.query.filter_by(subject_id=subj.id).count()
+    n += QuizQuestion.query.filter(
         QuizQuestion.subject_id == None,
         QuizQuestion.college == subj.college,
         QuizQuestion.year == subj.year,
         QuizQuestion.term == subj.term,
-        QuizQuestion.subject_name == subj.name).first() is not None
+        QuizQuestion.subject_name == subj.name).count()
+    return n
+
+def _subject_lesson_titles(subj, limit=3):
+    """عناوين الدروس المرتبطة بالمادة (حتى limit) لعرضها في رسائل الرفض،
+    حتى يرى المستخدم ما الذي يمنع الحذف بدل «فيها دروس» فقط."""
+    rows = CustomLesson.query.filter_by(subject_id=subj.id).order_by(CustomLesson.id).limit(limit).all()
+    if len(rows) < limit:
+        rows += CustomLesson.query.filter(
+            CustomLesson.subject_id == None,
+            CustomLesson.college == subj.college,
+            CustomLesson.year == subj.year,
+            CustomLesson.term == subj.term,
+            CustomLesson.subject_name == subj.name).order_by(CustomLesson.id).limit(limit - len(rows)).all()
+    titles = []
+    for r in rows:
+        _t = (r.title or '').strip()
+        _ch = (r.chapter_name or '').strip()
+        titles.append((_t + (' — ' + _ch if _ch else '')) or 'درس بدون عنوان')
+    return titles
+
+def _subject_has_lessons(subj):
+    """هل توجد دروس مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
+    return _subject_lesson_count(subj) > 0
+
+def _subject_has_questions(subj):
+    """هل توجد أسئلة اختبار مرتبطة بالمادة (عبر subject_id أو عبر الاسم القديم)؟"""
+    return _subject_question_count(subj) > 0
 
 @app.route('/admin/subjects', methods=['GET'])
 @admin_or_supervisor_required
@@ -1573,9 +1601,12 @@ def remove_subject():
         if not subj:
             return jsonify({"status": "error", "message": "المادة غير موجودة"}), 404
         if _subject_has_lessons(subj):
-            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها دروس — انقل الدروس أو احذفها أولاً"}), 400
+            _titles = _subject_lesson_titles(subj, 3)
+            _extra = (' (مثال: ' + '، '.join(_titles) + ')') if _titles else ''
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها دروس — انقل الدروس أو احذفها أولاً" + _extra}), 400
         if _subject_has_questions(subj):
-            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها أسئلة اختبار — احذف الأسئلة أولاً"}), 400
+            _nq = _subject_question_count(subj)
+            return jsonify({"status": "error", "message": "لا يمكن حذف مادة فيها أسئلة اختبار — احذف الأسئلة أولاً (عددها: %d)" % _nq}), 400
         if Student.query.filter(Student.role == 'specialization_supervisor', Student.supervisor_subject_id == subj.id).first():
             return jsonify({"status": "error", "message": "لا يمكن حذف مادة لديها مشرف تخصص — أزل المشرف أولاً"}), 400
         if Student.query.filter(Student.role == 'specialization_supervisor', Student.supervisor_subject_id == None, Student.supervisor_college == subj.college, Student.supervisor_specialization == subj.name).first():

@@ -1530,7 +1530,7 @@ async function loadSubjectsTab() {
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
                     <div style="font-weight:bold;" data-subject-name="${escapeText(s.name)}">${escapeText(s.name)}</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(s.college)} · ${escapeText(s.year)} · ${escapeText(s.term)}</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(s.college)} · ${escapeText(s.year)} · ${escapeText(s.term)} · ${(s.lesson_count || 0)} درس · ${(s.question_count || 0)} سؤال</div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     ${(USER_ROLE === 'admin' || USER_ROLE === 'college_supervisor') ? `<button onclick="startRenameSubject(${s.id}, this)" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>` : ''}

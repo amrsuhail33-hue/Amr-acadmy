@@ -118,6 +118,7 @@ class Student(db.Model):
             "supervisor_college": self.supervisor_college or '',
             "supervisor_specialization": self.supervisor_specialization or '',
             "supervisor_subject_id": self.supervisor_subject_id,
+            "is_active": bool(self.is_active) if self.is_active is not None else True,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
@@ -272,6 +273,46 @@ class Product(db.Model):
             "details": self.details or "",
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
+
+class VipGrant(db.Model):
+    """منح VIP: وصول مدفوع لطالب إلى هدف محدد (مادة/محتوى/خدمة) حتى تاريخ
+    انتهاء، أو أبدي عند expires_at NULL. كل شيء مجاني افتراضياً — لا يغلق
+    أي وصول حتى يمنح الأدمن منحاً ويعلّم محتوى/خدمة كـ VIP."""
+    __tablename__ = 'vip_grants'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, nullable=False)
+    scope_type = db.Column(db.String(20), nullable=False)  # 'subject' | 'content' | 'service'
+    scope_key = db.Column(db.String(150), nullable=False)  # معرّف المادة أو الدرس أو مفتاح الخدمة
+    expires_at = db.Column(db.DateTime, nullable=True)  # NULL = أبدي
+    granted_by = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "scope_type": self.scope_type,
+            "scope_key": self.scope_key,
+            "expires_at": self.expires_at.strftime("%Y-%m-%d %H:%M") if self.expires_at else None,
+            "is_forever": self.expires_at is None,
+            "granted_by": self.granted_by,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
+        }
+
+class VipService(db.Model):
+    """مفتاح إغلاق خدمة من خدمات الفقاعة كـ VIP: الصف موجود والعمود True
+    يعني الخدمة مغلقة لمن ليس لديه منح خدمة عليها. الافتراضي: الكل مجاني."""
+    __tablename__ = 'vip_services'
+    service_key = db.Column(db.String(50), primary_key=True)
+    is_vip = db.Column(db.Boolean, default=False)
+
+class DeletedAccount(db.Model):
+    """شاهد قبر لحساب محذوف: يحتفظ باليوزر حتى تعرض محاولة دخول لاحقة
+    رسالة الحذف بدل رسالة دخول عامة. لا يحفظ أي كلمة سر."""
+    __tablename__ = 'deleted_accounts'
+    username = db.Column(db.String(80), primary_key=True)
+    deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reason = db.Column(db.String(200), nullable=True)
 
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
@@ -520,6 +561,7 @@ class CustomLesson(db.Model):
     download_url = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='approved')
+    is_vip = db.Column(db.Boolean, default=False)  # محتوى مدفوع: مغلق لمن ليس لديه منح تغطيه
     created_by = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=True)
     review_notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -540,6 +582,7 @@ class CustomLesson(db.Model):
             "download_url": self.download_url or "",
             "notes": self.notes or "",
             "status": self.status or 'approved',
+            "is_vip": bool(self.is_vip),
             "created_by": self.created_by,
             "created_at": date_str
         }
@@ -662,6 +705,10 @@ with app.app_context():
             db.session.execute(db.text("ALTER TABLE stores ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)"))
             db.session.execute(db.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS currency VARCHAR(10)"))
             db.session.execute(db.text("UPDATE products SET currency = 'YER' WHERE currency IS NULL"))
+            # علم «محتوى VIP» على الدروس: create_all() لا يضيف أعمدة لجداول
+            # موجودة، والقديم كله مجاني (False).
+            db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS is_vip BOOLEAN"))
+            db.session.execute(db.text("UPDATE custom_lessons SET is_vip = FALSE WHERE is_vip IS NULL"))
             # توسيع عمود الدور إلى VARCHAR(50): قيمة specialization_supervisor طولها 25 حرفاً
             # فلا تتسع في VARCHAR(20) وكان الحفظ يفشل بخطأ 500. يُتخطى على SQLite، وآمن عند
             # إعادة التشغيل لأن تعيين نفس النوع مجدداً لا يغيّر شيئاً.
@@ -891,6 +938,139 @@ def student_required(f):
     return decorated_function
 
 # ==========================================
+# نظام VIP — الوصول المدفوع (كل شيء مجاني افتراضياً)
+# ==========================================
+# مفاتيح خدمات الفقاعة القابلة للإغلاق كـ VIP + أسماؤها المعروضة.
+VIP_SERVICE_KEYS = {
+    'calculator': 'حاسبة المعدل',
+    'bot': 'المساعد الذكي',
+    'planner': 'الخطة الدراسية',
+    'simulator': 'المختبر',
+    'guide': 'دليل الطالب',
+}
+VIP_SERVICE_KEY_LIST = tuple(VIP_SERVICE_KEYS.keys())
+# رقم التواصل المستخدم في رسائل طلب تفعيل VIP (نفس رقم زر الدعم الفني).
+SUPPORT_WHATSAPP = '967774485611'
+
+def _vip_grant_is_active(grant):
+    """هل المنح ما زال سارياً؟ NULL في expires_at تعني أبدي."""
+    if grant is None:
+        return False
+    return grant.expires_at is None or grant.expires_at > datetime.utcnow()
+
+def _has_vip_grant(user, scope_type, scope_key):
+    """هل لدى المستخدم منح VIP نشط يغطي الهدف؟ الأدمن والمساعد معفيان."""
+    if not user:
+        return False
+    if user.role in ('admin', 'assistant'):
+        return True
+    now = datetime.utcnow()
+    grants = VipGrant.query.filter_by(student_id=user.id, scope_type=scope_type, scope_key=str(scope_key)).all()
+    return any(g.expires_at is None or g.expires_at > now for g in grants)
+
+def _lesson_vip_locked(user, lesson):
+    """هل هذا الدرس VIP ومغلق أمام المستخدم؟ منح محتوى على الدرس نفسه أو
+    منح مادة على مادته تفتحه. الدرس غير المعلَّم VIP مفتوح دائماً."""
+    if not lesson or not getattr(lesson, 'is_vip', False):
+        return False
+    if not user:
+        return True
+    if user.role in ('admin', 'assistant'):
+        return False
+    if _has_vip_grant(user, 'content', lesson.id):
+        return False
+    if getattr(lesson, 'subject_id', None) and _has_vip_grant(user, 'subject', lesson.subject_id):
+        return False
+    return True
+
+def _quiz_chapter_locked(user, subject_id=None, subject_name=None, chapter_name=None, college=None):
+    """هل اختبار هذا الفصل مغلق؟ الفصل مغلق إن وُجد درس اختبار VIP فيه
+    (CustomLesson من نوع quiz) بلا منح تغطيه. لا درس اختبار VIP = مفتوح."""
+    if not chapter_name:
+        return False
+    if user and user.role in ('admin', 'assistant'):
+        return False
+    q = CustomLesson.query.filter_by(content_type='quiz', chapter_name=chapter_name, is_vip=True)
+    if subject_id:
+        q = q.filter_by(subject_id=subject_id)
+    elif subject_name:
+        q = q.filter_by(subject_name=subject_name)
+        if college:
+            q = q.filter_by(college=college)
+    for les in q.all():
+        if _lesson_vip_locked(user, les):
+            return True
+    return False
+
+def _service_is_vip(key):
+    row = VipService.query.get(key)
+    return bool(row and row.is_vip)
+
+def _service_locked(user, key):
+    """هل الخدمة مغلقة كـ VIP أمام هذا المستخدم؟"""
+    if not _service_is_vip(key):
+        return False
+    if not user:
+        return True
+    if user.role in ('admin', 'assistant'):
+        return False
+    return not _has_vip_grant(user, 'service', key)
+
+def _vip_scope_label(scope_type, scope_key):
+    """اسم معروض لهدف منح VIP (للوحة الإدارة والملف الشخصي)."""
+    if scope_type == 'service':
+        return VIP_SERVICE_KEYS.get(str(scope_key), str(scope_key))
+    if scope_type == 'subject':
+        try:
+            s = Subject.query.get(int(scope_key))
+            if s:
+                return s.name
+        except (TypeError, ValueError):
+            pass
+        return str(scope_key)
+    if scope_type == 'content':
+        try:
+            les = CustomLesson.query.get(int(scope_key))
+            if les:
+                return les.title
+        except (TypeError, ValueError):
+            pass
+        return str(scope_key)
+    return str(scope_key)
+
+def _serialize_vip_grant(grant):
+    d = grant.to_dict()
+    d["scope_label"] = _vip_scope_label(grant.scope_type, grant.scope_key)
+    d["is_active"] = _vip_grant_is_active(grant)
+    student = Student.query.get(grant.student_id)
+    d["student_name"] = student.name if student else ""
+    d["student_username"] = student.username if student else ""
+    return d
+
+@app.before_request
+def _check_session_account_active():
+    """إن حُظر حساب مسجَّل دخول أو حُذف، أول طلب تالٍ ينهي جلسته ويعرض
+    له رسالة الحظر/الحذف. الصفحة الرئيسية تعرض الرسالة مرة واحدة عبر
+    terminated_reason؛ مسارات API تعيدها JSON فوراً."""
+    if request.path.startswith('/static') or request.path in ('/health',):
+        return None
+    uid = session.get('student_id')
+    if not uid:
+        return None
+    user = Student.query.get(uid)
+    if user and user.is_active:
+        return None
+    reason = 'banned' if (user and not user.is_active) else 'deleted'
+    session.clear()
+    msg = ('تم حظر هذا الحساب لمخالفة سياسة الموقع' if reason == 'banned'
+           else 'تم حذف هذا الحساب لمخالفة سياسة الموقع')
+    if request.path.startswith(('/api/', '/admin/')):
+        return jsonify({"status": "error", "message": msg, "account_terminated": reason}), 401
+    if request.method == 'GET' and request.path == '/':
+        session['terminated_reason'] = reason
+    return None
+
+# ==========================================
 # Platform Structured Data
 # ==========================================
 # تصحيح أسماء سنوات مخزنة بإملاء خاطئ في البيانات (تعرض كما هي في الواجهة)
@@ -1015,6 +1195,8 @@ def get_platform_data(user):
                 "title": item.title,
                 "notes": item.notes or "",
                 "status": item.status,
+                "is_vip": bool(item.is_vip),
+                "vip_locked": _lesson_vip_locked(user, item),
                 "custom_id": item.id
             }
             if c_type == "videos":
@@ -1032,6 +1214,14 @@ def get_platform_data(user):
                 for t in y["terms"].values():
                     t["subjects"] = list(t["subjects"].values())
                     for s in t["subjects"]:
+                        # شارة VIP على الفصل: أي درس VIP مغلق فيه يقفل الفصل كله
+                        # (للفيديو/الملف تُقفل الدروس المغلقة فردياً داخل الفصل،
+                        # وللاختبار يُقفل زر «بدء الاختبار» كاملاً).
+                        for _ctype in ("videos", "files", "quiz"):
+                            for _ch in s["types"][_ctype]["chapters"].values():
+                                _ch_lessons = _ch.get("lessons", [])
+                                _ch["has_vip"] = any(l.get("is_vip") for l in _ch_lessons)
+                                _ch["vip_locked"] = any(l.get("vip_locked") for l in _ch_lessons)
                         s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                         s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                         s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
@@ -1096,7 +1286,12 @@ def home():
         'student_id': user.id if user else None,
         'student_name': user.name if user else None,
         'colleges': colleges,
-        'data': data
+        'data': data,
+        # خدمات VIP المغلقة حالياً + خدمات VIP التي يملك المستخدم منحاً عليها.
+        'vip_closed_services': [k for k in VIP_SERVICE_KEY_LIST if _service_is_vip(k)],
+        'my_vip_services': [g.scope_key for g in VipGrant.query.filter_by(student_id=user.id, scope_type='service').all() if _vip_grant_is_active(g)] if user else [],
+        # سبب إنهاء جلسة (حظر/حذف) يُعرض مرة واحدة بعد إنهاء الجلسة.
+        'terminated_reason': session.pop('terminated_reason', None),
     }
 
     college_name = (request.args.get('college') or '').strip()
@@ -1136,7 +1331,9 @@ def home():
                         questions = q_query.order_by(LessonQuestion.is_answered.asc(), LessonQuestion.created_at.desc()).all()
                     else:
                         questions = q_query.filter_by(is_answered=True).order_by(LessonQuestion.created_at.desc()).all()
-                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, **view_context)
+                    # فصل اختبار VIP مغلق: يُعرض صندوق القفل بدل زر البدء.
+                    chapter_vip_locked = (content_type == 'quiz' and bool(c.get("vip_locked")))
+                    return render_template('index.html', view='content', subject=s, chapter=c, content_type=content_type, questions=questions, chapter_vip_locked=chapter_vip_locked, **view_context)
 
     if subject_id and content_type:
         s = _find_subject(subject_id)
@@ -1179,11 +1376,20 @@ def student_login():
 
         student = Student.query.filter(db.func.lower(Student.username) == username.lower()).first()
         if not student:
-            return jsonify({"status": "error", "message": "اسم المستخدم غير موجود"}), 401
+            # حساب محذوف سابقاً: رسالة الحذف بدل رسالة عامة.
+            deleted = DeletedAccount.query.filter(db.func.lower(DeletedAccount.username) == username.lower()).first()
+            if deleted:
+                return jsonify({"status": "error", "message": "تم حذف هذا الحساب لمخالفة سياسة الموقع"}), 401
+            # رسالة عامة عمداً: لا نكشف إن كان اليوزر موجوداً أم لا.
+            return jsonify({"status": "error", "message": "تعذر تسجيل الدخول بهذه البيانات"}), 401
 
-        if not student.is_active or not student.check_password(password):
+        if not student.is_active:
+            return jsonify({"status": "error", "message": "تم حظر هذا الحساب لمخالفة سياسة الموقع"}), 401
+
+        if not student.check_password(password):
             return jsonify({"status":"error","message":"تعذر تسجيل الدخول بهذه البيانات"}), 401
 
+        session.pop('terminated_reason', None)
         session.permanent = True
         session['student_id'] = student.id
         session['student_name'] = student.name
@@ -1226,6 +1432,9 @@ def student_register():
         db.session.add(student)
         db.session.flush()
 
+        # إن كان اليوزر محذوفاً سابقاً (شاهد قبر) فالتسجيل الجديد يلغي أثر الحذف.
+        DeletedAccount.query.filter(db.func.lower(DeletedAccount.username) == username.lower()).delete(synchronize_session=False)
+
         profile = UserProfile(student_id=student.id)
         db.session.add(profile)
         db.session.commit()
@@ -1267,6 +1476,14 @@ def _safe_str(value, default=""):
     if value is None:
         return default
     return str(value).strip()
+
+def _is_truthy(value):
+    """هل قيمة قادمة من JSON/نموذج تعني True؟ (true/1/on/yes)."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in ('true', '1', 'on', 'yes', 'y')
 
 # القيم القياسية للسنة والترم (تطبيع الإدخال):
 # أي صيغة مقبولة (رقم أو اسم مختصر أو كامل) تُطبع إلى القيمة القياسية عند
@@ -1378,6 +1595,7 @@ def add_custom_content():
             download_url=_safe_str(data.get('download_url')),
             notes=_safe_str(data.get('notes')),
             status=status,
+            is_vip=_is_truthy(data.get('is_vip')),
             created_by=user.id
         )
         db.session.add(lesson)
@@ -1473,6 +1691,9 @@ def edit_custom_content(content_id):
         item.url = _safe_str(data.get('url'), item.url)
         item.download_url = _safe_str(data.get('download_url'), item.download_url)
         item.notes = _safe_str(data.get('notes'), item.notes)
+        # علم VIP قابل للتبديل في أي وقت (VIP ⇄ مجاني) من نموذج التعديل نفسه.
+        if 'is_vip' in data:
+            item.is_vip = _is_truthy(data.get('is_vip'))
 
         if not item.year or not item.term or not item.subject_name or not item.title:
             return jsonify({"status": "error", "message": "السنة والترم واسم المادة والعنوان حقول مطلوبة"}), 400
@@ -2115,6 +2336,18 @@ def get_quiz():
         if not user or user.role == 'student':
             query = query.filter_by(status='approved')
 
+        # فصل اختبار VIP مغلق: لا تُعاد أسئلته لمن ليس لديه منح تغطيه.
+        if chapter_name and (subject_name or college_name):
+            _sid = None
+            if subject_name:
+                _sub = Subject.query.filter_by(name=subject_name)
+                if college_name:
+                    _sub = _sub.filter_by(college=college_name)
+                _sub_row = _sub.first()
+                _sid = _sub_row.id if _sub_row else None
+            if _quiz_chapter_locked(user, subject_id=_sid, subject_name=subject_name, chapter_name=chapter_name, college=college_name):
+                return jsonify({"status": "error", "message": "هذا المحتوى مدفوع، للفتح تواصل معنا", "vip_locked": True, "vip_title": f"أسئلة {subject_name or chapter_name}"}), 403
+
         questions = query.all()
         return jsonify([q.to_dict() for q in questions])
     except Exception as e:
@@ -2133,6 +2366,10 @@ def record_quiz_attempt():
         perc = float(data.get('percentage', 0))
         subject = str(data.get('subject_name', 'مادة عامة')).strip()
         chapter = str(data.get('chapter_name', 'عام')).strip()
+
+        # فصل اختبار VIP مغلق: لا تُسجَّل محاولة لمن ليس لديه منح تغطيه.
+        if _quiz_chapter_locked(user, subject_name=subject, chapter_name=chapter):
+            return jsonify({"status": "error", "message": "هذا المحتوى مدفوع، للفتح تواصل معنا", "vip_locked": True}), 403
 
         attempt = QuizAttempt(
             student_id=user.id,
@@ -2461,11 +2698,16 @@ def ask_ai():
 
 @app.route('/simulators')
 def simulators():
+    user = get_current_user()
+    if _service_locked(user, 'simulator'):
+        return render_template('vip_locked.html', service_name='المختبر', service_key='simulator', student_id=session.get('student_id'))
     return render_template('simulators.html', student_id=session.get('student_id'))
 
 @app.route('/planner')
 def planner():
     user = get_current_user()
+    if _service_locked(user, 'planner'):
+        return render_template('vip_locked.html', service_name='الخطة الدراسية', service_key='planner', student_id=user.id if user else None)
     return render_template('planner.html', student_id=user.id if user else None, student_name=user.name if user else None)
 
 @app.route('/guide')
@@ -2473,6 +2715,8 @@ def guide():
     """صفحة دليل الطالب (آراء الطلاب عن الدكاترة): قراءة الآراء المعتمدة
     مفتوحة للجميع، وإضافة رأي أو التصويت تتطلب تسجيل دخول."""
     user = get_current_user()
+    if _service_locked(user, 'guide'):
+        return render_template('vip_locked.html', service_name='دليل الطالب', service_key='guide', student_id=user.id if user else None)
     try:
         colleges = [c.to_dict() for c in College.query.order_by(College.id).all()]
     except Exception:
@@ -2862,6 +3106,339 @@ def get_my_store_products(store_id):
         db.session.rollback()
         return jsonify([])
 
+@app.route('/api/profile/update', methods=['POST'])
+@student_required
+def update_own_profile():
+    """المستخدم يعدّل بياناته بنفسه: الاسم + اليوزر + كلمة السر.
+    تغيير كلمة السر يتطلب الحالية + الجديدة + تأكيدها. لا يغيّر الدور ولا الحالة."""
+    user = get_current_user()
+    try:
+        data = request.get_json(silent=True) or {}
+        new_name = _safe_str(data.get('name'))
+        new_username = _safe_str(data.get('username'))
+        current_password = str(data.get('current_password') or '')
+        new_password = str(data.get('new_password') or '')
+        confirm_password = str(data.get('confirm_password') or '')
+
+        # التحقق كاملاً قبل أي تعديل حتى لا يُحفظ تعديل جزئي عند فشل الآخر.
+        if new_password:
+            if not current_password or not user.check_password(current_password):
+                return jsonify({"status": "error", "message": "كلمة المرور الحالية غير صحيحة"}), 400
+            if len(new_password) < 4:
+                return jsonify({"status": "error", "message": "كلمة المرور الجديدة قصيرة جداً (4 أحرف على الأقل)"}), 400
+            if new_password != confirm_password:
+                return jsonify({"status": "error", "message": "تأكيد كلمة المرور غير مطابق"}), 400
+        if new_username and new_username != user.username:
+            exists = Student.query.filter(db.func.lower(Student.username) == new_username.lower()).first()
+            if exists:
+                return jsonify({"status": "error", "message": "اسم المستخدم محجوز — اختر اسماً آخر"}), 400
+
+        if new_name:
+            user.name = new_name
+            session['student_name'] = new_name
+        if new_username and new_username != user.username:
+            user.username = new_username
+        if new_password:
+            user.set_password(new_password)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم تحديث بياناتك بنجاح", "student": user.to_dict()})
+    except Exception as e:
+        app.logger.exception("update_own_profile failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تحديث البيانات. حاول مرة أخرى."}), 500
+
+# ==========================================
+# إدارة الحسابات (المشرف الأعلى فقط) + نظام VIP
+# ==========================================
+
+@app.route('/admin/accounts', methods=['GET'])
+@admin_required
+def get_admin_accounts():
+    """كل حسابات الموقع: اليوزر والاسم والدور والحالة وXP والمستوى وتاريخ
+    التسجيل، مع بحث باليوزر أو الاسم (?q=)."""
+    try:
+        q = (request.args.get('q') or '').strip()
+        query = Student.query
+        if q:
+            like = f"%{q}%"
+            query = query.filter(db.or_(Student.username.ilike(like), Student.name.ilike(like)))
+        students = query.order_by(Student.created_at.desc()).all()
+        result = []
+        for s in students:
+            profile = UserProfile.query.filter_by(student_id=s.id).first()
+            d = s.to_dict()
+            d["xp"] = profile.points if profile else 0
+            d["level"] = profile.level if profile else 1
+            result.append(d)
+        return jsonify(result)
+    except Exception as e:
+        app.logger.exception("get_admin_accounts failed")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/reset-password', methods=['POST'])
+@admin_required
+def admin_reset_password():
+    """إعادة تعيين كلمة سر حساب (كلمة السر الحالية لا تُعرض أبداً لأنها
+    مشفّرة ولا يمكن استرجاعها — تُستبدل بجديدة مشفّرة)."""
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            student_id = int(data.get('student_id') or 0)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "الحساب غير محدد"}), 400
+        new_password = str(data.get('new_password') or '')
+        if len(new_password) < 4:
+            return jsonify({"status": "error", "message": "كلمة المرور الجديدة قصيرة جداً (4 أحرف على الأقل)"}), 400
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"status": "error", "message": "الحساب غير موجود"}), 404
+        student.set_password(new_password)
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"تم تعيين كلمة سر جديدة لحساب @{student.username}"})
+    except Exception as e:
+        app.logger.exception("admin_reset_password failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر إعادة تعيين كلمة السر."}), 500
+
+@app.route('/admin/ban-user', methods=['POST'])
+@admin_required
+def admin_ban_user():
+    """تبديل حظر حساب (is_active). الأدمن لا يحظر نفسه."""
+    admin = get_current_user()
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            student_id = int(data.get('student_id') or 0)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "الحساب غير محدد"}), 400
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"status": "error", "message": "الحساب غير موجود"}), 404
+        if student.id == admin.id:
+            return jsonify({"status": "error", "message": "لا يمكنك حظر حسابك"}), 400
+        student.is_active = not bool(student.is_active)
+        db.session.commit()
+        msg = "تم حظر الحساب" if not student.is_active else "تم فك حظر الحساب"
+        return jsonify({"status": "success", "message": msg, "is_active": bool(student.is_active)})
+    except Exception as e:
+        app.logger.exception("admin_ban_user failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تبديل الحظر."}), 500
+
+@app.route('/admin/delete-user', methods=['POST'])
+@admin_required
+def admin_delete_user():
+    """حذف حساب نهائياً مع كل تابعيه، وحفظ اليوزر في شاهد قبر حتى تعرض
+    محاولة دخول لاحقة رسالة الحذف. لا يحذف الأدمن نفسه ولا حساب a0mr1."""
+    admin = get_current_user()
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            student_id = int(data.get('student_id') or 0)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "الحساب غير محدد"}), 400
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"status": "error", "message": "الحساب غير موجود"}), 404
+        if student.id == admin.id:
+            return jsonify({"status": "error", "message": "لا يمكنك حذف حسابك"}), 400
+        if student.username == 'a0mr1':
+            return jsonify({"status": "error", "message": "لا يمكن حذف حساب المشرف الأعلى a0mr1"}), 400
+
+        username = student.username
+        # 1) فك ارتباط المتاجر التي يديرها (manager_id -> NULL).
+        Store.query.filter_by(manager_id=student.id).update({"manager_id": None}, synchronize_session=False)
+        # 2) منح VIP وآراء الدكاترة وأصواتها.
+        VipGrant.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        _opinion_ids = [o.id for o in DoctorOpinion.query.filter_by(student_id=student.id).all()]
+        if _opinion_ids:
+            DoctorOpinionVote.query.filter(DoctorOpinionVote.opinion_id.in_(_opinion_ids)).delete(synchronize_session=False)
+        DoctorOpinion.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        DoctorOpinionVote.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        # 3) السجلات المرتبطة بمفاتيح أجنبية على students.
+        PointTransaction.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        UnifiedTask.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        Favorite.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        Progress.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        QuizAttempt.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        UserProfile.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        # أسئلة الدروس ومحتواه تبقى للمنصة بلا مالك (student_id -> NULL).
+        LessonQuestion.query.filter_by(student_id=student.id).update({"student_id": None}, synchronize_session=False)
+        LessonQuestion.query.filter_by(answered_by=student.id).update({"answered_by": None}, synchronize_session=False)
+        CustomLesson.query.filter_by(created_by=student.id).update({"created_by": None}, synchronize_session=False)
+        QuizQuestion.query.filter_by(created_by=student.id).update({"created_by": None}, synchronize_session=False)
+        # 4) الحساب نفسه + شاهد القبر.
+        db.session.delete(student)
+        db.session.add(DeletedAccount(username=username, reason='حذف من المشرف الأعلى'))
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"تم حذف حساب @{username} نهائياً"})
+    except Exception as e:
+        app.logger.exception("admin_delete_user failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حذف الحساب."}), 500
+
+@app.route('/admin/vip-grants', methods=['GET'])
+@admin_required
+def get_admin_vip_grants():
+    """كل منح VIP (أو منح مستخدم واحد بـ ?student_id=) مع أسماء الأهداف
+    وحالة الصلاحية."""
+    try:
+        student_id = request.args.get('student_id')
+        query = VipGrant.query
+        if student_id:
+            try:
+                query = query.filter_by(student_id=int(student_id))
+            except (TypeError, ValueError):
+                return jsonify([])
+        grants = query.order_by(VipGrant.created_at.desc()).all()
+        return jsonify([_serialize_vip_grant(g) for g in grants])
+    except Exception as e:
+        app.logger.exception("get_admin_vip_grants failed")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/vip-content', methods=['GET'])
+@admin_required
+def get_admin_vip_content():
+    """المحتوى المعلَّم VIP (لاختيار هدف منح محتوى)."""
+    try:
+        lessons = CustomLesson.query.filter_by(is_vip=True).order_by(CustomLesson.subject_name, CustomLesson.chapter_name).all()
+        return jsonify([{"id": l.id, "title": l.title, "subject_name": l.subject_name, "chapter_name": l.chapter_name, "content_type": l.content_type} for l in lessons])
+    except Exception as e:
+        app.logger.exception("get_admin_vip_content failed")
+        db.session.rollback()
+        return jsonify([])
+
+@app.route('/admin/vip-grant', methods=['POST'])
+@admin_required
+def admin_vip_grant():
+    """منح VIP لمستخدم: مادة / محتوى / خدمة، لمدة (أيام/شهر/سنة/أبدي)."""
+    admin = get_current_user()
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            student_id = int(data.get('student_id') or 0)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "المستخدم غير محدد"}), 400
+        scope_type = str(data.get('scope_type') or '').strip()
+        scope_key = str(data.get('scope_key') or '').strip()
+        duration = str(data.get('duration') or '').strip()
+        if scope_type not in ('subject', 'content', 'service'):
+            return jsonify({"status": "error", "message": "نوع الهدف غير صالح"}), 400
+        if not scope_key:
+            return jsonify({"status": "error", "message": "الهدف غير محدد"}), 400
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"status": "error", "message": "المستخدم غير موجود"}), 404
+        # التحقق من وجود الهدف.
+        if scope_type == 'subject':
+            try:
+                if not Subject.query.get(int(scope_key)):
+                    return jsonify({"status": "error", "message": "المادة غير موجودة"}), 400
+            except (TypeError, ValueError):
+                return jsonify({"status": "error", "message": "المادة غير موجودة"}), 400
+        elif scope_type == 'content':
+            try:
+                if not CustomLesson.query.get(int(scope_key)):
+                    return jsonify({"status": "error", "message": "المحتوى غير موجود"}), 400
+            except (TypeError, ValueError):
+                return jsonify({"status": "error", "message": "المحتوى غير موجود"}), 400
+        elif scope_type == 'service':
+            if scope_key not in VIP_SERVICE_KEYS:
+                return jsonify({"status": "error", "message": "الخدمة غير موجودة"}), 400
+        # حساب الانتهاء.
+        expires_at = None
+        if duration == 'forever':
+            expires_at = None
+        elif duration == 'month':
+            expires_at = datetime.utcnow() + timedelta(days=30)
+        elif duration == 'year':
+            expires_at = datetime.utcnow() + timedelta(days=365)
+        elif duration == 'days':
+            try:
+                days = int(data.get('days') or 0)
+            except (TypeError, ValueError):
+                days = 0
+            if days < 1 or days > 3650:
+                return jsonify({"status": "error", "message": "عدد الأيام يجب أن يكون بين 1 و 3650"}), 400
+            expires_at = datetime.utcnow() + timedelta(days=days)
+        else:
+            return jsonify({"status": "error", "message": "المدة غير صالحة"}), 400
+        # منح مكرر نشط لنفس الهدف: جدّده بدل إنشاء صف مكرر.
+        existing = VipGrant.query.filter_by(student_id=student_id, scope_type=scope_type, scope_key=scope_key).all()
+        for g in existing:
+            if _vip_grant_is_active(g):
+                g.expires_at = expires_at
+                g.granted_by = admin.id
+                db.session.commit()
+                return jsonify({"status": "success", "message": "تم تجديد المنح", "grant": _serialize_vip_grant(g)})
+        grant = VipGrant(student_id=student_id, scope_type=scope_type, scope_key=scope_key, expires_at=expires_at, granted_by=admin.id)
+        db.session.add(grant)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم منح VIP بنجاح", "grant": _serialize_vip_grant(grant)})
+    except Exception as e:
+        app.logger.exception("admin_vip_grant failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر منح VIP."}), 500
+
+@app.route('/admin/vip-revoke', methods=['POST'])
+@admin_required
+def admin_vip_revoke():
+    """إلغاء منح VIP."""
+    try:
+        data = request.get_json(silent=True) or {}
+        try:
+            grant_id = int(data.get('grant_id') or 0)
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "المنح غير محدد"}), 400
+        grant = VipGrant.query.get(grant_id)
+        if not grant:
+            return jsonify({"status": "error", "message": "المنح غير موجود"}), 404
+        db.session.delete(grant)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم إلغاء المنح"})
+    except Exception as e:
+        app.logger.exception("admin_vip_revoke failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر إلغاء المنح."}), 500
+
+@app.route('/admin/vip-services', methods=['GET'])
+@admin_required
+def get_admin_vip_services():
+    """حالة إغلاق خدمات الفقاعة الخمس كـ VIP."""
+    try:
+        rows = {r.service_key: bool(r.is_vip) for r in VipService.query.all()}
+        return jsonify({k: rows.get(k, False) for k in VIP_SERVICE_KEY_LIST})
+    except Exception as e:
+        app.logger.exception("get_admin_vip_services failed")
+        db.session.rollback()
+        return jsonify({k: False for k in VIP_SERVICE_KEY_LIST})
+
+@app.route('/admin/vip-service', methods=['POST'])
+@admin_required
+def admin_vip_service():
+    """تشغيل/إيقاف إغلاق خدمة كـ VIP. عند الإيقاف تعود مجانية للجميع فوراً."""
+    try:
+        data = request.get_json(silent=True) or {}
+        key = str(data.get('service_key') or '').strip()
+        if key not in VIP_SERVICE_KEYS:
+            return jsonify({"status": "error", "message": "الخدمة غير موجودة"}), 400
+        is_vip = _is_truthy(data.get('is_vip'))
+        row = VipService.query.get(key)
+        if not row:
+            row = VipService(service_key=key, is_vip=is_vip)
+            db.session.add(row)
+        else:
+            row.is_vip = is_vip
+        db.session.commit()
+        msg = f"تم إغلاق «{VIP_SERVICE_KEYS[key]}» كـ VIP" if is_vip else f"عادت «{VIP_SERVICE_KEYS[key]}» مجانية للجميع"
+        return jsonify({"status": "success", "message": msg, "is_vip": is_vip})
+    except Exception as e:
+        app.logger.exception("admin_vip_service failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر تحديث الخدمة."}), 500
+
 @app.route('/generate_plan', methods=['POST'])
 def generate_plan():
     if groq_client is None:
@@ -3186,6 +3763,7 @@ def handle_single_task(task_id):
 @app.route('/api/lessons', methods=['GET'])
 @student_required
 def get_all_lessons():
+    user = get_current_user()
     try:
         lessons = CustomLesson.query.filter_by(status='approved').order_by(CustomLesson.subject_name, CustomLesson.chapter_name).all()
         result = []
@@ -3197,6 +3775,8 @@ def get_all_lessons():
                 "subject_id": l.subject_id,
                 "chapter_name": l.chapter_name,
                 "content_type": l.content_type,
+                "is_vip": bool(l.is_vip),
+                "vip_locked": _lesson_vip_locked(user, l),
                 "year": l.year,
                 "term": l.term,
                 "college": l.college or "كلية الهندسة"
@@ -3323,11 +3903,13 @@ def get_profile():
         completed_tasks = UnifiedTask.query.filter_by(student_id=student_id, completed=True).count() + completed_lessons
         total_tasks = UnifiedTask.query.filter_by(student_id=student_id).count() + total_lessons
         recent_transactions = PointTransaction.query.filter_by(student_id=student_id).order_by(PointTransaction.created_at.desc()).limit(10).all()
+        vip_grants = [_serialize_vip_grant(g) for g in VipGrant.query.filter_by(student_id=student_id).order_by(VipGrant.created_at.desc()).all()]
 
         return jsonify({
             "status": "success",
             "profile": profile.to_dict(),
             "student": student.to_dict(),
+            "vip_grants": vip_grants,
             "stats": {
                 "completed_tasks": completed_tasks,
                 "total_tasks": total_tasks,

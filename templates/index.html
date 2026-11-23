@@ -162,6 +162,7 @@
         .fab-container.open .fab-item:nth-child(5) { transition-delay: 0.2s; }
         .fab-container.open .fab-item:nth-child(6) { transition-delay: 0.25s; }
         .fab-container.open .fab-item:nth-child(7) { transition-delay: 0.3s; }
+        .fab-container.open .fab-item:nth-child(8) { transition-delay: 0.35s; }
         .fab-badge-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-card); }
         
         .chat-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2009; opacity: 0; visibility: hidden; transition: 0.3s; }
@@ -402,6 +403,7 @@
             <button onclick="switchAdminTab('review', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--warning); color:var(--warning);">طابور المراجعة <i class="fa-solid fa-shield-halved"></i></button>
             <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn">نشر إعلان</button>
             <button onclick="switchAdminTab('supervisors', event)" class="btn-calc-outline admin-tab-btn">المشرفون والكليات</button>
+            <button onclick="switchAdminTab('opinions', event)" class="btn-calc-outline admin-tab-btn">آراء الدكاترة</button>
             {% endif %}
             {% if is_admin or is_supervisor %}
             <button onclick="switchAdminTab('subjects', event)" class="btn-calc-outline admin-tab-btn">المواد</button>
@@ -504,6 +506,19 @@
                 <div id="supervisorMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
             <div id="supervisorsList">جاري جلب المشرفين...</div>
+        </div>
+        <div id="adminTab_opinions" style="display:none;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:15px;">
+                <select id="opinions_status_filter" class="qa-input-field" style="flex:2; margin-bottom:0;" onchange="loadDoctorOpinions()">
+                    <option value="">كل الآراء (المعلّقة أولاً)</option>
+                    <option value="pending">المعلّقة فقط</option>
+                    <option value="approved">المعتمدة فقط</option>
+                    <option value="rejected">المرفوضة فقط</option>
+                </select>
+                <button onclick="loadDoctorOpinions()" class="btn-calc-action" style="background:var(--primary); flex:0 0 auto; padding:8px 14px;"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            </div>
+            <div id="opinionAdminMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            <div id="doctorOpinionsAdminList">جاري جلب الآراء...</div>
         </div>
         {% endif %}
         {% if is_admin or is_supervisor %}
@@ -854,6 +869,7 @@
     <a href="/planner" target="_blank" class="fab-item" title="الخطة الدراسية"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
     <div class="fab-item" onclick="togglePopup('calcBox')" title="حاسبة المعدل"><i class="fa-solid fa-calculator"></i></div>
     <div class="fab-item" onclick="togglePopup('aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i></div>
+    <a href="/guide" class="fab-item" title="دليل الطالب"><i class="fa-solid fa-user-graduate" style="color:#8b5cf6;"></i></a>
 </div>
 {% endif %}
 
@@ -1117,7 +1133,7 @@ function openAdminDashboard() {
 function switchAdminTab(tab, evt) {
     document.querySelectorAll('#adminBox .admin-tab-btn').forEach(b => { b.style.color=''; b.style.borderColor=''; });
     if(evt && evt.currentTarget) { evt.currentTarget.style.color='var(--primary)'; evt.currentTarget.style.borderColor='var(--primary)'; }
-    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors', 'subjects'].forEach(t => {
+    ['qa', 'content', 'quiz_import', 'review', 'updates', 'supervisors', 'subjects', 'opinions'].forEach(t => {
         const el = document.getElementById('adminTab_' + t);
         if(el) el.style.display = (t === tab) ? 'block' : 'none';
     });
@@ -1127,6 +1143,7 @@ function switchAdminTab(tab, evt) {
     if(tab === 'review' && IS_ADMIN) loadReviewQueue();
     if(tab === 'supervisors' && IS_ADMIN) loadSupervisorsTab();
     if(tab === 'subjects') loadSubjectsTab();
+    if(tab === 'opinions' && IS_ADMIN) loadDoctorOpinions();
 }
 
 async function loadCustomContentList() {
@@ -1882,6 +1899,97 @@ async function deleteQuizQuestion(id, btn) {
         if (data.status === 'success') { showToast(data.message, 'success', 5000); loadQuizQuestions(); }
         else { showToast(data.message, 'error', 5000); const qm = document.getElementById('quizQuestionsMsg'); if (qm) { qm.textContent = data.message; qm.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ أثناء حذف السؤال.'; showToast(msg, 'error', 5000); const qm = document.getElementById('quizQuestionsMsg'); if (qm) { qm.textContent = msg; qm.style.display = 'block'; } }
+}
+
+// 6d. دليل الطالب — إدارة آراء الدكاترة (المشرف الأعلى فقط)
+let pendingOpinionRejectId = null;
+let pendingOpinionRejectTimer = null;
+let pendingOpinionDeleteId = null;
+let pendingOpinionDeleteTimer = null;
+function disarmOpinionReject() {
+    pendingOpinionRejectId = null;
+    clearTimeout(pendingOpinionRejectTimer);
+    document.querySelectorAll('#doctorOpinionsAdminList button[data-armed="1"][data-op-reject="1"]').forEach(b => { b.textContent = 'رفض'; delete b.dataset.armed; delete b.dataset.opReject; });
+}
+function disarmOpinionDelete() {
+    pendingOpinionDeleteId = null;
+    clearTimeout(pendingOpinionDeleteTimer);
+    document.querySelectorAll('#doctorOpinionsAdminList button[data-armed="1"][data-op-del="1"]').forEach(b => { b.textContent = 'حذف'; delete b.dataset.armed; delete b.dataset.opDel; });
+}
+function showOpinionAdminError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = document.getElementById('opinionAdminMsg');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+async function loadDoctorOpinions() {
+    const c = document.getElementById('doctorOpinionsAdminList'); if (!c) return;
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
+    const status = (document.getElementById('opinions_status_filter')?.value || '');
+    try {
+        const url = status ? ('/admin/doctor-opinions?status=' + encodeURIComponent(status)) : '/admin/doctor-opinions';
+        const res = await fetch(url); const list = await res.json();
+        if (!list || list.length === 0) { c.innerHTML = '<div style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد آراء هنا.</div>'; return; }
+        c.innerHTML = list.map(o => {
+            const statusLabel = o.status === 'pending' ? 'معلّق' : (o.status === 'approved' ? 'معتمد' : 'مرفوض');
+            const realAuthor = (o.student_name || o.student_username) ? ` (الحساب: ${escapeText(o.student_name || o.student_username)})` : '';
+            return `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
+                <div style="font-size:0.85rem; color:var(--text-muted);">${escapeText(o.author_name)}${realAuthor} · ${escapeText(o.college)} · ${escapeText(o.created_at || '')} · ${statusLabel}</div>
+                <div style="font-weight:900; font-size:1.1rem; color:var(--text-main); margin-top:6px;">${escapeText(o.doctor_name)}</div>
+                <div style="font-size:0.9rem; color:var(--text-muted);">مدرّس مادة ${escapeText(o.subject)}</div>
+                <div style="margin:8px 0; line-height:1.8;">${escapeText(o.comment)}</div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">لايك ${o.likes} · ديسلايك ${o.dislikes}</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    ${o.status === 'pending' ? `<button onclick="approveDoctorOpinion(${o.id}, this)" style="background:var(--accent); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">اعتماد</button>
+                    <button onclick="rejectDoctorOpinion(${o.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">رفض</button>` : ''}
+                    ${o.status !== 'pending' ? `<button onclick="deleteDoctorOpinion(${o.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) { c.innerHTML = '<div style="text-align:center; padding:15px; color:var(--danger);">خطأ في تحميل الآراء.</div>'; }
+}
+async function approveDoctorOpinion(id, btn) {
+    try {
+        const res = await fetch(`/admin/doctor-opinions/${id}/approve`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadDoctorOpinions(); }
+        else showOpinionAdminError(data.message || 'تعذر اعتماد الرأي.');
+    } catch(e) { showOpinionAdminError('خطأ أثناء اعتماد الرأي.'); }
+}
+async function rejectDoctorOpinion(id, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — نفس نمط حذف المادة
+    const m0 = document.getElementById('opinionAdminMsg'); if (m0) m0.style.display = 'none';
+    if (String(pendingOpinionRejectId) !== String(id)) {
+        disarmOpinionReject();
+        pendingOpinionRejectId = id;
+        if (btn) { btn.textContent = 'تأكيد الرفض؟'; btn.dataset.armed = '1'; btn.dataset.opReject = '1'; }
+        pendingOpinionRejectTimer = setTimeout(disarmOpinionReject, 6000);
+        return;
+    }
+    disarmOpinionReject();
+    try {
+        const res = await fetch(`/admin/doctor-opinions/${id}/reject`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadDoctorOpinions(); }
+        else showOpinionAdminError(data.message || 'تعذر رفض الرأي.');
+    } catch(e) { showOpinionAdminError('خطأ أثناء رفض الرأي.'); }
+}
+async function deleteDoctorOpinion(id, btn) {
+    // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — نفس نمط حذف المادة
+    const m0 = document.getElementById('opinionAdminMsg'); if (m0) m0.style.display = 'none';
+    if (String(pendingOpinionDeleteId) !== String(id)) {
+        disarmOpinionDelete();
+        pendingOpinionDeleteId = id;
+        if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; btn.dataset.opDel = '1'; }
+        pendingOpinionDeleteTimer = setTimeout(disarmOpinionDelete, 6000);
+        return;
+    }
+    disarmOpinionDelete();
+    try {
+        const res = await fetch(`/admin/doctor-opinions/${id}/delete`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') { showToast(data.message, 'success', 5000); loadDoctorOpinions(); }
+        else showOpinionAdminError(data.message || 'تعذر حذف الرأي.');
+    } catch(e) { showOpinionAdminError('خطأ أثناء حذف الرأي.'); }
 }
 
 // 7. إدارة الاستفسارات وتحديثات المنصة

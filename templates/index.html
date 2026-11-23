@@ -293,6 +293,7 @@
         <div id="loginForm" style="display:block;">
             <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field">
             <input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field">
+            <div id="loginError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentLogin()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">ليس لديك حساب؟ <span onclick="showRegisterForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل كطالب جديد</span></p>
@@ -301,6 +302,7 @@
             <input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field">
             <input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field">
             <input type="text" id="reg_name" placeholder="الاسم الكامل" class="qa-input-field">
+            <div id="regError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentRegister()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-regular fa-user"></i> إنشاء حساب</button>
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">لديك حساب بالفعل؟ <span onclick="showLoginForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل دخول</span></p>
@@ -906,17 +908,17 @@
 
     <div class="content-list">
         {% for item in chapter.lessons %}
-        <div class="list-item">
+        <div class="list-item"{% if item.vip_locked %} data-vip-title="{{ item.title|e }}"{% endif %}>
             <div class="item-info">
                 <label class="custom-checkbox">
                     <input type="checkbox" class="lesson-check" data-lesson-id="{{ item.id }}" onchange="calculateStudentProgress(this)">
                     <span class="checkmark"></span>
                 </label>
-                <div class="item-icon-box" style="width:40px; height:40px; font-size:1.1rem;">
+                <div class="item-icon-box" style="width:40px; height:40px; font-size:1.1rem;{% if item.vip_locked %} cursor:pointer;{% endif %}"{% if item.vip_locked %} onclick="showVipPayPopup(this.closest('.list-item').dataset.vipTitle)" title="محتوى مدفوع"{% endif %}>
                     {% if content_type == 'videos' %}<i class="fa-solid fa-circle-play"></i>{% else %}<i class="fa-solid fa-file-pdf" style="color:var(--danger);"></i>{% endif %}
                 </div>
                 <div class="item-text">
-                    <h4 class="item-title">{{ item.title }}
+                    <h4 class="item-title"{% if item.vip_locked %} onclick="showVipPayPopup(this.closest('.list-item').dataset.vipTitle)" style="cursor:pointer;" title="محتوى مدفوع — اضغط للتفعيل"{% endif %}>{{ item.title }}
                         {% if item.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}
                         {% if is_admin or is_assistant %}
                             {% if item.status == 'pending_review' %}<span class="status-badge status-pending">قيد المراجعة</span>{% endif %}
@@ -930,7 +932,7 @@
                 <button class="action-btn fav-btn" data-lesson-id="{{ item.id }}" onclick="toggleFavorite(this)" title="مفضلة"><i class="fa-regular fa-heart"></i></button>
                 <a href="/planner" target="_blank" class="action-btn plan-btn" title="خطة"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i></a>
                 {% if item.vip_locked %}
-                    <button class="action-btn view" onclick="showVipPayPopup({{ item.title|tojson }})" title="محتوى مدفوع" style="color:var(--warning);"><i class="fa-solid fa-lock"></i></button>
+                    <button class="action-btn view" onclick="showVipPayPopup(this.closest('.list-item').dataset.vipTitle)" title="محتوى مدفوع" style="color:var(--warning);"><i class="fa-solid fa-lock"></i></button>
                 {% else %}
                 {% if item.video or item.file %}
                     <a href="{{ item.video or item.file }}" target="_blank" class="action-btn view">{% if content_type == 'videos' %}<i class="fa-solid fa-play"></i>{% else %}<i class="fa-regular fa-eye"></i>{% endif %}</a>
@@ -1206,35 +1208,53 @@ function calcFinalGPA() {
 }
 
 // 5. تسجيل الدخول والتسجيل الموحد
+// رسالة خطأ الدخول: توست + عنصر ثابت داخل نافذة الدخول يبقى ظاهراً
+// حتى المحاولة التالية — alert() كانت تُبتلع فلا تظهر رسالة الحظر/الحذف.
+function showLoginError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = document.getElementById('loginError');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+function showRegError(msg) {
+    showToast(msg, 'error', 5000);
+    const m = document.getElementById('regError');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
 async function studentLogin() {
+    const errEl = document.getElementById('loginError');
+    if (errEl) errEl.style.display = 'none';
     const username = document.getElementById('login_username').value.trim();
     const password = document.getElementById('login_password').value.trim();
-    if (!username || !password) return alert('يرجى ملء جميع الحقول.');
+    if (!username || !password) return showLoginError('يرجى ملء جميع الحقول.');
     try {
         const res = await fetch('/student/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password })
         });
-        const data = await res.json();
-        if (data.status === 'success') {
+        let data = null;
+        try { data = await res.json(); } catch(e) { data = null; }
+        if (data && data.status === 'success') {
             showToast('تم تسجيل الدخول بنجاح!', 'success');
             setTimeout(() => location.reload(), 600);
-        } else alert(data.message || 'بيانات الدخول غير صحيحة');
-    } catch(e) { alert('خطأ في الاتصال بالسيرفر.'); }
+        } else showLoginError((data && data.message) || 'بيانات الدخول غير صحيحة');
+    } catch(e) { showLoginError('خطأ في الاتصال بالسيرفر.'); }
 }
 
 async function studentRegister() {
+    const errEl = document.getElementById('regError');
+    if (errEl) errEl.style.display = 'none';
     const username = document.getElementById('reg_username').value.trim();
     const password = document.getElementById('reg_password').value.trim();
     const name = document.getElementById('reg_name').value.trim();
-    if (!username || !password || !name) return alert('يرجى ملء جميع الحقول.');
+    if (!username || !password || !name) return showRegError('يرجى ملء جميع الحقول.');
     try {
         const res = await fetch('/student/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, name })
         });
-        const data = await res.json();
-        if (data.status === 'success') { alert('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.'); showLoginForm(); }
-        else alert(data.message);
-    } catch(e) { alert('خطأ في الاتصال.'); }
+        let data = null;
+        try { data = await res.json(); } catch(e) { data = null; }
+        if (data && data.status === 'success') { showToast('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.', 'success', 5000); showLoginForm(); }
+        else showRegError((data && data.message) || 'تعذر إنشاء الحساب.');
+    } catch(e) { showRegError('خطأ في الاتصال.'); }
 }
 
 let pendingLogoutTimer = null;

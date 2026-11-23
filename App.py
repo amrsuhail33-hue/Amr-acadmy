@@ -218,12 +218,13 @@ class DoctorOpinionVote(db.Model):
                                            name='uq_opinion_vote'),)
 
 class Store(db.Model):
-    """متجر داخل «خدمات»: اسم + وصف + رقم واتساب + مدير + حالة.
+    """متجر داخل «خدمات»: اسم + وصف + رقم واتساب + مدير + حالة + صورة.
     المتجر الموقوف (paused) لا يظهر للمتسوقين. مدير المتجر دوره store_manager."""
     __tablename__ = 'stores'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    image_url = db.Column(db.String(500), nullable=True)  # رابط صورة المتجر (اختياري)
     whatsapp_number = db.Column(db.String(30), nullable=False)
     status = db.Column(db.String(20), default='active')  # active / paused
     manager_id = db.Column(db.Integer, nullable=True)
@@ -237,6 +238,7 @@ class Store(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description or "",
+            "image_url": self.image_url or "",
             "whatsapp_number": self.whatsapp_number,
             "status": self.status or 'active',
             "manager_id": self.manager_id,
@@ -247,12 +249,14 @@ class Store(db.Model):
         }
 
 class Product(db.Model):
-    """منتج في متجر: اسم + سعر بالريال اليمني (عدد صحيح) + رابط صورة + تفاصيل اختيارية."""
+    """منتج في متجر: اسم + سعر (عدد صحيح) + عملة (YER/SAR/USD، الافتراضي YER)
+    + رابط صورة + تفاصيل اختيارية."""
     __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
     store_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(150), nullable=False)
     price = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(10), nullable=True, default='YER')
     image_url = db.Column(db.String(500), nullable=True)
     details = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -263,6 +267,7 @@ class Product(db.Model):
             "store_id": self.store_id,
             "name": self.name,
             "price": self.price,
+            "currency": self.currency or 'YER',
             "image_url": self.image_url or "",
             "details": self.details or "",
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
@@ -652,6 +657,11 @@ with app.app_context():
             db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
             db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_subject_id INTEGER"))
+            # أعمدة «خدمات» الجديدة: create_all() لا يضيف أعمدة لجداول موجودة،
+            # والمنتجات القديمة بلا عملة تُعامل كريال يمني (YER).
+            db.session.execute(db.text("ALTER TABLE stores ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)"))
+            db.session.execute(db.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS currency VARCHAR(10)"))
+            db.session.execute(db.text("UPDATE products SET currency = 'YER' WHERE currency IS NULL"))
             # توسيع عمود الدور إلى VARCHAR(50): قيمة specialization_supervisor طولها 25 حرفاً
             # فلا تتسع في VARCHAR(20) وكان الحفظ يفشل بخطأ 500. يُتخطى على SQLite، وآمن عند
             # إعادة التشغيل لأن تعيين نفس النوع مجدداً لا يغيّر شيئاً.
@@ -2529,6 +2539,9 @@ def add_store_product(store_id):
         name = _safe_str(data.get('name'))
         image_url = _safe_str(data.get('image_url'))
         details = _safe_str(data.get('details'))
+        currency = str(data.get('currency') or 'YER').strip().upper()
+        if currency not in ('YER', 'SAR', 'USD'):
+            return jsonify({"status": "error", "message": "العملة غير صالحة — اختر ريال يمني أو ريال سعودي أو دولار"}), 400
         try:
             price = int(data.get('price'))
         except (TypeError, ValueError):
@@ -2537,7 +2550,7 @@ def add_store_product(store_id):
             return jsonify({"status": "error", "message": "اسم المنتج مطلوب"}), 400
         if not price or price <= 0:
             return jsonify({"status": "error", "message": "السعر يجب أن يكون رقماً صحيحاً أكبر من صفر"}), 400
-        product = Product(store_id=store_id, name=name, price=price,
+        product = Product(store_id=store_id, name=name, price=price, currency=currency,
                           image_url=image_url or None, details=details or None)
         db.session.add(product)
         db.session.commit()
@@ -2566,6 +2579,38 @@ def delete_store_product(product_id):
         app.logger.exception("فشل حذف منتج: product_id=%s", product_id)
         db.session.rollback()
         return jsonify({"status": "error", "message": "تعذر حذف المنتج"}), 500
+
+@app.route('/api/stores/<int:store_id>/update', methods=['POST'])
+@store_manager_required
+def update_my_store(store_id):
+    """مدير المتجر (أو الأدمن) يعدّل اسم متجره وصورته ورقم واتسابه."""
+    name = ""
+    try:
+        user = get_current_user()
+        store = Store.query.get(store_id)
+        if not store:
+            return jsonify({"status": "error", "message": "المتجر غير موجود"}), 404
+        if not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المتجر ليس من متاجرك"}), 403
+        data = request.get_json(silent=True) or {}
+        name = _safe_str(data.get('name'))
+        image_url = _safe_str(data.get('image_url'))
+        whatsapp = normalize_whatsapp(data.get('whatsapp_number'))
+        if not name:
+            return jsonify({"status": "error", "message": "اسم المتجر مطلوب"}), 400
+        if not whatsapp:
+            return jsonify({"status": "error", "message": "رقم الواتساب مطلوب"}), 400
+        if len(image_url) > 500:
+            return jsonify({"status": "error", "message": "رابط صورة المتجر طويل جداً"}), 400
+        store.name = name
+        store.image_url = image_url or None
+        store.whatsapp_number = whatsapp
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حفظ تعديلات المتجر", "store": store.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تحديث متجر المدير: store_id=%s name=%s", store_id, name)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حفظ تعديلات المتجر"}), 500
 
 @app.route('/api/stores/<int:store_id>/whatsapp', methods=['POST'])
 @store_manager_required
@@ -2611,12 +2656,15 @@ def add_store():
         data = request.get_json(silent=True) or {}
         name = _safe_str(data.get('name'))
         description = _safe_str(data.get('description'))
+        image_url = _safe_str(data.get('image_url'))
         whatsapp = normalize_whatsapp(data.get('whatsapp_number'))
         manager_id = data.get('manager_id')
         if not name:
             return jsonify({"status": "error", "message": "اسم المتجر مطلوب"}), 400
         if not whatsapp:
             return jsonify({"status": "error", "message": "رقم واتساب المتجر مطلوب"}), 400
+        if len(image_url) > 500:
+            return jsonify({"status": "error", "message": "رابط صورة المتجر طويل جداً"}), 400
         manager = None
         if manager_id:
             try:
@@ -2628,7 +2676,7 @@ def add_store():
             if manager.role == 'admin':
                 return jsonify({"status": "error", "message": "هذا الحساب مشرف أعلى بالفعل"}), 400
         store = Store(name=name, description=description or None, whatsapp_number=whatsapp,
-                      status='active', manager_id=manager.id if manager else None,
+                      image_url=image_url or None, status='active', manager_id=manager.id if manager else None,
                       created_by=user.id if user else None)
         db.session.add(store)
         if manager:
@@ -2649,6 +2697,7 @@ def edit_store(store_id):
         data = request.get_json(silent=True) or {}
         name = _safe_str(data.get('name'))
         description = _safe_str(data.get('description'))
+        image_url = _safe_str(data.get('image_url'))
         whatsapp = normalize_whatsapp(data.get('whatsapp_number'))
         store = Store.query.get(store_id)
         if not store:
@@ -2657,8 +2706,11 @@ def edit_store(store_id):
             return jsonify({"status": "error", "message": "اسم المتجر مطلوب"}), 400
         if not whatsapp:
             return jsonify({"status": "error", "message": "رقم واتساب المتجر مطلوب"}), 400
+        if len(image_url) > 500:
+            return jsonify({"status": "error", "message": "رابط صورة المتجر طويل جداً"}), 400
         store.name = name
         store.description = description or None
+        store.image_url = image_url or None
         store.whatsapp_number = whatsapp
         db.session.commit()
         return jsonify({"status": "success", "message": "تم حفظ تعديلات المتجر", "store": store.to_dict()})

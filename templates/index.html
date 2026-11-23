@@ -534,6 +534,8 @@
                 <input type="hidden" id="edit_store_id" value="">
                 <input type="text" id="new_store_name" placeholder="اسم المتجر (مثال: متجر اشتراكات)" class="qa-input-field">
                 <input type="text" id="new_store_whatsapp" placeholder="رقم واتساب المتجر (مثال: 774485611)" class="qa-input-field">
+                <input type="url" id="new_store_image_url" placeholder="رابط صورة المتجر (اختياري)" class="qa-input-field" oninput="previewStoreImage()">
+                <img id="new_store_img_preview" style="display:none; width:100%; max-height:170px; object-fit:cover; border-radius:12px; margin-bottom:12px;" alt="">
                 <textarea id="new_store_description" rows="2" placeholder="وصف المتجر (اختياري)..." class="qa-input-field"></textarea>
                 <label style="font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">مدير المتجر (اختياري — من الطلاب):</label>
                 <select id="new_store_manager_id" class="qa-input-field"></select>
@@ -1139,7 +1141,7 @@ async function logoutStudent(btn) {
         btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تأكيد تسجيل الخروج؟';
         btn.dataset.armed = '1';
         clearTimeout(pendingLogoutTimer);
-        pendingLogoutTimer = setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج'; delete btn.dataset.armed; }, 6000);
+        pendingLogoutTimer = setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج'; delete btn.dataset.armed; }, 15000); // 15 ثانية بدل 6 — نفس السبب
         return;
     }
     clearTimeout(pendingLogoutTimer);
@@ -2055,6 +2057,21 @@ function disarmProductDelete() {
     clearTimeout(pendingProductDeleteTimer);
     document.querySelectorAll('#myStoresList button[data-armed="1"][data-prod-del="1"]').forEach(b => { b.textContent = 'حذف'; delete b.dataset.armed; delete b.dataset.prodDel; });
 }
+const CURRENCY_LABELS = { YER: 'ريال يمني', SAR: 'ريال سعودي', USD: 'دولار' };
+function currencyLabel(code) { return CURRENCY_LABELS[String(code || 'YER').toUpperCase()] || 'ريال يمني'; }
+function formatPrice(p) { return p.price + ' ' + currencyLabel(p.currency); }
+
+function previewStoreImage() {
+    const input = document.getElementById('new_store_image_url');
+    const img = document.getElementById('new_store_img_preview');
+    if (!input || !img) return;
+    const url = (input.value || '').trim();
+    if (!url) { img.style.display = 'none'; img.removeAttribute('src'); return; }
+    img.src = url;
+    img.style.display = 'block';
+    img.onerror = () => { img.style.display = 'none'; };
+}
+
 function showStoreAdminError(msg) {
     showToast(msg, 'error', 5000);
     const m = document.getElementById('storeAdminMsg');
@@ -2124,7 +2141,13 @@ function storeAdminCardHtml(s) {
         ? '<span class="status-badge status-rejected">موقوف مؤقتاً</span>'
         : '<span class="status-badge status-approved">ظاهر</span>';
     const manager = s.manager_name ? escapeText(s.manager_name) + ' (@' + escapeText(s.manager_username || '') + ')' : 'بدون مدير';
+    // حالة التسليح مصدرها الوحيد المتغير العام — فأي إعادة رسم للقائمة تعيد رسم
+    // الزر مسلّحاً كما كان، بدل أن يفقده (عيب: نقرة التأكيد كانت تفشل أحياناً).
+    const pauseArmed = String(pendingStorePauseId) === String(s.id);
+    const delArmed = String(pendingStoreDeleteId) === String(s.id);
+    const pauseLabel = paused ? 'إظهار' : 'إيقاف';
     return `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px;">
+        ${s.image_url ? `<img src="${escapeText(s.image_url)}" style="width:100%; max-height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;" onerror="this.style.display='none';" alt="">` : ''}
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <div style="font-weight:900; font-size:1.05rem;">${escapeText(s.name)} ${statusBadge}</div>
             <div style="font-size:0.85rem; color:var(--text-muted);">${s.product_count} منتج</div>
@@ -2133,9 +2156,9 @@ function storeAdminCardHtml(s) {
         <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;"><i class="fa-brands fa-whatsapp"></i> ${escapeText(s.whatsapp_number)} · المدير: ${manager}</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px;">
             <select class="qa-input-field" style="flex:2; margin-bottom:0; min-width:180px;" onchange="assignStoreManager(${s.id}, this)">${managerOptionsHtml(s.manager_id)}</select>
-            <button onclick="toggleStorePause(${s.id}, this)" data-orig-label="${paused ? 'إظهار' : 'إيقاف'}" style="background:var(--warning); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">${paused ? 'إظهار' : 'إيقاف'}</button>
+            <button onclick="toggleStorePause(${s.id}, this)" data-orig-label="${pauseLabel}"${pauseArmed ? ' data-armed="1" data-store-pause="1"' : ''} style="background:var(--warning); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">${pauseArmed ? 'تأكيد ' + pauseLabel + '؟' : pauseLabel}</button>
             <button onclick="startEditStore(${s.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
-            <button onclick="deleteStore(${s.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>
+            <button onclick="deleteStore(${s.id}, this)"${delArmed ? ' data-armed="1" data-store-del="1"' : ''} style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">${delArmed ? 'تأكيد الحذف؟' : 'حذف'}</button>
         </div>
     </div>`;
 }
@@ -2143,17 +2166,19 @@ function storeAdminCardHtml(s) {
 async function submitNewStore() {
     const name = document.getElementById('new_store_name').value.trim();
     const whatsapp = document.getElementById('new_store_whatsapp').value.trim();
+    const imageUrl = document.getElementById('new_store_image_url').value.trim();
     const description = document.getElementById('new_store_description').value.trim();
     const managerId = document.getElementById('new_store_manager_id').value;
     const editId = document.getElementById('edit_store_id').value;
     if (!name || !whatsapp) { showStoreFormError('اسم المتجر ورقم الواتساب حقول مطلوبة.'); return; }
+    if (imageUrl.length > 500) { showStoreFormError('رابط صورة المتجر طويل جداً.'); return; }
     const btn = document.getElementById('btn_save_store');
     if (btn) { btn.disabled = true; }
     try {
         const url = editId ? ('/admin/edit-store/' + editId) : '/admin/add-store';
         const body = editId
-            ? { name, whatsapp_number: whatsapp, description }
-            : { name, whatsapp_number: whatsapp, description, manager_id: managerId || null };
+            ? { name, whatsapp_number: whatsapp, description, image_url: imageUrl }
+            : { name, whatsapp_number: whatsapp, description, image_url: imageUrl, manager_id: managerId || null };
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.status === 'success') {
@@ -2174,6 +2199,9 @@ function resetStoreForm() {
     document.getElementById('edit_store_id').value = '';
     document.getElementById('new_store_name').value = '';
     document.getElementById('new_store_whatsapp').value = '';
+    document.getElementById('new_store_image_url').value = '';
+    const pimg = document.getElementById('new_store_img_preview');
+    if (pimg) { pimg.style.display = 'none'; pimg.removeAttribute('src'); }
     document.getElementById('new_store_description').value = '';
     const sel = document.getElementById('new_store_manager_id');
     if (sel) sel.value = '';
@@ -2191,6 +2219,8 @@ function startEditStore(id) {
     document.getElementById('edit_store_id').value = s.id;
     document.getElementById('new_store_name').value = s.name;
     document.getElementById('new_store_whatsapp').value = s.whatsapp_number;
+    document.getElementById('new_store_image_url').value = s.image_url || '';
+    previewStoreImage();
     document.getElementById('new_store_description').value = s.description || '';
     const sel = document.getElementById('new_store_manager_id');
     if (sel && s.manager_id) sel.value = String(s.manager_id);
@@ -2210,7 +2240,7 @@ async function toggleStorePause(id, btn) {
         disarmStorePause();
         pendingStorePauseId = id;
         if (btn) { btn.textContent = 'تأكيد ' + (btn.dataset.origLabel || 'إيقاف') + '؟'; btn.dataset.armed = '1'; btn.dataset.storePause = '1'; }
-        pendingStorePauseTimer = setTimeout(disarmStorePause, 6000);
+        pendingStorePauseTimer = setTimeout(disarmStorePause, 15000); // 15 ثانية بدل 6: الخادم بطيء فكانت النقرة الثانية تأتي بعد فك التسليح
         return;
     }
     disarmStorePause();
@@ -2229,7 +2259,7 @@ async function deleteStore(id, btn) {
         disarmStoreDelete();
         pendingStoreDeleteId = id;
         if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; btn.dataset.storeDel = '1'; }
-        pendingStoreDeleteTimer = setTimeout(disarmStoreDelete, 6000);
+        pendingStoreDeleteTimer = setTimeout(disarmStoreDelete, 15000); // 15 ثانية بدل 6 — نفس السبب
         return;
     }
     disarmStoreDelete();
@@ -2272,17 +2302,30 @@ function myStoreCardHtml(s) {
     return `<div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:15px;">
         <div style="font-weight:900; font-size:1.05rem;">${escapeText(s.name)} ${paused ? '<span class="status-badge status-rejected">موقوف مؤقتاً</span>' : ''}</div>
         ${s.description ? `<div style="color:var(--text-muted); margin-top:4px; line-height:1.7;">${escapeText(s.description)}</div>` : ''}
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px;">
-            <input type="text" id="wa_input_${s.id}" value="${escapeText(s.whatsapp_number)}" placeholder="رقم واتساب المتجر" class="qa-input-field" style="flex:2; margin-bottom:0; min-width:160px;">
-            <button onclick="saveStoreWhatsapp(${s.id})" class="btn-calc-action" style="background:var(--accent); flex:0 0 auto; padding:8px 14px;"><i class="fa-brands fa-whatsapp"></i> حفظ الرقم</button>
+        <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">
+            <div style="font-weight:800; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-pen"></i> تعديل المتجر:</div>
+            ${s.image_url ? `<img src="${escapeText(s.image_url)}" style="width:100%; max-height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;" onerror="this.style.display='none';" alt="">` : ''}
+            <input type="text" id="store_name_${s.id}" value="${escapeText(s.name)}" placeholder="اسم المتجر (مطلوب)" class="qa-input-field">
+            <input type="url" id="store_image_${s.id}" value="${escapeText(s.image_url || '')}" placeholder="رابط صورة المتجر (اختياري)" class="qa-input-field" oninput="previewMyStoreImage(${s.id})">
+            <img id="store_img_preview_${s.id}" style="display:none; width:100%; max-height:150px; object-fit:cover; border-radius:12px; margin-top:10px;" alt="">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <input type="text" id="wa_input_${s.id}" value="${escapeText(s.whatsapp_number)}" placeholder="رقم واتساب المتجر" class="qa-input-field" style="flex:2; margin-bottom:0; min-width:160px;">
+                <button onclick="saveMyStore(${s.id})" class="btn-calc-action" style="background:var(--accent); flex:0 0 auto; padding:8px 14px;"><i class="fa-solid fa-floppy-disk"></i> حفظ تعديلات المتجر</button>
+            </div>
+            <div id="storeEditMsg_${s.id}" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
         </div>
         <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:12px;">
             <div style="font-weight:800; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-plus"></i> إضافة منتج:</div>
             <input type="text" id="prod_name_${s.id}" placeholder="اسم المنتج (مطلوب)" class="qa-input-field">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <input type="number" id="prod_price_${s.id}" placeholder="السعر بالريال (مطلوب)" class="qa-input-field" style="margin-bottom:0;" min="1" step="1">
-                <input type="url" id="prod_image_${s.id}" placeholder="رابط صورة المنتج" class="qa-input-field" style="margin-bottom:0;" oninput="previewProductImage(${s.id})">
+                <input type="number" id="prod_price_${s.id}" placeholder="السعر (مطلوب)" class="qa-input-field" style="margin-bottom:0;" min="1" step="1">
+                <select id="prod_currency_${s.id}" class="qa-input-field" style="margin-bottom:0;">
+                    <option value="YER">ريال يمني</option>
+                    <option value="SAR">ريال سعودي</option>
+                    <option value="USD">دولار</option>
+                </select>
             </div>
+            <input type="url" id="prod_image_${s.id}" placeholder="رابط صورة المنتج" class="qa-input-field" oninput="previewProductImage(${s.id})">
             <img id="prod_img_preview_${s.id}" style="display:none; width:100%; max-height:170px; object-fit:cover; border-radius:12px; margin-top:10px;" alt="">
             <textarea id="prod_details_${s.id}" rows="2" placeholder="تفاصيل المنتج — الاستخدام وما هو (اختياري)..." class="qa-input-field"></textarea>
             <button onclick="submitNewProduct(${s.id})" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-plus"></i> إضافة المنتج</button>
@@ -2310,14 +2353,18 @@ async function loadMyStoreProducts(storeId) {
         const res = await fetch('/admin/my-stores/' + storeId + '/products');
         const products = await res.json() || [];
         if (!products.length) { c.innerHTML = '<div style="color:var(--text-muted); padding:10px 0;">لا توجد منتجات بعد — أضف أول منتج من النموذج أعلاه.</div>'; return; }
-        c.innerHTML = products.map(p => `
+        c.innerHTML = products.map(p => {
+            // حالة التسليح مصدرها المتغير العام — فأي إعادة رسم تعيد الزر مسلّحاً كما كان
+            const armed = String(pendingProductDeleteId) === String(p.id);
+            return `
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 0; border-bottom:1px solid var(--border);">
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${p.image_url ? `<img src="${escapeText(p.image_url)}" style="width:48px; height:48px; object-fit:cover; border-radius:10px;" onerror="this.style.display='none';">` : '<span style="width:48px; height:48px; border-radius:10px; background:var(--bg-card); display:grid; place-items:center; color:var(--text-muted);"><i class="fa-solid fa-image"></i></span>'}
-                    <div><div style="font-weight:800;">${escapeText(p.name)}</div><div style="font-size:0.85rem; color:var(--text-muted);">${p.price} ريال${p.details ? ' · له تفاصيل' : ' · بدون تفاصيل'}</div></div>
+                    <div><div style="font-weight:800;">${escapeText(p.name)}</div><div style="font-size:0.85rem; color:var(--text-muted);">${formatPrice(p)}${p.details ? ' · له تفاصيل' : ' · بدون تفاصيل'}</div></div>
                 </div>
-                <button onclick="deleteProduct(${p.id}, this)" style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">حذف</button>
-            </div>`).join('');
+                <button onclick="deleteProduct(${p.id}, this)"${armed ? ' data-armed="1" data-prod-del="1"' : ''} style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">${armed ? 'تأكيد الحذف؟' : 'حذف'}</button>
+            </div>`;
+        }).join('');
     } catch (e) {
         c.innerHTML = '<div style="color:var(--danger);">خطأ في تحميل المنتجات.</div>';
     }
@@ -2326,6 +2373,7 @@ async function loadMyStoreProducts(storeId) {
 async function submitNewProduct(storeId) {
     const nameEl = document.getElementById('prod_name_' + storeId);
     const priceEl = document.getElementById('prod_price_' + storeId);
+    const currencyEl = document.getElementById('prod_currency_' + storeId);
     const imageEl = document.getElementById('prod_image_' + storeId);
     const detailsEl = document.getElementById('prod_details_' + storeId);
     const msgEl = document.getElementById('prodFormMsg_' + storeId);
@@ -2336,16 +2384,18 @@ async function submitNewProduct(storeId) {
     const name = (nameEl.value || '').trim();
     const imageUrl = (imageEl.value || '').trim();
     const details = (detailsEl.value || '').trim();
+    const currency = (currencyEl && currencyEl.value) || 'YER';
     let price = 0;
     try { price = parseInt(priceEl.value, 10); } catch (e) { price = 0; }
     if (!name) { showErr('اسم المنتج مطلوب.'); return; }
-    if (!price || price <= 0) { showErr('السعر يجب أن يكون رقماً صحيحاً أكبر من صفر (بالريال).'); return; }
+    if (!price || price <= 0) { showErr('السعر يجب أن يكون رقماً صحيحاً أكبر من صفر.'); return; }
     try {
-        const res = await fetch('/api/stores/' + storeId + '/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, price, image_url: imageUrl, details }) });
+        const res = await fetch('/api/stores/' + storeId + '/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, price, currency, image_url: imageUrl, details }) });
         const data = await res.json();
         if (data.status === 'success') {
             showToast(data.message, 'success', 5000);
             nameEl.value = ''; priceEl.value = ''; imageEl.value = ''; detailsEl.value = '';
+            if (currencyEl) currencyEl.value = 'YER';
             const img = document.getElementById('prod_img_preview_' + storeId);
             if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
             if (msgEl) msgEl.style.display = 'none';
@@ -2363,7 +2413,7 @@ async function deleteProduct(productId, btn) {
         disarmProductDelete();
         pendingProductDeleteId = productId;
         if (btn) { btn.textContent = 'تأكيد الحذف؟'; btn.dataset.armed = '1'; btn.dataset.prodDel = '1'; }
-        pendingProductDeleteTimer = setTimeout(disarmProductDelete, 6000);
+        pendingProductDeleteTimer = setTimeout(disarmProductDelete, 15000); // 15 ثانية بدل 6 — نفس السبب
         return;
     }
     disarmProductDelete();
@@ -2381,20 +2431,43 @@ async function deleteProduct(productId, btn) {
     } catch (e) { showMyStoreError('خطأ أثناء حذف المنتج.'); }
 }
 
-async function saveStoreWhatsapp(storeId) {
+function previewMyStoreImage(storeId) {
+    const input = document.getElementById('store_image_' + storeId);
+    const img = document.getElementById('store_img_preview_' + storeId);
+    if (!input || !img) return;
+    const url = (input.value || '').trim();
+    if (!url) { img.style.display = 'none'; img.removeAttribute('src'); return; }
+    img.src = url;
+    img.style.display = 'block';
+    img.onerror = () => { img.style.display = 'none'; };
+}
+
+async function saveMyStore(storeId) {
+    const nameEl = document.getElementById('store_name_' + storeId);
+    const imageEl = document.getElementById('store_image_' + storeId);
     const input = document.getElementById('wa_input_' + storeId);
+    const msgEl = document.getElementById('storeEditMsg_' + storeId);
+    const showErr = (msg) => {
+        showToast(msg, 'error', 5000);
+        if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; }
+    };
+    const name = (nameEl.value || '').trim();
+    const imageUrl = (imageEl.value || '').trim();
     const number = (input.value || '').trim();
-    if (!number) { showMyStoreError('رقم الواتساب مطلوب.'); return; }
+    if (!name) { showErr('اسم المتجر مطلوب.'); return; }
+    if (!number) { showErr('رقم الواتساب مطلوب.'); return; }
+    if (imageUrl.length > 500) { showErr('رابط صورة المتجر طويل جداً.'); return; }
     try {
-        const res = await fetch('/api/stores/' + storeId + '/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ whatsapp_number: number }) });
+        const res = await fetch('/api/stores/' + storeId + '/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, image_url: imageUrl, whatsapp_number: number }) });
         const data = await res.json();
         if (data.status === 'success') {
             showToast(data.message, 'success', 5000);
-            if (input && data.store) input.value = data.store.whatsapp_number;
+            if (msgEl) msgEl.style.display = 'none';
+            loadMyStoresTab();
         } else {
-            showMyStoreError(data.message || 'تعذر تحديث الرقم.');
+            showErr(data.message || 'تعذر حفظ تعديلات المتجر.');
         }
-    } catch (e) { showMyStoreError('خطأ أثناء تحديث الرقم.'); }
+    } catch (e) { showErr('خطأ أثناء حفظ تعديلات المتجر.'); }
 }
 
 // 7. إدارة الاستفسارات وتحديثات المنصة

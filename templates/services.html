@@ -29,6 +29,7 @@
 </main>
 
 <main class="workspace" id="storeView" style="display:none; margin-top:18px;">
+<img id="storeImg" style="display:none; width:100%; max-height:220px; object-fit:cover; border-radius:16px; margin-bottom:14px;" alt="">
 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
 <button class="link-btn" onclick="showStoresList()"><i class="fa-solid fa-arrow-right"></i> كل المتاجر</button>
 <div style="flex:1; min-width:200px;"><h3 id="storeTitle" style="margin:0;"></h3><div id="storeDesc" style="color:var(--muted); line-height:1.8;"></div></div>
@@ -106,6 +107,15 @@ function normalizeWhatsapp(raw) {
     return digits;
 }
 
+const CURRENCY_LABELS = { YER: 'ريال يمني', SAR: 'ريال سعودي', USD: 'دولار' };
+function currencyLabel(code) { return CURRENCY_LABELS[String(code || 'YER').toUpperCase()] || 'ريال يمني'; }
+function formatPrice(price, currency) { return price + ' ' + currencyLabel(currency); }
+function formatTotals(totals) {
+    // إجمالي منفصل لكل عملة موجودة في السلة — لا تُجمع عملات مختلفة في رقم واحد
+    const parts = Object.keys(totals || {}).filter(c => totals[c] > 0).map(c => formatPrice(totals[c], c));
+    return parts.length ? parts.join(' + ') : '0 ريال يمني';
+}
+
 function cartKey(storeId) { return 'services_cart_' + storeId; }
 function loadCart(storeId) {
     try { cart = JSON.parse(localStorage.getItem(cartKey(storeId)) || '{}') || {}; }
@@ -128,6 +138,7 @@ async function loadStores() {
         }
         list.innerHTML = '<div class="store-grid">' + stores.map(s => `
             <div class="store-card" onclick="openStore(${s.id})">
+                ${s.image_url ? `<img src="${esc(s.image_url)}" alt="${esc(s.name)}" style="width:100%;height:150px;object-fit:cover;border-radius:14px;margin-bottom:12px;" onerror="this.style.display='none';">` : ''}
                 <h3><i class="fa-solid fa-store" style="color:var(--blue);"></i> ${esc(s.name)}</h3>
                 ${s.description ? `<p>${esc(s.description)}</p>` : ''}
                 <div class="store-meta"><span><i class="fa-solid fa-box-open"></i> ${s.product_count} منتج</span><span><i class="fa-brands fa-whatsapp"></i> طلب عبر واتساب</span></div>
@@ -160,6 +171,9 @@ async function openStore(storeId) {
     $('storeView').style.display = 'block';
     $('storeTitle').textContent = s.name;
     $('storeDesc').textContent = s.description || '';
+    const simg = $('storeImg');
+    if (s.image_url) { simg.src = s.image_url; simg.style.display = 'block'; simg.onerror = () => { simg.style.display = 'none'; }; }
+    else { simg.style.display = 'none'; simg.removeAttribute('src'); }
     const list = $('productsList');
     list.innerHTML = '<div style="text-align:center;color:var(--muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
@@ -186,7 +200,7 @@ function renderProducts() {
             ${p.image_url ? `<img class="product-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" onerror="this.outerHTML='<div class=&quot;product-img-fallback&quot;><i class=&quot;fa-solid fa-image&quot;></i></div>'">` : '<div class="product-img-fallback"><i class="fa-solid fa-image"></i></div>'}
             <div class="product-body">
                 <div class="product-name">${esc(p.name)}</div>
-                <div class="product-price">${p.price} ريال</div>
+                <div class="product-price">${formatPrice(p.price, p.currency)}</div>
                 <div class="product-actions">
                     <button class="details-btn" title="تفاصيل المنتج" onclick="showDetails(${p.id})">!</button>
                     <div class="qty-box ${shopMode ? 'on' : ''}" data-qty-box="${p.id}">
@@ -229,20 +243,23 @@ function changeQty(productId, delta) {
 }
 
 function cartTotals() {
-    let count = 0, total = 0;
+    let count = 0;
+    const totals = {}; // عملة -> إجمالي (لا تُجمع عملات مختلفة في رقم واحد)
     products.forEach(p => {
         const q = cart[p.id] || 0;
+        if (!q) return;
         count += q;
-        total += q * p.price;
+        const c = String(p.currency || 'YER').toUpperCase();
+        totals[c] = (totals[c] || 0) + q * p.price;
     });
-    return { count, total };
+    return { count, totals };
 }
 function updateCartBar() {
     const bar = $('cartBar');
     if (!bar) return;
     const t = cartTotals();
     $('cartCount').textContent = t.count;
-    $('cartTotal').textContent = t.total + ' ريال';
+    $('cartTotal').textContent = formatTotals(t.totals);
     $('checkoutBtn').disabled = t.count === 0;
     bar.classList.toggle('on', shopMode && t.count > 0);
 }
@@ -262,12 +279,16 @@ function checkoutViaWhatsapp() {
     if (!currentStore) return;
     const t = cartTotals();
     if (t.count === 0) { showToast('السلة فارغة — حدّد الكمية لمنتج واحد على الأقل.', 'info', 4000); return; }
-    const lines = ['السلام عليكم، أريد طلب المنتجات التالية من متجر ' + currentStore.name + ':'];
+    // لا نضيف «متجر» قبل اسم يبدأ بها أصلاً (كان يظهر «من متجر متجر اختبار»)
+    const storeName = (currentStore.name || '').trim();
+    const storePhrase = (storeName.startsWith('متجر') || storeName.startsWith('المتجر'))
+        ? 'من ' + storeName : 'من متجر ' + storeName;
+    const lines = ['السلام عليكم، أريد طلب المنتجات التالية ' + storePhrase + ':'];
     products.forEach(p => {
         const q = cart[p.id] || 0;
-        if (q > 0) lines.push('• ' + p.name + ' × ' + q + ' — ' + (p.price * q) + ' ريال');
+        if (q > 0) lines.push('• ' + p.name + ' × ' + q + ' — ' + formatPrice(p.price * q, p.currency));
     });
-    lines.push('الإجمالي: ' + t.total + ' ريال');
+    lines.push('الإجمالي: ' + formatTotals(t.totals));
     const number = normalizeWhatsapp(currentStore.whatsapp_number);
     if (!number) { showProductsError('رقم واتساب المتجر غير متوفر.'); return; }
     const url = 'https://wa.me/' + number + '?text=' + encodeURIComponent(lines.join('\n'));

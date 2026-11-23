@@ -415,10 +415,10 @@
                 <div id="content_form_header" style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-file-circle-plus"></i> إضافة درس / محتوى:</div>
                 <input type="hidden" id="edit_content_id" value="">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <input type="text" id="add_year" placeholder="السنة الدراسية" class="qa-input-field" style="margin-bottom:0;">
-                    <input type="text" id="add_term" placeholder="الفصل الدراسي" class="qa-input-field" style="margin-bottom:0;">
+                    <select id="add_year" class="qa-input-field" style="margin-bottom:0;" onchange="onContentYearChange()"></select>
+                    <select id="add_term" class="qa-input-field" style="margin-bottom:0;" onchange="onContentTermChange()"></select>
                 </div>
-                <select id="add_college" class="qa-input-field" style="margin-top:12px;"></select>
+                <select id="add_college" class="qa-input-field" style="margin-top:12px;" onchange="onContentCollegeChange()"></select>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
                     <select id="add_subject_id" class="qa-input-field" style="margin-bottom:0;" onchange="onSubjectSelect()"></select>
                     <input type="text" id="add_chapter" placeholder="الفصل / الشابتر" class="qa-input-field" style="margin-bottom:0;">
@@ -437,6 +437,11 @@
                     <button id="btn_cancel_edit" onclick="resetContentForm()" class="btn-calc-outline" style="display:none; flex:1; border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-ban"></i> إلغاء</button>
                 </div>
                 <div id="contentFormMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <select id="content_filter_college" class="qa-input-field" style="margin-bottom:0;" onchange="onContentFilterChange()"></select>
+                <select id="content_filter_year" class="qa-input-field" style="margin-bottom:0;" onchange="onContentFilterChange()"></select>
+                <select id="content_filter_term" class="qa-input-field" style="margin-bottom:0;" onchange="onContentFilterChange()"></select>
             </div>
             <div id="adminCustomContentList"></div>
             <div id="contentDeleteMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
@@ -1130,8 +1135,14 @@ async function loadCustomContentList() {
     try {
         const res = await fetch('/admin/custom-content'); const list = await res.json();
         window.cachedCustomList = list || [];
-        if(list.length===0) return c.innerHTML = `<div style="text-align:center; padding:20px;">لا يوجد محتوى حالياً.</div>`;
-        c.innerHTML = list.map(item => {
+        applyContentFilters();
+    } catch(e) { c.innerHTML="خطأ في تحميل القائمة."; }
+}
+
+function renderCustomContentList(list) {
+    const c = document.getElementById('adminCustomContentList'); if(!c) return;
+    if(!list || list.length===0) { c.innerHTML = `<div style="text-align:center; padding:20px;">لا يوجد محتوى مطابق للفلاتر.</div>`; return; }
+    c.innerHTML = list.map(item => {
             let statusBadge = '';
             if(item.status==='approved') statusBadge = '<span class="status-badge status-approved">معتمد</span>';
             else if(item.status==='pending_review') statusBadge = '<span class="status-badge status-pending">قيد المراجعة</span>';
@@ -1149,13 +1160,14 @@ async function loadCustomContentList() {
                 </div>
             </div>`;
         }).join('');
-    } catch(e) { c.innerHTML="خطأ في تحميل القائمة."; }
 }
 
 function editCustomContentForm(id) {
     const i = window.cachedCustomList.find(c => c.id === id); if(!i) return;
     document.getElementById('edit_content_id').value = i.id;
-    document.getElementById('add_year').value = i.year; document.getElementById('add_term').value = i.term;
+    const _yEl = document.getElementById('add_year'); const _tEl = document.getElementById('add_term');
+    _ensureSelectOption(_yEl, i.year); if (_yEl) _yEl.value = i.year;
+    _ensureSelectOption(_tEl, i.term); if (_tEl) _tEl.value = i.term;
     const _colSel = document.getElementById('add_college');
     if (_colSel && i.college && ![..._colSel.options].some(o => o.value === i.college)) { const _o = document.createElement('option'); _o.value = i.college; _o.textContent = i.college; _colSel.appendChild(_o); }
     if (_colSel) _colSel.value = i.college || '';
@@ -1231,6 +1243,123 @@ async function deleteAdminContent(id, btn) {
         if (data.status === 'success') { showToast('تم حذف المحتوى بنجاح', 'success', 5000); loadCustomContentList(); }
         else { const msg = data.message || 'تعذر حذف المحتوى.'; showToast(msg, 'error', 5000); const cdm = document.getElementById('contentDeleteMsg'); if (cdm) { cdm.textContent = msg; cdm.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ أثناء حذف المحتوى.'; showToast(msg, 'error', 5000); const cdm = document.getElementById('contentDeleteMsg'); if (cdm) { cdm.textContent = msg; cdm.style.display = 'block'; } }
+}
+
+// 6b-1. التتابع كلية ← سنة ← ترم في إدارة المحتوى — القوائم تُبنى من المواد
+// الموجودة (cachedSubjects) فتتحدث تلقائياً عند إضافة مادة أو إعادة تسميتها
+// أو حذفها، دون إعادة تحميل الصفحة. لا نص حر للسنة/الترم في هذا القسم.
+function _cascadeYears(college) {
+    const years = [];
+    (cachedSubjects || []).forEach(s => {
+        if (college && s.college !== college) return;
+        if (!years.includes(s.year)) years.push(s.year);
+    });
+    return years;
+}
+function _cascadeTerms(college, year) {
+    const terms = [];
+    (cachedSubjects || []).forEach(s => {
+        if (college && s.college !== college) return;
+        if (year && s.year !== year) return;
+        if (!terms.includes(s.term)) terms.push(s.term);
+    });
+    return terms;
+}
+function _filteredSubjects(college, year, term) {
+    return (cachedSubjects || []).filter(s =>
+        (!college || s.college === college) &&
+        (!year || s.year === year) &&
+        (!term || s.term === term));
+}
+function _fillSelectOptions(sel, values, allLabel) {
+    if (!sel) return;
+    const prev = sel.value;
+    sel.replaceChildren();
+    const all = document.createElement('option'); all.value = ''; all.textContent = allLabel; sel.appendChild(all);
+    values.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+    if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+function _ensureSelectOption(sel, value) {
+    if (!sel || !value) return;
+    if (![...sel.options].some(o => o.value === value)) { const o = document.createElement('option'); o.value = value; o.textContent = value; sel.appendChild(o); }
+}
+function _specSingleSubject() {
+    return (USER_ROLE === 'specialization_supervisor' && cachedSubjects.length === 1) ? cachedSubjects[0] : null;
+}
+function populateContentFormCascade() {
+    const colSel = document.getElementById('add_college');
+    const yearSel = document.getElementById('add_year');
+    const termSel = document.getElementById('add_term');
+    const subSel = document.getElementById('add_subject_id');
+    if (!yearSel || !termSel) return;
+    const spec = _specSingleSubject();
+    const college = spec ? spec.college : (colSel ? colSel.value : '');
+    // مادة مختارة حالياً: السنة/الترم من المادة نفسها وتُعطَّلان
+    const chosen = (subSel && subSel.value) ? ((cachedSubjects || []).find(s => String(s.id) === String(subSel.value)) || null) : null;
+    if (chosen) {
+        _ensureSelectOption(yearSel, chosen.year);
+        _ensureSelectOption(termSel, chosen.term);
+        yearSel.value = chosen.year; termSel.value = chosen.term;
+        yearSel.disabled = true; termSel.disabled = true;
+        return;
+    }
+    _fillSelectOptions(yearSel, spec ? [spec.year] : _cascadeYears(college || null), '— السنة —');
+    const year = spec ? spec.year : yearSel.value;
+    _fillSelectOptions(termSel, spec ? [spec.term] : _cascadeTerms(college || null, year || null), '— الترم —');
+    const term = spec ? spec.term : termSel.value;
+    if (spec) {
+        yearSel.value = spec.year; termSel.value = spec.term;
+        yearSel.disabled = true; termSel.disabled = true;
+    } else {
+        yearSel.disabled = false; termSel.disabled = false;
+    }
+    if (subSel && !subSel.disabled) {
+        fillSubjectSelect(subSel, _filteredSubjects(college || null, year || null, term || null), '— اختر المادة —');
+    }
+}
+function onContentCollegeChange() { populateContentFormCascade(); }
+function onContentYearChange() { populateContentFormCascade(); }
+function onContentTermChange() { populateContentFormCascade(); }
+
+function populateContentFilters() {
+    const colF = document.getElementById('content_filter_college');
+    const yearF = document.getElementById('content_filter_year');
+    const termF = document.getElementById('content_filter_term');
+    if (!colF || !yearF || !termF) return;
+    const spec = _specSingleSubject();
+    if (spec) {
+        _fillSelectOptions(colF, [spec.college], 'الكلية'); colF.value = spec.college; colF.disabled = true;
+        _fillSelectOptions(yearF, [spec.year], 'السنة'); yearF.value = spec.year; yearF.disabled = true;
+        _fillSelectOptions(termF, [spec.term], 'الترم'); termF.value = spec.term; termF.disabled = true;
+        applyContentFilters();
+        return;
+    }
+    const colleges = [];
+    (cachedSubjects || []).forEach(s => { if (!colleges.includes(s.college)) colleges.push(s.college); });
+    if (IS_SUPERVISOR && SUPERVISOR_COLLEGE) {
+        _fillSelectOptions(colF, [SUPERVISOR_COLLEGE], 'الكلية'); colF.value = SUPERVISOR_COLLEGE; colF.disabled = true;
+    } else {
+        _fillSelectOptions(colF, colleges, 'كل الكليات'); colF.disabled = false;
+    }
+    const college = colF.value || null;
+    _fillSelectOptions(yearF, _cascadeYears(college), 'كل السنوات'); yearF.disabled = false;
+    const year = yearF.value || null;
+    _fillSelectOptions(termF, _cascadeTerms(college, year), 'كل الفصول'); termF.disabled = false;
+    applyContentFilters();
+}
+function onContentFilterChange() { populateContentFilters(); }
+function applyContentFilters() {
+    const list = window.cachedCustomList || [];
+    const colF = document.getElementById('content_filter_college');
+    const yearF = document.getElementById('content_filter_year');
+    const termF = document.getElementById('content_filter_term');
+    const college = colF ? colF.value : '';
+    const year = yearF ? yearF.value : '';
+    const term = termF ? termF.value : '';
+    renderCustomContentList(list.filter(i =>
+        (!college || i.college === college) &&
+        (!year || i.year === year) &&
+        (!term || i.term === term)));
 }
 
 async function loadReviewQueue() {
@@ -1464,6 +1593,8 @@ async function loadSubjectOptions() {
             sel.disabled = false;
         }
         onSubjectSelect();
+        populateContentFormCascade();
+        populateContentFilters();
     } catch(e) { /* تبقى القائمة فارغة عند فشل الجلب */ }
 }
 
@@ -1479,8 +1610,8 @@ function onSubjectSelect() {
             if (![...colSel.options].some(o => o.value === opt.dataset.college)) { const o = document.createElement('option'); o.value = opt.dataset.college; o.textContent = opt.dataset.college; colSel.appendChild(o); }
             colSel.value = opt.dataset.college;
         }
-        if (yearEl) yearEl.value = opt.dataset.year;
-        if (termEl) termEl.value = opt.dataset.term;
+        if (yearEl) { _ensureSelectOption(yearEl, opt.dataset.year); yearEl.value = opt.dataset.year; }
+        if (termEl) { _ensureSelectOption(termEl, opt.dataset.term); termEl.value = opt.dataset.term; }
         if (colSel) colSel.disabled = true;
         if (yearEl) yearEl.disabled = true;
         if (termEl) termEl.disabled = true;
@@ -1488,6 +1619,7 @@ function onSubjectSelect() {
         if (colSel) colSel.disabled = (IS_SUPERVISOR && !!SUPERVISOR_COLLEGE);
         if (yearEl) yearEl.disabled = false;
         if (termEl) termEl.disabled = false;
+        populateContentFormCascade();
     }
 }
 
@@ -1527,6 +1659,9 @@ async function loadSubjectsTab() {
     if (!sl) return;
     try {
         const res = await fetch('/admin/subjects'); const list = await res.json();
+        cachedSubjects = list || [];
+        populateContentFormCascade();
+        populateContentFilters();
         if (!list || list.length === 0) { sl.innerHTML = '<div style="text-align:center; padding:20px;">لا توجد مواد بعد — أضف أول مادة من النموذج أعلاه.</div>'; return; }
         sl.innerHTML = list.map(s => `
             <div style="background:var(--bg-body); border-radius:12px; padding:15px; border:1px solid var(--border); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">

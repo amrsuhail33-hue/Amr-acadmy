@@ -508,19 +508,21 @@
                 <input type="text" id="new_subject_name" placeholder="اسم المادة (مثال: إلكترونك)" class="qa-input-field">
                 <select id="new_subject_college" class="qa-input-field"></select>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <select id="new_subject_year" class="qa-input-field" style="margin-bottom:0;">
+                    <select id="new_subject_year" class="qa-input-field" style="margin-bottom:0;" onchange="toggleCustomYear()">
                         <option value="السنة الأولى">السنة الأولى</option>
                         <option value="السنة الثانية">السنة الثانية</option>
                         <option value="السنة الثالثة">السنة الثالثة</option>
                         <option value="السنة الرابعة">السنة الرابعة</option>
                         <option value="السنة الخامسة">السنة الخامسة</option>
                         <option value="السنة السادسة">السنة السادسة</option>
+                        <option value="__custom__">سنة مخصصة…</option>
                     </select>
                     <select id="new_subject_term" class="qa-input-field" style="margin-bottom:0;">
                         <option value="الترم الأول">الترم الأول</option>
                         <option value="الترم الثاني">الترم الثاني</option>
                     </select>
                 </div>
+                <input type="text" id="new_subject_year_custom" placeholder="اكتب السنة المخصصة (مثال: سنة تحضيرية)" class="qa-input-field" style="display:none; margin-top:12px;">
                 <button onclick="submitNewSubject()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-plus"></i> إضافة المادة</button>
                 <div id="subjectMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
             </div>
@@ -1540,17 +1542,28 @@ async function loadSubjectsTab() {
     } catch(e) { sl.innerHTML = 'خطأ في تحميل المواد.'; }
 }
 
+function toggleCustomYear() {
+    const ys = document.getElementById('new_subject_year');
+    const ci = document.getElementById('new_subject_year_custom');
+    if (!ys || !ci) return;
+    const custom = ys.value === '__custom__';
+    ci.style.display = custom ? 'block' : 'none';
+    if (custom) ci.focus();
+    else ci.value = '';
+}
+
 async function submitNewSubject() {
     const name = document.getElementById('new_subject_name').value.trim();
     const college = document.getElementById('new_subject_college') ? document.getElementById('new_subject_college').value : '';
-    const year = document.getElementById('new_subject_year').value.trim();
+    let year = document.getElementById('new_subject_year').value.trim();
+    if (year === '__custom__') year = document.getElementById('new_subject_year_custom').value.trim();
     const term = document.getElementById('new_subject_term').value.trim();
     const sm = document.getElementById('subjectMsg');
     if (!name || !year || !term) { const msg = 'اسم المادة والسنة والترم حقول مطلوبة.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } return; }
     try {
         const res = await fetch('/admin/add-subject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, college, year, term }) });
         const data = await res.json();
-        if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('new_subject_name').value = ''; const _ys = document.getElementById('new_subject_year'); if (_ys) _ys.selectedIndex = 0; const _ts = document.getElementById('new_subject_term'); if (_ts) _ts.selectedIndex = 0; loadSubjectsTab(); }
+        if (data.status === 'success') { if (sm) { sm.textContent = ''; sm.style.display = 'none'; } showToast(data.message, 'success'); document.getElementById('new_subject_name').value = ''; const _ys = document.getElementById('new_subject_year'); if (_ys) _ys.selectedIndex = 0; const _ts = document.getElementById('new_subject_term'); if (_ts) _ts.selectedIndex = 0; const _yc = document.getElementById('new_subject_year_custom'); if (_yc) { _yc.value = ''; _yc.style.display = 'none'; } loadSubjectsTab(); }
         else { showToast(data.message, 'error', 5000); if (sm) { sm.textContent = data.message; sm.style.display = 'block'; } }
     } catch(e) { const msg = 'خطأ أثناء إضافة المادة. تحقق من الاتصال وحاول مجدداً.'; showToast(msg, 'error', 5000); if (sm) { sm.textContent = msg; sm.style.display = 'block'; } }
 }

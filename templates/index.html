@@ -31,7 +31,8 @@
         const USER_ROLE = {{ user_role|tojson }};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
-        const CATALOG_DATA = {{ data | tojson }};
+        const CATALOG_DATA = {{ catalog_json | safe }};
+        const COLLEGE_ORDER_JS = {{ college_order|tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
         // نظام VIP: الخدمات المغلقة حالياً + الخدمات التي يملك المستخدم منحاً عليها
         const VIP_CLOSED_SERVICES = {{ vip_closed_services|tojson }};
@@ -1150,7 +1151,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span>
             <div class="card-btn">فتح المختبر</div>
         </a>
-        <a href="javascript:void(0)" class="card" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox'); return false;">
+        <a href="/?tool=calculator" class="card" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox'); return false;" title="حاسبة المعدل التراكمي (GPA)">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
             <h3 class="card-title">حاسبة المعدل</h3>
             <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
@@ -1634,8 +1635,29 @@ function cascadeSearchHTML(placeholder) {
         '<i class="fa-solid fa-magnifying-glass"></i>' +
         '</div>';
 }
+// ترتيب عرض ثابت للسنوات/الفصول/الكليات في كل قوائم جافاسكربت:
+// مفاتيح CATALOG_DATA كانت تأتي بترتيب tojson الأبجدي (يونيكود) فيعرض
+// المنتقي داخل الصفحة السنوات 1، 3، 2 والكليات «الطب» قبل «الهندسة»،
+// بينما التحميل الكامل يعرض 1، 2، 3 — لذلك يُفرز هنا عند كل عرض،
+// ولا يعتمد أي عارض على ترتيب مفاتيح القاموس كما وصل من السيرفر.
+const YEAR_NAME_FIX_JS = { 'السنة الاولئ': 'السنة الأولى' };
+const YEAR_ORDER_JS = { 'السنة الأولى': 1, 'السنة الثانية': 2, 'السنة الثالثة': 3, 'السنة الرابعة': 4, 'السنة الخامسة': 5, 'السنة السادسة': 6 };
+const TERM_ORDER_JS = { 'الترم الأول': 1, 'الترم الثاني': 2 };
+function fixYearNameJS(y) { const v = (y || '').trim(); return YEAR_NAME_FIX_JS[v] || y; }
+function _sortYearsJS(years) { years.sort((a, b) => ((YEAR_ORDER_JS[fixYearNameJS(a)] || 99) - (YEAR_ORDER_JS[fixYearNameJS(b)] || 99)) || String(a).localeCompare(String(b), 'ar')); return years; }
+function _sortTermsJS(terms) { terms.sort((a, b) => ((TERM_ORDER_JS[a] || 99) - (TERM_ORDER_JS[b] || 99)) || String(a).localeCompare(String(b), 'ar')); return terms; }
+function _sortCollegeNamesJS(names) {
+    var order = (typeof COLLEGE_ORDER_JS !== 'undefined' && COLLEGE_ORDER_JS) ? COLLEGE_ORDER_JS : [];
+    names.sort(function (a, b) {
+        var ia = order.indexOf(a), ib = order.indexOf(b);
+        if (ia === -1) ia = 900 + order.length;
+        if (ib === -1) ib = 900 + order.length;
+        return (ia - ib) || String(a).localeCompare(String(b), 'ar');
+    });
+    return names;
+}
 function cascadeCollegesHTML(data) {
-    var names = data ? Object.keys(data) : [];
+    var names = _sortCollegeNamesJS(data ? Object.keys(data) : []);
     var h = cascadeHeroHTML() +
         cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
         '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
@@ -1662,7 +1684,7 @@ function cascadeCollegesHTML(data) {
 function cascadeYearsHTML(data, college) {
     var c = data ? data[college] : null;
     var years = (c && c.years) ? c.years : {};
-    var keys = Object.keys(years);
+    var keys = _sortYearsJS(Object.keys(years));
     var h = cascadeNavBtnsHTML() +
         cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
         '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
@@ -1691,7 +1713,7 @@ function cascadeTermsHTML(data, college, year) {
     var c = data ? data[college] : null;
     var y = (c && c.years) ? c.years[year] : null;
     var terms = (y && y.terms) ? y.terms : {};
-    var keys = Object.keys(terms);
+    var keys = _sortTermsJS(Object.keys(terms));
     var h = cascadeNavBtnsHTML() +
         '<div class="section-header"><h2>اختر الفصل الدراسي</h2><p>' + escHtml(college) + '</p></div>' +
         '<div class="grid-container grid-2col">';
@@ -2342,10 +2364,18 @@ function searchItems() {
             link.href = '/?' + new URLSearchParams(params);
             results.append(link);
         };
-        for (const college of Object.values(catalog))
-            for (const year of Object.values(college.years))
-            for (const semester of Object.values(year.terms))
-                for (const subject of semester.subjects) {
+        // نتائج البحث بترتيب العرض الثابت (كلية حسب id، سنة رقمياً، ترم رقمياً)
+        // — مفاتيح CATALOG_DATA وحدها بترتيب أبجدي (يونيكود) يعرض 1، 3، 2.
+        var _collegeNames = _sortCollegeNamesJS(Object.keys(catalog || {}));
+        for (var _ci = 0; _ci < _collegeNames.length; _ci++) {
+            var college = catalog[_collegeNames[_ci]];
+            var _yearNames = _sortYearsJS(Object.keys((college && college.years) || {}));
+            for (var _yi = 0; _yi < _yearNames.length; _yi++) {
+                var year = college.years[_yearNames[_yi]];
+                var _termNames = _sortTermsJS(Object.keys((year && year.terms) || {}));
+                for (var _ti = 0; _ti < _termNames.length; _ti++) {
+                    var semester = year.terms[_termNames[_ti]];
+                    for (const subject of semester.subjects) {
                     const label = [subject.name, year.name, semester.name, college.name].join(' · ');
                     if (label.toLowerCase().includes(term)) add(label, {subject:subject.id});
                     for (const [type, content] of Object.entries(subject.types))
@@ -2353,7 +2383,10 @@ function searchItems() {
                             for (const lesson of chapter.lessons)
                                 if (lesson.title.toLowerCase().includes(term))
                                     add(lesson.title + ' · ' + subject.name, {subject:subject.id, type, chapter:chapter.name});
+                    }
                 }
+            }
+        }
         if (!results.childElementCount) results.innerHTML = '<p role="status">لا توجد نتائج مطابقة</p>';
         return;
     }
@@ -3082,12 +3115,7 @@ async function deleteAdminContent(id, btn) {
 // أو حذفها، دون إعادة تحميل الصفحة. لا نص حر للسنة/الترم في هذا القسم.
 // ترتيب رقمي ثابت + تطبيع عرض السنة: الترتيب الأبجدي يعرض 1، 3، 2،
 // والسنة المخزنة بإملاء خاطئ «السنة الاولئ» تُعرض «السنة الأولى».
-const YEAR_NAME_FIX_JS = { 'السنة الاولئ': 'السنة الأولى' };
-const YEAR_ORDER_JS = { 'السنة الأولى': 1, 'السنة الثانية': 2, 'السنة الثالثة': 3, 'السنة الرابعة': 4, 'السنة الخامسة': 5, 'السنة السادسة': 6 };
-const TERM_ORDER_JS = { 'الترم الأول': 1, 'الترم الثاني': 2 };
-function fixYearNameJS(y) { const v = (y || '').trim(); return YEAR_NAME_FIX_JS[v] || y; }
-function _sortYearsJS(years) { years.sort((a, b) => ((YEAR_ORDER_JS[a] || 99) - (YEAR_ORDER_JS[b] || 99)) || String(a).localeCompare(String(b), 'ar')); return years; }
-function _sortTermsJS(terms) { terms.sort((a, b) => ((TERM_ORDER_JS[a] || 99) - (TERM_ORDER_JS[b] || 99)) || String(a).localeCompare(String(b), 'ar')); return terms; }
+// (خرائط الترتيب ودوال الفرز معرّفة أعلى بجانب عارضات المنتقي cascade*).
 function _cascadeYears(college) {
     const years = [];
     (cachedSubjects || []).forEach(s => {

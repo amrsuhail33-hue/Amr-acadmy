@@ -129,6 +129,15 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
 </div>
 
 <section class="hero"><div><div class="eyebrow">تعلّم بالتجربة، لا بالحفظ</div><h2>مختبرك العلمي<br><span>بين يديك</span></h2><p>محاكيات مرئية وتفاعلية تشمل الرياضيات المتقدمة، الكيمياء، الكهرباء، العمارة، ومحاكيات PhET الشهيرة.</p></div></section>
+<!-- حاسبة المعدل التراكمي (GPA): كانت موجودة كنافذة منبثقة في الصفحة الرئيسية فقط،
+     فلا يجدها الزائر في المختبر — هذه البطاقة مدخل واضح لها من هنا، وتعمل دون تسجيل دخول. -->
+<section id="gpaCalculator" class="gpa-entry" style="background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:0 0 18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:space-between;box-shadow:var(--shadow)">
+  <div style="flex:1;min-width:260px">
+    <h3 style="margin:0 0 6px;font-size:1.25rem"><i class="fa-solid fa-calculator" style="color:var(--blue)"></i> حاسبة المعدل التراكمي (GPA)</h3>
+    <p style="margin:0;color:var(--muted);line-height:1.8">احسب معدلك الفصلي والتراكمي: أدخل ساعات ودرجات موادك، وأضف معدلك السابق وساعاته المنجزة إن وجد، واختر سلم التقدير من 4 أو من 5. تعمل دون تسجيل دخول.</p>
+  </div>
+  <a href="/?tool=calculator" class="primary" style="text-decoration:none;text-align:center;flex:0 0 auto;min-width:190px;width:auto;margin:0">افتح حاسبة المعدل <i class="fa-solid fa-arrow-left"></i></a>
+</section>
 <div class="toolbar"><button class="tab active" data-tab="math"><i class="fa-solid fa-calculator"></i> الرياضيات</button><button class="tab" data-tab="chem"><i class="fa-solid fa-atom"></i> الكيمياء</button><button class="tab" data-tab="electric"><i class="fa-solid fa-bolt"></i> الكهرباء</button><button class="tab" data-tab="architecture"><i class="fa-solid fa-cubes"></i> العمارة</button><button class="tab" data-tab="phet"><i class="fa-solid fa-flask"></i> منوع (PhET)</button></div>
 <main class="workspace">
 <!-- ========== الرياضيات المتطورة ========== -->

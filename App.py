@@ -1381,6 +1381,19 @@ def home():
     for _c in colleges:
         _c["subject_count"] = _college_subject_counts.get(_c.get("name"), 0)
 
+    # كتالوج JSON بترتيب الإدراج المحفوظ: فلتر tojson في Jinja يرتّب مفاتيح
+    # القواميس أبجدياً (يونيكود) فيعيد السنوات 1، 3، 2 والكليات «الطب» قبل
+    # «الهندسة» داخل CATALOG_DATA، رغم أن get_platform_data يرتّبها رقمياً —
+    # فكان التنقّل داخل الصفحة (PJAX من CATALOG_DATA) يعرض 1، 3، 2 بينما
+    # التحميل الكامل (Jinja من القاموس المرتب) يعرض 1، 2، 3. هذا الـ JSON
+    # يحفظ ترتيب الإدراج الرقمي كما بناه get_platform_data، مع هروب آمن
+    # لعلامات HTML كما يفعل tojson (بلا فرز للمفاتيح).
+    try:
+        catalog_json = json.dumps(data, ensure_ascii=False).replace('&', '\\u0026').replace('<', '\\u003c').replace('>', '\\u003e')
+    except Exception:
+        app.logger.exception("تعذر بناء catalog_json")
+        catalog_json = '{}'
+
     view_context = {
         'catalog_error': catalog_error,
         'updates': updates,
@@ -1395,6 +1408,10 @@ def home():
         'student_name': user.name if user else None,
         'colleges': colleges,
         'data': data,
+        'catalog_json': catalog_json,
+        # ترتيب الكليات حسب id (الهندسة أولاً) لفرز القوائم في جافاسكربت؛
+        # tojson يحفظ ترتيب القوائم كما هو (الفرز الأبجدي يطال مفاتيح القواميس فقط).
+        'college_order': [c.get("name") for c in colleges],
         # خدمات VIP المغلقة حالياً + خدمات VIP التي يملك المستخدم منحاً عليها.
         'vip_closed_services': [k for k in VIP_SERVICE_KEY_LIST if _service_is_vip(k)],
         'my_vip_services': [g.scope_key for g in VipGrant.query.filter_by(student_id=user.id, scope_type='service').all() if _vip_grant_is_active(g)] if user else [],
@@ -1464,10 +1481,15 @@ def home():
     if year:
         c, ydata = _find_year_term(year)
         if ydata:
-            return render_template('index.html', view='terms', terms=ydata["terms"], y_id=year, college_name=c["name"], **view_context)
+            # فرز صريح عند العرض (حزام أمان فوق ترتيب get_platform_data):
+            # مفاتيح القاموس وحدها لا تضمن الترتيب الرقمي 1، 2، 3.
+            _terms_sorted = dict(sorted(ydata["terms"].items(), key=lambda kv: _term_order(kv[0])))
+            return render_template('index.html', view='terms', terms=_terms_sorted, y_id=year, college_name=c["name"], **view_context)
 
     if college_name and college_name in data:
-        return render_template('index.html', view='years', years=data[college_name]["years"], college_name=college_name, **view_context)
+        # فرز صريح عند العرض (حزام أمان فوق ترتيب get_platform_data).
+        _years_sorted = dict(sorted(data[college_name]["years"].items(), key=lambda kv: _year_order(kv[0])))
+        return render_template('index.html', view='years', years=_years_sorted, college_name=college_name, **view_context)
 
     return render_template('index.html', view='colleges', **view_context)
 

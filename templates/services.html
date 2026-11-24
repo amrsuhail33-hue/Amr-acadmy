@@ -27,6 +27,20 @@ html.dark-mode{
 
 .top-nav-links{display:flex;gap:2px;align-items:center}.top-nav-links a{padding:8px 12px;border-radius:10px;font-weight:800;font-size:.88rem;color:var(--muted);text-decoration:none}.top-nav-links a:hover{color:var(--blue);background:rgba(37,99,235,.1)}
 /* ===== نظام موحد: تنقل سفلي + skeleton + حركة (من design-system.css) ===== */
+/* ===== أنيميشن التحميل الأنيق (موحّد مع منتقي الرئيسية) ===== */
+.cascade-loader{text-align:center;padding:28px 10px}
+.cl-spinner{width:46px;height:46px;margin:6px auto 14px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--primary);animation:clSpin .8s linear infinite}
+@keyframes clSpin{to{transform:rotate(360deg)}}
+.cl-text{font-weight:800;color:var(--text-main);margin-bottom:8px}
+.cl-count{font-weight:900;color:var(--primary);font-family:Outfit,sans-serif;margin-bottom:10px}
+.cl-bar{max-width:280px;height:8px;background:var(--border);border-radius:20px;margin:0 auto 18px;overflow:hidden}
+.cl-fill{display:block;height:100%;width:0;background:var(--primary);border-radius:20px;transition:width .25s}
+.profile-circle{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(37,99,235,.3);text-decoration:none;flex-shrink:0}
+.profile-letter{color:#fff;font-weight:900;font-size:1.2rem}
+.page-veil{position:fixed;inset:0;background:rgba(248,250,252,.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center}
+html.dark-mode .page-veil{background:rgba(11,17,32,.86)}
+.page-veil[hidden]{display:none}
+.page-veil .cascade-loader{background:var(--bg-card);border:1px solid var(--border);border-radius:24px;padding:28px 30px;box-shadow:0 20px 50px rgba(0,0,0,.18);min-width:280px;max-width:90vw}
 .mobile-bottom-nav{display:none}
 @media(max-width:768px){
 .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:1500;background:var(--nav-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.06);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
@@ -68,13 +82,13 @@ html.dark-mode .hero-art{background:linear-gradient(145deg,#14345a,#0b1729)}
 </head>
 <body>
 <div class="shell">
-<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="أكاديمية عمرو"></div><div><h1>Amr Suhail Academy</h1><small>خدمات — متاجر الأكاديمية</small></div></a><div class="top-actions"><nav class="top-nav-links"><a href="/">الرئيسية</a><a href="/#subjects">المواد</a><a href="/?page=services">خدمات</a><a href="/?tool=bot">المساعد</a></nav><button class="link-btn" type="button" onclick="toggleTheme()" aria-label="تبديل الوضع الليلي"><i class="fa-solid fa-moon" id="moon-icon"></i><i class="fa-solid fa-sun" id="sun-icon" style="display:none;color:var(--blue);"></i></button><a class="link-btn" href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>{% if student_id %}<a class="link-btn" href="/"><i class="fa-solid fa-user"></i> حسابي</a>{% endif %}<div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div></div></header>
+<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="أكاديمية عمرو"></div><div><h1>Amr Suhail Academy</h1><small>خدمات — متاجر الأكاديمية</small></div></a><div class="top-actions"><nav class="top-nav-links"><a href="/">الرئيسية</a><a href="/#subjects">المواد</a><a href="/?page=services">خدمات</a></nav>{% if student_id %}<a class="profile-circle" href="/" title="ملفي الشخصي" aria-label="ملفي الشخصي"><i class="fa-solid fa-user"></i></a>{% else %}<a class="link-btn" href="/">دخول</a>{% endif %}<div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div></div></header>
 <section class="hero"><div><div class="eyebrow">تسوّق من متاجر الأكاديمية</div><h2>خدمات<br><span>المتاجر</span></h2><p>اختر متجراً وتصفح منتجاته، حدّد الكميات التي تريدها، ثم اضغط «انتقال» فيُفتح واتساب المتجر برسالة جاهزة فيها طلبك والسعر الكلي. التسوق لا يحتاج تسجيل دخول.</p></div><div class="hero-art"><div class="hero-orb"></div></div></section>
 
 <main class="workspace" id="storesView">
 <h3 style="margin:0 0 16px;"><i class="fa-solid fa-store"></i> المتاجر المتاحة</h3>
 <div id="storesMsg" class="form-msg error"></div>
-<div id="storesList"><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div>
+    <div id="storesList"><div class="cascade-loader" role="status" aria-live="polite"><div class="cl-spinner" aria-hidden="true"></div><div class="cl-text">جارٍ تحميل المتاجر...</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div></div>
 </main>
 
 <main class="workspace" id="storeView" style="display:none; margin-top:18px;">
@@ -85,7 +99,7 @@ html.dark-mode .hero-art{background:linear-gradient(145deg,#14345a,#0b1729)}
 <button class="shop-btn" id="shopModeBtn" onclick="toggleShopMode()"><i class="fa-solid fa-basket-shopping"></i> تسوق</button>
 </div>
 <div id="productsMsg" class="form-msg error"></div>
-<div id="productsList"><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div>
+    <div id="productsList"><div class="cascade-loader" role="status" aria-live="polite"><div class="cl-spinner" aria-hidden="true"></div><div class="cl-text">جارٍ تحميل المنتجات...</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div></div>
 </main>
 <p class="footer-note">الطلب يُرسل عبر واتساب إلى رقم المتجر — لا تُحفظ بياناتك هنا.</p>
 </div>
@@ -107,7 +121,7 @@ html.dark-mode .hero-art{background:linear-gradient(145deg,#14345a,#0b1729)}
 <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
 <a href="/#subjects"><i class="fa-solid fa-layer-group"></i> المواد</a>
 <a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
-<a href="/?tool=bot"><i class="fa-solid fa-robot"></i> المساعد</a>
+
 </nav>
 <script>
 // ============================================================
@@ -230,7 +244,7 @@ async function openStore(storeId) {
     if (s.image_url) { simg.src = s.image_url; simg.style.display = 'block'; simg.onerror = () => { simg.style.display = 'none'; }; }
     else { simg.style.display = 'none'; simg.removeAttribute('src'); }
     const list = $('productsList');
-    list.innerHTML = '<div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>';
+    list.innerHTML = elegantLoaderHTML('جارٍ تحميل المنتجات...', 2);
     try {
         const res = await fetch('/api/stores/' + s.id + '/products');
         if (!res.ok) throw new Error('store unavailable');
@@ -361,6 +375,59 @@ function updateThemeIcon() {
     if (m) m.style.display = isDark ? 'none' : 'block';
     if (s) s.style.display = isDark ? 'block' : 'none';
 }
+/* ===== أنيميشن التحميل الأنيق (موحّد مع منتقي الرئيسية) ===== */
+function elegantLoaderHTML(text, nSk) {
+    var sk = '';
+    for (var i = 0; i < (nSk || 0); i++) sk += '<div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>';
+    return '<div class="cascade-loader" role="status" aria-live="polite"><div class="cl-spinner" aria-hidden="true"></div>' +
+        '<div class="cl-text">' + (text || 'جارٍ التحميل...') + '</div>' +
+        '<div class="cl-count"><span class="cl-num">0</span>%</div>' +
+        '<div class="cl-bar"><div class="cl-fill"></div></div>' + sk + '</div>';
+}
+(function elegantLoaderTicker() {
+    if (window.__elegantLoaderTicker) return; window.__elegantLoaderTicker = true;
+    setInterval(function () {
+        document.querySelectorAll('.cascade-loader .cl-num').forEach(function (num) {
+            var root = num.closest('.cascade-loader');
+            if (!root || !root.isConnected) return;
+            var v = parseInt(num.textContent || '0', 10) || 0;
+            if (v >= 90) return;
+            v = Math.min(90, v + Math.floor(Math.random() * 4) + 1);
+            num.textContent = String(v);
+            var fill = root.querySelector('.cl-fill');
+            if (fill) fill.style.width = v + '%';
+        });
+    }, 300);
+})();
+function showPageVeil(text) {
+    var v = document.getElementById('pageVeil');
+    if (!v) {
+        v = document.createElement('div');
+        v.className = 'page-veil'; v.id = 'pageVeil'; v.hidden = true;
+        v.innerHTML = elegantLoaderHTML(text || 'جارٍ التحميل...', 0);
+        document.body.appendChild(v);
+    }
+    v.hidden = false;
+    setTimeout(function () { v.hidden = true; }, 12000);
+    return v;
+}
+function hidePageVeil() { var v = document.getElementById('pageVeil'); if (v) v.hidden = true; }
+/* ستار مغادرة أنيق عند التنقّل لصفحة أخرى (بدل الشاشة البيضاء) */
+document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || (a.target && a.target !== '_self')) return;
+    if (a.closest('.popup-box, [data-no-pjax]')) return;
+    var href = a.getAttribute('href') || '';
+    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    var u; try { u = new URL(href, location.href); } catch (err) { return; }
+    if (u.origin !== location.origin) return;
+    if (u.pathname === location.pathname && u.search === location.search) return;
+    showPageVeil();
+});
+window.addEventListener('pageshow', hidePageVeil);
+
 function toggleTheme() {
     document.documentElement.classList.toggle('dark-mode');
     localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');

@@ -233,6 +233,20 @@
 
         .loading-state { text-align: center; padding: 50px 20px; }
         .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+/* ===== أنيميشن التحميل الأنيق (موحّد مع منتقي الرئيسية) ===== */
+.cascade-loader{text-align:center;padding:28px 10px}
+.cl-spinner{width:46px;height:46px;margin:6px auto 14px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--primary);animation:clSpin .8s linear infinite}
+@keyframes clSpin{to{transform:rotate(360deg)}}
+.cl-text{font-weight:800;color:var(--text-main);margin-bottom:8px}
+.cl-count{font-weight:900;color:var(--primary);font-family:Outfit,sans-serif;margin-bottom:10px}
+.cl-bar{max-width:280px;height:8px;background:var(--border);border-radius:20px;margin:0 auto 18px;overflow:hidden}
+.cl-fill{display:block;height:100%;width:0;background:var(--primary);border-radius:20px;transition:width .25s}
+.profile-circle{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(37,99,235,.3);text-decoration:none;flex-shrink:0}
+.profile-letter{color:#fff;font-weight:900;font-size:1.2rem}
+.page-veil{position:fixed;inset:0;background:rgba(248,250,252,.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center}
+html.dark-mode .page-veil{background:rgba(11,17,32,.86)}
+.page-veil[hidden]{display:none}
+.page-veil .cascade-loader{background:var(--bg-card);border:1px solid var(--border);border-radius:24px;padding:28px 30px;box-shadow:0 20px 50px rgba(0,0,0,.18);min-width:280px;max-width:90vw}
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
@@ -304,24 +318,16 @@
                 <a href="/">الرئيسية</a>
                 <a href="/#subjects">المواد</a>
                 <a href="/?page=services">خدمات</a>
-                <a href="/?tool=bot">المساعد</a>
             </nav>
-            <button class="theme-toggle-btn" onclick="togglePlannerTheme()" title="تبديل الوضع الليلي"><i class="fa-solid fa-moon"></i> الوضع الليلي</button>
             <div class="brand-user" id="userDisplay">
-            <i class="fa-regular fa-user"></i> 
             {% if student_id %}
-                <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
-                <span class="profile-badge" onclick="window.location.href='/'" title="اذهب للملف الشخصي">
-                    <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
-                    <span style="font-weight:400; font-size:0.75rem; margin-right:4px;"><i class="fa-solid fa-star" style="color:var(--gold);"></i> <span id="navPoints">0</span></span>
-                </span>
+                <a class="profile-circle" href="/" title="ملفي الشخصي" aria-label="ملفي الشخصي"><span class="profile-letter">{{ (student_name or 'ط')[:1] }}</span></a>
                 <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
                 <button onclick="logoutStudent(this)" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> خروج
                 </button>
             {% else %}
-                <span style="color:var(--danger);">غير مسجل الدخول</span>
-                <a href="/" class="login-link">→ تسجيل الدخول</a>
+                <a href="/" class="login-link">دخول</a>
                 <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
             {% endif %}
         </div>
@@ -493,8 +499,7 @@
                 <div class="form-group">
                     <label style="margin-bottom:10px;"><i class="fa-solid fa-list-check"></i> اختر الدروس التي تريد مراجعتها:</label>
                     <div id="exam-lessons-container">
-                        <div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>
-                        <div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>
+                        <div class="cascade-loader" role="status" aria-live="polite"><div class="cl-spinner" aria-hidden="true"></div><div class="cl-text">جارٍ تحميل الدروس...</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div>
                     </div>
                     <div class="selected-count" id="selected-count" style="margin-top:10px;">تم اختيار 0 درس</div>
                 </div>
@@ -610,6 +615,59 @@ function showToast(message, type = 'info', duration = 3000) {
         setTimeout(() => toast.remove(), 500);
     }, duration);
 }
+
+/* ===== أنيميشن التحميل الأنيق (موحّد مع منتقي الرئيسية) ===== */
+function elegantLoaderHTML(text, nSk) {
+    var sk = '';
+    for (var i = 0; i < (nSk || 0); i++) sk += '<div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>';
+    return '<div class="cascade-loader" role="status" aria-live="polite"><div class="cl-spinner" aria-hidden="true"></div>' +
+        '<div class="cl-text">' + (text || 'جارٍ التحميل...') + '</div>' +
+        '<div class="cl-count"><span class="cl-num">0</span>%</div>' +
+        '<div class="cl-bar"><div class="cl-fill"></div></div>' + sk + '</div>';
+}
+(function elegantLoaderTicker() {
+    if (window.__elegantLoaderTicker) return; window.__elegantLoaderTicker = true;
+    setInterval(function () {
+        document.querySelectorAll('.cascade-loader .cl-num').forEach(function (num) {
+            var root = num.closest('.cascade-loader');
+            if (!root || !root.isConnected) return;
+            var v = parseInt(num.textContent || '0', 10) || 0;
+            if (v >= 90) return;
+            v = Math.min(90, v + Math.floor(Math.random() * 4) + 1);
+            num.textContent = String(v);
+            var fill = root.querySelector('.cl-fill');
+            if (fill) fill.style.width = v + '%';
+        });
+    }, 300);
+})();
+function showPageVeil(text) {
+    var v = document.getElementById('pageVeil');
+    if (!v) {
+        v = document.createElement('div');
+        v.className = 'page-veil'; v.id = 'pageVeil'; v.hidden = true;
+        v.innerHTML = elegantLoaderHTML(text || 'جارٍ التحميل...', 0);
+        document.body.appendChild(v);
+    }
+    v.hidden = false;
+    setTimeout(function () { v.hidden = true; }, 12000);
+    return v;
+}
+function hidePageVeil() { var v = document.getElementById('pageVeil'); if (v) v.hidden = true; }
+/* ستار مغادرة أنيق عند التنقّل لصفحة أخرى (بدل الشاشة البيضاء) */
+document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || (a.target && a.target !== '_self')) return;
+    if (a.closest('.popup-box, [data-no-pjax]')) return;
+    var href = a.getAttribute('href') || '';
+    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+    var u; try { u = new URL(href, location.href); } catch (err) { return; }
+    if (u.origin !== location.origin) return;
+    if (u.pathname === location.pathname && u.search === location.search) return;
+    showPageVeil();
+});
+window.addEventListener('pageshow', hidePageVeil);
 
 function togglePlannerTheme() {
     document.documentElement.classList.toggle('dark-mode');
@@ -811,7 +869,7 @@ let loadTasksSeq = 0;
 async function loadTasks() {
     const mySeq = ++loadTasksSeq;
     const container = document.getElementById('tasks-container');
-    container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p style="color:var(--text-muted);">جاري التحميل...</p></div>';
+    container.innerHTML = elegantLoaderHTML('جارٍ التحميل...', 2);
 
     let tasks = [];
     if (isStudentLoggedIn()) {
@@ -1489,7 +1547,7 @@ window.addEventListener('focus', () => {
 <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
 <a href="/#subjects"><i class="fa-solid fa-layer-group"></i> المواد</a>
 <a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
-<a href="/?tool=bot"><i class="fa-solid fa-robot"></i> المساعد</a>
+
 </nav>
 </body>
 </html>

@@ -24,7 +24,7 @@
         const STUDENT_NAME = {{ student_name|tojson }};
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -53,7 +53,14 @@
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
             --radius: 16px;
             --radius-lg: 24px;
-            --gold: #f59e0b;
+            --radius-sm: 12px;
+            --gold: #e79a2e;
+            --primary-light: #eff6ff; --primary-hover: #1d4ed8;
+            --font-arabic: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
+            --font-latin: 'Outfit', sans-serif;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --dur-fast: 0.2s; --dur-med: 0.3s;
+            --skeleton-base: #e2e8f0; --skeleton-shine: #f1f5f9;
         }
 
         html.dark-mode {
@@ -76,9 +83,11 @@
             --border: #1e293b;
             --modal-bg: rgba(11, 17, 32, 0.85);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+            --primary-light: rgba(59, 130, 246, 0.1); --primary-hover: #60a5fa;
+            --skeleton-base: #1e293b; --skeleton-shine: #162032;
         }
 
-        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        * { box-sizing: border-box; font-family: var(--font-arabic); }
         body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .app-container { width: 100%; max-width: 850px; }
 
@@ -113,7 +122,7 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } .main-card { padding: 20px; } }
 
-        /* ===== 🚀 NEW: RADIO CARDS (أزرار اختيار نوع الخطة) ===== */
+        /* ===== NEW: RADIO CARDS (أزرار اختيار نوع الخطة) ===== */
         .plan-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .radio-card { cursor: pointer; display: block; }
         .radio-card input { display: none; }
@@ -123,7 +132,7 @@
         .radio-card input:checked + .card-content i { color: var(--primary) !important; transform: scale(1.1); }
         .radio-card input:checked + .card-content .card-title { color: var(--primary); }
 
-        /* ===== 🚀 NEW: CUSTOM TOGGLES (أزرار الراحة والورد) ===== */
+        /* ===== NEW: CUSTOM TOGGLES (أزرار الراحة والورد) ===== */
         .custom-toggle { cursor: pointer; display: inline-block; width: 100%; }
         .custom-toggle input { display: none; }
         .custom-toggle .toggle-text { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--bg-card-inner); color: var(--text-muted); font-weight: 800; font-size: 0.95rem; transition: 0.3s; user-select: none; }
@@ -133,7 +142,7 @@
         .custom-toggle input:checked + .toggle-text.success-toggle { background: var(--success); border-color: var(--success); box-shadow: 0 8px 20px var(--success-glow); }
         .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
 
-        /* ===== 🚀 NEW: EXAM LESSONS CHECKBOXES ===== */
+        /* ===== NEW: EXAM LESSONS CHECKBOXES ===== */
         .lesson-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-height: 350px; overflow-y: auto; padding: 10px; background: transparent; }
         @media (max-width: 600px) { .lesson-checkbox-grid { grid-template-columns: 1fr; } }
         .lesson-checkbox-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--bg-card-inner); border: 2px solid var(--border); cursor: pointer; transition: 0.3s; font-weight: 700; overflow: hidden; }
@@ -222,6 +231,37 @@
         .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
 
         #hidden-export-container { position: absolute; top: -9999px; left: -9999px; width: 850px; background: #0b1120; padding: 40px; color: #f8fafc; border-radius: 24px; font-family: 'Tajawal', sans-serif; }
+
+        /* ---------- نظام التصميم الموحد — إضافات (REDESIGN-V1-20261124) ---------- */
+        .planner-logo { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 22px; overflow: hidden; box-shadow: 0 10px 26px rgba(37,99,235,0.3); border: 3px solid var(--bg-card); background: #0f172a; }
+        .planner-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+        .theme-toggle-btn { background: var(--bg-card); color: var(--text-main); border: 2px solid var(--border); padding: 8px 18px; border-radius: 50px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: all var(--dur-med) var(--ease); display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; font-family: var(--font-arabic); }
+        .theme-toggle-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .setup-step { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.15rem; margin: 0 0 16px; color: var(--text-main); }
+        .setup-step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; font-family: var(--font-latin); flex-shrink: 0; }
+        .skeleton { position: relative; overflow: hidden; background: var(--skeleton-base); border-radius: 8px; }
+        .skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--skeleton-shine), transparent); animation: shimmer 1.4s infinite; transform: translateX(-100%); }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        .sk-line { height: 14px; margin-bottom: 10px; }
+        .sk-line.short { width: 60%; }
+        .sk-row { display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+        .sk-circle { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; }
+        .sk-block { flex: 1; min-width: 0; }
+        .mobile-bottom-nav { display: none; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-fade-up { animation: fadeUp 0.5s var(--ease) both; }
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1500; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); justify-content: space-around; }
+            html.dark-mode .mobile-bottom-nav { background: rgba(11,17,32,0.85); box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
+            .mobile-bottom-nav a, .mobile-bottom-nav button { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 56px; min-height: 48px; padding: 6px 4px; background: none; border: none; color: var(--text-muted); font-size: 0.68rem; font-weight: 800; font-family: var(--font-arabic); cursor: pointer; text-decoration: none; border-radius: 12px; }
+            .mobile-bottom-nav a i, .mobile-bottom-nav button i { font-size: 1.25rem; }
+            .mobile-bottom-nav a.active { color: var(--primary); }
+            .app-container { padding-bottom: 110px; }
+            .toast-container { bottom: 150px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+        }
     </style>
 </head>
 <body>
@@ -231,6 +271,7 @@
 <div class="app-container">
 
     <div class="brand-header">
+        <div class="planner-logo"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
         <h1 class="brand-title">Amr Suhail Academy</h1>
         <div class="brand-sub">نظام التخطيط الدراسي الموحّد</div>
         <div class="brand-user" id="userDisplay">
@@ -239,7 +280,7 @@
                 <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
                 <span class="profile-badge" onclick="window.location.href='/'" title="اذهب للملف الشخصي">
                     <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
-                    <span style="font-weight:400; font-size:0.75rem; margin-right:4px;">⭐ <span id="navPoints">0</span></span>
+                    <span style="font-weight:400; font-size:0.75rem; margin-right:4px;"><i class="fa-solid fa-star" style="color:var(--gold);"></i> <span id="navPoints">0</span></span>
                 </span>
                 <button onclick="logoutStudent(this)" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> خروج
@@ -249,6 +290,7 @@
                 <a href="/" class="login-link">→ تسجيل الدخول</a>
             {% endif %}
         </div>
+        <button class="theme-toggle-btn" onclick="togglePlannerTheme()" title="تبديل الوضع الليلي"><i class="fa-solid fa-moon"></i> الوضع الليلي</button>
     </div>
 
     <!-- Tabs -->
@@ -272,11 +314,11 @@
 
         <div class="filter-bar">
             <button class="filter-btn active" data-filter="all">الكل</button>
-            <button class="filter-btn" data-filter="manual">📝 يدوي</button>
-            <button class="filter-btn" data-filter="planner">📚 عام</button>
-            <button class="filter-btn" data-filter="exam">🎯 اختبارات</button>
-            <button class="filter-btn" data-filter="completed">✅ مكتمل</button>
-            <button class="filter-btn" data-filter="pending">⏳ غير مكتمل</button>
+            <button class="filter-btn" data-filter="manual"><i class="fa-solid fa-pen"></i> يدوي</button>
+            <button class="filter-btn" data-filter="planner"><i class="fa-solid fa-book-open"></i> عام</button>
+            <button class="filter-btn" data-filter="exam"><i class="fa-solid fa-bullseye"></i> اختبارات</button>
+            <button class="filter-btn" data-filter="completed"><i class="fa-solid fa-check"></i> مكتمل</button>
+            <button class="filter-btn" data-filter="pending"><i class="fa-solid fa-hourglass-half"></i> غير مكتمل</button>
         </div>
 
         <div id="tasks-container" class="main-card" style="padding: 20px;"></div>
@@ -295,7 +337,7 @@
     <!-- ========================================================== -->
     <div id="tab-new-plan" class="view-section">
         <div class="main-card">
-            <div class="section-title" style="margin-bottom:20px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--purple);"></i> اختر نوع الخطة</div>
+            <div class="setup-step"><span class="setup-step-num">1</span> اختر نوع الخطة</div>
             
             <div class="plan-type-grid">
                 <label class="radio-card">
@@ -328,6 +370,7 @@
 
             <!-- Planner Form -->
             <div id="planner-form" style="display:none; animation: viewIn 0.3s;">
+                <div class="setup-step"><span class="setup-step-num">2</span> تفاصيل الخطة العامة</div>
                 <div class="form-group">
                     <label>المسارات والمواد الدراسية:</label>
                     <input type="text" id="subjects" placeholder="مثال: الدوائر الكهربائية، رسم هندسي، رياضيات">
@@ -398,11 +441,12 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-purple" onclick="generatePlannerPlan(event)"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
+                <button class="btn btn-primary" onclick="generatePlannerPlan(event)"><i class="fa-solid fa-wand-magic-sparkles"></i> توليد الخطة العامة</button>
             </div>
 
             <!-- Exam Form -->
             <div id="exam-form" style="display:none; animation: viewIn 0.3s;">
+                <div class="setup-step"><span class="setup-step-num">2</span> تفاصيل خطة الاختبار</div>
                 <div class="form-group">
                     <label>اسم الاختبار:</label>
                     <input type="text" id="exam_name" placeholder="مثال: إلكترونيات - منتصف الفصل">
@@ -414,23 +458,22 @@
                 <div class="form-group">
                     <label style="margin-bottom:10px;"><i class="fa-solid fa-list-check"></i> اختر الدروس التي تريد مراجعتها:</label>
                     <div id="exam-lessons-container">
-                        <div class="loading-state" style="padding: 20px;">
-                            <div class="spinner" style="width:30px; height:30px;"></div>
-                            <p style="font-size:0.9rem; color:var(--text-muted);">جاري تحميل الدروس...</p>
-                        </div>
+                        <div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>
+                        <div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div>
                     </div>
                     <div class="selected-count" id="selected-count" style="margin-top:10px;">تم اختيار 0 درس</div>
                 </div>
                 <div style="background:rgba(245, 158, 11, 0.1); padding:15px; border-radius:var(--radius); margin-bottom:15px; font-size:0.9rem; color:var(--warning); font-weight:700;">
                     <i class="fa-regular fa-lightbulb"></i> سيقوم الذكاء الاصطناعي بتوزيع الدروس المختارة على الأيام المتبقية بذكاء.
                 </div>
-                <button class="btn btn-warning" style="background:var(--warning); color:white; box-shadow:0 8px 20px var(--warning-glow);" onclick="generateExamPlan(event)">
+                <button class="btn btn-primary" onclick="generateExamPlan(event)">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> توليد خطة الاختبارات
                 </button>
             </div>
 
             <!-- Manual Form -->
             <div id="manual-form" style="display:none; animation: viewIn 0.3s;">
+                <div class="setup-step"><span class="setup-step-num">2</span> تفاصيل المهمة</div>
                 <div class="form-group">
                     <label>عنوان المهمة:</label>
                     <input type="text" id="manual_title" placeholder="مثال: مراجعة الفصل الأول">
@@ -495,7 +538,7 @@
 <div class="modal-overlay" id="success-modal">
     <div class="modal-content">
         <div class="modal-icon" style="background:var(--success-glow); color:var(--success);"><i class="fa-solid fa-trophy"></i></div>
-        <h2 style="color:var(--text-main); margin:0 0 10px 0; font-weight:900;">🎉 إنجاز رائع!</h2>
+        <h2 style="color:var(--text-main); margin:0 0 10px 0; font-weight:900;">إنجاز رائع!</h2>
         <p style="color:var(--text-muted); font-size:1rem; line-height:1.6; margin-bottom:20px;">لقد أكملت مهمة بنجاح! استمر بهذا العزم نحو هدفك.</p>
         <button class="btn btn-primary" onclick="closeSuccessModal()">متابعة <i class="fa-solid fa-arrow-left"></i></button>
     </div>
@@ -531,6 +574,11 @@ function showToast(message, type = 'info', duration = 3000) {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 500);
     }, duration);
+}
+
+function togglePlannerTheme() {
+    document.documentElement.classList.toggle('dark-mode');
+    localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
 }
 
 // رسالة خطأ ثابتة داخل الصفحة (تبقى ظاهرة حتى المحاولة التالية) — التوست وحده قد يختفي دون أن يُرى
@@ -569,7 +617,7 @@ async function logoutStudent(btn) {
             localStorage.removeItem('unified_tasks');
             localStorage.removeItem('unified_tasks_backup');
             sessionStorage.clear();
-            showToast('✅ تم تسجيل الخروج بنجاح', 'success');
+            showToast('تم تسجيل الخروج بنجاح', 'success');
             window.location.href = '/';
         } else {
             const data = await res.json().catch(() => ({}));
@@ -637,14 +685,14 @@ async function autoSaveTask(taskData) {
                 tasks[index].synced = true;
                 localStorage.setItem('unified_tasks', JSON.stringify(tasks));
             }
-            showToast('✅ تم الحفظ تلقائياً', 'success');
+            showToast('تم الحفظ تلقائياً', 'success');
             return true;
         } else {
-            showToast('⚠️ حفظ محلي (خطأ في الخادم)', 'error');
+            showToast('حفظ محلي (خطأ في الخادم)', 'error');
             return false;
         }
     } catch(e) {
-        showToast('⚠️ حفظ محلي (لا يوجد اتصال)', 'error');
+        showToast('حفظ محلي (لا يوجد اتصال)', 'error');
         return false;
     }
 }
@@ -769,7 +817,7 @@ async function loadTasks() {
         }
         const completedClass = task.completed ? 'completed' : '';
         const sourceClass = 'source-' + (task.source || 'manual');
-        const sourceLabel = task.source === 'planner' ? '📚 عام' : task.source === 'exam' ? '🎯 اختبار' : '📝 يدوي';
+        const sourceLabel = task.source === 'planner' ? 'عام' : task.source === 'exam' ? 'اختبار' : 'يدوي';
         const priorityLabel = task.priority === 1 ? 'عالية' : task.priority === 2 ? 'متوسطة' : 'منخفضة';
         const priorityPill = task.priority === 1 ? 'pill-danger' : task.priority === 2 ? 'pill-warning' : 'pill-primary';
         const hours = task.allocated_hours || 1.0;
@@ -785,7 +833,7 @@ async function loadTasks() {
                     <div class="task-meta">
                         <span class="task-pill ${priorityPill}">${priorityLabel}</span>
                         <span class="source-badge ${sourceClass}">${sourceLabel}</span>
-                        ${task.lesson_id ? `<span class="task-pill pill-primary" style="font-size:0.7rem;">📖 درس</span>` : ''}
+                        ${task.lesson_id ? `<span class="task-pill pill-primary" style="font-size:0.7rem;">درس</span>` : ''}
                         ${wirdBadge}
                     </div>
                     <div class="task-actions">
@@ -832,7 +880,7 @@ async function toggleTaskComplete(taskId, isChecked) {
             if (res.ok && data.status === 'success') {
                 updateSyncStatus(taskId, true);
                 if(isChecked) {
-                    showToast('✅ تم إكمال المهمة وإضافة النقاط', 'success');
+                    showToast('تم إكمال المهمة وإضافة النقاط', 'success');
                     await loadProfileBadge();
                 }
             } else {
@@ -1045,7 +1093,7 @@ async function generatePlannerPlan(event) {
         });
         const data = await res.json().catch(() => ({}));
         if (data.status === 'success') {
-            showToast('✅ تم توليد الخطة بنجاح!', 'success');
+            showToast('تم توليد الخطة بنجاح!', 'success');
             await loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
@@ -1116,7 +1164,7 @@ async function generateExamPlan(event) {
         });
         const data = await res.json().catch(() => ({}));
         if (data.status === 'success') {
-            showToast('✅ تم توليد خطة الاختبارات وحفظها!', 'success');
+            showToast('تم توليد خطة الاختبارات وحفظها!', 'success');
             document.getElementById('exam_name').value = '';
             document.getElementById('exam_date').value = '';
             selectedLessonIds = [];
@@ -1140,7 +1188,7 @@ async function rescheduleTasks(event) {
     if (!isStudentLoggedIn()) { showPlannerError('يرجى تسجيل الدخول لإعادة التوزيع.'); return; }
     let tasks = JSON.parse(localStorage.getItem('unified_tasks') || '[]');
     const incomplete = tasks.filter(t => !t.completed);
-    if (incomplete.length === 0) return showToast('🎉 جميع المهام مكتملة!', 'success');
+    if (incomplete.length === 0) return showToast('جميع المهام مكتملة!', 'success');
     const btn = event ? event.currentTarget : null;
     // تأكيد داخل الصفحة بخطوتين بدل نافذة confirm() — النافذة كانت تُبتلع فلا يظهر تأكيد ولا تتم إعادة التوزيع
     if (btn && !btn.dataset.armed) {
@@ -1190,7 +1238,7 @@ async function rescheduleTasks(event) {
                         }
                     }
                 }
-                showToast('✅ تم إعادة توزيع المهام بنجاح!', 'success');
+                showToast('تم إعادة توزيع المهام بنجاح!', 'success');
                 await loadTasks();
             } else showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
         } else {
@@ -1290,7 +1338,7 @@ function updateStats() {
     const sources = {};
     tasks.forEach(t => { const s = t.source || 'manual'; sources[s] = (sources[s] || 0) + 1; });
     const distContainer = document.getElementById('source-distribution');
-    const labels = { manual: '📝 يدوي', planner: '📚 عام', exam: '🎯 اختبار' };
+    const labels = { manual: 'يدوي', planner: 'عام', exam: 'اختبار' };
     distContainer.innerHTML = Object.entries(sources).map(([key, count]) => `
         <div style="background:var(--bg-card-inner); padding:8px 16px; border-radius:50px; font-weight:700; font-size:0.9rem;">
             ${labels[key] || key}: ${count}
@@ -1329,18 +1377,18 @@ function exportFullPlan() {
             <div style="background:#162032; border:1px solid #1e293b; border-radius:16px; padding:20px;">
                 <div style="display:flex; justify-content:space-between; border-bottom:1px solid #1e293b; padding-bottom:12px; margin-bottom:15px;">
                     <span style="color:#38bdf8; font-size:18px; font-weight:900;">${formatDate(date)}</span>
-                    <span style="color:#94a3b8; font-size:14px; font-family:'Outfit', sans-serif;">${completedCount}/${dayTasks.length} ✅</span>
+                    <span style="color:#94a3b8; font-size:14px; font-family:'Outfit', sans-serif;">${completedCount}/${dayTasks.length} ✓</span>
                 </div>
         `;
         dayTasks.forEach(t => {
-            const sourceLabel = t.source === 'planner' ? '📚' : t.source === 'exam' ? '🎯' : '📝';
+            const sourceLabel = t.source === 'planner' ? 'عام' : t.source === 'exam' ? 'اختبار' : 'يدوي';
             const priorityLabel = t.priority === 1 ? 'عالية' : t.priority === 2 ? 'متوسطة' : 'منخفضة';
             const hours = t.allocated_hours || 1.0;
-            const wirdLabel = t.is_wird ? '🕌 ورد' : '';
+            const wirdLabel = t.is_wird ? 'ورد' : '';
             exportHTML += `
                 <div style="background:#1e293b; padding:12px 16px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:${t.completed ? '#10b981' : '#94a3b8'};">${t.completed ? '✅' : '⬜'}</span>
+                        <span style="color:${t.completed ? '#10b981' : '#94a3b8'};">${t.completed ? '✓' : '○'}</span>
                         <span style="color:#f8fafc; font-weight:600; font-size:14px;">${t.title}</span>
                         <span style="color:#38bdf8; font-size:12px; font-weight:800;">${hours} ساعة</span>
                         ${wirdLabel ? `<span style="color:#f59e0b; font-size:11px; font-weight:700;">${wirdLabel}</span>` : ''}
@@ -1362,7 +1410,7 @@ function exportFullPlan() {
         link.download = 'Amr-Suhail-My-Plans.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
-        showToast('✅ تم تصدير الخطة كصورة', 'success');
+        showToast('تم تصدير الخطة كصورة', 'success');
     }).catch(() => showToast('خطأ في التصدير', 'error'));
 }
 
@@ -1375,7 +1423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     updateStats();
     if (document.getElementById('exam-form').style.display !== 'none') loadLessonsForExam();
-    if (!isStudentLoggedIn()) showToast('⚠️ يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
+    if (!isStudentLoggedIn()) showToast('يرجى تسجيل الدخول لحفظ البيانات على الخادم', 'error');
     else loadProfileBadge();
 });
 
@@ -1385,5 +1433,13 @@ window.addEventListener('focus', () => {
     if (isStudentLoggedIn()) loadProfileBadge();
 });
 </script>
+<!-- شريط التنقل السفلي للجوال -->
+<nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
+    <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+    <a href="/"><i class="fa-solid fa-layer-group"></i> المواد</a>
+    <a href="/services"><i class="fa-solid fa-bag-shopping"></i> المتجر</a>
+    <a href="/guide"><i class="fa-solid fa-user-graduate"></i> الدليل</a>
+    <a href="/"><i class="fa-solid fa-user"></i> حسابي</a>
+</nav>
 </body>
 </html>

@@ -98,15 +98,15 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
 </head>
 <body>
 <div class="shell">
-<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="أكاديمية عمرو"></div><div><h1>Amr Suhail Academy</h1></div></a><div class="top-actions"><nav class="top-nav-links"><a href="/">الرئيسية</a><a href="/#subjects">المواد</a><a href="/?page=services">خدمات</a></nav>{% if student_id %}<button class="profile-circle" type="button" onclick="openSideProfile(event)" title="ملفي الشخصي" aria-label="ملفي الشخصي"><span class="profile-letter" id="sideProfileLetter">{{ (student_name or 'ط')[:1] }}</span></button>{% else %}<a class="link-btn" href="/">دخول</a>{% endif %}<div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div></div></header>
+<header class="topbar"><a href="/" class="brand" style="text-decoration:none;color:inherit"><div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="أكاديمية عمرو"></div><div><h1>Amr Suhail Academy</h1></div></a><div class="top-actions"><nav class="top-nav-links"><a href="/">الرئيسية</a><a href="/#subjects">المواد</a><a href="/?page=services">خدمات</a></nav>{% if student_id %}<button class="profile-circle" type="button" onclick="openSideProfile(event)" title="ملفي الشخصي" aria-label="ملفي الشخصي"><span class="profile-letter" id="sideProfileLetter">{{ (student_name or '')[:1] }}</span></button>{% else %}<a class="link-btn" href="/">دخول</a>{% endif %}<div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div></div></header>
 <!-- نافذة «ملفي الشخصي» (جولة 5.1: شريط علوي موحّد مع الرئيسية) -->
 <div class="side-profile-overlay" id="sideProfileOverlay" onclick="if(event.target===this)closeSideProfile()">
   <div class="side-profile-box" role="dialog" aria-label="ملفي الشخصي">
     <button type="button" class="side-profile-close" onclick="closeSideProfile()" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
-    <div class="side-profile-avatar" id="sideProfileAvatar">ط</div>
-    <div class="side-profile-name" id="sideProfileName">...</div>
+    <div class="side-profile-avatar" id="sideProfileAvatar"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.6rem"></i></div>
+    <div class="side-profile-name" id="sideProfileName">جارٍ تحميل البيانات...</div>
     <div class="side-profile-user" id="sideProfileUser"></div>
-    <div class="side-profile-stats"><span id="sideProfileLevel">المستوى 1</span><span id="sideProfileXp">0 XP</span></div>
+    <div class="side-profile-stats"><span id="sideProfileLevel">—</span><span id="sideProfileXp">—</span></div>
     <div class="side-profile-err" id="sideProfileErr"></div>
     <button type="button" class="side-profile-logout" id="sideProfileLogoutBtn" onclick="sideLogout(this)"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
   </div>
@@ -491,7 +491,7 @@ async function loadSideProfile(){
   var fill=function(d){
     if(!d||d.status!=='success'||!d.student){ showSideProfileError('تعذر تحميل الملف الشخصي'); return; }
     var st=d.student, pf=d.profile||{};
-    var letter=(st.name||'ط').charAt(0);
+    var letter=(st.name||'').charAt(0);
     var set=function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
     set('sideProfileName', st.name||'طالب');
     set('sideProfileUser', '@'+(st.username||''));
@@ -520,6 +520,16 @@ async function sideLogout(btn){
     else{ showSideProfileError('تعذر تسجيل الخروج'); if(btn){ btn.innerHTML=btn.dataset.origHtml||'تسجيل الخروج'; delete btn.dataset.armed; } }
   }catch(e){ showSideProfileError('خطأ بالاتصال'); if(btn){ btn.innerHTML=btn.dataset.origHtml||'تسجيل الخروج'; delete btn.dataset.armed; } }
 }
+/* جولة 5.2: جلب البروفايل مسبقاً عند تحميل الصفحة حتى تفتح النافذة والبيانات جاهزة */
+(function prefetchSideProfile(){
+    function go(){
+        if(__sideProfileData) return;
+        fetch('/api/profile').then(function(r){ return r.json(); }).then(function(d){
+            if(d && d.status==='success'){ __sideProfileData=d; }
+        }).catch(function(){});
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSideProfile(); });
 </script>
 

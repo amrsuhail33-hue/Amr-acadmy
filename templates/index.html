@@ -537,7 +537,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="nav-actions">
         {% if student_id %}
             <button class="compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
-                <span class="profile-letter">{{ (student_name or 'ط')[:1] }}</span>
+                <span class="profile-letter">{{ (student_name or '')[:1] }}</span>
             </button>
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact"><i class="fa-regular fa-user"></i> دخول</button>
@@ -588,13 +588,13 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div id="profileUsername" style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2;"></div>
             
             <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2; flex-wrap:wrap;">
-                <span class="profile-level-badge" id="profileLevel">المستوى 1</span>
+                <span class="profile-level-badge" id="profileLevel">—</span>
                 <span style="background:rgba(0,0,0,0.3); padding:5px 18px; border-radius:50px; font-weight:800; font-size:1rem; border:1px solid rgba(255,255,255,0.2);">
-                    ⭐ <span id="profilePoints">0</span> XP
+                    ⭐ <span id="profilePoints">—</span> XP
                 </span>
             </div>
             <div style="margin-top:12px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
-                <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak">0</span> يوم متتالي
+                <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak">—</span> يوم متتالي
             </div>
         </div>
         
@@ -973,7 +973,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="nav-buttons-container">
         <a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>
         {% if view in ['years', 'subjects', 'chapters', 'select_type', 'content', 'terms'] %}
-        <a href="javascript:history.back()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>
+        <a href="javascript:cascadeBack()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>
         {% endif %}
     </div>
     {% endif %}
@@ -1493,7 +1493,7 @@ function findYearCollege(data, yearName) {
 function cascadeNavBtnsHTML() {
     return '<div class="nav-buttons-container">' +
         '<a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>' +
-        '<a href="javascript:history.back()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>' +
+        '<a href="javascript:cascadeBack()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>' +
         '</div>';
 }
 function cascadeHeroHTML() {
@@ -1680,6 +1680,22 @@ function __botBubbleInQuiz() {
     var qv = document.getElementById('quiz-view'), rv = document.getElementById('result-view');
     return !!((qv && !qv.classList.contains('hidden')) || (rv && !rv.classList.contains('hidden')));
 }
+/* جولة 5.2: الفقاعة لا تغطي أي زر بطاقة أبداً — فحص هندسي حي: إن تداخل مستطيل الفقاعة (يسار 20px، عرض 56px، أسفل 88px على الجوال / 20px على اللابتوب) مع أي زر بطاقة ظاهر في الشاشة تُخفى حتى يزول التداخل */
+function __botBubbleOverlapsCardBtn() {
+    var b = document.getElementById('botBubble');
+    if (!b || b.style.display === 'none') return false;
+    var mobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    var bottom = mobile ? 88 : 20;
+    var br = { left: 20, right: 76, top: window.innerHeight - bottom - 56, bottom: window.innerHeight - bottom };
+    var btns = document.querySelectorAll('.card-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var r = btns[i].getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+        if (r.left < br.right && r.right > br.left && r.top < br.bottom && r.bottom > br.top) return true;
+    }
+    return false;
+}
 function syncBotBubble() {
     var b = document.getElementById('botBubble');
     if (!b) return;
@@ -1690,7 +1706,7 @@ function syncBotBubble() {
     } catch (e) { /* keep visible */ }
     if (show && __botBubbleInQuiz()) show = false;
     b.style.display = show ? '' : 'none';
-    b.classList.toggle('bubble-hidden', __botBubbleScrollHidden && show);
+    b.classList.toggle('bubble-hidden', (__botBubbleScrollHidden || __botBubbleOverlapsCardBtn()) && show);
 }
 function __botBubbleOnScroll() {
     if (__botBubbleRaf) return; __botBubbleRaf = true;
@@ -1703,9 +1719,45 @@ function __botBubbleOnScroll() {
     });
 }
 window.addEventListener('scroll', __botBubbleOnScroll, { passive: true });
+window.addEventListener('resize', syncBotBubble);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncBotBubble);
 else syncBotBubble();
 
+/* جولة 5.2: زر الرجوع لا يخرج من الموقع أبداً — إن كان هناك سجل داخل الموقع (حالة PJAX) نرجع إليه؛ وإلا نصعد خطوة في المنتقي بدل history.back() */
+function cascadeParentUrl() {
+    var u;
+    try { u = new URL(location.href); } catch (e) { return '/'; }
+    if (u.origin !== location.origin || u.pathname !== '/') return '/';
+    var sp = u.searchParams;
+    var subject = sp.get('subject'), type = sp.get('type'), chapter = sp.get('chapter');
+    var college = sp.get('college'), year = sp.get('year'), term = sp.get('term');
+    if (subject && chapter) return '/?subject=' + encodeURIComponent(subject) + (type ? '&type=' + encodeURIComponent(type) : '');
+    if (subject && type) return '/?subject=' + encodeURIComponent(subject);
+    if (subject) {
+        var f = null;
+        try { f = (typeof findSubjectInData === 'function' && typeof CATALOG_DATA !== 'undefined') ? findSubjectInData(CATALOG_DATA, subject) : null; } catch (err) { f = null; }
+        if (f) return '/?college=' + encodeURIComponent(f.college) + '&year=' + encodeURIComponent(f.year) + '&term=' + encodeURIComponent(f.term);
+        return '/';
+    }
+    if (term) return '/?college=' + encodeURIComponent(college || '') + '&year=' + encodeURIComponent(year || '');
+    if (year) return college ? '/?college=' + encodeURIComponent(college) : '/';
+    if (college) return '/';
+    return '/';
+}
+function cascadeBack() {
+    if (window.history.state) { history.back(); return; }
+    var url = cascadeParentUrl();
+    if (url === location.pathname + location.search) { location.href = '/'; return; }
+    try {
+        var u = new URL(url, location.origin);
+        if (cascadeStateFromUrl(u)) {
+            history.pushState({ pjax: true }, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            return;
+        }
+    } catch (e) { /* fall through to full navigation */ }
+    location.href = url;
+}
 function cascadeStateFromUrl(u) {
     if (!u || u.origin !== location.origin || u.pathname !== '/') return null;
     var keys = Array.from(u.searchParams.keys());

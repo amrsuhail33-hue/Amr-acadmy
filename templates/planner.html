@@ -44,8 +44,8 @@
             --danger-glow: rgba(239, 68, 68, 0.15);
             --warning: #f59e0b;
             --warning-glow: rgba(245, 158, 11, 0.15);
-            --purple: #8b5cf6;
-            --purple-glow: rgba(139, 92, 246, 0.15);
+            --purple: #2563eb;
+            --purple-glow: rgba(37, 99, 235, 0.15);
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
@@ -55,7 +55,7 @@
             --radius-lg: 24px;
             --radius-sm: 12px;
             --gold: #e79a2e;
-            --primary-light: #eff6ff; --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255, 255, 255, 0.85);
             --font-arabic: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
             --font-latin: 'Outfit', sans-serif;
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -76,14 +76,14 @@
             --danger-glow: rgba(239, 68, 68, 0.15);
             --warning: #f59e0b;
             --warning-glow: rgba(245, 158, 11, 0.15);
-            --purple: #8b5cf6;
-            --purple-glow: rgba(139, 92, 246, 0.15);
+            --purple: #3b82f6;
+            --purple-glow: rgba(59, 130, 246, 0.15);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #1e293b;
             --modal-bg: rgba(11, 17, 32, 0.85);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
-            --primary-light: rgba(59, 130, 246, 0.1); --primary-hover: #60a5fa;
+            --primary-light: rgba(59, 130, 246, 0.1); --primary-hover: #60a5fa; --nav-bg: rgba(11, 17, 32, 0.85);
             --skeleton-base: #1e293b; --skeleton-shine: #162032;
         }
 
@@ -100,6 +100,21 @@
         .brand-user .logout-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .brand-user .login-link { color: var(--primary); font-weight: 800; text-decoration: none; }
         .brand-user .login-link:hover { text-decoration: underline; }
+        /* ===== الشريط العلوي الموحد (نفس الرئيسية) ===== */
+        .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; background: var(--nav-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+        .brandmark { width: 38px; height: 38px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(37,99,235,0.2); flex-shrink: 0; }
+        .brandmark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .brand h1 { font-size: 1.05rem; margin: 0; font-weight: 900; font-family: 'Outfit', sans-serif; color: var(--primary); }
+        .brand small { display: block; color: var(--text-muted); font-size: 0.73rem; margin-top: 2px; }
+        .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .top-nav-links { display: flex; gap: 2px; align-items: center; }
+        .top-nav-links a { padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.88rem; color: var(--text-muted); text-decoration: none; font-family: var(--font-arabic); }
+        .top-nav-links a:hover { color: var(--primary); background: var(--primary-light); }
+        .topbar .theme-toggle-btn { margin-top: 0; }
+        .topbar .brand-user { margin-top: 0; }
+        @media (max-width: 768px) { .top-nav-links { display: none; } .topbar { align-items: flex-start; } }
+
         .brand-user .profile-badge { background: var(--primary); color: white; padding: 4px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s; }
         .brand-user .profile-badge:hover { transform: scale(1.05); box-shadow: 0 4px 12px var(--primary-glow); }
         .brand-user .profile-badge .level-badge { background: var(--gold); color: #0f172a; padding: 0 8px; border-radius: 50px; font-size: 0.75rem; font-weight: 900; }
@@ -224,8 +239,8 @@
         .toast.info { border-color: var(--primary); color: var(--primary); }
 
         .view-section { display: none; }
-        .active-view { display: block; animation: viewIn 0.35s ease; }
-        @keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .active-view { display: block; animation: viewIn 0.25s ease; }
+        @keyframes viewIn { from { opacity: 0.65; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .empty-state i { font-size: 2.5rem; margin-bottom: 15px; color: var(--border); }
@@ -248,8 +263,8 @@
         .sk-circle { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; }
         .sk-block { flex: 1; min-width: 0; }
         .mobile-bottom-nav { display: none; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        .anim-fade-up { animation: fadeUp 0.5s var(--ease) both; }
+        @keyframes fadeUp { from { opacity: 0.65; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-fade-up { animation: fadeUp 0.3s var(--ease) both; }
         @media (max-width: 768px) {
             .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1500; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); justify-content: space-around; }
             html.dark-mode .mobile-bottom-nav { background: rgba(11,17,32,0.85); box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
@@ -270,11 +285,20 @@
 
 <div class="app-container">
 
-    <div class="brand-header">
-        <div class="planner-logo"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
-        <h1 class="brand-title">Amr Suhail Academy</h1>
-        <div class="brand-sub">نظام التخطيط الدراسي الموحّد</div>
-        <div class="brand-user" id="userDisplay">
+    <header class="topbar">
+        <a href="/" class="brand">
+            <div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
+            <div><h1>Amr Suhail Academy</h1><small>الخطة الدراسية</small></div>
+        </a>
+        <div class="top-actions">
+            <nav class="top-nav-links">
+                <a href="/">الرئيسية</a>
+                <a href="/#subjects">المواد</a>
+                <a href="/?page=services">خدمات</a>
+                <a href="/?tool=bot">المساعد</a>
+            </nav>
+            <button class="theme-toggle-btn" onclick="togglePlannerTheme()" title="تبديل الوضع الليلي"><i class="fa-solid fa-moon"></i> الوضع الليلي</button>
+            <div class="brand-user" id="userDisplay">
             <i class="fa-regular fa-user"></i> 
             {% if student_id %}
                 <span style="color:var(--success); font-weight:900;">{{ student_name }}</span>
@@ -290,8 +314,8 @@
                 <a href="/" class="login-link">→ تسجيل الدخول</a>
             {% endif %}
         </div>
-        <button class="theme-toggle-btn" onclick="togglePlannerTheme()" title="تبديل الوضع الليلي"><i class="fa-solid fa-moon"></i> الوضع الليلي</button>
-    </div>
+        </div>
+    </header>
 
     <!-- Tabs -->
     <div class="tabs-container">
@@ -1435,11 +1459,10 @@ window.addEventListener('focus', () => {
 </script>
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
-    <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
-    <a href="/"><i class="fa-solid fa-layer-group"></i> المواد</a>
-    <a href="/services"><i class="fa-solid fa-bag-shopping"></i> المتجر</a>
-    <a href="/guide"><i class="fa-solid fa-user-graduate"></i> الدليل</a>
-    <a href="/"><i class="fa-solid fa-user"></i> حسابي</a>
+<a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+<a href="/#subjects"><i class="fa-solid fa-layer-group"></i> المواد</a>
+<a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
+<a href="/?tool=bot"><i class="fa-solid fa-robot"></i> المساعد</a>
 </nav>
 </body>
 </html>

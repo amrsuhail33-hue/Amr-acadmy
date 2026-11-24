@@ -184,28 +184,9 @@
         
         .student-progress-box { background: var(--bg-card); padding: 16px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--card-shadow); margin-bottom: 25px; }
         
-        /* الزر العائم (FAB) */
-        .fab-container { position: fixed; left: 16px; bottom: 20px; z-index: 2005; display: flex; flex-direction: column-reverse; align-items: center; gap: 12px; pointer-events: none; }
-        .fab-container > * { pointer-events: auto; }
-        .fab-main { width: 52px; height: 52px; border-radius: 18px; background: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; box-shadow: 0 10px 25px rgba(37,99,235,0.4); transition: 0.3s; border: none; }
-        .fab-main:hover { transform: scale(1.05); background: var(--primary-hover); }
-        .fab-item { width: 42px; height: 42px; border-radius: 14px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); box-shadow: var(--card-shadow); cursor: pointer; transform: scale(0) translateY(15px); opacity: 0; visibility: hidden; transition: 0.3s; color: var(--text-main); font-size: 1.1rem; text-decoration: none;}
-        .fab-item:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary-light); }
-        .fab-container.open .fab-item { transform: scale(1) translateY(0); opacity: 1; visibility: visible; }
-        .fab-container.open .fab-item:nth-child(2) { transition-delay: 0.05s; }
-        .fab-container.open .fab-item:nth-child(3) { transition-delay: 0.1s; }
-        .fab-container.open .fab-item:nth-child(4) { transition-delay: 0.15s; }
-        .fab-container.open .fab-item:nth-child(5) { transition-delay: 0.2s; }
-        .fab-container.open .fab-item:nth-child(6) { transition-delay: 0.25s; }
-        .fab-container.open .fab-item:nth-child(7) { transition-delay: 0.3s; }
-        .fab-container.open .fab-item:nth-child(8) { transition-delay: 0.35s; }
-        .fab-container.open .fab-item:nth-child(9) { transition-delay: 0.4s; }
-        .fab-container.open .fab-item:nth-child(10) { transition-delay: 0.45s; }
-        .fab-container.open .fab-item:nth-child(11) { transition-delay: 0.5s; }
         .fab-badge-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-card); }
         /* شارة VIP الذهبية — فوق المحتوى/الخدمة المدفوعة عند الطرف */
         .vip-badge { position: absolute; top: -7px; left: -7px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 999px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 2; }
-        .fab-item { position: relative; }
         .vip-badge-inline { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.7rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
         
         .chat-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2009; opacity: 0; visibility: hidden; transition: 0.3s; }
@@ -401,6 +382,11 @@ body { -webkit-font-smoothing: antialiased; }
 .profile-level-badge { background: var(--gold); }
 
 /* ---------- شريط التنقل السفلي للجوال ---------- */
+.nav-links { display: flex; gap: 2px; align-items: center; }
+.nav-links a { padding: 8px 14px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; color: var(--text-muted); text-decoration: none; transition: 0.3s; white-space: nowrap; }
+.nav-links a:hover { color: var(--primary); background: var(--primary-light); }
+.nav-links a.active { color: var(--primary); background: var(--primary-light); }
+@media (max-width: 768px) { .nav-links { display: none; } }
 .mobile-bottom-nav { display: none; }
 @media (max-width: 768px) {
     .mobile-bottom-nav {
@@ -418,7 +404,6 @@ body { -webkit-font-smoothing: antialiased; }
     .mobile-bottom-nav a i, .mobile-bottom-nav button i { font-size: 1.25rem; }
     .mobile-bottom-nav a.active, .mobile-bottom-nav button.active { color: var(--primary); }
     .mobile-bottom-nav a:active, .mobile-bottom-nav button:active { background: var(--primary-light); }
-    .fab-container { bottom: 86px; }
     .main-content { padding-bottom: 130px; }
     .toast-container { bottom: 150px; }
 }
@@ -441,15 +426,15 @@ body { -webkit-font-smoothing: antialiased; }
 .sk-block { flex: 1; min-width: 0; }
 
 /* ---------- الحركة (Motion) ---------- */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-.anim-fade-up { animation: fadeUp 0.5s var(--ease) both; }
-.anim-d1 { animation-delay: 0.06s; }
-.anim-d2 { animation-delay: 0.12s; }
-.anim-d3 { animation-delay: 0.18s; }
-.features-grid .feature-card { animation: fadeUp 0.5s var(--ease) both; }
-.features-grid .feature-card:nth-child(2) { animation-delay: 0.07s; }
-.features-grid .feature-card:nth-child(3) { animation-delay: 0.14s; }
-.features-grid .feature-card:nth-child(4) { animation-delay: 0.21s; }
+@keyframes fadeUp { from { opacity: 0.65; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.anim-fade-up { animation: fadeUp 0.3s var(--ease) both; }
+.anim-d1 { animation-delay: 0.03s; }
+.anim-d2 { animation-delay: 0.06s; }
+.anim-d3 { animation-delay: 0.09s; }
+.features-grid .feature-card { animation: fadeUp 0.3s var(--ease) both; }
+.features-grid .feature-card:nth-child(2) { animation-delay: 0.04s; }
+.features-grid .feature-card:nth-child(3) { animation-delay: 0.08s; }
+.features-grid .feature-card:nth-child(4) { animation-delay: 0.12s; }
 .list-item, .card, .feature-card, .opinion-card, .product-card { transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), background var(--dur-med) var(--ease); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
@@ -482,7 +467,6 @@ body { -webkit-font-smoothing: antialiased; }
 .popup-box { border-radius: var(--radius-lg); }
 .qa-input-field { font-family: var(--font-arabic); }
 select.qa-input-field { cursor: pointer; }
-.fab-item { transition: all var(--dur-med) var(--ease); }
 
 /* ---------- الوضع الليلي: صقل إضافي ---------- */
 html.dark-mode .card:hover, html.dark-mode .opinion-card:hover, html.dark-mode .product-card:hover { border-color: rgba(59,130,246,0.4); }
@@ -511,6 +495,12 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="nav-logo">
         <div class="nav-title">Amr Suhail Academy</div>
         {% if is_admin or is_assistant %}<span class="admin-indicator-dot"></span>{% endif %}
+    </div>
+    <div class="nav-links">
+        <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}">الرئيسية</a>
+        <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}">المواد</a>
+        <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}">خدمات</a>
+        <a href="/?tool=bot">المساعد</a>
     </div>
     <div class="nav-actions">
         {% if student_id %}
@@ -952,9 +942,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     {% if view == 'years' or view == 'colleges' %}
     <section class="hero-section anim-fade-up">
         <div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>
-        {% if not student_id %}
         <div class="welcome-logo"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
-        {% endif %}
         <h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>
         <h2 class="hero-subtitle">From Nothing to Be Something</h2>
         <p class="hero-desc">منصة تعليمية حديثة تساعدك في الوصول إلى محاضراتك وملفاتك وشروحاتك الجامعية بسهولة وفي مكان واحد منظم واحترافي.</p>
@@ -982,9 +970,9 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div id="catalogResults" class="grid-container" aria-live="polite"></div>
     {% if view == 'colleges' %}
     <div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>
-    <div class="grid-container">
+    <div class="grid-container" id="subjects">
         {% for c in colleges %}
-            <a href="/?college={{ c.name|urlencode }}" class="card green year-card">
+            <a href="/?college={{ c.name|urlencode }}" class="card year-card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
                 <h3 class="card-title year-card-title">{{ c.name }}</h3>
                 <div class="card-subtitle">جميع سنوات ومواد الكلية</div>
@@ -995,10 +983,10 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     </div>
     {% else %}
     <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — {{ college_name }}</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
-    <div class="grid-container">
+    <div class="grid-container" id="subjects">
         {% for id, year in years.items() %}
-            <a href="/?college={{ college_name|urlencode }}&year={{ id|urlencode }}" class="card green year-card">
-                <div class="card-icon-wrapper"></div>
+            <a href="/?college={{ college_name|urlencode }}&year={{ id|urlencode }}" class="card year-card">
+                <div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
                 <h3 class="card-title year-card-title">{{ year.name }}</h3>
                 <div class="card-subtitle">جميع مواد ومحتوى السنة</div>
                 <div class="card-btn">استعرض المواد</div>
@@ -1027,17 +1015,85 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <input type="text" id="searchInput" oninput="searchItems()" aria-label="بحث" placeholder="ابحث عن مادة محددة...">
         <i class="fa-solid fa-magnifying-glass"></i>
     </div>
-    <div class="section-header"><h2>المقررات الدراسية</h2></div>
+    <div class="section-header" id="subjects"><h2>المقررات الدراسية</h2></div>
     <div class="grid-container">
         {% for subject in subjects %}
-            <a href="/?subject={{ subject.id|urlencode }}" class="card" style="justify-content:center; align-items:center; text-align:center; padding:45px 20px;">
-                <h3 class="card-title" style="margin:0 0 25px 0; font-size:1.6rem;">{{ subject.name }}</h3>
+            <a href="/?subject={{ subject.id|urlencode }}" class="card">
+                <div class="card-icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
+                <h3 class="card-title">{{ subject.name }}</h3>
+                <div class="card-subtitle">{{ subject.lesson_count or 0 }} درس · {{ subject.question_count or 0 }} سؤال</div>
+                {% if subject.has_vip %}<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}
                 {% if subject.lesson_count == 0 and not subject.types.quiz.chapters %}
                 <div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>
                 {% endif %}
-                <div class="card-btn" style="max-width:200px; margin:0 auto;">دخول للمادة</div>
+                <div class="card-btn">دخول للمادة</div>
             </a>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if view == 'services_hub' %}
+    <div class="section-header"><h2>خدمات الأكاديمية</h2><p>كل أدوات المنصة في مكان واحد</p></div>
+    <div class="grid-container">
+        <a href="/simulators" class="card" onclick="return guardVipService('simulator', 'المختبر', event)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-flask"></i></div>
+            <h3 class="card-title">المختبر</h3>
+            <div class="card-subtitle">محاكيات تفاعلية للمواد العلمية</div>
+            <span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span>
+            <div class="card-btn">فتح المختبر</div>
+        </a>
+        <a href="/?tool=calculator" class="card">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
+            <h3 class="card-title">حاسبة المعدل</h3>
+            <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
+            <span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span>
+            <div class="card-btn">فتح الحاسبة</div>
+        </a>
+        <a href="/planner" target="_blank" class="card" onclick="return guardVipService('planner', 'الخطة الدراسية', event)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
+            <h3 class="card-title">الخطة الدراسية</h3>
+            <div class="card-subtitle">خطط دراستك وتابع تقدمك</div>
+            <span class="vip-badge" data-vip-badge="planner" style="display:none;">VIP</span>
+            <div class="card-btn">فتح الخطة</div>
+        </a>
+        <a href="/services" class="card">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-bag-shopping"></i></div>
+            <h3 class="card-title">المتجر</h3>
+            <div class="card-subtitle">متاجر الأكاديمية ومنتجاتها</div>
+            <div class="card-btn">تصفح المتجر</div>
+        </a>
+        <a href="/guide" class="card" onclick="return guardVipService('guide', 'دليل الطالب', event)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-user-graduate"></i></div>
+            <h3 class="card-title">دليل الطالب</h3>
+            <div class="card-subtitle">آراء الطلاب عن الدكاترة</div>
+            <span class="vip-badge" data-vip-badge="guide" style="display:none;">VIP</span>
+            <div class="card-btn">فتح الدليل</div>
+        </a>
+        <a href="/?tool=fav" class="card">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-heart"></i></div>
+            <h3 class="card-title">المفضلة</h3>
+            <div class="card-subtitle">دروسك وملفاتك المحفوظة</div>
+            <div class="card-btn">فتح المفضلة</div>
+        </a>
+        <a href="/?tool=updates" class="card">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-bell"></i></div>
+            <h3 class="card-title">التحديثات</h3>
+            <div class="card-subtitle">آخر أخبار وتحديثات المنصة</div>
+            <span class="fab-badge-dot" id="unreadUpdateFabDot" style="display:none;"></span>
+            <div class="card-btn">عرض التحديثات</div>
+        </a>
+        <a href="https://wa.me/967774485611" target="_blank" class="card">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-headset"></i></div>
+            <h3 class="card-title">الدعم</h3>
+            <div class="card-subtitle">تواصل معنا عبر واتساب</div>
+            <div class="card-btn">فتح واتساب</div>
+        </a>
+        <div class="card" role="button" tabindex="0" onclick="toggleTheme()" style="cursor:pointer;">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-moon"></i></div>
+            <h3 class="card-title">المظهر</h3>
+            <div class="card-subtitle">تبديل الوضع الفاتح / الليلي</div>
+            <div class="card-btn">تبديل المظهر</div>
+        </div>
     </div>
     {% endif %}
 
@@ -1241,26 +1297,6 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     {% endif %}
 </div>
 
-<!-- الزر العائم (FAB) -->
-{% if view in ['years', 'colleges'] %}
-<div class="fab-container" id="fabMenu">
-    <div class="fab-main" onclick="toggleFabMenu()" title="أدوات المنصة">
-        <svg id="fabMainIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
-        <i id="fabCloseIcon" class="fa-solid fa-xmark" style="display:none; font-size:1.3rem;"></i>
-        <span class="fab-badge-dot" id="unreadUpdateFabDot" style="display:none;"></span>
-    </div>
-    <div class="fab-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="moon-icon"></i><i class="fa-solid fa-sun" id="sun-icon" style="display:none; color:var(--warning);"></i></div>
-    <div class="fab-item" onclick="togglePopup('favBox')" title="مفضلتي"><i class="fa-solid fa-heart" style="color:var(--primary);"></i></div>
-    <a href="https://wa.me/967774485611" target="_blank" class="fab-item" title="الدعم الفني"><i class="fa-solid fa-headset" style="color:var(--accent);"></i></a>
-    <div class="fab-item" onclick="openWhatsNewModal()" title="التحديثات"><i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadStarDot" style="display:none; top:0; right:0;"></span></div>
-    <a href="/simulators" class="fab-item" aria-label="المحاكيات" title="المحاكيات" onclick="return guardVipService('simulator', 'المختبر', event)"><i class="fa-solid fa-flask"></i><span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span></a>
-    <a href="/planner" target="_blank" class="fab-item" title="الخطة الدراسية" onclick="return guardVipService('planner', 'الخطة الدراسية', event)"><i class="fa-solid fa-calendar-check" style="color:#8b5cf6;"></i><span class="vip-badge" data-vip-badge="planner" style="display:none;">VIP</span></a>
-    <div class="fab-item" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox')" title="حاسبة المعدل"><i class="fa-solid fa-calculator"></i><span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span></div>
-    <div class="fab-item" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox')" title="المساعد الذكي" style="color:var(--primary);"><i class="fa-solid fa-robot"></i><span class="vip-badge" data-vip-badge="bot" style="display:none;">VIP</span></div>
-    <a href="/guide" class="fab-item" title="دليل الطالب" onclick="return guardVipService('guide', 'دليل الطالب', event)"><i class="fa-solid fa-user-graduate" style="color:#8b5cf6;"></i><span class="vip-badge" data-vip-badge="guide" style="display:none;">VIP</span></a>
-    <a href="/services" class="fab-item" title="خدمات"><i class="fa-solid fa-bag-shopping" style="color:#0ea5e9;"></i></a>
-</div>
-{% endif %}
 
 <footer class="footer">
     <div style="margin-bottom:12px; letter-spacing:1px; color:var(--text-main); font-family:'Outfit', sans-serif; font-weight:900; font-size:1rem;"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="footer-logo">Amr Suhail Academy &copy; 2026</div>
@@ -1300,16 +1336,6 @@ function showQuizStartError(msg) {
 function isStudentLoggedIn() { return STUDENT_ID !== null; }
 
 // 2. التحكم في القوائم والنوافذ
-function toggleFabMenu() {
-    const menu = document.getElementById('fabMenu');
-    if (!menu) return;
-    menu.classList.toggle('open');
-    const mainIcon = document.getElementById('fabMainIcon');
-    const closeIcon = document.getElementById('fabCloseIcon');
-    if (mainIcon) mainIcon.style.display = menu.classList.contains('open') ? 'none' : 'block';
-    if (closeIcon) closeIcon.style.display = menu.classList.contains('open') ? 'block' : 'none';
-}
-
 function togglePopup(boxId) {
     const target = document.getElementById(boxId);
     if (!target) return;
@@ -1322,8 +1348,6 @@ function togglePopup(boxId) {
         if (boxId === 'profileBox') loadProfile();
         if (boxId === 'favBox') renderFavLists();
     }
-    const menu = document.getElementById('fabMenu');
-    if (menu && menu.classList.contains('open')) toggleFabMenu();
 }
 
 function closeAllPopups() {
@@ -3780,18 +3804,26 @@ window.addEventListener('DOMContentLoaded', () => {
         initFavoriteButtons();
     }
 });
+
+// فتح أداة عبر ?tool= (من شريط التنقل أو صفحة خدمات) — يعمل من أي صفحة
+(function () {
+    try {
+        var tool = new URLSearchParams(window.location.search).get('tool');
+        if (!tool) return;
+        if (tool === 'bot') guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox');
+        else if (tool === 'calculator') guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox');
+        else if (tool === 'fav') togglePopup('favBox');
+        else if (tool === 'updates') openWhatsNewModal();
+        history.replaceState(null, '', window.location.pathname + window.location.hash);
+    } catch (e) {}
+})();
 </script>
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
     <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}"><i class="fa-solid fa-house"></i> الرئيسية</a>
-    <button type="button" onclick="scrollToYears()"><i class="fa-solid fa-layer-group"></i> المواد</button>
-    <a href="/services"><i class="fa-solid fa-bag-shopping"></i> المتجر</a>
-    <a href="/guide"><i class="fa-solid fa-user-graduate"></i> الدليل</a>
-    {% if student_id %}
-    <button type="button" onclick="togglePopup('profileBox')"><i class="fa-solid fa-user"></i> حسابي</button>
-    {% else %}
-    <button type="button" onclick="togglePopup('loginBox')"><i class="fa-solid fa-user"></i> حسابي</button>
-    {% endif %}
+    <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}"><i class="fa-solid fa-layer-group"></i> المواد</a>
+    <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}"><i class="fa-solid fa-border-all"></i> خدمات</a>
+    <a href="/?tool=bot"><i class="fa-solid fa-robot"></i> المساعد</a>
 </nav>
 </body>
 </html>

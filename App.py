@@ -15,7 +15,7 @@ from flask import (
     make_response
 )
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import CheckConstraint, Uuid
+from sqlalchemy import CheckConstraint, Uuid, func
 from sqlalchemy.sql import text
 from groq import Groq
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1216,6 +1216,14 @@ def get_platform_data(user):
             subj_data["types"][c_type]["chapters"][chapter]["lessons"].append(lesson_dict)
             subj_data["lesson_count"] = subj_data.get("lesson_count", 0) + 1
 
+        # عدد أسئلة الاختبار لكل مادة (استعلامان مجمّعان فقط — لبطاقات المواد «N درس · M سؤال»)
+        try:
+            _qc = dict(db.session.query(QuizQuestion.subject_id, func.count(QuizQuestion.id)).filter(QuizQuestion.subject_id.isnot(None)).group_by(QuizQuestion.subject_id).all())
+            _qc_legacy = {(r[0], r[1], r[2], r[3]): r[4] for r in db.session.query(QuizQuestion.college, QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name, func.count(QuizQuestion.id)).filter(QuizQuestion.subject_id.is_(None)).group_by(QuizQuestion.college, QuizQuestion.year, QuizQuestion.term, QuizQuestion.subject_name).all()}
+        except Exception:
+            db.session.rollback()
+            _qc, _qc_legacy = {}, {}
+
         for c in data.values():
             for y in c["years"].values():
                 for t in y["terms"].values():
@@ -1232,6 +1240,8 @@ def get_platform_data(user):
                         s["types"]["videos"]["chapters"] = list(s["types"]["videos"]["chapters"].values())
                         s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                         s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
+                        s["question_count"] = _qc.get(s.get("subject_id"), 0) + _qc_legacy.get((s.get("college"), s.get("year"), s.get("term"), s.get("name")), 0)
+                        s["has_vip"] = any(_ch.get("has_vip") for _ctype in ("videos", "files", "quiz") for _ch in s["types"][_ctype]["chapters"])
     except Exception as e:
         db.session.rollback()
 
@@ -1307,6 +1317,9 @@ def home():
     subject_id = request.args.get('subject')
     content_type = request.args.get('type')
     chapter_name = request.args.get('chapter')
+
+    if request.args.get('page') == 'services':
+        return render_template('index.html', view='services_hub', **view_context)
 
     def _find_subject(sid):
         for c in data.values():

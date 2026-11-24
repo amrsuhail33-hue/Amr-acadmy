@@ -152,15 +152,6 @@
         .nav-buttons-container { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
         .nav-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border); color: var(--text-main); text-decoration: none; transition: 0.3s; box-shadow: var(--card-shadow); font-size: 1.1rem; }
         .nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px); }
-.nav-back-btn { width: auto; padding: 0 18px; gap: 8px; font-size: 0.95rem; font-weight: 800; }
-/* فقاعة المساعد — الصفحة الرئيسية فقط */
-.bot-bubble { position: fixed; left: 20px; bottom: 20px; z-index: 1400; width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 28px rgba(37, 99, 235, .45); transition: transform .2s ease, box-shadow .2s ease; }
-.bot-bubble:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 32px rgba(37, 99, 235, .55); }
-.bot-bubble i { pointer-events: none; }
-@media (max-width: 768px) { .bot-bubble { bottom: 88px; } }
-/* أنيميشن تحميل أنيق مصغّر (قوائم الإدارة والنوافذ المنبثقة) */
-.cl-mini { text-align: center; padding: 18px 10px; }
-.cl-mini .cl-spinner { width: 34px; height: 34px; border-width: 3px; margin-bottom: 10px; }
         
         .section-header { text-align: center; margin-bottom: 25px; }
         .section-header h2 { font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin: 0 0 8px; }
@@ -532,6 +523,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}">الرئيسية</a>
         <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}">المواد</a>
         <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}">خدمات</a>
+        <a href="/?tool=bot">المساعد</a>
     </div>
     <div class="nav-actions">
         {% if student_id %}
@@ -671,7 +663,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 <!-- WhatsNew Box -->
 <div class="popup-box" id="whatsNewBox">
     <div class="popup-header"><div><i class="fa-solid fa-bullhorn header-icon" style="color:var(--warning);"></i> إعلانات وتحديثات</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
-    <div class="popup-body" id="whatsNewList"><div class="cl-mini" role="status"><div class="cl-spinner"></div><div class="cl-text">جارٍ التحميل...</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div></div></div>
+    <div class="popup-body" id="whatsNewList"><div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div></div>
 </div>
 
 <!-- Calculator Box -->
@@ -968,17 +960,16 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 <!-- MAIN CONTENT AREA -->
 <!-- ========================================================== -->
 <div class="main-content">
-    {% if view != 'colleges' %}
+    {% if view not in ['years', 'colleges'] %}
     <div class="nav-buttons-container">
         <a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>
-        {% if view in ['years', 'subjects', 'chapters', 'select_type', 'content', 'terms'] %}
-        <a href="javascript:history.back()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>
+        {% if view in ['subjects', 'chapters', 'select_type', 'content', 'terms'] %}
+        <a href="javascript:history.back()" class="nav-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i></a>
         {% endif %}
     </div>
     {% endif %}
 
     {% if view == 'years' or view == 'colleges' %}
-    {% if view == 'colleges' %}
     <section class="hero-section anim-fade-up">
         <div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>
         <h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>
@@ -992,7 +983,6 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         </div>
         {% endif %}
     </section>
-    {% endif %}
 
 
     <div class="search-box">
@@ -1492,7 +1482,7 @@ function findYearCollege(data, yearName) {
 function cascadeNavBtnsHTML() {
     return '<div class="nav-buttons-container">' +
         '<a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>' +
-        '<a href="javascript:history.back()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>' +
+        '<a href="javascript:history.back()" class="nav-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i></a>' +
         '</div>';
 }
 function cascadeHeroHTML() {
@@ -1541,7 +1531,7 @@ function cascadeYearsHTML(data, college) {
     var c = data ? data[college] : null;
     var years = (c && c.years) ? c.years : {};
     var keys = Object.keys(years);
-    var h = cascadeNavBtnsHTML() +
+    var h = cascadeHeroHTML() +
         cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
         '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
         '<div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — ' + escHtml(college) + '</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>' +
@@ -1653,40 +1643,6 @@ function cascadeLoaderHTML(text) {
         '<div class="cl-bar"><div class="cl-fill"></div></div>' +
         '<div class="grid-container grid-2col">' + sk + '</div></div>';
 }
-/* ===== أنيميشن التحميل الأنيق المصغّر (قوائم الإدارة والنوافذ المنبثقة) ===== */
-function elegantLoaderMiniHTML(text) {
-    return '<div class="cl-mini" role="status"><div class="cl-spinner"></div><div class="cl-text">' + (text || 'جارٍ التحميل...') + '</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div></div>';
-}
-(function miniLoaderTicker() {
-    if (window.__miniLoaderTicker) return; window.__miniLoaderTicker = true;
-    setInterval(function () {
-        document.querySelectorAll('.cl-mini .cl-num').forEach(function (num) {
-            var root = num.closest('.cl-mini');
-            if (!root || !root.isConnected) return;
-            var v = parseInt(num.textContent || '0', 10) || 0;
-            if (v >= 90) return;
-            v = Math.min(90, v + Math.floor(Math.random() * 4) + 1);
-            num.textContent = String(v);
-            var f = root.querySelector('.cl-fill');
-            if (f) f.style.width = v + '%';
-        });
-    }, 300);
-})();
-
-/* فقاعة البوت: تظهر في صفحات الرئيسية (الكتالوج) فقط، وتُخفى في مركز الخدمات وأي ?tool= */
-function syncBotBubble() {
-    var b = document.getElementById('botBubble');
-    if (!b) return;
-    var show = true;
-    try {
-        var u = new URL(location.href);
-        if (u.pathname !== '/' || u.searchParams.get('page') || u.searchParams.get('tool')) show = false;
-    } catch (e) { /* keep visible */ }
-    b.style.display = show ? '' : 'none';
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncBotBubble);
-else syncBotBubble();
-
 function cascadeStateFromUrl(u) {
     if (!u || u.origin !== location.origin || u.pathname !== '/') return null;
     var keys = Array.from(u.searchParams.keys());
@@ -1760,11 +1716,7 @@ function cascadeStepHTML(st) {
         if (u.origin !== location.origin || u.pathname !== '/') return false;
         var keys = Array.from(u.searchParams.keys());
         for (var i = 0; i < keys.length; i++) {
-            if (keys[i] === 'tool') return false;
-            if (keys[i] === 'page') {
-                if (u.searchParams.get('page') !== 'services') return false;
-                continue;
-            }
+            if (keys[i] === 'tool' || keys[i] === 'page') return false;
             if (CATALOG_PARAMS.indexOf(keys[i]) === -1) return false;
         }
         if (u.searchParams.get('type') === 'quiz') return false;
@@ -1792,7 +1744,6 @@ function cascadeStepHTML(st) {
         refreshVipBadges();
         initFavoriteButtons();
         updateThemeIcon();
-        if (typeof syncBotBubble === 'function') syncBotBubble();
         if (document.querySelector('.main-content a[href*="chapter="]')) scheduleChapterPrefetch();
     }
     function scrollToHash(hash) {
@@ -2011,25 +1962,6 @@ function cascadeStepHTML(st) {
         closeAllPopups();
         swapTo(u.origin + u.pathname + u.search, true, u.hash || '');
     });
-    /* ——— ستار مغادرة أنيق عند التنقّل لصفحة منفصلة (بدل الشاشة البيضاء) ——— */
-    document.addEventListener('click', function (e) {
-        if (e.defaultPrevented) return;
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-        var a = e.target.closest ? e.target.closest('a[href]') : null;
-        if (!a || (a.target && a.target !== '_self')) return;
-        if (a.closest('.popup-box, [data-no-pjax]')) return;
-        var href = a.getAttribute('href') || '';
-        if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
-        var u;
-        try { u = new URL(href, location.href); } catch (err) { return; }
-        if (u.origin !== location.origin) return;
-        if (u.pathname === location.pathname && u.search === location.search) return;
-        if (isCatalogUrl(u)) return;
-        showVeil();
-        setTimeout(hideVeil, 12000);
-    });
-    window.addEventListener('pageshow', hideVeil);
-
     window.addEventListener('popstate', function () {
         var u;
         try { u = new URL(location.href); } catch (e) { return; }
@@ -2316,7 +2248,7 @@ function showAccountsError(msg) {
 async function loadAccountsTab() {
     const c = document.getElementById('accountsList'); if (!c) return;
     const q = (document.getElementById('accounts_search') || {}).value || '';
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
         const res = await fetch('/admin/accounts?q=' + encodeURIComponent(q));
         cachedAccounts = await res.json() || [];
@@ -2554,7 +2486,7 @@ async function revokeVipGrant(id, btn) {
 
 async function loadVipServices() {
     const c = document.getElementById('vipServicesList'); if (!c) return;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
         const res = await fetch('/admin/vip-services');
         const states = await res.json() || {};
@@ -2591,7 +2523,7 @@ async function toggleVipService(key, isVip) {
 
 async function loadAllVipGrants() {
     const c = document.getElementById('vipAllGrantsList'); if (!c) return;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
         const res = await fetch('/admin/vip-grants');
         const grants = await res.json() || [];
@@ -2634,7 +2566,7 @@ async function submitProfileUpdate() {
 
 async function loadCustomContentList() {
     const c = document.getElementById('adminCustomContentList'); if(!c) return;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = `<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>`;
     try {
         const res = await fetch('/admin/custom-content'); const list = await res.json();
         window.cachedCustomList = list || [];
@@ -2871,7 +2803,7 @@ function applyContentFilters() {
 async function loadReviewQueue() {
     const c = document.getElementById('reviewQueueList'); if(!c) return;
     const canApprove = IS_ADMIN;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ جلب طابور المراجعة...');
+    c.innerHTML = `<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري جلب طابور المراجعة...</div>`;
     try {
         const res = await fetch('/admin/review-queue'); const data = await res.json();
         if(data.lessons.length===0 && data.quizzes.length===0) return c.innerHTML = `<div style="text-align:center; padding:20px; color:var(--accent);">لا توجد عناصر بانتظار المراجعة. كل شيء معتمد!</div>`;
@@ -3356,7 +3288,7 @@ async function loadQuizQuestions() {
     const listEl = document.getElementById('quizQuestionsList'); if (!listEl) return;
     const sel = document.getElementById('quiz_questions_subject_id');
     const subjectId = sel && sel.value ? sel.value : '';
-    listEl.innerHTML = elegantLoaderMiniHTML('جارٍ جلب الأسئلة...');
+    listEl.innerHTML = '<div style="text-align:center; padding:15px;">جاري جلب الأسئلة...</div>';
     try {
         const url = subjectId ? ('/admin/quiz-questions?subject_id=' + encodeURIComponent(subjectId)) : '/admin/quiz-questions';
         const res = await fetch(url); const list = await res.json();
@@ -3412,7 +3344,7 @@ function showOpinionAdminError(msg) {
 }
 async function loadDoctorOpinions() {
     const c = document.getElementById('doctorOpinionsAdminList'); if (!c) return;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     const status = (document.getElementById('opinions_status_filter')?.value || '');
     try {
         const url = status ? ('/admin/doctor-opinions?status=' + encodeURIComponent(status)) : '/admin/doctor-opinions';
@@ -3574,7 +3506,7 @@ async function loadStoresTab() {
     await loadStudentsForStoreSelect();
     const c = document.getElementById('storesAdminList');
     if (!c) return;
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
         const res = await fetch('/admin/stores');
         cachedStores = await res.json() || [];
@@ -3735,7 +3667,7 @@ async function loadMyStoresTab() {
     const c = document.getElementById('myStoresList');
     if (!c) return;
     const m = document.getElementById('myStoreAdminMsg'); if (m) m.style.display = 'none';
-    c.innerHTML = elegantLoaderMiniHTML('جارٍ التحميل...');
+    c.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...</div>';
     try {
         const res = await fetch('/admin/my-stores');
         const stores = await res.json() || [];
@@ -3781,7 +3713,7 @@ function myStoreCardHtml(s) {
             <button onclick="submitNewProduct(${s.id})" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-plus"></i> إضافة المنتج</button>
             <div id="prodFormMsg_${s.id}" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
         </div>
-        <div style="margin-top:15px;"><div style="font-weight:800; color:var(--primary); margin-bottom:10px;">منتجات المتجر:</div><div id="myProductsList_${s.id}"><div class="cl-mini" role="status"><div class="cl-spinner"></div><div class="cl-text">جارٍ التحميل...</div><div class="cl-count"><span class="cl-num">0</span>%</div><div class="cl-bar"><div class="cl-fill"></div></div></div></div></div>
+        <div style="margin-top:15px;"><div style="font-weight:800; color:var(--primary); margin-bottom:10px;">منتجات المتجر:</div><div id="myProductsList_${s.id}">جاري التحميل...</div></div>
     </div>`;
 }
 
@@ -4495,14 +4427,12 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
 })();
 </script>
-    {% if view != 'services_hub' %}
-    <button id="botBubble" class="bot-bubble" type="button" title="المساعد الذكي" aria-label="المساعد الذكي" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox')"><i class="fa-solid fa-robot"></i></button>
-    {% endif %}
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
     <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}"><i class="fa-solid fa-house"></i> الرئيسية</a>
     <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}"><i class="fa-solid fa-layer-group"></i> المواد</a>
     <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}"><i class="fa-solid fa-border-all"></i> خدمات</a>
+    <a href="/?tool=bot"><i class="fa-solid fa-robot"></i> المساعد</a>
 </nav>
 </body>
 </html>

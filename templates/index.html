@@ -159,6 +159,11 @@
 .bot-bubble:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 32px rgba(37, 99, 235, .55); }
 .bot-bubble.bubble-hidden{opacity:0;pointer-events:none;transform:scale(.7)}
 .bot-bubble i { pointer-events: none; }
+/* زر إرسال المساعد — نص واضح «إرسال» مع أيقونة، حتى لا يعتمد الزر على الأيقونة وحدها */
+.ai-send-btn { flex: 0 0 auto; height: 45px; padding: 0 18px; border-radius: 50px; border: none; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-family: inherit; font-size: 1rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 5px 15px rgba(37,99,235,0.3); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; white-space: nowrap; }
+.ai-send-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.4); }
+.ai-send-btn:disabled { opacity: .6; cursor: default; transform: none; box-shadow: 0 5px 15px rgba(37,99,235,0.2); }
+.ai-send-btn i { pointer-events: none; }
 @media (max-width: 768px) { .bot-bubble { bottom: 88px; } }
 /* أنيميشن تحميل أنيق مصغّر (قوائم الإدارة والنوافذ المنبثقة) */
 .cl-mini { text-align: center; padding: 18px 10px; }
@@ -1002,8 +1007,8 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div style="padding:15px 20px; background:var(--bg-card); border-top:1px solid var(--border); display:flex; gap:10px; align-items:center;">
         <input type="file" id="aiImageUpload" accept="image/*" style="display:none;" onchange="previewAiImage()">
         <label for="aiImageUpload" style="width:45px; height:45px; border-radius:12px; background:var(--bg-body); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-camera"></i></label>
-        <input type="text" id="aiUserInput" placeholder="اسأل المساعد الذكي..." style="flex:1; padding:14px 20px; border-radius:50px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); outline:none; font-size:1rem;" onkeypress="if(event.key==='Enter') sendAIMessage()">
-        <button onclick="sendAIMessage()" style="width:45px; height:45px; border-radius:50%; background:var(--primary); color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 5px 15px rgba(37,99,235,0.3);"><i class="fa-solid fa-paper-plane"></i></button>
+        <input type="text" id="aiUserInput" placeholder="اسأل المساعد الذكي..." style="flex:1; min-width:0; padding:14px 20px; border-radius:50px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); outline:none; font-size:16px;" onkeypress="if(event.key==='Enter') sendAIMessage()">
+        <button id="aiSendBtn" type="button" class="ai-send-btn" onclick="sendAIMessage()" aria-label="إرسال" title="إرسال"><i class="fa-solid fa-paper-plane"></i><span>إرسال</span></button>
     </div>
     <div id="aiImgPreviewBox" style="position:absolute; bottom:90px; right:20px; display:none; background:var(--bg-card); padding:8px; border-radius:12px; border:1px solid var(--border);">
         <span onclick="clearAiImage()" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; border:2px solid var(--bg-card);"><i class="fa-solid fa-xmark"></i></span>
@@ -1157,6 +1162,13 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
             <span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span>
             <div class="card-btn">فتح الحاسبة</div>
+        </a>
+        <a href="/?tool=bot" class="card" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox'); return false;" title="المساعد الذكي">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+            <h3 class="card-title">المساعد الذكي</h3>
+            <div class="card-subtitle">اسأل المساعد الذكي عن دروسك ومسائلك</div>
+            <span class="vip-badge" data-vip-badge="bot" style="display:none;">VIP</span>
+            <div class="card-btn">فتح المساعد</div>
         </a>
         <a href="/planner" target="_blank" class="card" onclick="return guardVipService('planner', 'الخطة الدراسية', event)">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
@@ -4467,9 +4479,16 @@ function previewAiImage() {
 function clearAiImage() { document.getElementById('aiImageUpload').value=''; document.getElementById('aiImgPreviewBox').style.display='none'; }
 
 async function sendAIMessage() {
-    const txt = document.getElementById('aiUserInput').value.trim();
+    if (window.__aiSending) return;
+    const inputEl = document.getElementById('aiUserInput');
+    const sendBtn = document.getElementById('aiSendBtn');
+    const txt = inputEl.value.trim();
     const file = document.getElementById('aiImageUpload').files[0];
     if(!txt && !file) return;
+    // حالة الإرسال: منع الإرسال المزدوج وتعطيل الحقل والزر أثناء انتظار الرد.
+    window.__aiSending = true;
+    if (inputEl) inputEl.disabled = true;
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>جارٍ...</span>'; }
     const b = document.getElementById('aiChatBody');
     b.innerHTML += `
         <div style="display:flex; gap:15px; align-items:flex-end; flex-direction:row-reverse; margin-top:10px;">
@@ -4502,6 +4521,12 @@ async function sendAIMessage() {
     } catch(e) {
         document.getElementById(loadId)?.remove();
         b.innerHTML += `<div style="text-align:center; color:var(--danger); margin-top:10px;">خطأ في الاتصال بالمساعد الذكي.</div>`;
+    } finally {
+        window.__aiSending = false;
+        if (inputEl) inputEl.disabled = false;
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>إرسال</span>'; }
+        // إعادة التركيز للحقل على الأجهزة بلوحة مفاتيح فعلية فقط — على الجوال لا تُفتح لوحة المفاتيح قسراً.
+        if (inputEl && window.matchMedia && window.matchMedia('(pointer:fine)').matches) inputEl.focus();
     }
     b.scrollTop = b.scrollHeight;
 }
@@ -4953,6 +4978,10 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
         var tool = new URLSearchParams(window.location.search).get('tool');
         if (!tool) return;
+        // رابط الأداة يفتح نافذة منبثقة — وشاشة الدخول (z-index 9999) فوق النوافذ
+        // (z-index 2010) فكانت تغطيها للزائر المسجل خروجه؛ اعتبر الزيارة مسبقة
+        // حتى لا تحجب شاشة الدخول النافذة التي جاء المستخدم من أجلها.
+        try { sessionStorage.setItem('visited', '1'); } catch (e) {}
         if (tool === 'bot') guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox');
         else if (tool === 'calculator') guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox');
         else if (tool === 'fav') togglePopup('favBox');

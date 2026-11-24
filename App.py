@@ -2330,6 +2330,10 @@ def add_supervisor():
 @app.route('/admin/remove-supervisor', methods=['POST'])
 @admin_required
 def remove_supervisor():
+    # جولة 5.4: حراسة — إزالة الإشراف كانت بلا أي حماية: استدعاء واحد باسم
+    # أي حساب (حتى المشرف الأعلى a0mr1 أو الأدمن نفسه) كان يحوّل دوره إلى
+    # 'student' ويسلب صلاحياته. الآن تُرفض أهداف الأدمن والإزالة الذاتية.
+    admin = get_current_user()
     username = ""
     try:
         data = request.get_json(silent=True) or request.form or {}
@@ -2337,6 +2341,12 @@ def remove_supervisor():
         student = Student.query.filter_by(username=username).first()
         if not student:
             return jsonify({"status": "error", "message": "لا يوجد حساب بهذا الاسم"}), 404
+        if student.role == 'admin':
+            return jsonify({"status": "error", "message": "لا يمكن إزالة صلاحية المشرف الأعلى"}), 400
+        if student.id == admin.id:
+            return jsonify({"status": "error", "message": "لا يمكنك إزالة صلاحياتك بنفسك"}), 400
+        if student.role not in SUPERVISOR_ROLES:
+            return jsonify({"status": "error", "message": "هذا الحساب ليس مشرفاً"}), 400
         student.role = 'student'
         student.supervisor_college = None
         student.supervisor_specialization = None

@@ -545,7 +545,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button>
             <div class="more-menu" id="moreMenu" role="menu">
                 <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button>
-                <button type="button" onclick="closeMoreMenu(); togglePopup('favBox');"><i class="fa-solid fa-heart"></i> المفضلة</button>
+                {% if view != 'services_hub' %}<button type="button" onclick="closeMoreMenu(); togglePopup('favBox');"><i class="fa-solid fa-heart"></i> المفضلة</button>{% endif %}
                 <button type="button" onclick="closeMoreMenu(); openWhatsNewModal();"><i class="fa-solid fa-bell"></i> التنبيهات</button>
             </div>
         </div>
@@ -631,7 +631,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <input type="password" id="edit_profile_current_pw" placeholder="كلمة المرور الحالية (مطلوبة فقط عند تغيير كلمة السر)" class="qa-input-field" autocomplete="current-password">
             <input type="password" id="edit_profile_new_pw" placeholder="كلمة المرور الجديدة (اتركها فارغة إن لم تغيّرها)" class="qa-input-field" autocomplete="new-password">
             <input type="password" id="edit_profile_confirm_pw" placeholder="تأكيد كلمة المرور الجديدة" class="qa-input-field" autocomplete="new-password">
-            <button onclick="submitProfileUpdate()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
+            <button id="profileSaveBtn" onclick="submitProfileUpdate()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
             <div id="profileEditMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
         </div>
         
@@ -1382,6 +1382,8 @@ function togglePopup(boxId) {
         target.classList.add('active');
         const overlay = document.getElementById('chatOverlay');
         if (overlay) overlay.classList.add('active');
+        // جولة 5.4: نافذة الملف الشخصي كانت تُعاد فتحها ممرَّرة للأسفل — أعد التمرير للأعلى عند الفتح.
+        if (boxId === 'profileBox') { const pb = document.getElementById('profileBody'); if (pb) pb.scrollTop = 0; target.scrollTop = 0; }
         if (boxId === 'profileBox') loadProfile();
         if (boxId === 'favBox') renderFavLists();
     }
@@ -1978,18 +1980,29 @@ function cascadeStepHTML(st) {
         if (hash) scrollToHash(hash); else scrollTopNow();
         afterSwap();
     }
+    // جولة 5.4: لا تُبتلع النقرة أبداً — أي فشل في التبديل يرجع للتنقّل العادي.
+    // (عيب 5.3: النقر الثاني أثناء جلب بطيء بلا ستار كان يُبتلع صامتاً عند pjaxBusy،
+    //  وpjaxBusy نفسه كان قد يعلق للأبد إن رمى showVeil قبل بلوك try.)
     async function swapTo(url, push, hash, opts) {
         opts = opts || {};
-        if (pjaxBusy) return;
+        if (pjaxBusy) { window.location.href = url + (hash || ''); return; }
         var cached = pjaxCache.get(url);
         if (cached) {
             try { applySwappedHtml(cached, url, push, hash); } catch (e) { window.location.href = url + (hash || ''); }
             return;
         }
-        pjaxBusy = true;
-        if (!opts.noVeil) showVeil();
         try {
-            var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            pjaxBusy = true;
+            if (!opts.noVeil) showVeil();
+            var ctrl = null, timer = null;
+            if (opts.noVeil && typeof AbortController !== 'undefined') {
+                // روابط الشريطين بلا ستار: انتظار محدود (5 ثوانٍ) ثم تنقّل عادي،
+                // حتى لا يحدّق المستخدم بصفحة لا تتغير أثناء جلب بطيء بلا أي إيحاء.
+                ctrl = new AbortController();
+                timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 5000);
+            }
+            var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: ctrl ? ctrl.signal : undefined });
+            if (timer) clearTimeout(timer);
             if (!res.ok) throw new Error('bad status ' + res.status);
             var html = await res.text();
             if (pjaxCache.size > 24) { var k = pjaxCache.keys().next().value; pjaxCache.delete(k); }
@@ -2095,7 +2108,12 @@ function cascadeStepHTML(st) {
             document.querySelectorAll('.nav-links a, .mobile-bottom-nav a').forEach(function (x) { x.classList.remove('active'); });
             a.classList.add('active');
         }
-        swapTo(u.origin + u.pathname + u.search, true, u.hash || '', { noVeil: isNavLink });
+        // جولة 5.4: أي خطأ متزامن أو وعد مرفوض في التبديل يرجع للتنقّل العادي — لا نقرة مبتلعة.
+        var _swapUrl = u.origin + u.pathname + u.search;
+        try {
+            var _p = swapTo(_swapUrl, true, u.hash || '', { noVeil: isNavLink });
+            if (_p && typeof _p.catch === 'function') _p.catch(function () { window.location.href = _swapUrl + (u.hash || ''); });
+        } catch (e) { window.location.href = _swapUrl + (u.hash || ''); }
     });
     /* ——— ستار مغادرة أنيق عند التنقّل لصفحة منفصلة (بدل الشاشة البيضاء) ——— */
     document.addEventListener('click', function (e) {
@@ -2713,7 +2731,13 @@ function revealProfileEdit() {
 
 async function submitProfileUpdate() {
     const msgEl = document.getElementById('profileEditMsg');
-    const showErr = (msg) => { showToast(msg, 'error', 5000); if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; } };
+    const saveBtn = document.getElementById('profileSaveBtn');
+    // جولة 5.4: رسالة ثابتة داخل القسم (نجاحاً كانت أم خطأ) + توست — لا يعتمد على التوست وحده.
+    const showMsg = (msg, ok) => {
+        showToast(msg, ok ? 'success' : 'error', 5000);
+        if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; msgEl.style.color = ok ? 'var(--accent)' : 'var(--danger)'; }
+    };
+    const showErr = (msg) => showMsg(msg, false);
     const payload = {
         name: (document.getElementById('edit_profile_name') || {}).value ? document.getElementById('edit_profile_name').value.trim() : '',
         username: (document.getElementById('edit_profile_username') || {}).value ? document.getElementById('edit_profile_username').value.trim() : '',
@@ -2722,16 +2746,27 @@ async function submitProfileUpdate() {
         confirm_password: (document.getElementById('edit_profile_confirm_pw') || {}).value || ''
     };
     if (!payload.name && !payload.username && !payload.new_password) { showErr('لا يوجد شيء لتحديثه'); return; }
+    // جولة 5.4: حالة «لا تغيير» — الاسم واليوزر كما هما ولا كلمة سر جديدة: تأكيد واضح بلا طلب.
+    var _curName = ((document.getElementById('profileName') || {}).textContent || '').trim();
+    var _curUser = ((document.getElementById('profileUsername') || {}).textContent || '').trim().replace(/^@/, '');
+    if (!payload.new_password && _curName && payload.name === _curName && payload.username === _curUser) {
+        showMsg('لا توجد تغييرات للحفظ', true);
+        return;
+    }
+    var _origLabel = saveBtn ? saveBtn.innerHTML : '';
     try {
+        // مؤشر حفظ فوري أثناء الطلب (الخادم بطيء 8–12 ثانية).
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الحفظ...'; }
+        if (msgEl) { msgEl.textContent = 'جارٍ حفظ بياناتك...'; msgEl.style.display = 'block'; msgEl.style.color = 'var(--text-muted)'; }
         const res = await fetch('/api/profile/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.status === 'success') {
-            showToast(data.message, 'success', 5000);
-            if (msgEl) msgEl.style.display = 'none';
+            showMsg(data.message || 'تم حفظ بياناتك بنجاح', true);
             ['edit_profile_current_pw', 'edit_profile_new_pw', 'edit_profile_confirm_pw'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             loadProfile();
         } else showErr(data.message || 'تعذر تحديث البيانات.');
     } catch (e) { showErr('خطأ أثناء تحديث البيانات.'); }
+    finally { if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = _origLabel; } }
 }
 
 async function loadCustomContentList() {
@@ -4486,7 +4521,7 @@ async function renderFavLists() {
         const res = await fetch('/api/favorites'); const favs = await res.json();
         const videos = favs.filter(f => f.lesson && f.lesson.content_type === 'videos');
         const files = favs.filter(f => f.lesson && f.lesson.content_type === 'files');
-        const buildHtml = (arr) => arr.length === 0 ? '<div style="text-align:center; color:var(--text-muted); padding:20px;">القائمة فارغة.</div>' : arr.map(f => `
+        const buildHtml = (arr) => arr.length === 0 ? '<div style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد مفضلات بعد.</div>' : arr.map(f => `
             <a href="${f.lesson.url || '#'}" target="_blank" class="fav-item-link">
                 <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
                     <div style="background:var(--primary-light); color:var(--primary); padding:8px; border-radius:8px;"><i class="fa-solid fa-${f.lesson.content_type === 'videos' ? 'video' : 'file-pdf'}"></i></div>

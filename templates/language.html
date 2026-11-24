@@ -517,22 +517,154 @@ async function studentRegister() {
     } catch (e) { showRegError('خطأ في الاتصال.'); }
 }
 
-/* ===== النطق (Web Speech API) ===== */
+/* ===== النطق (Web Speech API + بديل صوتي عبر الإنترنت) ===== */
 function speechSupported() { return ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window); }
-function speak(text, rate) {
-    if (!speechSupported()) {
-        var note = $('speechNote');
-        if (note) note.style.display = 'block';
-        return;
+
+/* السبب الجذري للصمت (مثبت من الكود + من هاتف عمرو ومتصفح الفحص):
+   لم يُختر أي صوت أبداً، وأصوات المتصفح تُحمَّل بشكل غير متزامن،
+   وكل الأخطاء كانت تُبتلع بصمت — فإذا لم يكن في الهاتف صوت إنجليزي
+   مثبّت (محتمل جداً في هاتف لغته العربية) بقي النطق صامتاً دون أي
+   أثر. الإصلاح يختار صوتاً إنجليزياً صراحةً، وينتظر تحميل الأصوات،
+   وإن غاب الصوت الإنجليزي يستخدم ملفاً صوتياً عبر الإنترنت، وإن فشل
+   كلاهما يُظهر رسالة واضحة بدل الصمت. */
+var __voicesReady = null;
+var __englishVoice = null;
+var __speakSeq = 0;
+var __audioEl = null;
+
+function pickEnglishVoice(voices) {
+    var i, lang;
+    for (i = 0; i < voices.length; i++) {
+        lang = (voices[i].lang || '').toLowerCase();
+        if (lang === 'en-us') return voices[i];
+    }
+    for (i = 0; i < voices.length; i++) {
+        lang = (voices[i].lang || '').toLowerCase();
+        if (lang === 'en-gb') return voices[i];
+    }
+    for (i = 0; i < voices.length; i++) {
+        lang = (voices[i].lang || '').toLowerCase();
+        if (lang.indexOf('en') === 0) return voices[i];
+    }
+    return null;
+}
+
+function loadVoices() {
+    var synth = window.speechSynthesis;
+    var now = synth.getVoices() || [];
+    if (now.length) {
+        __englishVoice = pickEnglishVoice(now);
+        return Promise.resolve(__englishVoice);
+    }
+    if (__voicesReady) return __voicesReady;
+    __voicesReady = new Promise(function (resolve) {
+        var settled = false;
+        function settle() {
+            if (settled) return;
+            settled = true;
+            var voices = synth.getVoices() || [];
+            __englishVoice = pickEnglishVoice(voices);
+            resolve(__englishVoice);
+        }
+        synth.addEventListener('voiceschanged', settle);
+        setTimeout(settle, 1500); /* بعض الأجهزة لا تطلق الحدث أبداً */
+    });
+    return __voicesReady;
+}
+
+/* رسالة نطق ظاهرة (بدل الفشل الصامت): في بطاقة الدرس إن وُجدت + تنبيه. */
+function showSpeechNote(msg) {
+    var note = $('speechNote');
+    if (note) { note.textContent = msg; note.style.display = 'block'; }
+    showToast(msg, 'error', 6000);
+}
+
+var SPEECH_NO_VOICE_MSG = 'لا يوجد صوت إنجليزي في هذا الجهاز، وتعذّر تشغيل النطق عبر الإنترنت — فعّل صوتاً إنجليزياً من إعدادات تحويل النص إلى كلام في هاتفك ثم أعد المحاولة.';
+
+/* بديل صوتي عبر الإنترنت (يُستخدم فقط عند غياب صوت إنجليزي محلي أو
+   فشل النطق المحلي): ملف صوتي من خدمة النطق العامة، يُشغَّل بعنصر
+   <audio> دون أي مفتاح. */
+function playOnlineAudio(text, rate) {
+    var failed = false;
+    function failOnce() {
+        if (failed) return;
+        failed = true;
+        showSpeechNote(SPEECH_NO_VOICE_MSG);
     }
     try {
-        window.speechSynthesis.cancel();
-        var u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
-        u.rate = rate || 1;
-        window.speechSynthesis.speak(u);
-    } catch (e) { /* النطق غير متاح — تبقى البطاقة قابلة للقراءة */ }
+        if (!__audioEl) { __audioEl = new Audio(); }
+        __audioEl.onerror = failOnce;
+        __audioEl.pause();
+        __audioEl.playbackRate = (rate && rate < 1) ? 0.6 : 1;
+        __audioEl.src = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=' + encodeURIComponent(text);
+        var p = __audioEl.play();
+        if (p && typeof p.catch === 'function') p.catch(failOnce);
+    } catch (e) { failOnce(); }
 }
+
+/* النطق المحلي بصوت إنجليزي مختار صراحةً. */
+function speakLocal(text, rate, voice, silent) {
+    var synth = window.speechSynthesis;
+    var mySeq = ++__speakSeq;
+    function doSpeak() {
+        if (mySeq !== __speakSeq) return; /* طلب أحدث حلّ محل هذا الطلب */
+        var ended = false;
+        try {
+            var u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-US';
+            if (voice) u.voice = voice;
+            u.rate = rate || 1;
+            u.onend = function () { ended = true; };
+            u.onerror = function (ev) {
+                ended = true;
+                if (mySeq !== __speakSeq) return;
+                if (ev && (ev.error === 'canceled' || ev.error === 'interrupted')) return; /* إلغاء مقصود من نقرة أحدث */
+                if (!silent) playOnlineAudio(text, rate);
+            };
+            synth.speak(u);
+            /* حارس: إن علق النطق أو أُسقط دون نهاية أو خطأ (حالة معروفة
+               في كروم/أندرويد) جرّب البديل الصوتي بدل الصمت. */
+            setTimeout(function () {
+                if (ended || mySeq !== __speakSeq) return;
+                if (synth.speaking || synth.pending) { try { synth.cancel(); } catch (e) {} }
+                if (!silent) playOnlineAudio(text, rate);
+            }, Math.ceil(5000 / (rate || 1)));
+        } catch (e) {
+            if (!silent) playOnlineAudio(text, rate);
+        }
+    }
+    try {
+        if (synth.speaking || synth.pending || synth.paused) {
+            /* لا تُلغِ ثم تنطق في نفس النبضة — كروم/أندرويد يُسقط الطلب.
+               ألغِ ثم انتظر قليلاً قبل النطق. */
+            synth.cancel();
+            setTimeout(doSpeak, 120);
+        } else {
+            doSpeak();
+        }
+    } catch (e) {
+        if (!silent) playOnlineAudio(text, rate);
+    }
+}
+
+/* speak(text, rate, silent): silent=true للنطق التلقائي في أسئلة
+   الاستماع (بدون إيماءة مستخدم قد يحظره المتصفح — يبقى زر «استمع»
+   اليدوي هو المسار الموثوق، ويفشل بصمت دون إزعاج الطالب). */
+function speak(text, rate, silent) {
+    rate = rate || 1;
+    if (!speechSupported()) {
+        if (silent) return;
+        showSpeechNote('النطق غير مدعوم في هذا المتصفح');
+        return;
+    }
+    loadVoices().then(function (voice) {
+        if (voice) speakLocal(text, rate, voice, silent);
+        else if (!silent) playOnlineAudio(text, rate);
+    });
+}
+
+/* تسخين مبكر لقائمة الأصوات حتى تكون جاهزة عند أول نقرة. */
+if (speechSupported()) { loadVoices(); }
 
 /* ===== جلب البيانات ===== */
 function isLoggedOutResponse(res) { return res.status === 401 || res.status === 403; }
@@ -796,7 +928,7 @@ function renderQuizQuestion() {
         '<button type="button" class="btn btn-primary" id="quizNextBtn" style="display:none;" onclick="nextQuizQuestion()">' +
         (quizIndex === quizQuestions.length - 1 ? 'عرض النتيجة' : 'التالي') + ' <i class="fa-solid fa-arrow-left"></i></button>';
     bindSpeakButtons(body);
-    if (q.type === 'listen' && speechSupported()) speak(w.word, 1);
+    if (q.type === 'listen' && speechSupported()) speak(w.word, 1, true); /* تلقائي صامت: زر «استمع» اليدوي هو المسار الموثوق */
 }
 function chooseOption(btn) {
     if (quizAnswered) return;

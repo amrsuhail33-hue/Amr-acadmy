@@ -94,11 +94,22 @@
         .compact-user-pill { width: 42px; height: 42px; border-radius: 50%; background: var(--gradient-profile); border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--card-shadow); transition: 0.3s; }
         .compact-user-pill:hover { transform: scale(1.05); border-color: var(--primary); }
         .profile-letter { color: #fff; font-size: 1.2rem; font-weight: 900; font-family: 'Tajawal', sans-serif; }
+.more-menu-wrap{position:relative;display:inline-flex;flex-shrink:0}
+.more-menu-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text-main);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem;box-shadow:var(--card-shadow);transition:.2s}
+.more-menu-btn:hover{border-color:var(--primary);color:var(--primary)}
+.more-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:200px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.16);padding:6px;display:none;z-index:2000}
+.more-menu.open{display:block;animation:fadeUp .2s var(--ease) both}
+.more-menu button,.more-menu a{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:0;background:none;color:var(--text-main);font:inherit;font-weight:700;font-size:.92rem;cursor:pointer;border-radius:10px;text-decoration:none;text-align:right}
+.more-menu button:hover,.more-menu a:hover{background:var(--primary-light)}
+.more-menu i{color:var(--primary);width:18px;text-align:center}
+
         
         .navbar-contact { background: var(--primary); color: white; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; border: none; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
         .navbar-contact:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.3); }
         
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
+        .main-content { transition: opacity 0.22s var(--ease), transform 0.22s var(--ease); }
+        .main-content.pjax-out { opacity: 0; transform: translateY(8px); }
         .hero-section { text-align: center; padding: 30px 10px 20px; position: relative; }
         .hero-bg-blob-1 { position: absolute; top: -30px; right: -30px; width: 250px; height: 250px; background: var(--primary); opacity: 0.05; border-radius: 50%; filter: blur(60px); z-index: -1; }
         .hero-bg-blob-2 { position: absolute; bottom: -30px; left: -30px; width: 200px; height: 200px; background: var(--accent); opacity: 0.05; border-radius: 50%; filter: blur(50px); z-index: -1; }
@@ -109,15 +120,6 @@
         .hero-btn-primary { background: var(--primary); color: white; padding: 14px 30px; border-radius: 50px; font-weight: 800; font-size: 1.05rem; border: none; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(37,99,235,0.3); }
         .hero-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(37,99,235,0.4); background: var(--primary-hover); }
         
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .feature-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 25px 20px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--border); }
-        .f-icon { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 15px; }
-        .f-icon.blue { background: var(--primary-light); color: var(--primary); }
-        .f-icon.green { background: var(--accent-light); color: var(--accent); }
-        .f-icon.purple { background: rgba(139,92,246,0.1); color: #8b5cf6; }
-        .f-icon.orange { background: rgba(245,158,11,0.1); color: var(--warning); }
-        .feature-card h4 { font-weight: 800; font-size: 1.1rem; margin: 0 0 8px; color: var(--text-main); }
-        .feature-card p { font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.6; }
         
         .search-box { margin-bottom: 30px; position: relative; max-width: 800px; margin-left: auto; margin-right: auto; }
         .search-box i { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem; pointer-events: none; }
@@ -133,6 +135,7 @@
         .section-header p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
         
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .grid-container.grid-2col { grid-template-columns: repeat(2, 1fr); }
         .card { background: var(--bg-card); padding: 30px 20px; border-radius: var(--radius-lg); text-decoration: none; box-shadow: var(--card-shadow); border: 1px solid var(--border); transition: all 0.3s; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; z-index: 1;}
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: transparent; transition: 0.3s; }
         .card:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--hover-shadow); }
@@ -252,7 +255,13 @@
             .hero-title { font-size: 1.6rem; }
             .hero-subtitle { font-size: 0.95rem; }
             .hero-desc { font-size: 0.95rem; }
-            .grid-container, .features-grid { grid-template-columns: 1fr; }
+            .grid-container { grid-template-columns: 1fr; }
+            .grid-container.grid-2col { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .grid-2col .card { padding: 16px 10px; }
+            .grid-2col .card-icon-wrapper { width: 48px; height: 48px; font-size: 1.3rem; border-radius: 14px; margin-bottom: 10px; }
+            .grid-2col .card-title { font-size: 1rem; }
+            .grid-2col .card-subtitle { font-size: 0.8rem; margin-bottom: 12px; }
+            .grid-2col .card-btn { padding: 9px 10px; font-size: 0.82rem; }
             .card { padding: 20px 16px; }
             .quiz-question-text { font-size: 1.05rem; }
             .quiz-opt { font-size: 0.95rem; padding: 12px 14px; }
@@ -368,11 +377,6 @@ body { -webkit-font-smoothing: antialiased; }
 /* ---------- الشعار الأصلي — التنسيق حول الصورة فقط ---------- */
 .nav-logo { border: 2px solid var(--bg-card); object-fit: cover; background: #0f172a; }
 #splash-screen img { border-radius: 26px; box-shadow: 0 14px 34px rgba(37,99,235,0.35); border: 3px solid var(--bg-card); }
-.welcome-logo {
-    width: 92px; height: 92px; margin: 0 auto 18px; border-radius: 26px; overflow: hidden;
-    box-shadow: 0 12px 30px rgba(37,99,235,0.35); border: 3px solid var(--bg-card); background: #0f172a;
-}
-.welcome-logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .welcome-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
 .welcome-actions .hero-btn-primary, .welcome-actions .btn-ghost { min-height: 48px; }
 .footer-logo { width: 26px; height: 26px; border-radius: 8px; vertical-align: middle; margin-left: 8px; object-fit: cover; }
@@ -431,11 +435,7 @@ body { -webkit-font-smoothing: antialiased; }
 .anim-d1 { animation-delay: 0.03s; }
 .anim-d2 { animation-delay: 0.06s; }
 .anim-d3 { animation-delay: 0.09s; }
-.features-grid .feature-card { animation: fadeUp 0.3s var(--ease) both; }
-.features-grid .feature-card:nth-child(2) { animation-delay: 0.04s; }
-.features-grid .feature-card:nth-child(3) { animation-delay: 0.08s; }
-.features-grid .feature-card:nth-child(4) { animation-delay: 0.12s; }
-.list-item, .card, .feature-card, .opinion-card, .product-card { transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), background var(--dur-med) var(--ease); }
+.list-item, .card, .opinion-card, .product-card { transition: transform var(--dur-med) var(--ease), box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease), background var(--dur-med) var(--ease); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
@@ -510,6 +510,13 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact"><i class="fa-regular fa-user"></i> دخول</button>
         {% endif %}
+        <div class="more-menu-wrap">
+            <button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button>
+            <div class="more-menu" id="moreMenu" role="menu">
+                <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button>
+                <button type="button" onclick="closeMoreMenu(); openWhatsNewModal();"><i class="fa-solid fa-bell"></i> التنبيهات</button>
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -942,7 +949,6 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     {% if view == 'years' or view == 'colleges' %}
     <section class="hero-section anim-fade-up">
         <div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>
-        <div class="welcome-logo"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
         <h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>
         <h2 class="hero-subtitle">From Nothing to Be Something</h2>
         <p class="hero-desc">منصة تعليمية حديثة تساعدك في الوصول إلى محاضراتك وملفاتك وشروحاتك الجامعية بسهولة وفي مكان واحد منظم واحترافي.</p>
@@ -955,27 +961,21 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         {% endif %}
     </section>
 
-    <section class="features-grid anim-fade-up">
-        <div class="feature-card"><div class="f-icon blue"><i class="fa-solid fa-shield-halved"></i></div><h4>موثوق وآمن</h4><p>ملفات آمنة ومرفوعة على مكتبة ميكا درايف بشكل منظم.</p></div>
-        <div class="feature-card"><div class="f-icon green"><i class="fa-solid fa-cloud-arrow-down"></i></div><h4>تحميل سريع</h4><p>سرعة عالية وروابط مباشرة في تحميل جميع الملفات.</p></div>
-        <div class="feature-card"><div class="f-icon purple"><i class="fa-solid fa-layer-group"></i></div><h4>تنظيم احترافي</h4><p>كل المواد مرتبة بطريقة أكاديمية دقيقة للسنوات والمواد.</p></div>
-        <div class="feature-card"><div class="f-icon orange"><i class="fa-solid fa-graduation-cap"></i></div><h4>محتوى شامل</h4><p>محاضرات، ملخصات، بنك أسئلة واختبارات تفاعلية.</p></div>
-    </section>
 
     <div class="search-box">
         <input type="text" id="searchInput" oninput="searchItems()" aria-label="بحث" placeholder="ابحث عن أي مادة أو درس أو ملف...">
         <i class="fa-solid fa-magnifying-glass"></i>
     </div>
 
-    <div id="catalogResults" class="grid-container" aria-live="polite"></div>
+    <div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>
     {% if view == 'colleges' %}
     <div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>
-    <div class="grid-container" id="subjects">
+    <div class="grid-container grid-2col" id="subjects">
         {% for c in colleges %}
             <a href="/?college={{ c.name|urlencode }}" class="card year-card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
                 <h3 class="card-title year-card-title">{{ c.name }}</h3>
-                <div class="card-subtitle">جميع سنوات ومواد الكلية</div>
+                <div class="card-subtitle">{% if c.subject_count == 1 %}مادة واحدة{% elif c.subject_count == 2 %}مادتان{% elif c.subject_count %}{{ c.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
                 <div class="card-btn">استعرض الكلية</div>
             </a>
         {% else %}<p role="status">{{ "تعذر تحميل الكليات. حاول تحديث الصفحة." if catalog_error else "ستظهر الكليات هنا عند إضافة أول كلية." }}</p>
@@ -983,12 +983,12 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     </div>
     {% else %}
     <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — {{ college_name }}</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
-    <div class="grid-container" id="subjects">
+    <div class="grid-container grid-2col" id="subjects">
         {% for id, year in years.items() %}
             <a href="/?college={{ college_name|urlencode }}&year={{ id|urlencode }}" class="card year-card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
                 <h3 class="card-title year-card-title">{{ year.name }}</h3>
-                <div class="card-subtitle">جميع مواد ومحتوى السنة</div>
+                <div class="card-subtitle">{% if year.subject_count == 1 %}مادة واحدة{% elif year.subject_count == 2 %}مادتان{% elif year.subject_count %}{{ year.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
                 <div class="card-btn">استعرض المواد</div>
             </a>
         {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "لا توجد سنوات بعد في " + college_name + ". سيتم إضافة المقررات قريباً." }}</p>
@@ -999,11 +999,12 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
     {% if view == 'terms' %}
     <div class="section-header"><h2>اختر الفصل الدراسي</h2><p>{{ college_name }}</p></div>
-    <div class="grid-container">
+    <div class="grid-container grid-2col">
         {% for t_id, term_data in terms.items() %}
         <a href="/?college={{ college_name|urlencode }}&year={{ y_id|urlencode }}&term={{ t_id|urlencode }}" class="card">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
             <h3 class="card-title">{{ term_data.name }}</h3>
+            <div class="card-subtitle">{% if term_data.subject_count == 1 %}مادة واحدة{% elif term_data.subject_count == 2 %}مادتان{% elif term_data.subject_count %}{{ term_data.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
             <div class="card-btn">تصفح الفصل</div>
         </a>
         {% endfor %}
@@ -1016,12 +1017,12 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <i class="fa-solid fa-magnifying-glass"></i>
     </div>
     <div class="section-header" id="subjects"><h2>المقررات الدراسية</h2></div>
-    <div class="grid-container">
+    <div class="grid-container grid-2col">
         {% for subject in subjects %}
             <a href="/?subject={{ subject.id|urlencode }}" class="card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
                 <h3 class="card-title">{{ subject.name }}</h3>
-                <div class="card-subtitle">{{ subject.lesson_count or 0 }} درس · {{ subject.question_count or 0 }} سؤال</div>
+                <div class="card-subtitle">{{ subject.video_count or 0 }} فيديو · {{ subject.file_count or 0 }} ملفات · {{ subject.question_count or 0 }} سؤال{% if subject.test_count == 1 %} · اختبار واحد{% elif subject.test_count == 2 %} · اختباران{% elif subject.test_count %} · {{ subject.test_count }} اختبارات{% endif %}</div>
                 {% if subject.has_vip %}<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}
                 {% if subject.lesson_count == 0 and not subject.types.quiz.chapters %}
                 <div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>
@@ -1034,7 +1035,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
     {% if view == 'services_hub' %}
     <div class="section-header"><h2>خدمات الأكاديمية</h2><p>كل أدوات المنصة في مكان واحد</p></div>
-    <div class="grid-container">
+    <div class="grid-container grid-2col">
         <a href="/simulators" class="card" onclick="return guardVipService('simulator', 'المختبر', event)">
             <div class="card-icon-wrapper"><i class="fa-solid fa-flask"></i></div>
             <h3 class="card-title">المختبر</h3>
@@ -1099,7 +1100,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
     {% if view == 'select_type' %}
     <div class="section-header"><h2>{{ subject.name }}</h2><p>اختر نوع المحتوى</p></div>
-    <div class="grid-container">
+    <div class="grid-container grid-2col">
         <a href="/?subject={{ subject.id|urlencode }}&type=videos" class="card">
             <div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>
             <h3 class="card-title">المحاضرات</h3>
@@ -1120,7 +1121,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
     {% if view == 'chapters' %}
     <div class="section-header"><h2>الفصول والمواضيع</h2></div>
-    <div class="grid-container">
+    <div class="grid-container grid-2col">
         {% for chapter in chapters %}
             <a href="/?subject={{ subject.id|urlencode }}&type={{ content_type|urlencode }}&chapter={{ chapter.name|urlencode }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px; position:relative;">
                 <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}{% if chapter.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}</span>
@@ -1351,6 +1352,7 @@ function togglePopup(boxId) {
 }
 
 function closeAllPopups() {
+    if (typeof closeMoreMenu === 'function') closeMoreMenu();
     document.querySelectorAll('.popup-box').forEach(el => el.classList.remove('active'));
     const overlay = document.getElementById('chatOverlay');
     if (overlay) overlay.classList.remove('active');
@@ -1370,6 +1372,101 @@ function toggleTheme() {
     localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
     updateThemeIcon();
 }
+// قائمة النقاط الثلاث بجانب البروفايل (المظهر + التنبيهات)
+function toggleMoreMenu(e) {
+    if (e) e.stopPropagation();
+    var m = document.getElementById('moreMenu');
+    if (!m) return;
+    var wasOpen = m.classList.contains('open');
+    document.querySelectorAll('.more-menu.open').forEach(function (el) { el.classList.remove('open'); });
+    if (!wasOpen) m.classList.add('open');
+}
+function closeMoreMenu() {
+    document.querySelectorAll('.more-menu.open').forEach(function (el) { el.classList.remove('open'); });
+}
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
+});
+
+// 3b. تنقّل سلس داخل الصفحة (PJAX خفيف) — الكلية ← السنة ← الترم ← المواد وصفحات المادة
+// الصفحات المنفصلة (/simulators و/planner و/guide و/services و?tool= و?page=) تبقى تحميلاً كاملاً،
+// وصفحات الاختبار (type=quiz) تُحمّل كاملاً لأن بدء الاختبار يعتمد على ثوابت معرّضة من القالب.
+(function () {
+    var main = document.querySelector('.main-content');
+    if (!main || !window.fetch || !window.DOMParser) return;
+    var CATALOG_PARAMS = ['college', 'year', 'term', 'subject', 'type', 'chapter'];
+    var lastPjaxUrl = location.origin + location.pathname + location.search;
+    function isCatalogUrl(u) {
+        if (u.origin !== location.origin || u.pathname !== '/') return false;
+        var keys = Array.prototype.slice.call(u.searchParams.keys());
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i] === 'tool' || keys[i] === 'page') return false;
+            if (CATALOG_PARAMS.indexOf(keys[i]) === -1) return false;
+        }
+        if (u.searchParams.get('type') === 'quiz') return false;
+        return true;
+    }
+    function syncNavActive(doc) {
+        document.querySelectorAll('.nav-links a, .mobile-bottom-nav a').forEach(function (a) {
+            var href = a.getAttribute('href') || '';
+            var other = null;
+            try { other = doc.querySelector('.nav-links a[href="' + href + '"], .mobile-bottom-nav a[href="' + href + '"]'); } catch (e) { other = null; }
+            a.classList.toggle('active', !!(other && other.classList.contains('active')));
+        });
+    }
+    function afterSwap() {
+        applyYearBadges();
+        refreshVipBadges();
+        initFavoriteButtons();
+        updateThemeIcon();
+    }
+    function scrollToHash(hash) {
+        var el = document.getElementById(hash.slice(1));
+        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 80, behavior: 'smooth' });
+    }
+    async function swapTo(url, push, hash) {
+        main.classList.add('pjax-out');
+        try {
+            var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!res.ok) throw new Error('bad status ' + res.status);
+            var doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            var next = doc.querySelector('.main-content');
+            if (!next) throw new Error('no main-content');
+            await new Promise(function (r) { setTimeout(r, 180); });
+            main.innerHTML = next.innerHTML;
+            syncNavActive(doc);
+            lastPjaxUrl = url;
+            if (push) history.pushState({ pjax: true }, '', url + (hash || ''));
+            main.classList.remove('pjax-out');
+            if (hash) scrollToHash(hash); else window.scrollTo(0, 0);
+            afterSwap();
+        } catch (e) {
+            window.location.href = url + (hash || '');
+        }
+    }
+    document.addEventListener('click', function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        var a = e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a || (a.target && a.target !== '_self')) return;
+        if (a.closest('.popup-box, .more-menu, [data-no-pjax]')) return;
+        var u;
+        try { u = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
+        var samePage = (u.pathname === location.pathname && u.search === location.search);
+        if (samePage) return; // روابط # داخل نفس الصفحة يعالجها المتصفح
+        if (!isCatalogUrl(u)) return;
+        e.preventDefault();
+        closeAllPopups();
+        swapTo(u.origin + u.pathname + u.search, true, u.hash || '');
+    });
+    window.addEventListener('popstate', function () {
+        var u;
+        try { u = new URL(location.href); } catch (e) { return; }
+        var base = u.origin + u.pathname + u.search;
+        if (base === lastPjaxUrl && u.hash) { scrollToHash(u.hash); return; }
+        if (isCatalogUrl(u)) swapTo(base, false, u.hash || '');
+    });
+})();
+
 
 function applyYearBadges() {
     document.querySelectorAll('.year-card-title').forEach(el => {
@@ -3794,10 +3891,12 @@ window.addEventListener('DOMContentLoaded', () => {
     // إن أُنهيت الجلسة (حظر/حذف) يُعرض السبب مرة واحدة بعد الخروج
     if (TERMINATED_REASON === 'banned') showToast('تم حظر هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
     else if (TERMINATED_REASON === 'deleted') showToast('تم حذف هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
+    {% if not student_id %}
     if (!sessionStorage.getItem('visited')) {
         const splash = document.getElementById('splash-screen');
         if (splash) splash.classList.remove('hidden');
     }
+    {% endif %}
     if (isStudentLoggedIn()) {
         loadProfile();
         loadStudentProgress();

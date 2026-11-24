@@ -113,6 +113,15 @@
         .top-nav-links a:hover { color: var(--primary); background: var(--primary-light); }
         .topbar .theme-toggle-btn { margin-top: 0; }
         .topbar .brand-user { margin-top: 0; }
+.more-menu-wrap{position:relative;display:inline-flex;flex-shrink:0}
+.more-menu-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text-main);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem;box-shadow:var(--card-shadow);transition:.2s}
+.more-menu-btn:hover{border-color:var(--primary);color:var(--primary)}
+.more-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:200px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.16);padding:6px;display:none;z-index:2000}
+.more-menu.open{display:block;animation:fadeUp .2s var(--ease) both}
+.more-menu button,.more-menu a{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:0;background:none;color:var(--text-main);font:inherit;font-weight:700;font-size:.92rem;cursor:pointer;border-radius:10px;text-decoration:none;text-align:right}
+.more-menu button:hover,.more-menu a:hover{background:var(--primary-light)}
+.more-menu i{color:var(--primary);width:18px;text-align:center}
+
         @media (max-width: 768px) { .top-nav-links { display: none; } .topbar { align-items: flex-start; } }
 
         .brand-user .profile-badge { background: var(--primary); color: white; padding: 4px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s; }
@@ -306,12 +315,14 @@
                     <i class="fa-regular fa-star"></i> المستوى <span class="level-badge" id="navLevelBadge">1</span>
                     <span style="font-weight:400; font-size:0.75rem; margin-right:4px;"><i class="fa-solid fa-star" style="color:var(--gold);"></i> <span id="navPoints">0</span></span>
                 </span>
+                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
                 <button onclick="logoutStudent(this)" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> خروج
                 </button>
             {% else %}
                 <span style="color:var(--danger);">غير مسجل الدخول</span>
                 <a href="/" class="login-link">→ تسجيل الدخول</a>
+                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
             {% endif %}
         </div>
         </div>
@@ -604,6 +615,22 @@ function togglePlannerTheme() {
     document.documentElement.classList.toggle('dark-mode');
     localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
 }
+// قائمة النقاط الثلاث بجانب البروفايل (المظهر + التنبيهات)
+function toggleMoreMenu(e) {
+    if (e) e.stopPropagation();
+    var m = document.getElementById('moreMenu');
+    if (!m) return;
+    var wasOpen = m.classList.contains('open');
+    document.querySelectorAll('.more-menu.open').forEach(function (el) { el.classList.remove('open'); });
+    if (!wasOpen) m.classList.add('open');
+}
+function closeMoreMenu() {
+    document.querySelectorAll('.more-menu.open').forEach(function (el) { el.classList.remove('open'); });
+}
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
+});
+
 
 // رسالة خطأ ثابتة داخل الصفحة (تبقى ظاهرة حتى المحاولة التالية) — التوست وحده قد يختفي دون أن يُرى
 function showPlannerError(msg) {

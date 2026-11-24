@@ -1119,7 +1119,7 @@ def get_platform_data(user):
                 _s_subs[_s_name] = {
                     "id": f"{_s_year}_{_s_term}_{_s_name}".replace(" ", "_"),
                     "name": _s_name, "year": _s_year, "term": _s_term, "college": _s_college,
-                    "subject_id": _s.id, "lesson_count": 0,
+                    "subject_id": _s.id, "lesson_count": 0, "video_count": 0, "file_count": 0,
                     "types": {
                         "videos": {"chapters": {}},
                         "files": {"chapters": {}},
@@ -1172,7 +1172,7 @@ def get_platform_data(user):
                 years[year]["terms"][term]["subjects"][subject] = {
                     "id": f"{year}_{term}_{subject}".replace(" ", "_"),
                     "name": subject, "year": year, "term": term, "college": college,
-                    "subject_id": _linked.id if _linked is not None else None, "lesson_count": 0,
+                    "subject_id": _linked.id if _linked is not None else None, "lesson_count": 0, "video_count": 0, "file_count": 0,
                     "types": {
                         "videos": {"chapters": {}},
                         "files": {"chapters": {}},
@@ -1215,6 +1215,10 @@ def get_platform_data(user):
 
             subj_data["types"][c_type]["chapters"][chapter]["lessons"].append(lesson_dict)
             subj_data["lesson_count"] = subj_data.get("lesson_count", 0) + 1
+            if c_type == "videos":
+                subj_data["video_count"] = subj_data.get("video_count", 0) + 1
+            elif c_type == "files":
+                subj_data["file_count"] = subj_data.get("file_count", 0) + 1
 
         # عدد أسئلة الاختبار لكل مادة (استعلامان مجمّعان فقط — لبطاقات المواد «N درس · M سؤال»)
         try:
@@ -1241,7 +1245,15 @@ def get_platform_data(user):
                         s["types"]["files"]["chapters"] = list(s["types"]["files"]["chapters"].values())
                         s["types"]["quiz"]["chapters"] = list(s["types"]["quiz"]["chapters"].values())
                         s["question_count"] = _qc.get(s.get("subject_id"), 0) + _qc_legacy.get((s.get("college"), s.get("year"), s.get("term"), s.get("name")), 0)
+                        # عدد الاختبارات = عدد فصول بنك الأسئلة في المادة (كل فصل اختبار مستقل)
+                        s["test_count"] = len(s["types"]["quiz"]["chapters"])
                         s["has_vip"] = any(_ch.get("has_vip") for _ctype in ("videos", "files", "quiz") for _ch in s["types"][_ctype]["chapters"])
+        # أعداد المواد لكل سنة/ترم (لبطاقات السنوات والفصول)
+        for _c in data.values():
+            for _y in _c["years"].values():
+                _y["subject_count"] = sum(len(_t.get("subjects", [])) for _t in _y["terms"].values())
+                for _t in _y["terms"].values():
+                    _t["subject_count"] = len(_t.get("subjects", []))
     except Exception as e:
         db.session.rollback()
 
@@ -1289,6 +1301,13 @@ def home():
     except Exception:
         db.session.rollback()
         updates = []
+
+    # عدد المواد في كل كلية (لبطاقة الكلية «N مواد») — محسوب من بيانات الكتالوج نفسها.
+    _college_subject_counts = {}
+    for _cname, _cdata in data.items():
+        _college_subject_counts[_cname] = sum(len(_t.get("subjects", [])) for _y in _cdata.get("years", {}).values() for _t in _y.get("terms", {}).values())
+    for _c in colleges:
+        _c["subject_count"] = _college_subject_counts.get(_c.get("name"), 0)
 
     view_context = {
         'catalog_error': catalog_error,

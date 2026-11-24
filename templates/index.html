@@ -31,6 +31,7 @@
         const USER_ROLE = {{ user_role|tojson }};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
+        const CATALOG_DATA = {{ data | tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
         // نظام VIP: الخدمات المغلقة حالياً + الخدمات التي يملك المستخدم منحاً عليها
         const VIP_CLOSED_SERVICES = {{ vip_closed_services|tojson }};
@@ -109,7 +110,29 @@
         
         .main-content { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 20px 20px 80px; position: relative; z-index: 1;}
         .main-content { transition: opacity 0.22s var(--ease), transform 0.22s var(--ease); }
-        .main-content.pjax-out { opacity: 0; transform: translateY(8px); }
+        /* ---------- منتقي متتالي + مؤشر تحميل أنيق (جولة 4) ---------- */
+        .cascade-step { animation: cascadeIn 0.3s var(--ease) both; }
+        @keyframes cascadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .cascade-step .grid-container .card { animation: cascadeIn 0.3s var(--ease) backwards; }
+        .cascade-step .grid-container .card:nth-child(2) { animation-delay: 0.05s; }
+        .cascade-step .grid-container .card:nth-child(3) { animation-delay: 0.1s; }
+        .cascade-step .grid-container .card:nth-child(4) { animation-delay: 0.15s; }
+        .cascade-step .grid-container .card:nth-child(5) { animation-delay: 0.2s; }
+        .cascade-step .grid-container .card:nth-child(6) { animation-delay: 0.25s; }
+        .cascade-step .grid-container .card:nth-child(n+7) { animation-delay: 0.3s; }
+        .cascade-loader { text-align: center; padding: 26px 10px 10px; }
+        .cl-spinner { width: 46px; height: 46px; margin: 6px auto 14px; border-radius: 50%; border: 4px solid var(--border); border-top-color: var(--primary); animation: clSpin 0.8s linear infinite; }
+        @keyframes clSpin { to { transform: rotate(360deg); } }
+        .cl-text { font-weight: 800; color: var(--text-main); font-size: 1.05rem; }
+        .cl-count { font-family: 'Outfit', sans-serif; font-weight: 900; color: var(--primary); font-size: 1.5rem; margin-top: 4px; }
+        .cl-bar { height: 6px; background: var(--border); border-radius: 99px; max-width: 280px; margin: 10px auto 22px; overflow: hidden; }
+        .cl-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 99px; transition: width 0.12s linear; }
+        .cl-sk { pointer-events: none; }
+        .pjax-veil { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; background: rgba(248, 250, 252, 0.62); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+        .pjax-veil[hidden] { display: none; }
+        html.dark-mode .pjax-veil { background: rgba(2, 6, 23, 0.55); }
+        .pjax-veil-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16); padding: 28px 34px; text-align: center; min-width: min(320px, 86vw); }
+        .pjax-veil-card .cl-bar { margin-bottom: 0; }
         .hero-section { text-align: center; padding: 30px 10px 20px; position: relative; }
         .hero-bg-blob-1 { position: absolute; top: -30px; right: -30px; width: 250px; height: 250px; background: var(--primary); opacity: 0.05; border-radius: 50%; filter: blur(60px); z-index: -1; }
         .hero-bg-blob-2 { position: absolute; bottom: -30px; left: -30px; width: 200px; height: 200px; background: var(--accent); opacity: 0.05; border-radius: 50%; filter: blur(50px); z-index: -1; }
@@ -1388,17 +1411,310 @@ document.addEventListener('click', function (e) {
     if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
 });
 
-// 3b. تنقّل سلس داخل الصفحة (PJAX خفيف) — الكلية ← السنة ← الترم ← المواد وصفحات المادة
+// 3b. تنقّل سلس داخل الصفحة — منتقي متتالي من بيانات الصفحة + PJAX بلا شاشة بيضاء (جولة 4)
+// القاعدة: المحتوى القديم يبقى ظاهراً أو يظهر هيكل تحميل في مكانه حتى يصل الجديد — شاشة بيضاء فارغة ممنوعة.
+// خطوات المنتقي (كلية ← سنة ← ترم ← مواد ← صفحة المادة ← فصول) تُعرض من CATALOG_DATA المضمّنة أصلاً في الصفحة، بلا أي طلب جديد.
+// صفحة محتوى الفصل فقط (دروس/أسئلة) تُجلب من السيرفر عبر PJAX مع ستار تحميل — وتُجلَب مسبقاً (prefetch) عند عرض الفصول.
 // الصفحات المنفصلة (/simulators و/planner و/guide و/services و?tool= و?page=) تبقى تحميلاً كاملاً،
-// وصفحات الاختبار (type=quiz) تُحمّل كاملاً لأن بدء الاختبار يعتمد على ثوابت معرّضة من القالب.
+// وصفحات الاختبار (type=quiz مع فصل محدد) تُحمّل كاملاً لأن بدء الاختبار يعتمد على ثوابت معرّضة من القالب.
+
+var CATALOG_PARAMS = ['college', 'year', 'term', 'subject', 'type', 'chapter'];
+
+// ---------- أدوات نصية نقية (بلا DOM — قابلة للاختبار في node) ----------
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function pluralSubjects(n) {
+    n = n || 0;
+    if (n === 0) return 'لا توجد مواد بعد';
+    if (n === 1) return 'مادة واحدة';
+    if (n === 2) return 'مادتان';
+    return n + ' مواد';
+}
+function subjectSubtitle(s) {
+    var t = (s.video_count || 0) + ' فيديو · ' + (s.file_count || 0) + ' ملفات · ' + (s.question_count || 0) + ' سؤال';
+    var tc = s.test_count || 0;
+    if (tc === 1) t += ' · اختبار واحد';
+    else if (tc === 2) t += ' · اختباران';
+    else if (tc > 2) t += ' · ' + tc + ' اختبارات';
+    return t;
+}
+function collegeSubjectCount(data, name) {
+    var c = data ? data[name] : null;
+    if (!c || !c.years) return 0;
+    var n = 0;
+    Object.keys(c.years).forEach(function (yk) {
+        var y = c.years[yk];
+        if (y && y.terms) Object.keys(y.terms).forEach(function (tk) { n += ((y.terms[tk] || {}).subjects || []).length; });
+    });
+    return n;
+}
+function findSubjectInData(data, sid) {
+    if (!data || !sid) return null;
+    var names = Object.keys(data);
+    for (var i = 0; i < names.length; i++) {
+        var c = data[names[i]];
+        if (!c.years) continue;
+        var yks = Object.keys(c.years);
+        for (var j = 0; j < yks.length; j++) {
+            var y = c.years[yks[j]];
+            if (!y.terms) continue;
+            var tks = Object.keys(y.terms);
+            for (var k = 0; k < tks.length; k++) {
+                var subs = y.terms[tks[k]].subjects || [];
+                for (var m = 0; m < subs.length; m++) {
+                    if (subs[m].id === sid) return { subject: subs[m], college: names[i], year: yks[j], term: tks[k] };
+                }
+            }
+        }
+    }
+    return null;
+}
+function findYearCollege(data, yearName) {
+    if (!data || !yearName) return null;
+    var names = Object.keys(data);
+    for (var i = 0; i < names.length; i++) {
+        var c = data[names[i]];
+        if (c.years && Object.prototype.hasOwnProperty.call(c.years, yearName)) return names[i];
+    }
+    return null;
+}
+function cascadeNavBtnsHTML() {
+    return '<div class="nav-buttons-container">' +
+        '<a href="/" class="nav-btn" title="الرئيسية"><i class="fa-solid fa-house"></i></a>' +
+        '<a href="javascript:history.back()" class="nav-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i></a>' +
+        '</div>';
+}
+function cascadeHeroHTML() {
+    var h = '<section class="hero-section anim-fade-up">' +
+        '<div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>' +
+        '<h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>' +
+        '<h2 class="hero-subtitle">From Nothing to Be Something</h2>' +
+        '<p class="hero-desc">منصة تعليمية حديثة تساعدك في الوصول إلى محاضراتك وملفاتك وشروحاتك الجامعية بسهولة وفي مكان واحد منظم واحترافي.</p>' +
+        '<button onclick="scrollToYears()" class="hero-btn-primary"><i class="fa-solid fa-rocket"></i> ابدأ التعلم الآن</button>';
+    if (typeof STUDENT_ID !== 'undefined' && STUDENT_ID === null) {
+        h += '<div class="welcome-actions">' +
+            '<button onclick="togglePopup(\'loginBox\'); showRegisterForm()" class="hero-btn-primary"><i class="fa-solid fa-user-plus"></i> إنشاء حساب</button>' +
+            '<button onclick="togglePopup(\'loginBox\')" class="btn-ghost"><i class="fa-regular fa-user"></i> دخول</button>' +
+            '</div>';
+    }
+    return h + '</section>';
+}
+function cascadeSearchHTML(placeholder) {
+    return '<div class="search-box">' +
+        '<input type="text" id="searchInput" oninput="searchItems()" aria-label="بحث" placeholder="' + escHtml(placeholder) + '">' +
+        '<i class="fa-solid fa-magnifying-glass"></i>' +
+        '</div>';
+}
+function cascadeCollegesHTML(data) {
+    var names = data ? Object.keys(data) : [];
+    var h = cascadeHeroHTML() +
+        cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
+        '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
+        '<div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>' +
+        '<div class="grid-container grid-2col" id="subjects">';
+    if (!names.length) {
+        h += '</div><p role="status">ستظهر الكليات هنا عند إضافة أول كلية.</p>';
+        return h;
+    }
+    names.forEach(function (name) {
+        var n = collegeSubjectCount(data, name);
+        h += '<a href="/?college=' + encodeURIComponent(name) + '" class="card year-card">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>' +
+            '<h3 class="card-title year-card-title">' + escHtml(name) + '</h3>' +
+            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+            '<div class="card-btn">استعرض الكلية</div></a>';
+    });
+    return h + '</div>';
+}
+function cascadeYearsHTML(data, college) {
+    var c = data ? data[college] : null;
+    var years = (c && c.years) ? c.years : {};
+    var keys = Object.keys(years);
+    var h = cascadeHeroHTML() +
+        cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
+        '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
+        '<div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — ' + escHtml(college) + '</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>' +
+        '<div class="grid-container grid-2col" id="subjects">';
+    if (!keys.length) {
+        h += '</div><p role="status">لا توجد سنوات بعد في ' + escHtml(college) + '. سيتم إضافة المقررات قريباً.</p>';
+        return h;
+    }
+    keys.forEach(function (yk) {
+        var y = years[yk];
+        var n = (y && typeof y.subject_count === 'number') ? y.subject_count : 0;
+        h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(yk) + '" class="card year-card">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>' +
+            '<h3 class="card-title year-card-title">' + escHtml((y && y.name) || yk) + '</h3>' +
+            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+            '<div class="card-btn">استعرض المواد</div></a>';
+    });
+    return h + '</div>';
+}
+function cascadeTermsHTML(data, college, year) {
+    var c = data ? data[college] : null;
+    var y = (c && c.years) ? c.years[year] : null;
+    var terms = (y && y.terms) ? y.terms : {};
+    var keys = Object.keys(terms);
+    var h = cascadeNavBtnsHTML() +
+        '<div class="section-header"><h2>اختر الفصل الدراسي</h2><p>' + escHtml(college) + '</p></div>' +
+        '<div class="grid-container grid-2col">';
+    keys.forEach(function (tk) {
+        var t = terms[tk];
+        var n = (t && typeof t.subject_count === 'number') ? t.subject_count : ((t && t.subjects) || []).length;
+        h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(year) + '&term=' + encodeURIComponent(tk) + '" class="card">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>' +
+            '<h3 class="card-title">' + escHtml((t && t.name) || tk) + '</h3>' +
+            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+            '<div class="card-btn">تصفح الفصل</div></a>';
+    });
+    return h + '</div>';
+}
+function cascadeSubjectsShellHTML() {
+    return cascadeNavBtnsHTML() +
+        cascadeSearchHTML('ابحث عن مادة محددة...') +
+        '<div class="section-header" id="subjects"><h2>المقررات الدراسية</h2></div>' +
+        '<div id="subjectsSlot"></div>';
+}
+function cascadeSubjectsGridHTML(data, college, year, term) {
+    var c = data ? data[college] : null;
+    var y = (c && c.years) ? c.years[year] : null;
+    var t = (y && y.terms) ? y.terms[term] : null;
+    var subs = (t && t.subjects) ? t.subjects : [];
+    var h = '<div class="grid-container grid-2col cascade-step">';
+    subs.forEach(function (s) {
+        h += '<a href="/?subject=' + encodeURIComponent(s.id) + '" class="card">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-book-open"></i></div>' +
+            '<h3 class="card-title">' + escHtml(s.name) + '</h3>' +
+            '<div class="card-subtitle">' + escHtml(subjectSubtitle(s)) + '</div>';
+        if (s.has_vip) h += '<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>';
+        var quizCh = (s.types && s.types.quiz && s.types.quiz.chapters) ? s.types.quiz.chapters.length : 0;
+        if ((s.lesson_count || 0) === 0 && !quizCh) {
+            h += '<div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>';
+        }
+        h += '<div class="card-btn">دخول للمادة</div></a>';
+    });
+    return h + '</div>';
+}
+function cascadeSelectTypeHTML(found) {
+    var s = found.subject;
+    return cascadeNavBtnsHTML() +
+        '<div class="section-header"><h2>' + escHtml(s.name) + '</h2><p>اختر نوع المحتوى</p></div>' +
+        '<div class="grid-container grid-2col">' +
+        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=videos" class="card">' +
+            '<div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>' +
+            '<h3 class="card-title">المحاضرات</h3><div class="card-btn">تصفح الفيديوهات</div></a>' +
+        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=files" class="card green">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>' +
+            '<h3 class="card-title">الملفات</h3><div class="card-btn">تصفح الملفات</div></a>' +
+        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=quiz" class="card" style="border-color:transparent;">' +
+            '<div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>' +
+            '<h3 class="card-title">اختبار</h3><div class="card-btn" style="color:var(--warning); border-color:var(--warning);">بدء الاختبار</div></a>' +
+        '</div>';
+}
+function cascadeChaptersHTML(found, type) {
+    var s = found.subject;
+    var chs = (s.types && s.types[type] && s.types[type].chapters) ? s.types[type].chapters : [];
+    var h = cascadeNavBtnsHTML() +
+        '<div class="section-header"><h2>الفصول والمواضيع</h2></div>' +
+        '<div class="grid-container grid-2col">';
+    if (!chs.length) {
+        h += '<p style="text-align:center; color:var(--text-muted); font-weight:700; padding:30px 20px; grid-column:1 / -1;">لا توجد فصول متاحة لهذا النوع بعد.</p>';
+    }
+    chs.forEach(function (ch) {
+        h += '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=' + encodeURIComponent(type) + '&chapter=' + encodeURIComponent(ch.name) + '" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px; position:relative;">' +
+            '<span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> ' + escHtml(ch.name);
+        if (ch.vip_locked) h += ' <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>';
+        h += '</span><i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i></a>';
+    });
+    return h + '</div>';
+}
+function cascadeLoaderHTML(text) {
+    var sk = '';
+    for (var i = 0; i < 4; i++) {
+        sk += '<div class="card cl-sk"><div class="card-icon-wrapper skeleton" style="width:48px;height:48px;"></div>' +
+            '<div class="skeleton" style="height:14px;width:70%;margin-bottom:10px;"></div>' +
+            '<div class="skeleton" style="height:12px;width:45%;margin-bottom:16px;"></div></div>';
+    }
+    return '<div class="cascade-loader" role="status" aria-live="polite">' +
+        '<div class="cl-spinner" aria-hidden="true"></div>' +
+        '<div class="cl-text">' + escHtml(text || 'جارٍ التحميل...') + '</div>' +
+        '<div class="cl-count"><span class="cl-num">0</span>%</div>' +
+        '<div class="cl-bar"><div class="cl-fill"></div></div>' +
+        '<div class="grid-container grid-2col">' + sk + '</div></div>';
+}
+function cascadeStateFromUrl(u) {
+    if (!u || u.origin !== location.origin || u.pathname !== '/') return null;
+    var keys = Array.from(u.searchParams.keys());
+    for (var i = 0; i < keys.length; i++) {
+        if (keys[i] === 'tool' || keys[i] === 'page') return null;
+        if (CATALOG_PARAMS.indexOf(keys[i]) === -1) return null;
+    }
+    if (u.searchParams.get('chapter')) return null;
+    var college = u.searchParams.get('college');
+    var year = u.searchParams.get('year');
+    var term = u.searchParams.get('term');
+    var subject = u.searchParams.get('subject');
+    var type = u.searchParams.get('type');
+    if (subject) return { step: type ? 'chapters' : 'select_type', subject: subject, type: type };
+    if (term) return { step: 'subjects', college: college, year: year, term: term };
+    if (year) return { step: 'terms', college: college, year: year };
+    if (college) return { step: 'years', college: college };
+    if (!college && !year && !term && !subject && !type) return { step: 'colleges' };
+    return null;
+}
+function resolveCascadeState(st) {
+    if (!st) return null;
+    var data = (typeof CATALOG_DATA !== 'undefined') ? CATALOG_DATA : null;
+    if (!data) return null;
+    if (st.step === 'years' || st.step === 'terms' || st.step === 'subjects') {
+        if (!st.college && st.year) st.college = findYearCollege(data, st.year);
+        if (!st.college) return null;
+        var c = data[st.college];
+        if (!c) return null;
+        if (st.step !== 'years' && (!c.years || !c.years[st.year])) return null;
+        if (st.step === 'subjects' && (!c.years[st.year].terms || !c.years[st.year].terms[st.term])) return null;
+    }
+    if (st.step === 'select_type' || st.step === 'chapters') {
+        var f = findSubjectInData(data, st.subject);
+        if (!f) return null;
+        st.found = f;
+        if (st.step === 'chapters' && (!f.subject.types || !f.subject.types[st.type])) return null;
+    }
+    return st;
+}
+function cascadeUrlFor(st) {
+    if (st.step === 'colleges') return '/';
+    if (st.step === 'years') return '/?college=' + encodeURIComponent(st.college);
+    if (st.step === 'terms') return '/?college=' + encodeURIComponent(st.college) + '&year=' + encodeURIComponent(st.year);
+    if (st.step === 'subjects') return '/?college=' + encodeURIComponent(st.college) + '&year=' + encodeURIComponent(st.year) + '&term=' + encodeURIComponent(st.term);
+    if (st.step === 'select_type') return '/?subject=' + encodeURIComponent(st.subject);
+    if (st.step === 'chapters') return '/?subject=' + encodeURIComponent(st.subject) + '&type=' + encodeURIComponent(st.type);
+    return '/';
+}
+function cascadeStepHTML(st) {
+    var data = (typeof CATALOG_DATA !== 'undefined') ? CATALOG_DATA : null;
+    if (st.step === 'colleges') return cascadeCollegesHTML(data);
+    if (st.step === 'years') return cascadeYearsHTML(data, st.college);
+    if (st.step === 'terms') return cascadeTermsHTML(data, st.college, st.year);
+    if (st.step === 'subjects') return cascadeSubjectsShellHTML();
+    if (st.step === 'select_type') return cascadeSelectTypeHTML(st.found);
+    if (st.step === 'chapters') return cascadeChaptersHTML(st.found, st.type);
+    return '';
+}
+
 (function () {
     var main = document.querySelector('.main-content');
     if (!main || !window.fetch || !window.DOMParser) return;
-    var CATALOG_PARAMS = ['college', 'year', 'term', 'subject', 'type', 'chapter'];
     var lastPjaxUrl = location.origin + location.pathname + location.search;
+    var pjaxBusy = false;
+    var pjaxCache = new Map();
+    var prefetching = {};
+    var veilTimer = null;
+
     function isCatalogUrl(u) {
         if (u.origin !== location.origin || u.pathname !== '/') return false;
-        var keys = Array.prototype.slice.call(u.searchParams.keys());
+        var keys = Array.from(u.searchParams.keys());
         for (var i = 0; i < keys.length; i++) {
             if (keys[i] === 'tool' || keys[i] === 'page') return false;
             if (CATALOG_PARAMS.indexOf(keys[i]) === -1) return false;
@@ -1414,36 +1730,224 @@ document.addEventListener('click', function (e) {
             a.classList.toggle('active', !!(other && other.classList.contains('active')));
         });
     }
+    // حالة الشريطين للمنتقي — نفس قاعدة السيرفر: الرئيسية لكلية/سنة، المواد لما بعدها.
+    function syncCascadeNav(step) {
+        var home = (step === 'colleges' || step === 'years');
+        document.querySelectorAll('.nav-links a, .mobile-bottom-nav a').forEach(function (a) {
+            var href = a.getAttribute('href') || '';
+            if (href === '/') a.classList.toggle('active', home);
+            else if (href === '/#subjects') a.classList.toggle('active', !home);
+        });
+    }
     function afterSwap() {
         applyYearBadges();
         refreshVipBadges();
         initFavoriteButtons();
         updateThemeIcon();
+        if (document.querySelector('.main-content a[href*="chapter="]')) scheduleChapterPrefetch();
     }
     function scrollToHash(hash) {
         var el = document.getElementById(hash.slice(1));
         if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 80, behavior: 'smooth' });
     }
+    function scrollTopNow() {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+    }
+    function animateMainIn() {
+        main.classList.remove('cascade-step');
+        void main.offsetWidth;
+        main.classList.add('cascade-step');
+    }
+
+    // ---------- ستار التحميل (veil) — المحتوى القديم يبقى ظاهراً خلفه، بلا شاشة بيضاء ----------
+    function veilEl() {
+        var v = document.getElementById('pjaxVeil');
+        if (v) return v;
+        v = document.createElement('div');
+        v.className = 'pjax-veil';
+        v.id = 'pjaxVeil';
+        v.hidden = true;
+        v.innerHTML = '<div class="pjax-veil-card">' +
+            '<div class="cl-spinner" aria-hidden="true"></div>' +
+            '<div class="cl-text">جارٍ تحميل المحتوى...</div>' +
+            '<div class="cl-count"><span class="cl-num">0</span>%</div>' +
+            '<div class="cl-bar"><div class="cl-fill"></div></div></div>';
+        document.body.appendChild(v);
+        return v;
+    }
+    function setVeilNum(n) {
+        var v = document.getElementById('pjaxVeil');
+        if (!v) return;
+        var num = v.querySelector('.cl-num');
+        var fill = v.querySelector('.cl-fill');
+        if (num) num.textContent = String(n);
+        if (fill) fill.style.width = n + '%';
+    }
+    function showVeil() {
+        var v = veilEl();
+        v.hidden = false;
+        var n = 0;
+        setVeilNum(0);
+        clearInterval(veilTimer);
+        veilTimer = setInterval(function () {
+            if (n < 90) { n += Math.floor(Math.random() * 4) + 1; if (n > 90) n = 90; setVeilNum(n); }
+        }, 300);
+    }
+    function hideVeil() {
+        clearInterval(veilTimer);
+        var v = document.getElementById('pjaxVeil');
+        if (!v) return;
+        setVeilNum(100);
+        v.hidden = true;
+    }
+
+    // ---------- جلب مسبق (prefetch) لصفحات محتوى الفصول ----------
+    function absCatalogUrl(href) {
+        try { var u = new URL(href, location.href); return u.origin + u.pathname + u.search; } catch (e) { return null; }
+    }
+    function prefetchCatalog(url) {
+        if (!url || pjaxCache.has(url) || prefetching[url]) return;
+        prefetching[url] = true;
+        fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.text(); })
+            .then(function (t) {
+                if (pjaxCache.size > 24) { var k = pjaxCache.keys().next().value; pjaxCache.delete(k); }
+                pjaxCache.set(url, t);
+            })
+            .catch(function () {})
+            .finally(function () { delete prefetching[url]; });
+    }
+    function scheduleChapterPrefetch() {
+        setTimeout(function () {
+            var a = document.querySelector('.main-content a[href*="chapter="]');
+            if (!a) return;
+            var u = absCatalogUrl(a.getAttribute('href'));
+            if (u && a.getAttribute('href').indexOf('type=quiz') === -1) prefetchCatalog(u);
+        }, 1200);
+    }
+    function prefetchOnIntent(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a) return;
+        var href = a.getAttribute('href') || '';
+        if (href.indexOf('chapter=') === -1 || href.indexOf('type=quiz') !== -1) return;
+        var url = absCatalogUrl(href);
+        if (url) prefetchCatalog(url);
+    }
+    document.addEventListener('mouseover', prefetchOnIntent);
+    document.addEventListener('focusin', prefetchOnIntent);
+
+    // ---------- PJAX: لا إخفاء للمحتوى أبداً — ستار فوق المحتوى القديم حتى يصل الجديد ----------
+    function applySwappedHtml(html, url, push, hash) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var next = doc.querySelector('.main-content');
+        if (!next) throw new Error('no main-content');
+        main.innerHTML = next.innerHTML;
+        animateMainIn();
+        syncNavActive(doc);
+        lastPjaxUrl = url;
+        if (push) history.pushState({ pjax: true }, '', url + (hash || ''));
+        if (hash) scrollToHash(hash); else scrollTopNow();
+        afterSwap();
+    }
     async function swapTo(url, push, hash) {
-        main.classList.add('pjax-out');
+        if (pjaxBusy) return;
+        var cached = pjaxCache.get(url);
+        if (cached) {
+            try { applySwappedHtml(cached, url, push, hash); } catch (e) { window.location.href = url + (hash || ''); }
+            return;
+        }
+        pjaxBusy = true;
+        showVeil();
         try {
             var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             if (!res.ok) throw new Error('bad status ' + res.status);
-            var doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-            var next = doc.querySelector('.main-content');
-            if (!next) throw new Error('no main-content');
-            await new Promise(function (r) { setTimeout(r, 180); });
-            main.innerHTML = next.innerHTML;
-            syncNavActive(doc);
-            lastPjaxUrl = url;
-            if (push) history.pushState({ pjax: true }, '', url + (hash || ''));
-            main.classList.remove('pjax-out');
-            if (hash) scrollToHash(hash); else window.scrollTo(0, 0);
-            afterSwap();
+            var html = await res.text();
+            if (pjaxCache.size > 24) { var k = pjaxCache.keys().next().value; pjaxCache.delete(k); }
+            pjaxCache.set(url, html);
+            hideVeil();
+            applySwappedHtml(html, url, push, hash);
         } catch (e) {
+            hideVeil();
             window.location.href = url + (hash || '');
-        }
+        } finally { pjaxBusy = false; }
     }
+
+    // ---------- المنتقي المتتالي (من بيانات الصفحة — بلا طلبات) ----------
+    function runLoaderCounter(slot, ms, done) {
+        var numEl = slot.querySelector('.cl-num');
+        var fillEl = slot.querySelector('.cl-fill');
+        var t0 = Date.now();
+        var iv = setInterval(function () {
+            var p = Math.min(100, Math.round((Date.now() - t0) / ms * 100));
+            if (numEl) numEl.textContent = String(p);
+            if (fillEl) fillEl.style.width = p + '%';
+            if (p >= 100) {
+                clearInterval(iv);
+                if (slot.isConnected) done();
+            }
+        }, 40);
+    }
+    function renderCascade(st, opts) {
+        opts = opts || {};
+        st = resolveCascadeState(st);
+        if (!st) return false;
+        main.innerHTML = cascadeStepHTML(st);
+        animateMainIn();
+        syncCascadeNav(st.step);
+        if (opts.push) {
+            history.pushState({ pjax: true }, '', cascadeUrlFor(st));
+            lastPjaxUrl = location.origin + location.pathname + location.search;
+        }
+        scrollTopNow();
+        afterSwap();
+        if (st.step === 'subjects') {
+            var slot = document.getElementById('subjectsSlot');
+            if (slot) {
+                if (opts.withLoader) {
+                    slot.innerHTML = cascadeLoaderHTML('جارٍ تحميل المواد...');
+                    runLoaderCounter(slot, 650, function () {
+                        slot.innerHTML = cascadeSubjectsGridHTML(CATALOG_DATA, st.college, st.year, st.term);
+                    });
+                } else {
+                    slot.innerHTML = cascadeSubjectsGridHTML(CATALOG_DATA, st.college, st.year, st.term);
+                }
+            }
+        }
+        if (st.step === 'chapters') scheduleChapterPrefetch();
+        return true;
+    }
+    // اعتراض مبكر (capture) لروابط المنتقي — قبل مستمع PJAX، حتى لا تُجلب صفحة جديدة.
+    document.addEventListener('click', function (e) {
+        if (pjaxBusy) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        var a = e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a || (a.target && a.target !== '_self')) return;
+        if (a.closest('.popup-box, .more-menu, [data-no-pjax]')) return;
+        var rawHref = a.getAttribute('href') || '';
+        // رابط «المواد» (/#subjects) من صفحة عميقة: يعيد للمنتقي بدل أن لا يفعل شيئاً.
+        if (rawHref === '/#subjects' || rawHref === '#subjects') {
+            var cur = null;
+            try { cur = cascadeStateFromUrl(new URL(location.href)); } catch (err) { cur = null; }
+            if (!cur || (cur.step !== 'colleges' && cur.step !== 'years')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeAllPopups();
+                renderCascade({ step: 'colleges' }, { push: true });
+            }
+            return;
+        }
+        var u;
+        try { u = new URL(rawHref, location.href); } catch (err) { return; }
+        var samePage = (u.pathname === location.pathname && u.search === location.search);
+        if (samePage) return;
+        var st = cascadeStateFromUrl(u);
+        if (!st) return;
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllPopups();
+        renderCascade(st, { push: true, withLoader: (st.step === 'subjects') });
+    }, true);
     document.addEventListener('click', function (e) {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         var a = e.target.closest ? e.target.closest('a[href]') : null;
@@ -1452,7 +1956,7 @@ document.addEventListener('click', function (e) {
         var u;
         try { u = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
         var samePage = (u.pathname === location.pathname && u.search === location.search);
-        if (samePage) return; // روابط # داخل نفس الصفحة يعالجها المتصفح
+        if (samePage) return;
         if (!isCatalogUrl(u)) return;
         e.preventDefault();
         closeAllPopups();
@@ -1463,7 +1967,13 @@ document.addEventListener('click', function (e) {
         try { u = new URL(location.href); } catch (e) { return; }
         var base = u.origin + u.pathname + u.search;
         if (base === lastPjaxUrl && u.hash) { scrollToHash(u.hash); return; }
-        if (isCatalogUrl(u)) swapTo(base, false, u.hash || '');
+        var st = cascadeStateFromUrl(u);
+        if (st && renderCascade(st, { push: false })) {
+            lastPjaxUrl = base;
+            return;
+        }
+        if (isCatalogUrl(u)) { swapTo(base, false, u.hash || ''); return; }
+        window.location.href = location.href;
     });
 })();
 
@@ -1504,7 +2014,7 @@ function searchItems() {
         const term = f.trim().toLowerCase();
         results.replaceChildren();
         if (!term) return;
-        const catalog = {{ data | tojson }};
+        const catalog = CATALOG_DATA;
         const add = (label, params) => {
             const link = document.createElement('a');
             link.className = 'card';

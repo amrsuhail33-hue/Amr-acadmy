@@ -323,7 +323,7 @@
 
         <div class="main-card">
             <h3 class="section-title"><i class="fa-solid fa-chart-simple" style="color:var(--primary);"></i> تقدمي</h3>
-            <p class="section-desc">عدد الكلمات المتقنة في كل مسار.</p>
+            <p class="section-desc">عدد الكلمات المتقنة من إجمالي كلمات كل مسار.</p>
             <div id="progressBody"><div class="loading-state"><div class="spinner"></div>جارٍ تحميل التقدم...</div></div>
         </div>
 
@@ -373,6 +373,8 @@ var quizCorrect = 0;
 var quizAnswered = false;
 var completeCalled = false;
 var lessonXp = 0;
+var pendingAnswers = [];     // وعود POST /answer الجارية — ينتظرها الملخص قبل حساب النقاط
+var WORD_XP = 2;             // نقاط إتقان كلمة لأول مرة (تطابق LANGUAGE_WORD_XP في App.py)
 
 function $(id) { return document.getElementById(id); }
 function esc(s) {
@@ -604,11 +606,12 @@ async function loadProgress() {
         if (!res.ok) return;
         var data = await res.json();
         var counts = data.counts || {};
+        var masteredByTrack = data.mastered_by_track || {};
         var rows = '';
         var keys = ['medical', 'engineering', 'general'];
         for (var i = 0; i < keys.length; i++) {
             var k = keys[i];
-            rows += '<div class="track-count-row"><span><i class="fa-solid ' + TRACK_ICONS[k] + '" style="color:var(--primary); margin-left:8px;"></i>' + TRACK_LABELS[k] + '</span><span class="count">' + (counts[k] || 0) + ' كلمة متقنة</span></div>';
+            rows += '<div class="track-count-row"><span><i class="fa-solid ' + TRACK_ICONS[k] + '" style="color:var(--primary); margin-left:8px;"></i>' + TRACK_LABELS[k] + '</span><span class="count">' + (masteredByTrack[k] || 0) + ' / ' + (counts[k] || 0) + ' كلمة متقنة</span></div>';
         }
         $('progressBody').innerHTML = rows;
         if (data.mastered !== undefined && profile) {
@@ -712,6 +715,7 @@ async function reloadLesson() {
     quizCorrect = 0;
     completeCalled = false;
     lessonXp = 0;
+    pendingAnswers = [];
     $('quizCard').style.display = 'none';
     $('summaryCard').style.display = 'none';
     $('lessonCard').style.display = 'block';
@@ -757,6 +761,7 @@ function startQuiz() {
     quizAnswered = false;
     completeCalled = false;
     lessonXp = 0;
+    pendingAnswers = [];
     $('lessonCard').style.display = 'none';
     $('summaryCard').style.display = 'none';
     $('quizCard').style.display = 'block';
@@ -807,6 +812,17 @@ function chooseOption(btn) {
     if (correct) {
         quizCorrect++;
         btn.classList.add('correct');
+        /* تحديث فوري لعدادات الترويسة: الإجابة الصحيحة هنا إتقان لأول مرة
+           (+WORD_XP) لأن الدرس لا يضم إلا كلمات غير متقنة؛ وردّ السيرفر
+           بعدها يزامن الأرقام الدقيقة. بدون هذا يبقى العداد متأخراً إجابة
+           كاملة ريثما يرجع POST /answer. */
+        if (profile) {
+            profile.mastered = (profile.mastered || 0) + 1;
+            profile.xp_from_language = (profile.xp_from_language || 0) + WORD_XP;
+            profile.level = levelFromMastered(profile.mastered).level;
+            profile.level_progress = levelFromMastered(profile.mastered).progress;
+            renderHero(profile);
+        }
     } else {
         btn.classList.add('wrong');
     }
@@ -815,7 +831,7 @@ function chooseOption(btn) {
     fb.innerHTML = '<div class="quiz-feedback ' + (correct ? 'good' : 'bad') + '">' + (correct ? 'إجابة صحيحة — أحسنت!' : 'إجابة خاطئة') + '</div>' +
         (correct ? '' : '<div class="quiz-correct-answer">الإجابة الصحيحة: ' + esc(correctLabel) + '</div>');
     $('quizNextBtn').style.display = 'flex';
-    submitAnswer(q.word.id, correct, q.type);
+    pendingAnswers.push(submitAnswer(q.word.id, correct, q.type));
 }
 async function submitAnswer(wordId, correct, quizType) {
     try {
@@ -825,9 +841,12 @@ async function submitAnswer(wordId, correct, quizType) {
         });
         if (!res.ok) return;
         var data = await res.json();
-        if (data.mastered !== undefined && profile) { profile.mastered = data.mastered; }
+        /* mastered_count عدد (int) — لا نستخدم data.mastered فهو منطقي
+           (true/false) وكان يحوّل عداد «كلمة متقنة» إلى نص true/false.
+           xp_from_language نقاط اللغة فقط — لا total_points (الإجمالي العام). */
+        if (data.mastered_count !== undefined && profile) { profile.mastered = data.mastered_count; }
         if (data.level !== undefined && profile) { profile.level = data.level; }
-        if (data.total_points !== undefined && profile) { profile.xp_from_language = data.total_points; }
+        if (data.xp_from_language !== undefined && profile) { profile.xp_from_language = data.xp_from_language; }
         if (data.xp_awarded) lessonXp += data.xp_awarded;
         if (profile) renderHero(profile);
     } catch (e) { /* فشل حفظ إجابة واحدة لا يوقف الاختبار — تُعاد المحاولة في الإجابة التالية */ }
@@ -847,6 +866,10 @@ async function finishQuiz() {
     var body = $('summaryBody');
     body.innerHTML = '<div class="loading-state"><div class="spinner"></div>جارٍ حفظ نتيجتك...</div>';
     summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* انتظر حفظ كل الإجابات أولاً — وإلا فقد الملخص نقاط آخر إجابة
+       إن كان POST /answer ما زال جارياً عند الضغط على «عرض النتيجة». */
+    try { await Promise.allSettled(pendingAnswers); } catch (e) {}
+    pendingAnswers = [];
     var streak = profile ? (profile.streak || 0) : 0;
     var xp = lessonXp;
     if (!completeCalled) {
@@ -855,10 +878,11 @@ async function finishQuiz() {
             var res = await fetch('/api/language/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
             if (res.ok) {
                 var data = await res.json();
-                if (data.xp_awarded !== undefined) xp = data.xp_awarded;
+                /* نقاط اليوم = نقاط الكلمات + مكافأة الإكمال (لا تستبدل بها). */
+                if (data.xp_awarded !== undefined) xp = lessonXp + data.xp_awarded;
                 if (data.streak !== undefined) streak = data.streak;
                 if (data.level !== undefined && profile) profile.level = data.level;
-                if (data.total_points !== undefined && profile) profile.xp_from_language = data.total_points;
+                if (data.xp_from_language !== undefined && profile) profile.xp_from_language = data.xp_from_language;
                 if (profile) { profile.streak = streak; renderHero(profile); }
             }
         } catch (e) { /* الملخص يظهر حتى لو فشل الحفظ */ }

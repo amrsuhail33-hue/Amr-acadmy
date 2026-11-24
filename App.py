@@ -3205,6 +3205,7 @@ def language_answer():
     mastered_count = _mastered_count(user.id, lang_profile.track)
     return jsonify({"status": "success", "mastered": rel.state == 'mastered',
                     "xp_awarded": xp_awarded, "total_points": profile.total_points or 0,
+                    "xp_from_language": _xp_from_language(user.id),
                     "level": _language_level(mastered_count), "mastered_count": mastered_count})
 
 @app.route('/api/language/complete', methods=['POST'])
@@ -3221,7 +3222,8 @@ def language_complete():
         return jsonify({"status": "success", "already_completed": True, "xp_awarded": 0,
                         "streak": lang_profile.streak_days or 0,
                         "level": _language_level(_mastered_count(user.id, lang_profile.track)),
-                        "total_points": profile.total_points or 0})
+                        "total_points": profile.total_points or 0,
+                        "xp_from_language": _xp_from_language(user.id)})
     yesterday = today - timedelta(days=1)
     if lang_profile.last_lesson_date == yesterday:
         lang_profile.streak_days = (lang_profile.streak_days or 0) + 1
@@ -3239,7 +3241,8 @@ def language_complete():
     return jsonify({"status": "success", "already_completed": False, "xp_awarded": xp_awarded,
                     "streak": lang_profile.streak_days or 0,
                     "level": _language_level(mastered_count),
-                    "total_points": profile.total_points or 0})
+                    "total_points": profile.total_points or 0,
+                    "xp_from_language": _xp_from_language(user.id)})
 
 @app.route('/api/language/progress', methods=['GET'])
 @student_required
@@ -3253,7 +3256,8 @@ def language_progress():
                     "streak": lang_profile.streak_days or 0,
                     "daily_target": lang_profile.daily_target,
                     "track": lang_profile.track,
-                    "counts": _word_counts_by_track()})
+                    "counts": _word_counts_by_track(),
+                    "mastered_by_track": {t: _mastered_count(user.id, t) for t in LANGUAGE_TRACKS}})
 
 @app.route('/admin/import-language-words', methods=['POST'])
 @admin_required

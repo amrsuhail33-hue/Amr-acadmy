@@ -1,0 +1,301 @@
+word,translation,sentence,sentence_translation,track,pos
+force,قوة,The force pushes the machine forward.,القوة تدفع الآلة إلى الأمام.,engineering,noun
+pressure,ضغط,The pressure inside the tank is very high.,الضغط داخل الخزان مرتفع جدا.,engineering,noun
+torque,عزم الدوران,The engine produces enough torque to turn the wheels.,ينتج المحرك عزم دوران كافيا لتدوير العجلات.,engineering,noun
+friction,احتكاك,Friction between the tires and the road helps the car stop.,الاحتكاك بين الإطارات والطريق يساعد السيارة على التوقف.,engineering,noun
+velocity,سرعة,The velocity of the water in the pipe is high.,سرعة الماء في الأنبوب عالية.,engineering,noun
+acceleration,تسارع,The acceleration of the train increases after it leaves the station.,تسارع القطار يزداد بعد مغادرته المحطة.,engineering,noun
+momentum,زخم,The heavy truck has more momentum than the small car.,الشاحنة الثقيلة لديها زخم أكبر من السيارة الصغيرة.,engineering,noun
+gravity,جاذبية,Gravity pulls the water down from the tank.,الجاذبية تسحب الماء إلى الأسفل من الخزان.,engineering,noun
+load,حمل,The bridge can carry a heavy load.,الجسر يستطيع حمل حمولة ثقيلة.,engineering,noun
+stress,إجهاد,Too much stress can damage the metal beam.,الإجهاد الزائد يمكن أن يتلف العارضة المعدنية.,engineering,noun
+strain,انفعال,The engineer measures the strain in the steel bar.,المهندس يقيس الانفعال في القضيب الفولاذي.,engineering,noun
+tension,شد,The rope is under high tension.,الحبل تحت شد عال.,engineering,noun
+compression,انضغاط,The column resists compression from the weight above it.,العمود يقاوم الانضغاط الناتج عن الوزن فوقه.,engineering,noun
+shear,قص,The engineer checks the shear force on the bolt.,المهندس يفحص قوة القص على المسمار.,engineering,noun
+bending,انحناء,Bending can weaken a long thin beam.,الانحناء يمكن أن يضعف عارضة طويلة ورفيعة.,engineering,noun
+vibration,اهتزاز,The vibration of the motor is too strong.,اهتزاز المحرك قوي جدا.,engineering,noun
+rotation,دوران,The rotation of the wheel is fast and smooth.,دوران العجلة سريع وسلس.,engineering,noun
+motion,حركة,The motion of the piston is up and down.,حركة المكبس إلى الأعلى والأسفل.,engineering,noun
+speed,سرعة,The speed of the fan increases when the power rises.,سرعة المروحة تزداد عندما ترتفع القدرة.,engineering,noun
+weight,وزن,The weight of the steel plate is fifty kilograms.,وزن اللوح الفولاذي خمسون كيلوغراما.,engineering,noun
+mass,كتلة,The mass of the machine is two tons.,كتلة الآلة طنان.,engineering,noun
+energy,طاقة,The solar panel changes sunlight into energy.,اللوح الشمسي يحول ضوء الشمس إلى طاقة.,engineering,noun
+power,قدرة,The power of this motor is five kilowatts.,قدرة هذا المحرك خمسة كيلوواط.,engineering,noun
+work,شغل,The machine does useful work every day.,الآلة تنجز شغلا مفيدا كل يوم.,engineering,noun
+efficiency,كفاءة,The efficiency of the new engine is very high.,كفاءة المحرك الجديد عالية جدا.,engineering,noun
+lever,رافعة,The worker uses a lever to lift the heavy stone.,العامل يستخدم رافعة لرفع الحجر الثقيل.,engineering,noun
+pulley,بكرة,The pulley changes the direction of the rope.,البكرة تغير اتجاه الحبل.,engineering,noun
+gear,ترس,The gear turns the second wheel.,الترس يدير العجلة الثانية.,engineering,noun
+shaft,عمود,The shaft connects the motor to the wheel.,العمود يربط المحرك بالعجلة.,engineering,noun
+bearing,محمل,The bearing helps the shaft turn smoothly.,المحمل يساعد العمود على الدوران بسلاسة.,engineering,noun
+axle,محور,The axle holds the two wheels together.,المحور يربط العجلتين معا.,engineering,noun
+spring,نابض,The spring pushes the valve back to its place.,النابض يعيد الصمام إلى مكانه.,engineering,noun
+damper,مخمد,The damper reduces the vibration of the machine.,المخمد يقلل اهتزاز الآلة.,engineering,noun
+pendulum,بندول,The pendulum moves from side to side.,البندول يتحرك من جانب إلى آخر.,engineering,noun
+inertia,قصور ذاتي,Inertia keeps the moving wheel turning for a short time.,القصور الذاتي يجعل العجلة المتحركة تستمر في الدوران لفترة قصيرة.,engineering,noun
+equilibrium,توازن,The bridge is in equilibrium when all forces are balanced.,الجسر في حالة توازن عندما تكون جميع القوى متوازنة.,engineering,noun
+balance,توازن,The engineer checks the balance of the rotating part.,المهندس يفحص توازن الجزء الدوار.,engineering,noun
+thrust,دفع,The thrust of the engine pushes the plane forward.,دفع المحرك يدفع الطائرة إلى الأمام.,engineering,noun
+drag,مقاومة هوائية,Drag slows the car when it moves fast.,المقاومة الهوائية تبطئ السيارة عندما تتحرك بسرعة.,engineering,noun
+lift,رفع,The lift of the heavy load needs a strong crane.,رفع الحمل الثقيل يحتاج إلى رافعة قوية.,engineering,noun
+voltage,جهد كهربائي,The voltage of the battery is twelve volts.,جهد البطارية اثنا عشر فولتا.,engineering,noun
+current,تيار كهربائي,The current flows through the wire to the lamp.,التيار الكهربائي يسري عبر السلك إلى المصباح.,engineering,noun
+resistance,مقاومة كهربائية,The resistance of the wire reduces the current.,مقاومة السلك تقلل التيار الكهربائي.,engineering,noun
+circuit,دائرة كهربائية,The circuit connects the battery to the light.,الدائرة الكهربائية تربط البطارية بالمصباح.,engineering,noun
+conductor,موصل,Copper is a good conductor of electricity.,النحاس موصل جيد للكهرباء.,engineering,noun
+insulator,عازل,Plastic is a good insulator for electric wires.,البلاستيك عازل جيد للأسلاك الكهربائية.,engineering,noun
+battery,بطارية,The battery stores electric energy for the car.,البطارية تخزن الطاقة الكهربائية للسيارة.,engineering,noun
+capacitor,مكثف,The capacitor stores electric charge for a short time.,المكثف يخزن الشحنة الكهربائية لفترة قصيرة.,engineering,noun
+resistor,مقاوم,The resistor limits the current in the circuit.,المقاوم يحد من التيار في الدائرة الكهربائية.,engineering,noun
+inductor,محث,The inductor stores energy in a magnetic field.,المحث يخزن الطاقة في مجال مغناطيسي.,engineering,noun
+switch,مفتاح,Press the switch to turn on the light.,اضغط على المفتاح لتشغيل الضوء.,engineering,noun
+wire,سلك,The wire carries the current to the motor.,السلك ينقل التيار الكهربائي إلى المحرك.,engineering,noun
+cable,كابل,The thick cable connects the generator to the building.,الكابل السميك يربط المولد بالمبنى.,engineering,noun
+socket,مقبس,Put the plug into the socket to charge the phone.,ضع القابس في المقبس لشحن الهاتف.,engineering,noun
+plug,قابس,The plug fits into the socket on the wall.,القابس يناسب المقبس الموجود على الجدار.,engineering,noun
+transformer,محول كهربائي,The transformer changes high voltage to low voltage.,المحول الكهربائي يحول الجهد العالي إلى جهد منخفض.,engineering,noun
+generator,مولد كهربائي,The generator produces electricity for the hospital.,المولد الكهربائي ينتج الكهرباء للمستشفى.,engineering,noun
+motor,محرك كهربائي,The motor turns electric energy into motion.,المحرك الكهربائي يحول الطاقة الكهربائية إلى حركة.,engineering,noun
+diode,دايود,The diode lets current flow in one direction only.,الدايود يسمح بمرور التيار في اتجاه واحد فقط.,engineering,noun
+transistor,ترانزستور,The transistor controls the current in the circuit.,الترانزستور يتحكم في التيار داخل الدائرة الكهربائية.,engineering,noun
+sensor,مستشعر,The sensor measures the temperature of the water.,المستشعر يقيس درجة حرارة الماء.,engineering,noun
+signal,إشارة,The sensor sends a signal to the control unit.,المستشعر يرسل إشارة إلى وحدة التحكم.,engineering,noun
+frequency,تردد,The frequency of the power supply is fifty hertz.,تردد مصدر الطاقة خمسون هرتزا.,engineering,noun
+ampere,أمبير,The current is five amperes.,التيار الكهربائي خمسة أمبير.,engineering,noun
+volt,فولت,The battery gives twelve volts to the circuit.,البطارية تعطي اثني عشر فولتا للدائرة الكهربائية.,engineering,noun
+watt,واط,The lamp uses sixty watts of power.,المصباح يستخدم ستين واطا من القدرة.,engineering,noun
+ohm,أوم,The resistance is one hundred ohms.,المقاومة مئة أوم.,engineering,noun
+ground,تأريض,The ground protects people from electric shock.,التأريض يحمي الناس من الصدمة الكهربائية.,engineering,noun
+short circuit,دائرة قصر,A short circuit can damage the wires and start a fire.,دائرة القصر يمكن أن تتلف الأسلاك وتسبب حريقا.,engineering,phrase
+fuse,منصهر,The fuse stops the current when it is too high.,المنصهر يوقف التيار عندما يكون مرتفعا جدا.,engineering,noun
+relay,مرحل,The relay switches the motor on and off.,المرحل يشغل المحرك ويوقفه.,engineering,noun
+electromagnetic,كهرومغناطيسي,The motor works with an electromagnetic field.,المحرك يعمل بمجال كهرومغناطيسي.,engineering,adjective
+magnetic,مغناطيسي,The magnetic force pulls the iron plate.,القوة المغناطيسية تسحب اللوح الحديدي.,engineering,adjective
+electric,كهربائي,The electric motor is quiet and clean.,المحرك الكهربائي هادئ ونظيف.,engineering,adjective
+electronic,إلكتروني,The electronic device controls the temperature.,الجهاز الإلكتروني يتحكم في درجة الحرارة.,engineering,adjective
+alternating current,تيار متناوب,Alternating current changes direction many times every second.,التيار المتناوب يغير اتجاهه مرات كثيرة كل ثانية.,engineering,phrase
+direct current,تيار مستمر,Direct current flows in one direction only.,التيار المستمر يسري في اتجاه واحد فقط.,engineering,phrase
+power supply,مصدر طاقة,The power supply gives electricity to the computer.,مصدر الطاقة يزود الحاسوب بالكهرباء.,engineering,phrase
+overload,حمل زائد,An overload can damage the motor.,الحمل الزائد يمكن أن يتلف المحرك.,engineering,noun
+outage,انقطاع كهرباء,The outage stopped all the machines in the factory.,انقطاع الكهرباء أوقف جميع الآلات في المصنع.,engineering,noun
+steel,فولاذ,Steel is strong and used in bridges and buildings.,الفولاذ قوي ويستخدم في الجسور والمباني.,engineering,noun
+iron,حديد,Iron is a common metal in construction.,الحديد معدن شائع في البناء.,engineering,noun
+copper,نحاس,Copper wires carry electricity very well.,أسلاك النحاس تنقل الكهرباء بشكل جيد جدا.,engineering,noun
+aluminium,ألمنيوم,Aluminium is light and does not rust easily.,الألمنيوم خفيف ولا يصدأ بسهولة.,engineering,noun
+plastic,بلاستيك,Plastic is light and easy to shape.,البلاستيك خفيف وسهل التشكيل.,engineering,noun
+glass,زجاج,Glass is used for windows in the building.,الزجاج يستخدم للنوافذ في المبنى.,engineering,noun
+wood,خشب,Wood is used to make doors and tables.,الخشب يستخدم لصنع الأبواب والطاولات.,engineering,noun
+concrete,خرسانة,Concrete is made from cement and sand and water.,الخرسانة تصنع من الأسمنت والرمل والماء.,engineering,noun
+cement,أسمنت,Cement holds the bricks together.,الأسمنت يربط الطوب معا.,engineering,noun
+alloy,سبيكة,The alloy is stronger than pure metal.,السبيكة أقوى من المعدن النقي.,engineering,noun
+metal,معدن,Metal can carry heavy loads in a structure.,المعدن يستطيع تحمل أحمال ثقيلة في المنشأ.,engineering,noun
+ceramic,سيراميك,Ceramic tiles cover the floor of the laboratory.,بلاط السيراميك يغطي أرضية المختبر.,engineering,noun
+polymer,بوليمر,The polymer is used to make strong plastic parts.,البوليمر يستخدم لصنع قطع بلاستيكية قوية.,engineering,noun
+rubber,مطاط,Rubber seals the pipe and stops water leaks.,المطاط يسد الأنبوب ويمنع تسرب الماء.,engineering,noun
+hardness,صلابة,The hardness of steel makes it good for tools.,صلابة الفولاذ تجعله جيدا للأدوات.,engineering,noun
+strength,متانة,The strength of the beam is enough for the heavy roof.,متانة العارضة كافية للسقف الثقيل.,engineering,noun
+durability,ديمومة,The durability of the material means it lasts many years.,ديمومة المادة تعني أنها تدوم سنوات كثيرة.,engineering,noun
+flexibility,مرونة,The flexibility of the cable lets it bend without breaking.,مرونة الكابل تسمح له بالانحناء دون أن ينكسر.,engineering,noun
+stiffness,جساءة,The stiffness of the beam stops it from bending too much.,جساءة العارضة تمنعها من الانحناء أكثر من اللازم.,engineering,noun
+density,كثافة,The density of steel is higher than the density of wood.,كثافة الفولاذ أعلى من كثافة الخشب.,engineering,noun
+corrosion,تآكل,Corrosion can weaken metal pipes near the sea.,التآكل يمكن أن يضعف الأنابيب المعدنية قرب البحر.,engineering,noun
+rust,صدأ,Rust forms on iron when it stays wet.,الصدأ يتكون على الحديد عندما يبقى مبللا.,engineering,noun
+melting point,درجة الانصهار,The melting point of iron is very high.,درجة انصهار الحديد عالية جدا.,engineering,phrase
+boiling point,درجة الغليان,The boiling point of water is one hundred degrees.,درجة غليان الماء مئة درجة.,engineering,phrase
+conductivity,موصلية,The conductivity of copper is very high.,موصلية النحاس عالية جدا.,engineering,noun
+insulation,عزل,The insulation keeps the heat inside the pipe.,العزل يحافظ على الحرارة داخل الأنبوب.,engineering,noun
+thermal conductivity,التوصيل الحراري,Thermal conductivity shows how fast heat moves through a material.,التوصيل الحراري يبين سرعة انتقال الحرارة عبر المادة.,engineering,phrase
+expansion,تمدد,Expansion makes the metal longer when it is hot.,التمدد يجعل المعدن أطول عندما يكون ساخنا.,engineering,noun
+contraction,انكماش,Contraction makes the metal shorter when it is cold.,الانكماش يجعل المعدن أقصر عندما يكون باردا.,engineering,noun
+brittle,هش,Glass is brittle and breaks easily.,الزجاج هش وينكسر بسهولة.,engineering,adjective
+ductile,مطاوع,Copper is ductile and can be drawn into thin wires.,النحاس مطاوع ويمكن سحبه إلى أسلاك رفيعة.,engineering,adjective
+elastic,مرن,The elastic band returns to its shape after stretching.,الشريط المرن يعود إلى شكله بعد التمدد.,engineering,adjective
+rigid,صلب,The rigid frame does not bend under the load.,الإطار الصلب لا ينحني تحت الحمل.,engineering,adjective
+smooth,أملس,The smooth surface of the metal reduces friction.,السطح الأملس للمعدن يقلل الاحتكاك.,engineering,adjective
+rough,خشن,The rough surface gives a better grip.,السطح الخشن يعطي قبضة أفضل.,engineering,adjective
+transparent,شفاف,The transparent glass lets light pass through.,الزجاج الشفاف يسمح بمرور الضوء.,engineering,adjective
+opaque,معتم,The opaque wall blocks the light.,الجدار المعتم يحجب الضوء.,engineering,adjective
+waterproof,مقاوم للماء,The waterproof cover protects the machine from rain.,الغطاء المقاوم للماء يحمي الآلة من المطر.,engineering,adjective
+heat-resistant,مقاوم للحرارة,The heat-resistant material protects the oven walls.,المادة المقاومة للحرارة تحمي جدران الفرن.,engineering,adjective
+lightweight,خفيف الوزن,The lightweight frame is easy to carry.,الإطار خفيف الوزن سهل الحمل.,engineering,adjective
+bridge,جسر,The bridge crosses the river and carries cars.,الجسر يعبر النهر ويحمل السيارات.,engineering,noun
+building,مبنى,The building has ten floors and a strong foundation.,المبنى يتكون من عشرة طوابق وأساس قوي.,engineering,noun
+foundation,أساس,The foundation supports the whole building.,الأساس يدعم المبنى كاملا.,engineering,noun
+wall,جدار,The wall is made of bricks and cement.,الجدار مصنوع من الطوب والأسمنت.,engineering,noun
+roof,سقف,The roof protects the house from rain.,السقف يحمي المنزل من المطر.,engineering,noun
+floor,أرضية,The floor of the workshop is made of concrete.,أرضية الورشة مصنوعة من الخرسانة.,engineering,noun
+beam,عارضة,The beam carries the weight of the roof.,العارضة تحمل وزن السقف.,engineering,noun
+column,عمود,The column holds up the roof of the hall.,العمود يحمل سقف القاعة.,engineering,noun
+arch,قوس,The arch spreads the weight to both sides.,القوس يوزع الوزن على الجانبين.,engineering,noun
+tunnel,نفق,The tunnel goes through the mountain.,النفق يمر عبر الجبل.,engineering,noun
+road,طريق,The new road connects the city to the factory.,الطريق الجديد يربط المدينة بالمصنع.,engineering,noun
+dam,سد,The dam stores water for the farms.,السد يخزن الماء للمزارع.,engineering,noun
+tower,برج,The tower carries the electric cables across the valley.,البرج يحمل الكابلات الكهربائية عبر الوادي.,engineering,noun
+staircase,درج,The staircase connects the floors of the building.,الدرج يربط طوابق المبنى.,engineering,noun
+window,نافذة,The window lets light into the room.,النافذة تدخل الضوء إلى الغرفة.,engineering,noun
+door,باب,The door of the workshop is made of steel.,باب الورشة مصنوع من الفولاذ.,engineering,noun
+brick,طوب,The worker puts each brick in its place.,العامل يضع كل طوبة في مكانها.,engineering,noun
+sand,رمل,Sand is mixed with cement to make concrete.,الرمل يخلط مع الأسمنت لصنع الخرسانة.,engineering,noun
+gravel,حصى,Gravel is used under the road to make it strong.,الحصى يستخدم تحت الطريق لجعله قويا.,engineering,noun
+crane,رافعة,The crane lifts the heavy steel beams to the top floor.,الرافعة ترفع العوارض الفولاذية الثقيلة إلى الطابق العلوي.,engineering,noun
+scaffold,سقالة,The workers stand on the scaffold to paint the wall.,العمال يقفون على السقالة لطلاء الجدار.,engineering,noun
+blueprint,مخطط هندسي,The blueprint shows the plan of the new building.,المخطط الهندسي يبين خطة المبنى الجديد.,engineering,noun
+design,تصميم,The design of the bridge is safe and simple.,تصميم الجسر آمن وبسيط.,engineering,noun
+construction,بناء,The construction of the hospital will finish next year.,بناء المستشفى سينتهي العام القادم.,engineering,noun
+structure,منشأ,The structure must stand strong in an earthquake.,المنشأ يجب أن يبقى قويا أثناء الزلزال.,engineering,noun
+support,دعامة,The support holds the pipe in its place.,الدعامة تثبت الأنبوب في مكانه.,engineering,noun
+frame,إطار,The frame of the machine is made of steel.,إطار الآلة مصنوع من الفولاذ.,engineering,noun
+joint,وصلة,The joint connects two pipes together.,الوصلة تربط أنبوبين معا.,engineering,noun
+weld,لحام,The weld joins the two metal plates.,اللحام يربط اللوحين المعدنيين.,engineering,noun
+bolt,مسمار ملولب,The bolt holds the wheel to the axle.,المسمار الملولب يثبت العجلة على المحور.,engineering,noun
+nut,صامولة,Turn the nut to fix the bolt in place.,أدر الصامولة لتثبيت المسمار في مكانه.,engineering,noun
+screw,برغي,The screw fixes the cover to the box.,البرغي يثبت الغطاء على الصندوق.,engineering,noun
+nail,مسمار,The nail fixes the wood to the wall.,المسمار يثبت الخشب على الجدار.,engineering,noun
+hammer,مطرقة,Use the hammer to drive the nail into the wood.,استخدم المطرقة لدق المسمار في الخشب.,engineering,noun
+drill,مثقاب,The drill makes a hole in the wall.,المثقاب يصنع ثقبا في الجدار.,engineering,noun
+saw,منشار,The saw cuts the wood into small pieces.,المنشار يقطع الخشب إلى قطع صغيرة.,engineering,noun
+ladder,سلم,The worker climbs the ladder to reach the roof.,العامل يتسلق السلم للوصول إلى السقف.,engineering,noun
+excavation,حفر,The excavation for the foundation is deep.,الحفر للأساس عميق.,engineering,noun
+soil,تربة,The soil under the building must be strong.,التربة تحت المبنى يجب أن تكون قوية.,engineering,noun
+earthquake,زلزال,The building must resist an earthquake.,المبنى يجب أن يقاوم الزلزال.,engineering,noun
+machine,آلة,The machine cuts metal into small parts.,الآلة تقطع المعدن إلى قطع صغيرة.,engineering,noun
+engine,محرك,The engine of the truck is very powerful.,محرك الشاحنة قوي جدا.,engineering,noun
+pump,مضخة,The pump moves water from the well to the tank.,المضخة تنقل الماء من البئر إلى الخزان.,engineering,noun
+valve,صمام,Close the valve to stop the flow of water.,أغلق الصمام لإيقاف تدفق الماء.,engineering,noun
+pipe,أنبوب,The pipe carries water to the house.,الأنبوب ينقل الماء إلى المنزل.,engineering,noun
+tank,خزان,The tank stores water for the factory.,الخزان يخزن الماء للمصنع.,engineering,noun
+turbine,توربين,The turbine turns water power into electricity.,التوربين يحول طاقة الماء إلى كهرباء.,engineering,noun
+compressor,ضاغط,The compressor pushes air into the tank.,الضاغط يدفع الهواء إلى الخزان.,engineering,noun
+boiler,غلاية,The boiler heats water to make steam.,الغلاية تسخن الماء لصنع البخار.,engineering,noun
+fan,مروحة,The fan cools the motor with fresh air.,المروحة تبرد المحرك بالهواء النقي.,engineering,noun
+wheel,عجلة,The wheel turns when the motor starts.,العجلة تدور عندما يبدأ المحرك.,engineering,noun
+belt,حزام,The belt connects the motor to the fan.,الحزام يربط المحرك بالمروحة.,engineering,noun
+chain,سلسلة,The chain moves the wheel of the bicycle.,السلسلة تحرك عجلة الدراجة.,engineering,noun
+piston,مكبس,The piston moves up and down inside the cylinder.,المكبس يتحرك إلى الأعلى والأسفل داخل الأسطوانة.,engineering,noun
+cylinder,أسطوانة,The cylinder holds the piston and the fuel.,الأسطوانة تحتوي المكبس والوقود.,engineering,noun
+filter,مرشح,The filter removes dirt from the water.,المرشح يزيل الأوساخ من الماء.,engineering,noun
+gauge,مقياس,The gauge shows the pressure in the tank.,المقياس يبين الضغط داخل الخزان.,engineering,noun
+wrench,مفتاح ربط,Use the wrench to tighten the nut.,استخدم مفتاح الربط لشد الصامولة.,engineering,noun
+screwdriver,مفك براغي,The screwdriver turns the screw into the wood.,مفك البراغي يدير البرغي داخل الخشب.,engineering,noun
+pliers,كماشة,The pliers hold the wire while you cut it.,الكماشة تمسك السلك أثناء قطعه.,engineering,noun
+grinder,جلاخة,The grinder smooths the rough metal surface.,الجلاخة تنعم السطح المعدني الخشن.,engineering,noun
+lathe,مخرطة,The lathe shapes the metal into a round part.,المخرطة تشكل المعدن إلى قطعة دائرية.,engineering,noun
+milling machine,آلة تفريز,The milling machine cuts flat surfaces in metal.,آلة التفريز تقطع أسطحا مستوية في المعدن.,engineering,phrase
+robot,روبوت,The robot helps workers in the car factory.,الروبوت يساعد العمال في مصنع السيارات.,engineering,noun
+automation,أتمتة,Automation makes the factory work faster.,الأتمتة تجعل المصنع يعمل بسرعة أكبر.,engineering,noun
+hydraulic,هيدروليكي,The hydraulic system lifts heavy loads with oil pressure.,النظام الهيدروليكي يرفع الأحمال الثقيلة بضغط الزيت.,engineering,adjective
+pneumatic,هوائي,The pneumatic tool works with compressed air.,الأداة الهوائية تعمل بالهواء المضغوط.,engineering,adjective
+cooling,تبريد,The cooling system keeps the engine at a safe temperature.,نظام التبريد يحافظ على المحرك في درجة حرارة آمنة.,engineering,noun
+heating,تسخين,The heating system warms the water in winter.,نظام التسخين يسخن الماء في الشتاء.,engineering,noun
+lubrication,تزييت,The lubrication of the gears reduces friction.,تزييت التروس يقلل الاحتكاك.,engineering,noun
+maintenance,صيانة,Regular maintenance keeps the machine in good condition.,الصيانة المنتظمة تحافظ على الآلة في حالة جيدة.,engineering,noun
+repair,إصلاح,The repair of the pump took two hours.,إصلاح المضخة استغرق ساعتين.,engineering,noun
+installation,تركيب,The installation of the new machine is easy.,تركيب الآلة الجديدة سهل.,engineering,noun
+operation,تشغيل,The operation of the machine needs a trained worker.,تشغيل الآلة يحتاج إلى عامل مدرب.,engineering,noun
+shutdown,إيقاف التشغيل,The shutdown of the factory takes ten minutes.,إيقاف تشغيل المصنع يستغرق عشر دقائق.,engineering,noun
+startup,بدء التشغيل,The startup of the generator is automatic.,بدء تشغيل المولد تلقائي.,engineering,noun
+noise,ضجيج,The noise of the old machine is very loud.,ضجيج الآلة القديمة عال جدا.,engineering,noun
+safety,سلامة,Safety is the first rule in the workshop.,السلامة هي القاعدة الأولى في الورشة.,engineering,noun
+helmet,خوذة,The worker wears a helmet to protect his head.,العامل يرتدي خوذة لحماية رأسه.,engineering,noun
+gloves,قفازات,The gloves protect the hands from hot metal.,القفازات تحمي اليدين من المعدن الساخن.,engineering,noun
+length,طول,The length of the pipe is three meters.,طول الأنبوب ثلاثة أمتار.,engineering,noun
+width,عرض,The width of the road is ten meters.,عرض الطريق عشرة أمتار.,engineering,noun
+height,ارتفاع,The height of the tower is fifty meters.,ارتفاع البرج خمسون مترا.,engineering,noun
+depth,عمق,The depth of the well is twenty meters.,عمق البئر عشرون مترا.,engineering,noun
+diameter,قطر,The diameter of the pipe is five centimeters.,قطر الأنبوب خمسة سنتيمترات.,engineering,noun
+radius,نصف قطر,The radius of the wheel is thirty centimeters.,نصف قطر العجلة ثلاثون سنتيمترا.,engineering,noun
+area,مساحة,The area of the floor is one hundred square meters.,مساحة الأرضية مئة متر مربع.,engineering,noun
+volume,حجم,The volume of the tank is one thousand liters.,حجم الخزان ألف لتر.,engineering,noun
+angle,زاوية,The angle between the two walls is ninety degrees.,الزاوية بين الجدارين تسعون درجة.,engineering,noun
+distance,مسافة,The distance between the two cities is fifty kilometers.,المسافة بين المدينتين خمسون كيلومترا.,engineering,noun
+temperature,درجة الحرارة,The temperature of the water is forty degrees.,درجة حرارة الماء أربعون درجة.,engineering,noun
+time,وقت,The time needed to fill the tank is one hour.,الوقت اللازم لملء الخزان ساعة واحدة.,engineering,noun
+average,متوسط,The average speed of the car is sixty kilometers per hour.,متوسط سرعة السيارة ستون كيلومترا في الساعة.,engineering,noun
+total,مجموع,The total cost of the project is high.,مجموع تكلفة المشروع مرتفع.,engineering,noun
+percentage,نسبة مئوية,The percentage of steel in the alloy is ninety percent.,النسبة المئوية للفولاذ في السبيكة تسعون بالمئة.,engineering,noun
+ratio,نسبة,The ratio of cement to sand is one to three.,نسبة الأسمنت إلى الرمل واحد إلى ثلاثة.,engineering,noun
+formula,صيغة,The formula helps the student find the area.,الصيغة تساعد الطالب على إيجاد المساحة.,engineering,noun
+equation,معادلة,Solve the equation to find the value of x.,حل المعادلة لإيجاد قيمة س.,engineering,noun
+calculation,حساب,The calculation of the load takes ten minutes.,حساب الحمل يستغرق عشر دقائق.,engineering,noun
+measurement,قياس,The measurement of the length must be exact.,قياس الطول يجب أن يكون دقيقا.,engineering,noun
+unit,وحدة,The meter is a unit of length.,المتر وحدة لقياس الطول.,engineering,noun
+meter,متر,The wall is three meters long.,الجدار طوله ثلاثة أمتار.,engineering,noun
+kilogram,كيلوغرام,The bag of cement weighs fifty kilograms.,كيس الأسمنت يزن خمسين كيلوغراما.,engineering,noun
+liter,لتر,The tank holds one hundred liters of water.,الخزان يتسع لمئة لتر من الماء.,engineering,noun
+scale,مقياس,The scale of the drawing is one to one hundred.,مقياس الرسم واحد إلى مئة.,engineering,noun
+ruler,مسطرة,Use the ruler to draw a straight line.,استخدم المسطرة لرسم خط مستقيم.,engineering,noun
+thermometer,مقياس حرارة,The thermometer shows the temperature of the water.,مقياس الحرارة يبين درجة حرارة الماء.,engineering,noun
+accuracy,دقة,The accuracy of the measurement is very important.,دقة القياس مهمة جدا.,engineering,noun
+error,خطأ,The error in the calculation is very small.,الخطأ في الحساب صغير جدا.,engineering,noun
+estimate,تقدير,The estimate of the cost is ten thousand riyals.,تقدير التكلفة عشرة آلاف ريال.,engineering,noun
+result,نتيجة,The result of the test is good.,نتيجة الاختبار جيدة.,engineering,noun
+data,بيانات,The data from the test helps the engineer.,البيانات من الاختبار تساعد المهندس.,engineering,noun
+graph,رسم بياني,The graph shows how temperature changes with time.,الرسم البياني يبين كيف تتغير درجة الحرارة مع الوقت.,engineering,noun
+chart,مخطط,The chart shows the cost of each month.,المخطط يبين تكلفة كل شهر.,engineering,noun
+table,جدول,The table shows the results of the test.,الجدول يبين نتائج الاختبار.,engineering,noun
+diagram,رسم توضيحي,The diagram shows the parts of the machine.,الرسم التوضيحي يبين أجزاء الآلة.,engineering,noun
+dimension,بعد,One dimension of the room is four meters.,أحد أبعاد الغرفة أربعة أمتار.,engineering,noun
+tolerance,سماحية,The tolerance for the part is very small.,السماحية للقطعة صغيرة جدا.,engineering,noun
+standard,معيار,The standard for safety must be followed.,معيار السلامة يجب اتباعه.,engineering,noun
+zero,صفر,The temperature fell to zero degrees.,درجة الحرارة انخفضت إلى صفر درجة.,engineering,noun
+computer,حاسوب,The computer controls the machine in the factory.,الحاسوب يتحكم في الآلة داخل المصنع.,engineering,noun
+software,برمجيات,The software helps the engineer draw the design.,البرمجيات تساعد المهندس على رسم التصميم.,engineering,noun
+hardware,عتاد,The hardware of the computer is new.,عتاد الحاسوب جديد.,engineering,noun
+program,برنامج,The program calculates the load on the beam.,البرنامج يحسب الحمل على العارضة.,engineering,noun
+code,شيفرة برمجية,The code tells the robot what to do.,الشيفرة البرمجية تخبر الروبوت بما يجب أن يفعله.,engineering,noun
+database,قاعدة بيانات,The database stores the names of all parts.,قاعدة البيانات تخزن أسماء جميع القطع.,engineering,noun
+network,شبكة,The network connects all computers in the office.,الشبكة تربط جميع الحواسيب في المكتب.,engineering,noun
+internet,إنترنت,The internet helps engineers share designs.,الإنترنت يساعد المهندسين على مشاركة التصاميم.,engineering,noun
+system,نظام,The system controls the temperature of the building.,النظام يتحكم في درجة حرارة المبنى.,engineering,noun
+control,تحكم,The control of the motor is easy with this button.,التحكم في المحرك سهل بهذا الزر.,engineering,noun
+automatic,تلقائي,The automatic door opens when you come near.,الباب التلقائي يفتح عندما تقترب منه.,engineering,adjective
+manual,يدوي,The manual switch works without electricity.,المفتاح اليدوي يعمل دون كهرباء.,engineering,adjective
+input,إدخال,The input of the program is the length and the width.,إدخال البرنامج هو الطول والعرض.,engineering,noun
+output,إخراج,The output of the program is the final result.,إخراج البرنامج هو النتيجة النهائية.,engineering,noun
+keyboard,لوحة مفاتيح,Use the keyboard to type the numbers.,استخدم لوحة المفاتيح لكتابة الأرقام.,engineering,noun
+screen,شاشة,The screen shows the design of the bridge.,الشاشة تعرض تصميم الجسر.,engineering,noun
+printer,طابعة,The printer prints the drawing on paper.,الطابعة تطبع الرسم على الورق.,engineering,noun
+file,ملف,Save the file after you finish the design.,احفظ الملف بعد أن تنهي التصميم.,engineering,noun
+folder,مجلد,Put the drawings in one folder.,ضع الرسومات في مجلد واحد.,engineering,noun
+password,كلمة مرور,Type your password to open the program.,اكتب كلمة المرور لفتح البرنامج.,engineering,noun
+user,مستخدم,The user can change the settings of the program.,المستخدم يستطيع تغيير إعدادات البرنامج.,engineering,noun
+interface,واجهة,The interface of the program is simple and clear.,واجهة البرنامج بسيطة وواضحة.,engineering,noun
+application,تطبيق,The application helps students learn engineering words.,التطبيق يساعد الطلاب على تعلم الكلمات الهندسية.,engineering,noun
+website,موقع إلكتروني,The website shows the prices of the machines.,الموقع الإلكتروني يعرض أسعار الآلات.,engineering,noun
+email,بريد إلكتروني,Send the design by email to the engineer.,أرسل التصميم بالبريد الإلكتروني إلى المهندس.,engineering,noun
+download,تنزيل,Download the file from the website.,نزل الملف من الموقع الإلكتروني.,engineering,verb
+upload,رفع,Upload the drawing to the system.,ارفع الرسم إلى النظام.,engineering,verb
+update,تحديث,The update of the software fixes the old errors.,تحديث البرمجيات يصلح الأخطاء القديمة.,engineering,noun
+warning,تحذير,The warning tells the worker about the danger.,التحذير يخبر العامل عن الخطر.,engineering,noun
+settings,إعدادات,Change the settings to make the screen brighter.,غير الإعدادات لجعل الشاشة أكثر سطوعا.,engineering,noun
+assemble,يجمع,The workers assemble the machine in the factory.,العمال يجمعون الآلة في المصنع.,engineering,verb
+connect,يوصل,Connect the wire to the battery.,صل السلك بالبطارية.,engineering,verb
+disconnect,يفصل,Disconnect the plug before you repair the machine.,افصل القابس قبل أن تصلح الآلة.,engineering,verb
+measure,يقيس,Measure the length of the pipe before you cut it.,قس طول الأنبوب قبل أن تقطعه.,engineering,verb
+calculate,يحسب,Calculate the total cost before you start the work.,احسب التكلفة الإجمالية قبل أن تبدأ العمل.,engineering,verb
+test,يختبر,Test the motor before you install it.,اختبر المحرك قبل أن تركبه.,engineering,verb
+check,يفحص,Check the oil level every morning.,افحص مستوى الزيت كل صباح.,engineering,verb
+fix,يصلح,The engineer can fix the broken pump.,المهندس يستطيع إصلاح المضخة المعطلة.,engineering,verb
+replace,يستبدل,Replace the old battery with a new one.,استبدل البطارية القديمة بأخرى جديدة.,engineering,verb
+improve,يحسن,The new design will improve the safety of the bridge.,التصميم الجديد سيحسن سلامة الجسر.,engineering,verb
+reduce,يقلل,The new system will reduce the cost of energy.,النظام الجديد سيقلل تكلفة الطاقة.,engineering,verb
+increase,يزيد,The pump will increase the pressure in the pipe.,المضخة ستزيد الضغط في الأنبوب.,engineering,verb
+develop,يطور,The team will develop a new machine for the factory.,الفريق سيطور آلة جديدة للمصنع.,engineering,verb
+create,ينشئ,The engineer will create a plan for the new road.,المهندس سينشئ خطة للطريق الجديد.,engineering,verb
+operate,يشغل,The worker can operate the crane safely.,العامل يستطيع تشغيل الرافعة بأمان.,engineering,verb
+manage,يدير,The engineer will manage the construction project.,المهندس سيدير مشروع البناء.,engineering,verb
+solve,يحل,The engineer can solve this problem with a simple design.,المهندس يستطيع حل هذه المشكلة بتصميم بسيط.,engineering,verb
+analyze,يحلل,Analyze the data before you write the report.,حلل البيانات قبل أن تكتب التقرير.,engineering,verb
+strong,قوي,Steel is strong and lasts a long time.,الفولاذ قوي ويدوم طويلا.,engineering,adjective
+weak,ضعيف,The weak wall cannot carry a heavy roof.,الجدار الضعيف لا يستطيع حمل سقف ثقيل.,engineering,adjective
+heavy,ثقيل,The heavy machine needs a strong floor.,الآلة الثقيلة تحتاج إلى أرضية قوية.,engineering,adjective
+light,خفيف,The light box is easy to carry.,الصندوق الخفيف سهل الحمل.,engineering,adjective
+fast,سريع,The fast motor finishes the work in one hour.,المحرك السريع ينهي العمل في ساعة واحدة.,engineering,adjective
+slow,بطيء,The slow pump takes a long time to fill the tank.,المضخة البطيئة تستغرق وقتا طويلا لملء الخزان.,engineering,adjective
+safe,آمن,This machine is safe for all workers.,هذه الآلة آمنة لجميع العمال.,engineering,adjective
+dangerous,خطير,High voltage is dangerous without protection.,الجهد العالي خطير دون حماية.,engineering,adjective
+expensive,مكلف,The new machine is expensive but very good.,الآلة الجديدة مكلفة لكنها جيدة جدا.,engineering,adjective
+cheap,رخيص,This plastic part is cheap and easy to replace.,هذه القطعة البلاستيكية رخيصة وسهلة الاستبدال.,engineering,adjective
+new,جديد,The new bridge is open for cars.,الجسر الجديد مفتوح للسيارات.,engineering,adjective
+old,قديم,The old factory needs a new roof.,المصنع القديم يحتاج إلى سقف جديد.,engineering,adjective

@@ -1,0 +1,301 @@
+word,translation,sentence,sentence_translation,track,pos
+heart,قلب,The heart pumps blood around the body.,يضخ القلب الدم في جميع أنحاء الجسم.,medical,noun
+brain,دماغ,"The brain controls thought, memory and movement.",يتحكم الدماغ في التفكير والذاكرة والحركة.,medical,noun
+lung,رئة,The patient has an infection in his left lung.,يعاني المريض من التهاب في رئته اليسرى.,medical,noun
+liver,كبد,The liver helps to clean the blood and digest food.,يساعد الكبد على تنقية الدم وهضم الطعام.,medical,noun
+kidney,كلية,Each kidney filters waste from the blood.,تقوم كل كلية بترشيح الفضلات من الدم.,medical,noun
+stomach,معدة,The patient complained of pain in his stomach after eating.,اشتكى المريض من ألم في معدته بعد الأكل.,medical,noun
+intestine,أمعاء,Food passes from the stomach into the intestine.,ينتقل الطعام من المعدة إلى الأمعاء.,medical,noun
+bone,عظم,The X-ray showed a broken bone in his arm.,أظهرت الأشعة السينية كسرا في عظم ذراعه.,medical,noun
+muscle,عضلة,The doctor asked him to relax the muscle in his leg.,طلب الطبيب منه إرخاء العضلة في ساقه.,medical,noun
+nerve,عصب,The nerve carries signals between the brain and the body.,ينقل العصب الإشارات بين الدماغ والجسم.,medical,noun
+blood,دم,The nurse took a sample of blood for testing.,أخذت الممرضة عينة من الدم للفحص.,medical,noun
+vein,وريد,The nurse inserted the needle into a vein in his arm.,أدخلت الممرضة الإبرة في وريد في ذراعه.,medical,noun
+artery,شريان,The artery carries blood away from the heart.,يحمل الشريان الدم بعيدا عن القلب.,medical,noun
+skin,جلد,The doctor examined the rash on the patient's skin.,فحص الطبيب الطفح الجلدي على جلد المريض.,medical,noun
+eye,عين,The doctor checked the patient's eye with a small light.,فحص الطبيب عين المريض بضوء صغير.,medical,noun
+ear,أذن,The child has an infection in his right ear.,يعاني الطفل من التهاب في أذنه اليمنى.,medical,noun
+nose,أنف,The patient cannot breathe well through his nose.,لا يستطيع المريض التنفس جيدا من أنفه.,medical,noun
+throat,حلق,The doctor looked at the patient's throat with a torch.,نظر الطبيب إلى حلق المريض بمصباح صغير.,medical,noun
+tongue,لسان,The doctor asked the patient to stick out his tongue.,طلب الطبيب من المريض إخراج لسانه.,medical,noun
+tooth,سن,The dentist removed the damaged tooth.,خلع طبيب الأسنان السن التالف.,medical,noun
+chest,صدر,The patient felt a tight pain in his chest.,شعر المريض بألم ضاغط في صدره.,medical,noun
+abdomen,بطن,The doctor pressed gently on the patient's abdomen.,ضغط الطبيب بلطف على بطن المريض.,medical,noun
+back,ظهر,The patient has had pain in his lower back for a week.,يعاني المريض من ألم في أسفل ظهره منذ أسبوع.,medical,noun
+neck,رقبة,The nurse felt the glands in the patient's neck.,جست الممرضة الغدد في رقبة المريض.,medical,noun
+shoulder,كتف,He cannot raise his arm because of pain in his shoulder.,لا يستطيع رفع ذراعه بسبب الألم في كتفه.,medical,noun
+arm,ذراع,The nurse measured his blood pressure on his right arm.,قاست الممرضة ضغط دمه على ذراعه اليمنى.,medical,noun
+leg,ساق,The patient broke his leg in a car accident.,كسر المريض ساقه في حادث سيارة.,medical,noun
+knee,ركبة,Her knee is swollen after the fall.,ركبتها متورمة بعد السقوط.,medical,noun
+elbow,مرفق,The doctor checked the movement of his elbow.,فحص الطبيب حركة مرفقه.,medical,noun
+wrist,معصم,She wears a bandage around her wrist.,ترتدي ضمادة حول معصمها.,medical,noun
+ankle,كاحل,He twisted his ankle while playing football.,التوى كاحله أثناء لعب كرة القدم.,medical,noun
+finger,إصبع,The nurse pricked his finger to test his blood sugar.,وخزت الممرضة إصبعه لفحص سكر الدم.,medical,noun
+spine,عمود فقري,The spine protects the nerves that run down the back.,يحمي العمود الفقري الأعصاب التي تمتد على طول الظهر.,medical,noun
+rib,ضلع,The X-ray showed a fractured rib on the left side.,أظهرت الأشعة السينية ضلعا مكسورا في الجانب الأيسر.,medical,noun
+skull,جمجمة,The skull protects the brain from injury.,تحمي الجمجمة الدماغ من الإصابة.,medical,noun
+bladder,مثانة,The bladder stores urine until it leaves the body.,تخزن المثانة البول حتى يخرج من الجسم.,medical,noun
+pancreas,بنكرياس,The pancreas produces insulin to control blood sugar.,ينتج البنكرياس الأنسولين للتحكم في سكر الدم.,medical,noun
+spleen,طحال,The spleen helps to fight infection in the body.,يساعد الطحال على مكافحة العدوى في الجسم.,medical,noun
+thyroid,غدة درقية,The thyroid controls how fast the body uses energy.,تتحكم الغدة الدرقية في سرعة استهلاك الجسم للطاقة.,medical,noun
+joint,مفصل,The patient has pain and swelling in the knee joint.,يعاني المريض من ألم وتورم في مفصل الركبة.,medical,noun
+pain,ألم,The patient described the pain as sharp and sudden.,وصف المريض الألم بأنه حاد ومفاجئ.,medical,noun
+fever,حمى,The child has a fever of 39 degrees.,يعاني الطفل من حمى تبلغ 39 درجة.,medical,noun
+cough,سعال,He has had a dry cough for three days.,يعاني من سعال جاف منذ ثلاثة أيام.,medical,noun
+headache,صداع,She took a tablet for her headache.,تناولت قرصا لعلاج الصداع.,medical,noun
+nausea,غثيان,The patient felt nausea after taking the medicine.,شعر المريض بالغثيان بعد تناول الدواء.,medical,noun
+vomiting,قيء,The doctor asked how many times the vomiting had happened.,سأل الطبيب عن عدد مرات حدوث القيء.,medical,noun
+diarrhoea,إسهال,The child has diarrhoea and needs plenty of fluids.,يعاني الطفل من الإسهال ويحتاج إلى الكثير من السوائل.,medical,noun
+dizziness,دوار,She felt dizziness when she stood up quickly.,شعرت بالدوار عندما وقفت بسرعة.,medical,noun
+fatigue,إرهاق,Fatigue is a common symptom of anaemia.,الإرهاق عرض شائع لفقر الدم.,medical,noun
+weakness,ضعف,The patient complained of weakness in his legs.,اشتكى المريض من ضعف في ساقيه.,medical,noun
+swelling,تورم,There is swelling around the injured ankle.,يوجد تورم حول الكاحل المصاب.,medical,noun
+rash,طفح جلدي,The doctor examined the rash on the child's chest.,فحص الطبيب الطفح الجلدي على صدر الطفل.,medical,noun
+itching,حكة,The cream will help to reduce the itching.,سيساعد الكريم على تقليل الحكة.,medical,noun
+bleeding,نزيف,The nurse stopped the bleeding with a clean bandage.,أوقفت الممرضة النزيف بضمادة نظيفة.,medical,noun
+bruising,كدمة,There is bruising on his arm where he fell.,توجد كدمة على ذراعه حيث سقط.,medical,noun
+numbness,خدر,The patient reported numbness in his fingers.,أبلغ المريض عن خدر في أصابعه.,medical,noun
+tingling,وخز,Tingling in the hands can be a sign of nerve damage.,قد يكون الوخز في اليدين علامة على تلف الأعصاب.,medical,noun
+shortness of breath,ضيق في التنفس,The patient came to hospital with shortness of breath.,جاء المريض إلى المستشفى وهو يعاني من ضيق في التنفس.,medical,phrase
+chest pain,ألم في الصدر,Chest pain should always be checked by a doctor quickly.,يجب فحص ألم الصدر من قبل الطبيب بسرعة دائما.,medical,phrase
+sore throat,التهاب الحلق,He has a sore throat and finds it hard to swallow.,يعاني من التهاب في الحلق ويجد صعوبة في البلع.,medical,phrase
+runny nose,سيلان الأنف,A runny nose is a common symptom of a cold.,سيلان الأنف عرض شائع لنزلات البرد.,medical,phrase
+sneezing,عطس,Sneezing spreads germs through the air.,ينشر العطس الجراثيم عبر الهواء.,medical,noun
+chills,قشعريرة,The patient had a fever with chills during the night.,عانى المريض من حمى مع قشعريرة أثناء الليل.,medical,noun
+sweating,تعرق,Heavy sweating at night can be a sign of infection.,قد يكون التعرق الشديد ليلا علامة على العدوى.,medical,noun
+loss of appetite,فقدان الشهية,Loss of appetite can happen during a serious illness.,قد يحدث فقدان الشهية أثناء المرض الشديد.,medical,phrase
+weight loss,فقدان الوزن,The doctor asked about any recent weight loss.,سأل الطبيب عن أي فقدان وزن حديث.,medical,phrase
+insomnia,أرق,Insomnia means having difficulty falling asleep at night.,الأرق يعني صعوبة النوم ليلا.,medical,noun
+anxiety,قلق,Many patients feel anxiety before an operation.,يشعر كثير من المرضى بالقلق قبل العملية.,medical,noun
+confusion,ارتباك,Confusion in an older patient should be checked urgently.,يجب فحص الارتباك لدى المريض المسن بشكل عاجل.,medical,noun
+fainting,إغماء,Fainting can happen when blood pressure drops suddenly.,قد يحدث الإغماء عندما ينخفض ضغط الدم فجأة.,medical,noun
+seizure,نوبة صرع,The nurse stayed with the patient during the seizure.,بقيت الممرضة مع المريض أثناء نوبة الصرع.,medical,noun
+cramp,تشنج عضلي,He woke up at night with a painful cramp in his leg.,استيقظ ليلا بسبب تشنج مؤلم في ساقه.,medical,noun
+stiffness,تيبس,The patient has stiffness in his neck and shoulders.,يعاني المريض من تيبس في رقبته وكتفيه.,medical,noun
+tenderness,ألم عند اللمس,The doctor found tenderness when he pressed the abdomen.,وجد الطبيب ألما عند اللمس عندما ضغط على البطن.,medical,noun
+burning,حرقة,The patient described a burning feeling when passing urine.,وصف المريض شعورا بالحرقة عند التبول.,medical,noun
+palpitations,خفقان القلب,She went to the doctor because of palpitations at night.,ذهبت إلى الطبيب بسبب خفقان القلب ليلا.,medical,noun
+wheezing,أزيز,Wheezing is a whistling sound when breathing out.,الأزيز صوت صفير عند الزفير.,medical,noun
+constipation,إمساك,Drinking more water can help with constipation.,شرب المزيد من الماء يمكن أن يساعد في علاج الإمساك.,medical,noun
+sore,مؤلم,His throat is sore and red.,حلقه مؤلم وأحمر.,medical,adjective
+swollen,متورم,Her ankle is swollen after the injury.,كاحلها متورم بعد الإصابة.,medical,adjective
+diabetes,مرض السكري,Diabetes means the body cannot control blood sugar well.,مرض السكري يعني أن الجسم لا يستطيع التحكم في سكر الدم جيدا.,medical,noun
+hypertension,ارتفاع ضغط الدم,"Hypertension often has no symptoms, so it must be measured regularly.",غالبا لا تظهر أعراض على ارتفاع ضغط الدم، لذلك يجب قياسه بانتظام.,medical,noun
+asthma,ربو,"Asthma makes it hard to breathe, especially at night.",يجعل الربو التنفس صعبا، خاصة في الليل.,medical,noun
+pneumonia,التهاب الرئة,Pneumonia is an infection that fills the lungs with fluid.,التهاب الرئة عدوى تملأ الرئتين بالسوائل.,medical,noun
+tuberculosis,سل,Tuberculosis mainly affects the lungs and needs long treatment.,يؤثر السل أساسا على الرئتين ويحتاج إلى علاج طويل.,medical,noun
+malaria,ملاريا,Malaria is spread by the bite of an infected mosquito.,تنتشر الملاريا عن طريق لدغة بعوضة مصابة.,medical,noun
+influenza,إنفلونزا,Influenza spreads quickly in winter and causes fever and body pain.,تنتشر الإنفلونزا بسرعة في الشتاء وتسبب حمى وألما في الجسم.,medical,noun
+hepatitis,التهاب الكبد,"Hepatitis is an inflammation of the liver, often caused by a virus.",التهاب الكبد هو التهاب في الكبد، وغالبا ما يسببه فيروس.,medical,noun
+cancer,سرطان,Early detection improves the treatment of cancer.,الكشف المبكر يحسن علاج السرطان.,medical,noun
+anaemia,فقر الدم,Anaemia means the blood has too few red blood cells.,فقر الدم يعني أن الدم يحتوي على عدد قليل جدا من خلايا الدم الحمراء.,medical,noun
+allergy,حساسية,"She has an allergy to penicillin, so the doctor chose another drug.",لديها حساسية من البنسلين، لذلك اختار الطبيب دواء آخر.,medical,noun
+infection,عدوى,The wound became an infection because it was not cleaned.,تحول الجرح إلى عدوى لأنه لم ينظف.,medical,noun
+inflammation,التهاب,"Inflammation causes redness, swelling and pain in the affected area.",يسبب الالتهاب احمرارا وتورما وألما في المنطقة المصابة.,medical,noun
+arthritis,التهاب المفاصل,Arthritis causes pain and stiffness in the joints.,يسبب التهاب المفاصل ألما وتيبسا في المفاصل.,medical,noun
+migraine,صداع نصفي,A migraine is a severe headache that can last for hours.,الصداع النصفي صداع شديد قد يستمر لساعات.,medical,noun
+epilepsy,صرع,Epilepsy is a condition that causes repeated seizures.,الصرع حالة تسبب نوبات متكررة.,medical,noun
+stroke,سكتة دماغية,A stroke happens when blood flow to the brain is blocked.,تحدث السكتة الدماغية عندما ينقطع تدفق الدم إلى الدماغ.,medical,noun
+heart attack,نوبة قلبية,A heart attack needs emergency treatment in hospital.,تحتاج النوبة القلبية إلى علاج طارئ في المستشفى.,medical,phrase
+kidney failure,فشل كلوي,Kidney failure means the kidneys can no longer clean the blood.,الفشل الكلوي يعني أن الكليتين لم تعودا قادرتين على تنقية الدم.,medical,phrase
+liver disease,مرض الكبد,Liver disease can be caused by alcohol or by a virus.,قد يحدث مرض الكبد بسبب الكحول أو بسبب فيروس.,medical,phrase
+ulcer,قرحة,A stomach ulcer causes pain after eating.,تسبب قرحة المعدة ألما بعد الأكل.,medical,noun
+gastritis,التهاب المعدة,Gastritis is an inflammation of the lining of the stomach.,التهاب المعدة هو التهاب في بطانة المعدة.,medical,noun
+bronchitis,التهاب الشعب الهوائية,Bronchitis causes a cough that can last for weeks.,يسبب التهاب الشعب الهوائية سعالا قد يستمر لأسابيع.,medical,noun
+sinusitis,التهاب الجيوب الأنفية,Sinusitis causes pain in the face and a blocked nose.,يسبب التهاب الجيوب الأنفية ألما في الوجه وانسدادا في الأنف.,medical,noun
+tonsillitis,التهاب اللوزتين,"Tonsillitis makes swallowing painful, especially in children.",يجعل التهاب اللوزتين البلع مؤلما، خاصة عند الأطفال.,medical,noun
+appendicitis,التهاب الزائدة الدودية,Appendicitis causes severe pain in the lower right abdomen.,يسبب التهاب الزائدة الدودية ألما شديدا في أسفل البطن الأيمن.,medical,noun
+meningitis,التهاب السحايا,Meningitis is a serious infection around the brain and needs urgent care.,التهاب السحايا عدوى خطيرة حول الدماغ وتحتاج إلى رعاية عاجلة.,medical,noun
+measles,حصبة,Measles causes fever and a red rash all over the body.,تسبب الحصبة حمى وطفحا أحمر في جميع أنحاء الجسم.,medical,noun
+chickenpox,جدري الماء,Chickenpox causes itchy spots and is common in children.,يسبب جدري الماء بقعا مثيرة للحكة وهو شائع عند الأطفال.,medical,noun
+cholera,كوليرا,Cholera spreads through dirty water and causes severe diarrhoea.,تنتشر الكوليرا عبر المياه الملوثة وتسبب إسهالا شديدا.,medical,noun
+typhoid,حمى التيفوئيد,Typhoid is an infection spread by contaminated food or water.,الحمى التيفوئيدية عدوى تنتشر عبر الطعام أو الماء الملوث.,medical,noun
+dengue,حمى الضنك,Dengue is spread by mosquitoes and causes high fever and joint pain.,تنتشر حمى الضنك عن طريق البعوض وتسبب حمى شديدة وألما في المفاصل.,medical,noun
+obesity,سمنة,Obesity increases the risk of diabetes and heart disease.,تزيد السمنة من خطر الإصابة بالسكري وأمراض القلب.,medical,noun
+osteoporosis,هشاشة العظام,Osteoporosis makes the bones weak and easy to break.,تجعل هشاشة العظام العظام ضعيفة وسهلة الكسر.,medical,noun
+eczema,أكزيما,"Eczema causes dry, itchy patches on the skin.",تسبب الأكزيما بقعا جافة ومثيرة للحكة على الجلد.,medical,noun
+psoriasis,صدفية,"Psoriasis causes red, scaly patches on the skin.",تسبب الصدفية بقعا حمراء متقشرة على الجلد.,medical,noun
+depression,اكتئاب,Depression is a medical condition that affects mood and energy.,الاكتئاب حالة طبية تؤثر على المزاج والطاقة.,medical,noun
+cold,زكام,He stayed at home because he had a bad cold.,بقي في المنزل لأنه كان مصابا بزكام شديد.,medical,noun
+fracture,كسر,The doctor treated the fracture in his wrist with a plaster cast.,عالج الطبيب الكسر في معصمه بجبيرة من الجبس.,medical,noun
+burn,حرق,The nurse covered the burn with a clean dressing.,غطت الممرضة الحرق بضمادة نظيفة.,medical,noun
+examination,فحص,The doctor began the examination by listening to the patient's chest.,بدأ الطبيب الفحص بالاستماع إلى صدر المريض.,medical,noun
+diagnosis,تشخيص,The doctor reached the diagnosis after the blood test.,توصل الطبيب إلى التشخيص بعد فحص الدم.,medical,noun
+symptom,عرض,Fever and cough are common symptoms of this illness.,الحمى والسعال من الأعراض الشائعة لهذا المرض.,medical,noun
+sign,علامة,A high temperature is a sign of infection.,ارتفاع درجة الحرارة علامة على العدوى.,medical,noun
+history,تاريخ مرضي,The doctor took a full history before examining the patient.,أخذ الطبيب التاريخ المرضي الكامل قبل فحص المريض.,medical,noun
+checkup,فحص دوري,He visits the clinic every year for a checkup.,يزور العيادة كل عام لإجراء فحص دوري.,medical,noun
+screening,فحص مسحي,Screening helps to find diseases before symptoms appear.,يساعد الفحص المسحي على اكتشاف الأمراض قبل ظهور الأعراض.,medical,noun
+laboratory,مختبر,The sample was sent to the laboratory for analysis.,أرسلت العينة إلى المختبر للتحليل.,medical,noun
+sample,عينة,The nurse collected a urine sample from the patient.,جمعت الممرضة عينة بول من المريض.,medical,noun
+culture,مزرعة,The laboratory did a culture to find which germ caused the infection.,أجرى المختبر مزرعة لمعرفة الجرثومة التي سببت العدوى.,medical,noun
+blood pressure,ضغط الدم,The nurse measured the patient's blood pressure twice.,قاست الممرضة ضغط دم المريض مرتين.,medical,phrase
+blood test,فحص الدم,The blood test showed a low level of iron.,أظهر فحص الدم مستوى منخفضا من الحديد.,medical,phrase
+urine test,فحص البول,The urine test can show signs of kidney disease.,يمكن أن يظهر فحص البول علامات على مرض الكلى.,medical,phrase
+blood sugar,سكر الدم,The doctor checked his blood sugar before breakfast.,فحص الطبيب سكر دمه قبل الإفطار.,medical,phrase
+x-ray,أشعة سينية,The x-ray showed no fracture in the leg.,لم تظهر الأشعة السينية أي كسر في الساق.,medical,noun
+ultrasound,موجات فوق صوتية,The ultrasound showed a healthy baby in the womb.,أظهرت الموجات فوق الصوتية جنينا سليما في الرحم.,medical,noun
+CT scan,تصوير مقطعي,The CT scan showed bleeding inside the brain.,أظهر التصوير المقطعي نزيفا داخل الدماغ.,medical,phrase
+MRI,تصوير بالرنين المغناطيسي,The MRI gives a clear picture of the brain and spine.,يعطي التصوير بالرنين المغناطيسي صورة واضحة للدماغ والعمود الفقري.,medical,noun
+ECG,تخطيط القلب,The ECG showed a normal heart rhythm.,أظهر تخطيط القلب نظما طبيعيا لضربات القلب.,medical,noun
+endoscopy,تنظير داخلي,The doctor used an endoscopy to look inside the stomach.,استخدم الطبيب التنظير الداخلي للنظر داخل المعدة.,medical,noun
+biopsy,خزعة,The biopsy showed that the lump was not cancer.,أظهرت الخزعة أن الكتلة ليست سرطانية.,medical,noun
+pulse,نبض,The nurse counted the patient's pulse for one minute.,عدت الممرضة نبض المريض لمدة دقيقة واحدة.,medical,noun
+temperature,درجة الحرارة,The nurse recorded the patient's temperature every four hours.,سجلت الممرضة درجة حرارة المريض كل أربع ساعات.,medical,noun
+stethoscope,سماعة طبية,The doctor listened to the patient's heart with a stethoscope.,استمع الطبيب إلى قلب المريض بسماعة طبية.,medical,noun
+thermometer,ميزان حرارة,The mother used a thermometer to check her child's temperature.,استخدمت الأم ميزان حرارة لفحص درجة حرارة طفلها.,medical,noun
+syringe,محقنة,The nurse filled the syringe with the vaccine.,ملأت الممرضة المحقنة باللقاح.,medical,noun
+scan,مسح تصويري,The scan showed a small stone in the kidney.,أظهر المسح التصويري حصاة صغيرة في الكلية.,medical,noun
+monitor,جهاز مراقبة,The patient in intensive care is connected to a monitor.,المريض في العناية المركزة موصول بجهاز مراقبة.,medical,noun
+result,نتيجة,The doctor explained the result of the blood test to the patient.,شرح الطبيب نتيجة فحص الدم للمريض.,medical,noun
+report,تقرير,The laboratory report arrived the next morning.,وصل تقرير المختبر في صباح اليوم التالي.,medical,noun
+referral,تحويلة,The doctor wrote a referral to a heart specialist.,كتب الطبيب تحويلة إلى أخصائي قلب.,medical,noun
+specialist,أخصائي,The patient was sent to a specialist for further tests.,أرسل المريض إلى أخصائي لإجراء المزيد من الفحوصات.,medical,noun
+consultation,استشارة,During the consultation the doctor asked about the pain.,أثناء الاستشارة سأل الطبيب عن الألم.,medical,noun
+vital signs,علامات حيوية,The nurse checked the patient's vital signs on arrival.,فحصت الممرضة العلامات الحيوية للمريض عند وصوله.,medical,phrase
+heart rate,معدل ضربات القلب,His heart rate was fast because of the fever.,كان معدل ضربات قلبه سريعا بسبب الحمى.,medical,phrase
+breathing rate,معدل التنفس,The nurse counted the child's breathing rate for one minute.,عدت الممرضة معدل تنفس الطفل لمدة دقيقة.,medical,phrase
+oxygen level,مستوى الأكسجين,The doctor checked the patient's oxygen level with a small clip on his finger.,فحص الطبيب مستوى الأكسجين لدى المريض بمشبك صغير على إصبعه.,medical,phrase
+weight,وزن,The nurse recorded the baby's weight at birth.,سجلت الممرضة وزن الطفل عند الولادة.,medical,noun
+height,طول,The doctor measured the child's height and weight.,قاس الطبيب طول الطفل ووزنه.,medical,noun
+test,اختبار,The doctor ordered a test to check for diabetes.,طلب الطبيب اختبارا للتحقق من مرض السكري.,medical,noun
+antibiotic,مضاد حيوي,The doctor prescribed an antibiotic for the chest infection.,وصف الطبيب مضادا حيويا لعدوى الصدر.,medical,noun
+paracetamol,باراسيتامول,Take paracetamol to reduce the fever and pain.,تناول الباراسيتامول لتخفيف الحمى والألم.,medical,noun
+insulin,أنسولين,The patient takes insulin every day to control his diabetes.,يأخذ المريض الأنسولين كل يوم للتحكم في مرض السكري.,medical,noun
+penicillin,بنسلين,Penicillin is an antibiotic used to treat many infections.,البنسلين مضاد حيوي يستخدم لعلاج العديد من العدوى.,medical,noun
+aspirin,أسبرين,The doctor gave him aspirin to reduce the pain.,أعطاه الطبيب الأسبرين لتخفيف الألم.,medical,noun
+vaccine,لقاح,The vaccine protects children against measles.,يحمي اللقاح الأطفال من الحصبة.,medical,noun
+vaccination,تطعيم,Vaccination is the best way to prevent many diseases.,التطعيم هو أفضل طريقة للوقاية من العديد من الأمراض.,medical,noun
+dose,جرعة,Take one dose of the medicine every eight hours.,تناول جرعة واحدة من الدواء كل ثماني ساعات.,medical,noun
+tablet,قرص,Swallow the tablet with a glass of water.,ابلع القرص مع كوب من الماء.,medical,noun
+capsule,كبسولة,Take one capsule after breakfast.,تناول كبسولة واحدة بعد الإفطار.,medical,noun
+injection,حقنة,The nurse gave the child an injection in his arm.,أعطت الممرضة الطفل حقنة في ذراعه.,medical,noun
+infusion,تسريب وريدي,The patient received fluids by infusion in hospital.,تلقى المريض السوائل عن طريق التسريب الوريدي في المستشفى.,medical,noun
+ointment,مرهم,Apply the ointment to the rash twice a day.,ضع المرهم على الطفح الجلدي مرتين يوميا.,medical,noun
+drops,قطرات,Put two drops in each eye three times a day.,ضع قطرتين في كل عين ثلاث مرات يوميا.,medical,noun
+syrup,شراب,The child took the cough syrup before bed.,تناول الطفل شراب السعال قبل النوم.,medical,noun
+therapy,علاج,Physical therapy helped him walk again after the accident.,ساعده العلاج الطبيعي على المشي مرة أخرى بعد الحادث.,medical,noun
+physiotherapy,علاج طبيعي,Physiotherapy can reduce pain and improve movement.,يمكن أن يقلل العلاج الطبيعي الألم ويحسن الحركة.,medical,noun
+chemotherapy,علاج كيميائي,Chemotherapy is a treatment that kills cancer cells.,العلاج الكيميائي علاج يقتل الخلايا السرطانية.,medical,noun
+dialysis,غسيل الكلى,The patient needs dialysis three times a week.,يحتاج المريض إلى غسيل الكلى ثلاث مرات في الأسبوع.,medical,noun
+transfusion,نقل دم,The patient received a blood transfusion after the operation.,تلقى المريض نقل دم بعد العملية.,medical,noun
+oxygen,أكسجين,The patient with pneumonia was given oxygen to help him breathe.,أعطي مريض التهاب الرئة الأكسجين لمساعدته على التنفس.,medical,noun
+bandage,ضمادة,The nurse put a clean bandage on the wound.,وضعت الممرضة ضمادة نظيفة على الجرح.,medical,noun
+plaster,جبيرة,His broken arm was put in plaster for six weeks.,وضعت ذراعه المكسورة في جبيرة لمدة ستة أسابيع.,medical,noun
+splint,جبيرة داعمة,The doctor fixed a splint to keep the finger straight.,ثبت الطبيب جبيرة داعمة لإبقاء الإصبع مستقيما.,medical,noun
+treatment,علاج,The treatment for this infection takes ten days.,يستغرق علاج هذه العدوى عشرة أيام.,medical,noun
+medicine,دواء,"Take this medicine after food, not on an empty stomach.",تناول هذا الدواء بعد الطعام، وليس على معدة فارغة.,medical,noun
+drug,دواء,The pharmacist explained how to use the new drug.,شرح الصيدلي كيفية استخدام الدواء الجديد.,medical,noun
+prescription,وصفة طبية,The doctor wrote a prescription for antibiotics.,كتب الطبيب وصفة طبية للمضادات الحيوية.,medical,noun
+remedy,علاج,Rest and plenty of fluids are the best remedy for a cold.,الراحة والكثير من السوائل هما أفضل علاج للزكام.,medical,noun
+cure,شفاء,"There is no complete cure for this disease yet, but treatment helps.",لا يوجد شفاء كامل لهذا المرض بعد، لكن العلاج يساعد.,medical,noun
+painkiller,مسكن ألم,The nurse gave him a painkiller after the operation.,أعطته الممرضة مسكن ألم بعد العملية.,medical,noun
+antiseptic,مطهر,Clean the cut with antiseptic before covering it.,نظف الجرح بمطهر قبل تغطيته.,medical,noun
+vitamin,فيتامين,The doctor advised him to take vitamin D every day.,نصحه الطبيب بتناول فيتامين د كل يوم.,medical,noun
+iron,حديد,The doctor gave her iron tablets for anaemia.,أعطاها الطبيب أقراص حديد لفقر الدم.,medical,noun
+calcium,كالسيوم,Calcium helps to keep the bones strong.,يساعد الكالسيوم على إبقاء العظام قوية.,medical,noun
+saline,محلول ملحي,The nurse cleaned the wound with saline solution.,نظفت الممرضة الجرح بمحلول ملحي.,medical,noun
+cream,كريم,Apply the cream to the dry skin twice a day.,ضع الكريم على الجلد الجاف مرتين يوميا.,medical,noun
+inhaler,بخاخ استنشاق,The asthma patient always carries his inhaler with him.,يحمل مريض الربو بخاخ الاستنشاق معه دائما.,medical,noun
+first aid,إسعافات أولية,First aid can save a life before the ambulance arrives.,يمكن أن تنقذ الإسعافات الأولية حياة قبل وصول سيارة الإسعاف.,medical,phrase
+recovery,تعاف,The patient's recovery after surgery was quick.,كان تعافي المريض بعد الجراحة سريعا.,medical,noun
+surgery,جراحة,The patient needs surgery to remove the tumour.,يحتاج المريض إلى جراحة لإزالة الورم.,medical,noun
+operation,عملية جراحية,The operation lasted three hours and went well.,استمرت العملية الجراحية ثلاث ساعات وسارت بشكل جيد.,medical,noun
+anaesthesia,تخدير,The patient was given anaesthesia before the operation.,أعطي المريض التخدير قبل العملية.,medical,noun
+incision,شق جراحي,The surgeon made a small incision in the abdomen.,أجرى الجراح شقا صغيرا في البطن.,medical,noun
+suture,غرزة جراحية,The doctor closed the wound with a suture.,أغلق الطبيب الجرح بغرزة جراحية.,medical,noun
+stitch,غرزة,The nurse removed the stitch from the wound after a week.,أزالت الممرضة الغرزة من الجرح بعد أسبوع.,medical,noun
+transplant,زراعة عضو,A kidney transplant can save the life of a patient with kidney failure.,يمكن أن تنقذ زراعة الكلية حياة مريض الفشل الكلوي.,medical,noun
+amputation,بتر,Amputation was the only way to stop the infection spreading.,كان البتر هو الطريقة الوحيدة لوقف انتشار العدوى.,medical,noun
+caesarean,عملية قيصرية,The baby was born by caesarean because of complications.,ولد الطفل بعملية قيصرية بسبب مضاعفات.,medical,noun
+catheter,قسطرة,The nurse inserted a catheter to drain urine from the bladder.,أدخلت الممرضة قسطرة لتصريف البول من المثانة.,medical,noun
+drainage,تصريف,The surgeon placed a tube for drainage after the operation.,وضع الجراح أنبوبا للتصريف بعد العملية.,medical,noun
+biopsy procedure,إجراء الخزعة,The biopsy procedure takes only a few minutes in the clinic.,يستغرق إجراء الخزعة بضع دقائق فقط في العيادة.,medical,phrase
+endoscopy procedure,إجراء التنظير,The endoscopy procedure lets the doctor see inside the stomach.,يتيح إجراء التنظير للطبيب رؤية داخل المعدة.,medical,phrase
+sterilisation,تعقيم,Sterilisation of the instruments prevents infection during surgery.,يمنع تعقيم الأدوات العدوى أثناء الجراحة.,medical,noun
+disinfection,تطهير,Disinfection of the room is done before every operation.,يتم تطهير الغرفة قبل كل عملية.,medical,noun
+wound care,العناية بالجروح,Good wound care helps the wound heal without infection.,تساعد العناية الجيدة بالجروح على التئام الجرح دون عدوى.,medical,phrase
+stitches,غرز,The wound needed five stitches to close it.,احتاج الجرح إلى خمس غرز لإغلاقه.,medical,noun
+scar,ندبة,The operation left a small scar on his abdomen.,تركت العملية ندبة صغيرة على بطنه.,medical,noun
+tumour,ورم,The surgeon removed the tumour from the patient's liver.,أزال الجراح الورم من كبد المريض.,medical,noun
+cyst,كيس,The doctor removed a small cyst from her neck.,أزال الطبيب كيسا صغيرا من رقبتها.,medical,noun
+fracture repair,إصلاح الكسر,Fracture repair often needs metal plates and screws.,غالبا ما يحتاج إصلاح الكسر إلى صفائح ومسامير معدنية.,medical,phrase
+appendectomy,استئصال الزائدة الدودية,An appendectomy is the operation to remove an inflamed appendix.,استئصال الزائدة الدودية هو عملية إزالة الزائدة الملتهبة.,medical,noun
+tonsillectomy,استئصال اللوزتين,A tonsillectomy removes the tonsils when they keep getting infected.,استئصال اللوزتين يزيل اللوزتين عندما تتعرضان للعدوى باستمرار.,medical,noun
+hernia repair,إصلاح الفتق,Hernia repair is a common operation in general surgery.,إصلاح الفتق عملية شائعة في الجراحة العامة.,medical,phrase
+skin graft,ترقيع جلدي,A skin graft covers a large burn with healthy skin.,يغطي الترقيع الجلدي حرقا كبيرا بجلد سليم.,medical,phrase
+blood draw,سحب دم,The blood draw for the test took only a minute.,استغرق سحب الدم للاختبار دقيقة واحدة فقط.,medical,phrase
+urine sample,عينة بول,The doctor asked for a urine sample to check the kidneys.,طلب الطبيب عينة بول لفحص الكليتين.,medical,phrase
+bed rest,راحة في الفراش,The doctor ordered bed rest for three days after the operation.,أمر الطبيب بالراحة في الفراش لمدة ثلاثة أيام بعد العملية.,medical,phrase
+follow-up,متابعة,The patient came back for a follow-up visit after two weeks.,عاد المريض لزيارة متابعة بعد أسبوعين.,medical,noun
+discharge,خروج من المستشفى,The patient was ready for discharge after five days in hospital.,كان المريض جاهزا للخروج من المستشفى بعد خمسة أيام.,medical,noun
+doctor,طبيب,The doctor asked the patient about his symptoms.,سأل الطبيب المريض عن أعراضه.,medical,noun
+nurse,ممرضة,The nurse checked the patient's temperature every hour.,فحصت الممرضة درجة حرارة المريض كل ساعة.,medical,noun
+surgeon,جراح,The surgeon explained the operation to the patient and his family.,شرح الجراح العملية للمريض وعائلته.,medical,noun
+pharmacist,صيدلي,The pharmacist told the patient how to take the medicine.,أخبر الصيدلي المريض بكيفية تناول الدواء.,medical,noun
+patient,مريض,The patient waited in the clinic for the doctor.,انتظر المريض في العيادة لرؤية الطبيب.,medical,noun
+hospital,مستشفى,The injured man was taken to hospital by ambulance.,نقل الرجل المصاب إلى المستشفى بسيارة الإسعاف.,medical,noun
+clinic,عيادة,She visited the clinic because she had a fever.,زارت العيادة لأنها كانت تعاني من الحمى.,medical,noun
+pharmacy,صيدلية,He bought the medicine from the pharmacy near the hospital.,اشترى الدواء من الصيدلية القريبة من المستشفى.,medical,noun
+ward,جناح,The patient stayed in the medical ward for three nights.,بقي المريض في الجناح الطبي لثلاث ليال.,medical,noun
+emergency,طوارئ,The emergency department treats patients with serious injuries.,يعالج قسم الطوارئ المرضى ذوي الإصابات الخطيرة.,medical,noun
+intensive care,عناية مركزة,The patient was moved to intensive care after the operation.,نقل المريض إلى العناية المركزة بعد العملية.,medical,phrase
+ambulance,سيارة إسعاف,Call an ambulance if the patient cannot breathe.,اتصل بسيارة الإسعاف إذا لم يستطع المريض التنفس.,medical,noun
+operating room,غرفة العمليات,The operating room must be clean and sterile.,يجب أن تكون غرفة العمليات نظيفة ومعقمة.,medical,phrase
+waiting room,غرفة الانتظار,Patients sit in the waiting room before their appointment.,يجلس المرضى في غرفة الانتظار قبل موعدهم.,medical,phrase
+reception,استقبال,The patient gave his name at reception.,أعطى المريض اسمه في الاستقبال.,medical,noun
+dentist,طبيب أسنان,The dentist advised him to brush his teeth twice a day.,نصحه طبيب الأسنان بتنظيف أسنانه مرتين يوميا.,medical,noun
+midwife,قابلة,The midwife helped the mother during the birth.,ساعدت القابلة الأم أثناء الولادة.,medical,noun
+paediatrician,طبيب أطفال,The paediatrician examined the sick baby.,فحص طبيب الأطفال الطفل المريض.,medical,noun
+cardiologist,طبيب قلب,The cardiologist checked the patient's heart with an ECG.,فحص طبيب القلب قلب المريض بتخطيط القلب.,medical,noun
+neurologist,طبيب أعصاب,The neurologist examined the patient after the seizure.,فحص طبيب الأعصاب المريض بعد نوبة الصرع.,medical,noun
+radiologist,طبيب أشعة,The radiologist read the X-ray and wrote a report.,قرأ طبيب الأشعة الصورة وكتب تقريرا.,medical,noun
+anaesthetist,طبيب تخدير,The anaesthetist gave the patient medicine to sleep during surgery.,أعطى طبيب التخدير المريض دواء لينام أثناء الجراحة.,medical,noun
+paramedic,مسعف,The paramedic gave first aid at the scene of the accident.,قدم المسعف الإسعافات الأولية في مكان الحادث.,medical,noun
+therapist,معالج,The therapist taught him exercises to strengthen his leg.,علمه المعالج تمارين لتقوية ساقه.,medical,noun
+laboratory technician,فني مختبر,The laboratory technician prepared the blood sample for testing.,جهز فني المختبر عينة الدم للفحص.,medical,phrase
+appointment,موعد,He booked an appointment to see the doctor on Monday.,حجز موعدا لرؤية الطبيب يوم الاثنين.,medical,noun
+admission,دخول المستشفى,The patient's admission to hospital was arranged by his doctor.,رتب طبيبه دخوله إلى المستشفى.,medical,noun
+bed,سرير,The nurse prepared a bed for the new patient.,جهزت الممرضة سريرا للمريض الجديد.,medical,noun
+wheelchair,كرسي متحرك,The nurse brought a wheelchair for the patient who could not walk.,أحضرت الممرضة كرسيا متحركا للمريض الذي لا يستطيع المشي.,medical,noun
+stretcher,نقالة,The paramedics carried the patient on a stretcher to the ambulance.,حمل المسعفون المريض على نقالة إلى سيارة الإسعاف.,medical,noun
+diagnose,يشخص,The doctor will diagnose the illness after the test results arrive.,سيشخص الطبيب المرض بعد وصول نتائج الفحص.,medical,verb
+treat,يعالج,The hospital can treat most infections with antibiotics.,يمكن للمستشفى علاج معظم العدوى بالمضادات الحيوية.,medical,verb
+prescribe,يصف,The doctor prescribed a medicine for his blood pressure.,وصف الطبيب دواء لضغط دمه.,medical,verb
+examine,يفحص,The doctor examined the patient's throat and ears.,فحص الطبيب حلق المريض وأذنيه.,medical,verb
+admit,يدخل المستشفى,The doctor decided to admit the patient for observation.,قرر الطبيب إدخال المريض للمراقبة.,medical,verb
+recover,يتعافى,Most patients recover fully within two weeks.,يتعافى معظم المرضى تماما خلال أسبوعين.,medical,verb
+heal,يلتئم,The wound will heal in about ten days.,سيلتئم الجرح في حوالي عشرة أيام.,medical,verb
+prevent,يقي,Washing your hands can prevent many infections.,غسل يديك يمكن أن يقي من العديد من العدوى.,medical,verb
+infect,يصيب بالعدوى,"The virus can infect anyone, young or old.",يمكن أن يصيب الفيروس أي شخص، صغيرا أو كبيرا.,medical,verb
+vaccinate,يلقح,The clinic will vaccinate all children under five.,ستلقح العيادة جميع الأطفال دون سن الخامسة.,medical,verb
+operate,يجري عملية جراحية,The surgeon will operate on the patient tomorrow morning.,سيجري الجراح العملية للمريض صباح الغد.,medical,verb
+inject,يحقن,The nurse will inject the vaccine into his upper arm.,ستحقن الممرضة اللقاح في أعلى ذراعه.,medical,verb
+measure,يقيس,The nurse measured the child's temperature and weight.,قاست الممرضة درجة حرارة الطفل ووزنه.,medical,verb
+observe,يلاحظ,The nurse will observe the patient closely during the night.,ستلاحظ الممرضة المريض عن كثب أثناء الليل.,medical,verb
+breathe,يتنفس,The patient finds it hard to breathe when he lies flat.,يجد المريض صعوبة في التنفس عندما يستلقي مستويا.,medical,verb
+swallow,يبلع,"The patient cannot swallow tablets, so the doctor gave him syrup.",لا يستطيع المريض بلع الأقراص، لذلك أعطاه الطبيب شرابا.,medical,verb
+vomit,يتقيأ,The patient began to vomit after taking the strong medicine.,بدأ المريض يتقيأ بعد تناول الدواء القوي.,medical,verb
+sneeze,يعطس,Cover your mouth when you sneeze to protect others.,غط فمك عندما تعطس لحماية الآخرين.,medical,verb
+bleed,ينزف,The cut continued to bleed until the nurse pressed it.,استمر الجرح ينزف حتى ضغطت عليه الممرضة.,medical,verb
+faint,يغمى عليه,He may faint if he stands up too quickly after the illness.,قد يغمى عليه إذا وقف بسرعة كبيرة بعد المرض.,medical,verb
+acute,حاد,Acute pain starts suddenly and is usually severe.,الألم الحاد يبدأ فجأة ويكون شديدا عادة.,medical,adjective
+chronic,مزمن,Chronic pain lasts for months or even years.,الألم المزمن يستمر لأشهر أو حتى سنوات.,medical,adjective
+severe,شديد,Severe chest pain needs urgent medical attention.,ألم الصدر الشديد يحتاج إلى عناية طبية عاجلة.,medical,adjective
+mild,خفيف,He has a mild fever and feels a little tired.,يعاني من حمى خفيفة ويشعر بتعب قليل.,medical,adjective
+contagious,معد,Measles is a contagious disease that spreads easily.,الحصبة مرض معد ينتشر بسهولة.,medical,adjective
+hereditary,وراثي,Diabetes can be hereditary in some families.,قد يكون السكري وراثيا في بعض العائلات.,medical,adjective
+allergic,لديه حساسية,"He is allergic to penicillin, so he must tell the doctor.",لديه حساسية من البنسلين، لذلك يجب أن يخبر الطبيب.,medical,adjective
+painful,مؤلم,"The injection was painful, but it only lasted a second.",كانت الحقنة مؤلمة، لكنها استمرت ثانية واحدة فقط.,medical,adjective
+unconscious,فاقد للوعي,The patient was unconscious when the ambulance arrived.,كان المريض فاقدا للوعي عندما وصلت سيارة الإسعاف.,medical,adjective
+stable,مستقر,The patient's condition is stable after the operation.,حالة المريض مستقرة بعد العملية.,medical,adjective
+critical,حرج,The patient is in critical condition in intensive care.,المريض في حالة حرجة في العناية المركزة.,medical,adjective
+urgent,عاجل,This is an urgent case and the doctor must see him now.,هذه حالة عاجلة ويجب أن يراه الطبيب الآن.,medical,adjective
+routine,روتيني,A routine blood test is done once a year.,يتم إجراء فحص دم روتيني مرة في السنة.,medical,adjective
+sterile,معقم,Surgery needs sterile instruments to prevent infection.,تحتاج الجراحة إلى أدوات معقمة لمنع العدوى.,medical,adjective
+harmful,ضار,Smoking is harmful to the lungs and the heart.,التدخين ضار بالرئتين والقلب.,medical,adjective
+healthy,صحي,A healthy diet helps to prevent heart disease.,النظام الغذائي الصحي يساعد على الوقاية من أمراض القلب.,medical,adjective
+ill,مريض,He felt ill and stayed in bed all day.,شعر بالمرض وبقي في الفراش طوال اليوم.,medical,adjective
+sick,مريض,The sick child was taken to the clinic by his mother.,أخذت الأم طفلها المريض إلى العيادة.,medical,adjective
+medical,طبي,He asked the doctor for medical advice about his knee.,طلب من الطبيب نصيحة طبية حول ركبته.,medical,adjective
+clinical,سريري,Clinical examination is the first step in diagnosis.,الفحص السريري هو الخطوة الأولى في التشخيص.,medical,adjective

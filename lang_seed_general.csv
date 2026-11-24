@@ -1,0 +1,301 @@
+word,translation,sentence,sentence_translation,track,pos
+house,منزل,I live in a small house near the university.,أعيش في منزل صغير قرب الجامعة.,general,noun
+home,بيت,My home is a quiet place where I rest.,بيتي مكان هادئ أستريح فيه.,general,noun
+family,عائلة,My family eats dinner together every evening.,عائلتي تتناول العشاء معا كل مساء.,general,noun
+kitchen,مطبخ,My mother cooks delicious food in the kitchen.,أمي تطبخ طعاما لذيذا في المطبخ.,general,noun
+bedroom,غرفة نوم,I sleep in a clean bedroom every night.,أنام في غرفة نوم نظيفة كل ليلة.,general,noun
+bathroom,حمام,Please wash your hands in the bathroom.,اغسل يديك في الحمام من فضلك.,general,noun
+door,باب,Please close the door when you leave.,أغلق الباب من فضلك عندما تغادر.,general,noun
+window,نافذة,I open the window to let in fresh air.,أفتح النافذة ليدخل الهواء النقي.,general,noun
+table,طاولة,We put the books on the table.,نضع الكتب على الطاولة.,general,noun
+chair,كرسي,Please sit on this chair and wait.,اجلس على هذا الكرسي وانتظر من فضلك.,general,noun
+bed,سرير,I go to bed early on school days.,أذهب إلى السرير مبكرا في أيام الدراسة.,general,noun
+food,طعام,Healthy food gives your body energy.,الطعام الصحي يمنح جسمك الطاقة.,general,noun
+breakfast,فطور,I eat breakfast at seven every morning.,أتناول الفطور في السابعة كل صباح.,general,noun
+lunch,غداء,We have lunch with our friends at noon.,نتناول الغداء مع أصدقائنا ظهرا.,general,noun
+dinner,عشاء,We eat dinner at home after sunset.,نتناول العشاء في المنزل بعد غروب الشمس.,general,noun
+water,ماء,Please drink a glass of water every day.,اشرب كوبا من الماء كل يوم من فضلك.,general,noun
+bread,خبز,I buy fresh bread from the shop every morning.,أشتري خبزا طازجا من المتجر كل صباح.,general,noun
+milk,حليب,Children drink milk to grow strong.,يشرب الأطفال الحليب لينموا أقوياء.,general,noun
+coffee,قهوة,I drink coffee in the morning to wake up.,أشرب القهوة في الصباح لأستيقظ.,general,noun
+tea,شاي,My father drinks tea after lunch.,أبي يشرب الشاي بعد الغداء.,general,noun
+clothes,ملابس,I wash my clothes every week.,أغسل ملابسي كل أسبوع.,general,noun
+shirt,قميص,He wears a white shirt to work.,يرتدي قميصا أبيض إلى العمل.,general,noun
+shoes,أحذية,My shoes are clean and comfortable.,أحذيتي نظيفة ومريحة.,general,noun
+phone,هاتف,I call my mother on the phone every day.,أتصل بأمي على الهاتف كل يوم.,general,noun
+computer,حاسوب,I use my computer to study and write.,أستخدم حاسوبي للدراسة والكتابة.,general,noun
+book,كتاب,I read an interesting book every month.,أقرأ كتابا ممتعا كل شهر.,general,noun
+bag,حقيبة,I put my books in my bag every morning.,أضع كتبي في حقيبتي كل صباح.,general,noun
+key,مفتاح,I lost my house key yesterday.,فقدت مفتاح منزلي أمس.,general,noun
+money,مال,I save some money every month.,أدخر بعض المال كل شهر.,general,noun
+morning,صباح,I wake up early in the morning.,أستيقظ مبكرا في الصباح.,general,noun
+night,ليل,The stars shine in the sky at night.,تلمع النجوم في السماء ليلا.,general,noun
+sleep,ينام,I sleep eight hours every night.,أنام ثماني ساعات كل ليلة.,general,verb
+wake,يستيقظ,I wake at six every morning.,أستيقظ في السادسة كل صباح.,general,verb
+cook,يطبخ,My mother cooks rice for lunch.,أمي تطبخ الأرز للغداء.,general,verb
+eat,يأكل,We eat fresh vegetables every day.,نأكل خضروات طازجة كل يوم.,general,verb
+drink,يشرب,I drink water when I feel thirsty.,أشرب الماء عندما أشعر بالعطش.,general,verb
+clean,ينظف,I clean my room every Friday.,أنظف غرفتي كل يوم جمعة.,general,verb
+wash,يغسل,Please wash your hands before you eat.,اغسل يديك قبل أن تأكل من فضلك.,general,verb
+watch,يشاهد,I watch the news every evening.,أشاهد الأخبار كل مساء.,general,verb
+read,يقرأ,I read a new book every month.,أقرأ كتابا جديدا كل شهر.,general,verb
+teacher,معلم,The teacher explains the lesson clearly.,المعلم يشرح الدرس بوضوح.,general,noun
+student,طالب,Every student studies hard for the exam.,كل طالب يدرس بجد للامتحان.,general,noun
+school,مدرسة,Children go to school every morning.,يذهب الأطفال إلى المدرسة كل صباح.,general,noun
+university,جامعة,I study medicine at the university.,أدرس الطب في الجامعة.,general,noun
+lesson,درس,Today we learned an important lesson.,تعلمنا اليوم درسا مهما.,general,noun
+exam,امتحان,The exam starts at nine in the morning.,يبدأ الامتحان في التاسعة صباحا.,general,noun
+homework,واجب منزلي,I finish my homework before I play.,أنهي واجبي المنزلي قبل أن ألعب.,general,noun
+question,سؤال,The teacher answered my question kindly.,أجاب المعلم عن سؤالي بلطف.,general,noun
+answer,إجابة,Your answer is correct and clear.,إجابتك صحيحة وواضحة.,general,noun
+learn,يتعلم,I learn a new word every day.,أتعلم كلمة جديدة كل يوم.,general,verb
+teach,يعلم,My father teaches English at school.,أبي يعلم اللغة الإنجليزية في المدرسة.,general,verb
+study,يدرس,I study English for one hour every day.,أدرس اللغة الإنجليزية ساعة كل يوم.,general,verb
+class,صف,There are thirty students in my class.,يوجد ثلاثون طالبا في صفي.,general,noun
+course,دورة,I joined an English course this year.,التحقت بدورة في اللغة الإنجليزية هذا العام.,general,noun
+library,مكتبة,I read books in the library every week.,أقرأ الكتب في المكتبة كل أسبوع.,general,noun
+science,علم,Science helps us understand the world.,العلم يساعدنا على فهم العالم.,general,noun
+history,تاريخ,History teaches us about the past.,التاريخ يعلمنا عن الماضي.,general,noun
+language,لغة,English is an important language in the world.,الإنجليزية لغة مهمة في العالم.,general,noun
+mathematics,رياضيات,Mathematics helps us solve many problems.,الرياضيات تساعدنا على حل مشاكل كثيرة.,general,noun
+research,بحث,The student wrote a good research about health.,كتب الطالب بحثا جيدا عن الصحة.,general,noun
+project,مشروع,We finished our school project on time.,أنهينا مشروعنا المدرسي في الوقت المحدد.,general,noun
+report,تقرير,The manager wrote a short report about the work.,كتب المدير تقريرا قصيرا عن العمل.,general,noun
+presentation,عرض تقديمي,I gave a short presentation in class today.,قدمت عرضا تقديميا قصيرا في الصف اليوم.,general,noun
+job,وظيفة,He found a good job in a hospital.,وجد وظيفة جيدة في مستشفى.,general,noun
+office,مكتب,My father works in a big office in the city.,أبي يعمل في مكتب كبير في المدينة.,general,noun
+worker,عامل,The worker builds houses in our city.,العامل يبني المنازل في مدينتنا.,general,noun
+manager,مدير,The manager meets his team every Monday.,المدير يجتمع مع فريقه كل يوم اثنين.,general,noun
+company,شركة,She works for a large company in the city.,تعمل في شركة كبيرة في المدينة.,general,noun
+meeting,اجتماع,We have a meeting at ten tomorrow.,لدينا اجتماع في العاشرة غدا.,general,noun
+salary,راتب,He receives his salary at the end of the month.,يتسلم راتبه في نهاية الشهر.,general,noun
+interview,مقابلة,I have a job interview tomorrow morning.,لدي مقابلة عمل غدا صباحا.,general,noun
+experience,خبرة,Experience helps you work better.,الخبرة تساعدك على العمل بشكل أفضل.,general,noun
+skill,مهارة,Reading is an important skill for students.,القراءة مهارة مهمة للطلاب.,general,noun
+success,نجاح,Hard work leads to success in life.,العمل الجاد يؤدي إلى النجاح في الحياة.,general,noun
+goal,هدف,My goal is to speak English well.,هدفي أن أتحدث الإنجليزية بشكل جيد.,general,noun
+plan,خطة,We need a good plan for our project.,نحتاج إلى خطة جيدة لمشروعنا.,general,noun
+problem,مشكلة,We can solve this problem together.,يمكننا حل هذه المشكلة معا.,general,noun
+solution,حل,The teacher found a simple solution to the problem.,وجد المعلم حلا بسيطا للمشكلة.,general,noun
+test,اختبار,We have a short test on Monday.,لدينا اختبار قصير يوم الاثنين.,general,noun
+grade,درجة,I got a high grade in the English exam.,حصلت على درجة عالية في امتحان اللغة الإنجليزية.,general,noun
+today,اليوم,I study English today and tomorrow.,أدرس الإنجليزية اليوم وغدا.,general,adverb
+tomorrow,غدا,We will travel tomorrow morning.,سنسافر غدا صباحا.,general,adverb
+yesterday,أمس,I visited my friend yesterday.,زرت صديقي أمس.,general,adverb
+week,أسبوع,I read two books every week.,أقرأ كتابين كل أسبوع.,general,noun
+month,شهر,We pay the rent at the start of the month.,ندفع الإيجار في بداية الشهر.,general,noun
+year,سنة,I started university last year.,بدأت الجامعة العام الماضي.,general,noun
+hour,ساعة,I study for one hour every day.,أدرس ساعة واحدة كل يوم.,general,noun
+minute,دقيقة,Please wait one minute for me.,انتظر دقيقة واحدة من فضلك.,general,noun
+early,مبكرا,I wake up early every day.,أستيقظ مبكرا كل يوم.,general,adverb
+late,متأخرا,He arrived late to the meeting.,وصل متأخرا إلى الاجتماع.,general,adverb
+always,دائما,I always wash my hands before I eat.,أغسل يدي دائما قبل أن آكل.,general,adverb
+never,أبدا,I never forget my homework.,لا أنسى واجبي المنزلي أبدا.,general,adverb
+sometimes,أحيانا,Sometimes I walk to school in the morning.,أحيانا أمشي إلى المدرسة في الصباح.,general,adverb
+often,غالبا,I often read before I sleep.,غالبا ما أقرأ قبل أن أنام.,general,adverb
+usually,عادة,I usually drink tea after lunch.,عادة أشرب الشاي بعد الغداء.,general,adverb
+first,أول,This is my first lesson in English.,هذا أول درس لي في اللغة الإنجليزية.,general,adjective
+last,آخر,I visited my grandmother last week.,زرت جدتي الأسبوع الماضي.,general,adjective
+next,التالي,We will meet next week at school.,سنلتقي الأسبوع المقبل في المدرسة.,general,adjective
+before,قبل,Please come before ten in the morning.,تعال قبل العاشرة صباحا من فضلك.,general,adverb
+after,بعد,We play football after school.,نلعب كرة القدم بعد المدرسة.,general,adverb
+now,الآن,I am studying English now.,أنا أدرس الإنجليزية الآن.,general,adverb
+then,ثم,We ate lunch and then we rested.,تناولنا الغداء ثم استرحنا.,general,adverb
+soon,قريبا,The exam will start soon.,سيبدأ الامتحان قريبا.,general,adverb
+many,كثير,Many students study English every day.,كثير من الطلاب يدرسون الإنجليزية كل يوم.,general,adjective
+few,قليل,Only a few students were late today.,تأخر عدد قليل من الطلاب اليوم فقط.,general,adjective
+much,كثير,I do not have much time today.,ليس لدي كثير من الوقت اليوم.,general,adjective
+little,قليل,I have a little money in my bag.,لدي القليل من المال في حقيبتي.,general,adjective
+all,كل,All students must come on time.,يجب على كل الطلاب الحضور في الوقت المحدد.,general,adjective
+some,بعض,Some students like reading books.,بعض الطلاب يحبون قراءة الكتب.,general,adjective
+every,كل,Every student has a book and a pen.,كل طالب لديه كتاب وقلم.,general,adjective
+happy,سعيد,I feel happy when I see my friends.,أشعر بالسعادة عندما أرى أصدقائي.,general,adjective
+sad,حزين,He feels sad when his friend leaves.,يشعر بالحزن عندما يغادر صديقه.,general,adjective
+angry,غاضب,Do not be angry when you lose a game.,لا تغضب عندما تخسر مباراة.,general,adjective
+afraid,خائف,I am afraid of the dark at night.,أنا خائف من الظلام ليلا.,general,adjective
+tired,متعب,I feel tired after a long day at work.,أشعر بالتعب بعد يوم طويل في العمل.,general,adjective
+hungry,جائع,I am hungry because I did not eat lunch.,أنا جائع لأنني لم أتناول الغداء.,general,adjective
+thirsty,عطشان,I am thirsty after running in the sun.,أنا عطشان بعد الجري تحت الشمس.,general,adjective
+bored,ملول,I feel bored when I have nothing to do.,أشعر بالملل عندما لا يكون لدي ما أفعله.,general,adjective
+excited,متحمس,I am excited about my trip tomorrow.,أنا متحمس لرحلتي غدا.,general,adjective
+worried,قلق,My mother is worried about my exam.,أمي قلقة بشأن امتحاني.,general,adjective
+surprised,متفاجئ,I was surprised by the good news.,تفاجأت بالخبر السار.,general,adjective
+proud,فخور,My father is proud of my success.,أبي فخور بنجاحي.,general,adjective
+shy,خجول,The new student is shy in class.,الطالب الجديد خجول في الصف.,general,adjective
+calm,هادئ,Please stay calm and listen carefully.,ابق هادئا واستمع بانتباه من فضلك.,general,adjective
+nervous,متوتر,I feel nervous before the exam.,أشعر بالتوتر قبل الامتحان.,general,adjective
+love,يحب,I love my family very much.,أحب عائلتي كثيرا.,general,verb
+like,يحب,I like reading books in the evening.,أحب قراءة الكتب في المساء.,general,verb
+hate,يكره,I hate waiting in a long line.,أكره الانتظار في طابور طويل.,general,verb
+enjoy,يستمتع,I enjoy learning English every day.,أستمتع بتعلم الإنجليزية كل يوم.,general,verb
+prefer,يفضل,I prefer tea to coffee in the morning.,أفضل الشاي على القهوة في الصباح.,general,verb
+agree,يوافق,I agree with you about this plan.,أوافقك الرأي في هذه الخطة.,general,verb
+disagree,يختلف,I disagree with you about this idea.,أختلف معك في هذه الفكرة.,general,verb
+think,يفكر,I think English is useful for my future.,أعتقد أن الإنجليزية مفيدة لمستقبلي.,general,verb
+believe,يؤمن,I believe hard work brings success.,أؤمن بأن العمل الجاد يجلب النجاح.,general,verb
+hope,يأمل,I hope to visit London one day.,آمل أن أزور لندن يوما ما.,general,verb
+wish,يتمنى,I wish you a happy new year.,أتمنى لك عاما جديدا سعيدا.,general,verb
+feel,يشعر,I feel happy when I learn something new.,أشعر بالسعادة عندما أتعلم شيئا جديدا.,general,verb
+smile,يبتسم,She smiles when she sees her friends.,تبتسم عندما ترى أصدقائها.,general,verb
+laugh,يضحك,We laugh together when we hear a funny story.,نضحك معا عندما نسمع قصة مضحكة.,general,verb
+cry,يبكي,Babies cry when they are hungry.,يبكي الأطفال عندما يكونون جائعين.,general,verb
+speak,يتحدث,I speak English with my teacher every day.,أتحدث الإنجليزية مع معلمي كل يوم.,general,verb
+talk,يتحدث,We talk about our lessons after class.,نتحدث عن دروسنا بعد الصف.,general,verb
+say,يقول,Please say the word slowly.,قل الكلمة ببطء من فضلك.,general,verb
+tell,يخبر,Please tell me your name.,أخبرني باسمك من فضلك.,general,verb
+ask,يسأل,If you do not understand please ask the teacher.,إذا لم تفهم اسأل المعلم من فضلك.,general,verb
+reply,يرد,Please reply to my message today.,رد على رسالتي اليوم من فضلك.,general,verb
+listen,يستمع,Listen carefully to the teacher in class.,استمع بانتباه إلى المعلم في الصف.,general,verb
+hear,يسمع,I can hear the teacher from my seat.,أستطيع سماع المعلم من مقعدي.,general,verb
+understand,يفهم,I understand this lesson very well.,أفهم هذا الدرس جيدا.,general,verb
+explain,يشرح,The teacher explains the new words to us.,المعلم يشرح لنا الكلمات الجديدة.,general,verb
+discuss,يناقش,We discuss the lesson with our teacher.,نناقش الدرس مع معلمنا.,general,verb
+describe,يصف,Please describe your house in English.,صف منزلك باللغة الإنجليزية من فضلك.,general,verb
+call,يتصل,I call my friend every evening.,أتصل بصديقي كل مساء.,general,verb
+message,رسالة,I sent a message to my teacher yesterday.,أرسلت رسالة إلى معلمي أمس.,general,noun
+email,بريد إلكتروني,Please send me an email with the homework.,أرسل لي بريدا إلكترونيا بالواجب المنزلي من فضلك.,general,noun
+letter,خطاب,My grandmother wrote me a letter last month.,كتبت لي جدتي خطابا الشهر الماضي.,general,noun
+news,أخبار,I read the news in the morning.,أقرأ الأخبار في الصباح.,general,noun
+story,قصة,My teacher told us an interesting story.,أخبرنا معلمنا قصة ممتعة.,general,noun
+information,معلومات,The book gives us useful information about health.,يقدم لنا الكتاب معلومات مفيدة عن الصحة.,general,noun
+word,كلمة,Please write the new word in your notebook.,اكتب الكلمة الجديدة في دفترك من فضلك.,general,noun
+sentence,جملة,Please write a sentence with this word.,اكتب جملة بهذه الكلمة من فضلك.,general,noun
+meaning,معنى,What is the meaning of this word?,ما معنى هذه الكلمة؟,general,noun
+conversation,محادثة,We had a long conversation in English.,أجرينا محادثة طويلة باللغة الإنجليزية.,general,noun
+voice,صوت,Her voice is clear and beautiful.,صوتها واضح وجميل.,general,noun
+quiet,هادئ,Please be quiet in the library.,كن هادئا في المكتبة من فضلك.,general,adjective
+loud,عال,His voice is loud in the hall.,صوته عال في القاعة.,general,adjective
+shout,يصرخ,Do not shout in the classroom.,لا تصرخ في الفصل الدراسي.,general,verb
+whisper,يهمس,Please whisper in the library.,اهمس من فضلك في المكتبة.,general,verb
+promise,يعد,I promise to finish my homework today.,أعدك بأن أنهي واجبي المنزلي اليوم.,general,verb
+thank,يشكر,I thank my teacher for his help.,أشكر معلمي على مساعدته.,general,verb
+travel,يسافر,I travel to another city every year.,أسافر إلى مدينة أخرى كل عام.,general,verb
+trip,رحلة,We enjoyed our trip to the beach.,استمتعنا برحلتنا إلى الشاطئ.,general,noun
+journey,رحلة,The journey to the village took two hours.,استغرقت الرحلة إلى القرية ساعتين.,general,noun
+visit,يزور,I visit my grandmother every Friday.,أزور جدتي كل يوم جمعة.,general,verb
+city,مدينة,Aden is a beautiful city by the sea.,عدن مدينة جميلة على البحر.,general,noun
+town,بلدة,My uncle lives in a small town near the sea.,عمي يعيش في بلدة صغيرة قرب البحر.,general,noun
+village,قرية,My grandmother lives in a quiet village.,جدتي تعيش في قرية هادئة.,general,noun
+country,بلد,Yemen is my country and I love it.,اليمن بلدي وأحبه.,general,noun
+street,شارع,Our school is in a quiet street.,مدرستنا في شارع هادئ.,general,noun
+road,طريق,This road leads to the city centre.,هذا الطريق يؤدي إلى وسط المدينة.,general,noun
+bridge,جسر,We crossed the bridge over the river.,عبرنا الجسر فوق النهر.,general,noun
+park,حديقة,Children play in the park every afternoon.,يلعب الأطفال في الحديقة كل عصر.,general,noun
+market,سوق,I buy vegetables from the market every week.,أشتري الخضروات من السوق كل أسبوع.,general,noun
+restaurant,مطعم,We ate dinner in a nice restaurant yesterday.,تناولنا العشاء في مطعم جميل أمس.,general,noun
+hotel,فندق,We stayed in a hotel near the beach.,أقمنا في فندق قرب الشاطئ.,general,noun
+airport,مطار,We arrived at the airport early in the morning.,وصلنا إلى المطار مبكرا في الصباح.,general,noun
+station,محطة,The bus stops at the station every hour.,يتوقف الباص في المحطة كل ساعة.,general,noun
+train,قطار,I travel by train when I visit my uncle.,أسافر بالقطار عندما أزور عمي.,general,noun
+bus,حافلة,I go to school by bus every morning.,أذهب إلى المدرسة بالحافلة كل صباح.,general,noun
+car,سيارة,My father drives his car to work every day.,أبي يقود سيارته إلى العمل كل يوم.,general,noun
+bicycle,دراجة,I ride my bicycle to school in the morning.,أركب دراجتي إلى المدرسة في الصباح.,general,noun
+ticket,تذكرة,I bought a ticket for the train yesterday.,اشتريت تذكرة للقطار أمس.,general,noun
+map,خريطة,I use a map to find the new street.,أستخدم خريطة لأجد الشارع الجديد.,general,noun
+river,نهر,The river flows through our city.,يجري النهر عبر مدينتنا.,general,noun
+mountain,جبل,We climbed a high mountain last summer.,تسلقنا جبلا عاليا الصيف الماضي.,general,noun
+beach,شاطئ,We swim at the beach in summer.,نسبح في الشاطئ في الصيف.,general,noun
+museum,متحف,We visited a museum on our school trip.,زرنا متحفا في رحلتنا المدرسية.,general,noun
+hospital,مستشفى,The doctor works in a big hospital.,الطبيب يعمل في مستشفى كبير.,general,noun
+bank,بنك,I keep my money in the bank.,أحتفظ بمالي في البنك.,general,noun
+shop,متجر,There is a small shop near our house.,يوجد متجر صغير قرب منزلنا.,general,noun
+nature,طبيعة,I love the beauty of nature in spring.,أحب جمال الطبيعة في الربيع.,general,noun
+tree,شجرة,There is a big tree in our garden.,توجد شجرة كبيرة في حديقتنا.,general,noun
+flower,زهرة,My mother likes the red flower in the garden.,أمي تحب الزهرة الحمراء في الحديقة.,general,noun
+grass,عشب,The grass is green after the rain.,العشب أخضر بعد المطر.,general,noun
+leaf,ورقة,A green leaf fell from the tree.,سقطت ورقة خضراء من الشجرة.,general,noun
+animal,حيوان,The dog is a friendly animal.,الكلب حيوان ودود.,general,noun
+dog,كلب,My dog runs in the garden every day.,كلبي يجري في الحديقة كل يوم.,general,noun
+cat,قطة,The cat sleeps under the tree.,القطة تنام تحت الشجرة.,general,noun
+bird,طائر,A bird sings in the tree every morning.,طائر يغرد في الشجرة كل صباح.,general,noun
+fish,سمكة,We eat fish on Friday.,نأكل السمك يوم الجمعة.,general,noun
+sun,شمس,The sun rises in the morning.,تشرق الشمس في الصباح.,general,noun
+moon,قمر,The moon shines in the sky at night.,يضيء القمر في السماء ليلا.,general,noun
+star,نجمة,We can see a bright star in the sky.,يمكننا رؤية نجمة ساطعة في السماء.,general,noun
+sky,سماء,The sky is blue and clear today.,السماء زرقاء وصافية اليوم.,general,noun
+cloud,سحابة,A white cloud moves slowly in the sky.,تتحرك سحابة بيضاء ببطء في السماء.,general,noun
+rain,مطر,The rain falls on the trees in winter.,يسقط المطر على الأشجار في الشتاء.,general,noun
+snow,ثلج,Snow covers the mountains in winter.,الثلج يغطي الجبال في الشتاء.,general,noun
+wind,ريح,The wind blows the leaves from the trees.,تهب الريح فتسقط أوراق الأشجار.,general,noun
+sea,بحر,We swim in the sea in summer.,نسبح في البحر في الصيف.,general,noun
+ocean,محيط,The ocean is deep and very wide.,المحيط عميق وواسع جدا.,general,noun
+earth,أرض,The earth moves around the sun.,الأرض تدور حول الشمس.,general,noun
+air,هواء,Fresh air is good for your health.,الهواء النقي مفيد لصحتك.,general,noun
+fire,نار,We sit near the fire on cold nights.,نجلس قرب النار في الليالي الباردة.,general,noun
+stone,حجر,He picked up a small stone from the road.,التقط حجرا صغيرا من الطريق.,general,noun
+sand,رمل,Children play with sand on the beach.,يلعب الأطفال بالرمل على الشاطئ.,general,noun
+garden,حديقة,We grow flowers in our garden.,نزرع الزهور في حديقتنا.,general,noun
+forest,غابة,Many animals live in the forest.,تعيش حيوانات كثيرة في الغابة.,general,noun
+winter,شتاء,It is cold in winter in my city.,الجو بارد في الشتاء في مدينتي.,general,noun
+summer,صيف,We travel in summer every year.,نسافر في الصيف كل عام.,general,noun
+spring,ربيع,Flowers grow in spring every year.,تنمو الزهور في الربيع كل عام.,general,noun
+make,يصنع,I make a cake for my family.,أصنع كعكة لعائلتي.,general,verb
+do,يفعل,I do my homework every evening.,أقوم بواجبي المنزلي كل مساء.,general,verb
+give,يعطي,Please give me your book.,أعطني كتابك من فضلك.,general,verb
+take,يأخذ,Please take this book to the teacher.,خذ هذا الكتاب إلى المعلم من فضلك.,general,verb
+bring,يجلب,Please bring your book to class tomorrow.,أحضر كتابك إلى الصف غدا من فضلك.,general,verb
+carry,يحمل,I carry my bag to school every day.,أحمل حقيبتي إلى المدرسة كل يوم.,general,verb
+find,يجد,I can find my book in my bag.,أستطيع أن أجد كتابي في حقيبتي.,general,verb
+keep,يحفظ,Please keep your book on the table.,احتفظ بكتابك على الطاولة من فضلك.,general,verb
+put,يضع,I put my bag near the door.,أضع حقيبتي قرب الباب.,general,verb
+get,يحصل,I get a new book every month.,أحصل على كتاب جديد كل شهر.,general,verb
+go,يذهب,I go to school every morning.,أذهب إلى المدرسة كل صباح.,general,verb
+come,يأتي,Please come to my house tomorrow.,تعال إلى منزلي غدا من فضلك.,general,verb
+leave,يغادر,I leave home at seven every morning.,أغادر المنزل في السابعة كل صباح.,general,verb
+arrive,يصل,We arrive at school at eight.,نصل إلى المدرسة في الثامنة.,general,verb
+start,يبدأ,The lesson starts at nine.,يبدأ الدرس في التاسعة.,general,verb
+finish,ينهي,I finish my homework before dinner.,أنهي واجبي المنزلي قبل العشاء.,general,verb
+stop,يتوقف,Please stop talking in class.,توقف عن الكلام في الصف من فضلك.,general,verb
+begin,يبدأ,We begin our lesson with new words.,نبدأ درسنا بكلمات جديدة.,general,verb
+end,ينتهي,The lesson ends at ten.,ينتهي الدرس في العاشرة.,general,verb
+change,يغير,I change my clothes before I go out.,أغير ملابسي قبل أن أخرج.,general,verb
+grow,ينمو,Trees grow fast in spring.,تنمو الأشجار بسرعة في الربيع.,general,verb
+build,يبني,Workers build a new school in our town.,يبني العمال مدرسة جديدة في بلدتنا.,general,verb
+buy,يشتري,I buy bread from the market every day.,أشتري الخبز من السوق كل يوم.,general,verb
+sell,يبيع,He sells fruit in the market.,يبيع الفاكهة في السوق.,general,verb
+pay,يدفع,I pay for my book at the shop.,أدفع ثمن كتابي في المتجر.,general,verb
+choose,يختار,Please choose a book to read.,اختر كتابا لتقرأه من فضلك.,general,verb
+decide,يقرر,Every morning I decide what to study today.,كل صباح أقرر ماذا سأدرس اليوم.,general,verb
+remember,يتذكر,I remember my first day at school.,أتذكر أول يوم لي في المدرسة.,general,verb
+forget,ينسى,Do not forget your book at home.,لا تنس كتابك في المنزل.,general,verb
+know,يعرف,I know the answer to this question.,أعرف إجابة هذا السؤال.,general,verb
+try,يحاول,I try to speak English every day.,أحاول أن أتحدث الإنجليزية كل يوم.,general,verb
+help,يساعد,I help my mother in the kitchen.,أساعد أمي في المطبخ.,general,verb
+work,يعمل,My father works in a hospital.,أبي يعمل في مستشفى.,general,verb
+play,يلعب,Children play football after school.,يلعب الأطفال كرة القدم بعد المدرسة.,general,verb
+run,يجري,I run in the park every morning.,أجري في الحديقة كل صباح.,general,verb
+walk,يمشي,I walk to school with my friend.,أمشي إلى المدرسة مع صديقي.,general,verb
+sit,يجلس,I sit near the window in class.,أجلس قرب النافذة في الصف.,general,verb
+stand,يقف,Please stand near the door.,قف قرب الباب من فضلك.,general,verb
+wait,ينتظر,Please wait for me at the school gate.,انتظرني عند بوابة المدرسة من فضلك.,general,verb
+live,يعيش,I live in Aden with my family.,أعيش في عدن مع عائلتي.,general,verb
+big,كبير,We live in a big house near the school.,نعيش في منزل كبير قرب المدرسة.,general,adjective
+small,صغير,I live in a small village near the sea.,أعيش في قرية صغيرة قرب البحر.,general,adjective
+long,طويل,The river is long and very wide.,النهر طويل وواسع جدا.,general,adjective
+short,قصير,This is a short story for children.,هذه قصة قصيرة للأطفال.,general,adjective
+tall,طويل القامة,My brother is tall and strong.,أخي طويل القامة وقوي.,general,adjective
+high,عال,The mountain is very high.,الجبل عال جدا.,general,adjective
+low,منخفض,The water in the river is low in summer.,منسوب الماء في النهر منخفض في الصيف.,general,adjective
+new,جديد,I bought a new book yesterday.,اشتريت كتابا جديدا أمس.,general,adjective
+old,قديم,This is an old house in our village.,هذا منزل قديم في قريتنا.,general,adjective
+young,صغير السن,My young brother goes to school every day.,أخي الصغير يذهب إلى المدرسة كل يوم.,general,adjective
+good,جيد,This is a good book for students.,هذا كتاب جيد للطلاب.,general,adjective
+bad,سيئ,Smoking is bad for your health.,التدخين سيئ لصحتك.,general,adjective
+easy,سهل,This lesson is easy for all students.,هذا الدرس سهل لجميع الطلاب.,general,adjective
+difficult,صعب,This question is difficult for me.,هذا السؤال صعب بالنسبة لي.,general,adjective
+strong,قوي,He is strong and healthy.,هو قوي وصحي.,general,adjective
+weak,ضعيف,He feels weak after his illness.,يشعر بالضعف بعد مرضه.,general,adjective
+fast,سريع,The train is fast and comfortable.,القطار سريع ومريح.,general,adjective
+slow,بطيء,The old bus is slow in the morning.,الحافلة القديمة بطيئة في الصباح.,general,adjective
+hot,حار,The tea is hot so please wait.,الشاي حار فانتظر من فضلك.,general,adjective
+cold,بارد,The water is cold in winter.,الماء بارد في الشتاء.,general,adjective
+warm,دافئ,I drink warm milk before I sleep.,أشرب حليبا دافئا قبل أن أنام.,general,adjective
+cool,معتدل البرودة,The evening air is cool and fresh.,هواء المساء بارد ومنعش.,general,adjective
+bright,ساطع,The sun is bright in the morning.,الشمس ساطعة في الصباح.,general,adjective
+dark,مظلم,The room is dark at night.,الغرفة مظلمة ليلا.,general,adjective
+beautiful,جميل,The garden is beautiful in spring.,الحديقة جميلة في الربيع.,general,adjective
+busy,مشغول,My father is busy at work today.,أبي مشغول في العمل اليوم.,general,adjective
+free,مجاني,This book is free for all students.,هذا الكتاب مجاني لجميع الطلاب.,general,adjective
+safe,آمن,This road is safe for children.,هذا الطريق آمن للأطفال.,general,adjective
+dangerous,خطير,Driving fast is dangerous on this road.,القيادة بسرعة خطيرة على هذا الطريق.,general,adjective
+different,مختلف,Every student has a different book.,لكل طالب كتاب مختلف.,general,adjective

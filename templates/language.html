@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Amr Suhail Academy">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
+    <title>تعلم اللغة مع Amr | أكاديمية عمرو</title>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+        const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
+        const STUDENT_NAME = {{ student_name|tojson }};
+        const LOGGED_OUT = {% if logged_out %}true{% else %}false{% endif %};
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-inner: #f1f5f9;
+            --primary: #2563eb;
+            --primary-glow: rgba(37, 99, 235, 0.15);
+            --primary-light: #eff6ff;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.15);
+            --gold: #e79a2e;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --modal-bg: rgba(15, 23, 42, 0.6);
+            --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --radius-lg: 24px;
+            --radius-sm: 12px;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --gradient-profile: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --font-arabic: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
+            --font-latin: 'Outfit', sans-serif;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --dur-fast: 0.2s; --dur-med: 0.3s;
+        }
+        html.dark-mode {
+            --bg-body: #0b1120;
+            --bg-card: #162032;
+            --bg-card-inner: #1e293b;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.15);
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --modal-bg: rgba(11, 17, 32, 0.85);
+            --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+            --nav-bg: rgba(11, 17, 32, 0.85);
+            --gradient-profile: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        * { box-sizing: border-box; font-family: var(--font-arabic); }
+        body { background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+        .app-container { width: 100%; max-width: 850px; }
+        input, select, textarea { font-size: 16px; }
+
+        /* ===== الشريط العلوي الموحد (نفس الرئيسية) ===== */
+        .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 64px; padding: 12px 0; background: var(--nav-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; position: relative; }
+        .brandmark { width: 38px; height: 38px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(37,99,235,0.2); flex-shrink: 0; }
+        .brandmark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .brand h1 { font-size: 1.2rem; margin: 0; font-weight: 900; font-family: 'Outfit', sans-serif; color: var(--primary); }
+        .brand small { display: block; color: var(--text-muted); font-size: 0.73rem; margin-top: 2px; }
+        .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .top-nav-links { display: flex; gap: 2px; align-items: center; }
+        .top-nav-links a { padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 0.9rem; color: var(--text-muted); text-decoration: none; }
+        .top-nav-links a:hover { color: var(--primary); background: var(--primary-light); }
+        .top-nav-links a.active { color: var(--primary); background: var(--primary-light); }
+        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; position: absolute; right: -8px; top: 6px; box-shadow: 0 0 8px var(--success); }
+        .topbar-login { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; border: 0; cursor: pointer; text-decoration: none; box-shadow: 0 4px 12px rgba(37,99,235,0.2); display: inline-flex; align-items: center; gap: 6px; }
+        .topbar-login:hover { background: var(--primary-hover); }
+        .profile-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--gradient-profile); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 4px 12px rgba(37,99,235,.3); border: 0; cursor: pointer; flex-shrink: 0; font-weight: 900; }
+        .more-menu-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+        .more-menu-btn { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; box-shadow: var(--card-shadow); transition: .2s; }
+        .more-menu-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .more-menu { position: absolute; top: calc(100% + 8px); left: 0; min-width: 200px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.16); padding: 6px; display: none; z-index: 2000; }
+        .more-menu.open { display: block; animation: fadeUp .2s var(--ease) both; }
+        .more-menu button, .more-menu a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 0; background: none; color: var(--text-main); font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer; border-radius: 10px; text-decoration: none; text-align: right; }
+        .more-menu button:hover, .more-menu a:hover { background: var(--primary-light); }
+        .more-menu i { color: var(--primary); width: 18px; text-align: center; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .top-nav-links { display: none; } .topbar { align-items: flex-start; } }
+
+        /* ===== البطاقات والأزرار الموحدة ===== */
+        .main-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--card-shadow); margin-bottom: 25px; }
+        .section-title { font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+        .section-desc { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 20px; line-height: 1.8; }
+        .btn { width: 100%; padding: 14px; border-radius: var(--radius); font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; border: none; font-family: var(--font-arabic); }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px var(--primary-glow); }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-success { background: var(--success); color: #fff; box-shadow: 0 8px 20px var(--success-glow); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-card-inner); }
+        .form-msg { display: none; border-radius: var(--radius-sm); padding: 12px 14px; font-weight: 800; font-size: 0.92rem; margin-bottom: 16px; line-height: 1.7; }
+        .form-msg.show { display: block; }
+        .form-msg.error { background: var(--danger-glow); color: var(--danger); border: 1px solid var(--danger); }
+        .form-msg.info { background: var(--primary-glow); color: var(--primary); border: 1px solid var(--primary); }
+
+        /* ===== ترويسة اللغة: المستوى والتقدم والسلسلة ===== */
+        .lang-hero { text-align: center; }
+        .lang-hero-icon { width: 72px; height: 72px; border-radius: 50%; background: var(--primary-glow); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 12px; }
+        .lang-hero h2 { margin: 0 0 6px; font-size: 1.6rem; font-weight: 900; }
+        .lang-hero p { color: var(--text-muted); margin: 0 0 20px; line-height: 1.8; }
+        .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        .stat-box { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 10px; text-align: center; }
+        .stat-box .stat-num { font-family: var(--font-latin); font-weight: 900; font-size: 1.5rem; color: var(--primary); line-height: 1.2; }
+        .stat-box .stat-num.streak-num { color: #f97316; }
+        .stat-box .stat-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 700; margin-top: 4px; }
+        .level-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: #0f172a; font-weight: 900; font-size: 0.95rem; padding: 6px 18px; border-radius: 50px; margin-bottom: 14px; }
+        .progress-track { height: 12px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); width: 0%; transition: width 0.6s; border-radius: 20px; }
+        .progress-label { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.9rem; }
+        .progress-label span:last-child { color: var(--primary); font-family: var(--font-latin); }
+
+        /* ===== اختيار المسار والهدف اليومي ===== */
+        .picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 600px) { .picker-grid, .target-grid { grid-template-columns: 1fr; } .main-card { padding: 20px; } .stat-row { grid-template-columns: 1fr 1fr 1fr; gap: 8px; } }
+        .picker-btn { border: 2px solid var(--border); background: var(--bg-card-inner); border-radius: var(--radius); padding: 16px 10px; cursor: pointer; font-family: var(--font-arabic); font-weight: 800; font-size: 1rem; color: var(--text-main); display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.25s; }
+        .picker-btn i { font-size: 1.5rem; color: var(--primary); }
+        .picker-btn small { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+        .picker-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .picker-btn.active { background: var(--primary-glow); border-color: var(--primary); color: var(--primary); box-shadow: 0 10px 25px var(--primary-glow); }
+        .picker-btn.active small { color: var(--text-muted); }
+        .picker-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+        /* ===== بطاقة الكلمة ===== */
+        .word-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 22px; text-align: center; margin-bottom: 16px; }
+        .word-state { display: inline-block; font-size: 0.78rem; font-weight: 800; padding: 4px 14px; border-radius: 50px; background: var(--primary-glow); color: var(--primary); margin-bottom: 12px; }
+        .word-state.review { background: var(--warning-glow); color: var(--warning); }
+        .word-en { font-family: var(--font-latin); font-size: 2.2rem; font-weight: 900; color: var(--text-main); margin: 0 0 4px; direction: ltr; line-height: 1.2; }
+        .word-pos { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-bottom: 14px; }
+        .word-ar { font-size: 1.5rem; font-weight: 900; color: var(--primary); margin: 0 0 18px; }
+        .speak-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+        .speak-btn { border: 2px solid var(--primary); background: var(--bg-card); color: var(--primary); border-radius: 50px; padding: 10px 18px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.25s; font-family: var(--font-arabic); }
+        .speak-btn:hover { background: var(--primary); color: #fff; }
+        .speak-btn.slow { border-color: var(--border); color: var(--text-muted); }
+        .speak-btn.slow:hover { background: var(--bg-card-inner); color: var(--text-main); border-color: var(--text-muted); }
+        .sentence-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: right; }
+        .sentence-en { font-family: var(--font-latin); font-size: 1.05rem; font-weight: 600; direction: ltr; text-align: left; line-height: 1.7; margin: 0 0 6px; }
+        .sentence-ar { color: var(--text-muted); font-size: 0.95rem; line-height: 1.8; margin: 0; }
+        .study-progress { text-align: center; color: var(--text-muted); font-weight: 800; font-size: 0.9rem; margin-bottom: 14px; }
+        .speech-note { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-top: 10px; }
+
+        /* ===== الاختبار ===== */
+        .quiz-q { font-size: 1.15rem; font-weight: 900; margin: 0 0 4px; line-height: 1.8; }
+        .quiz-q-en { font-family: var(--font-latin); direction: ltr; text-align: center; font-size: 1.6rem; }
+        .quiz-hint { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px; text-align: center; }
+        .quiz-listen { text-align: center; margin-bottom: 18px; }
+        .opt-list { display: grid; gap: 10px; }
+        .opt-btn { border: 2px solid var(--border); background: var(--bg-card-inner); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; font-family: var(--font-arabic); font-weight: 800; font-size: 1.05rem; color: var(--text-main); text-align: center; transition: 0.2s; width: 100%; }
+        .opt-btn:hover:not(:disabled) { border-color: var(--primary); }
+        .opt-btn:disabled { cursor: default; opacity: 0.85; }
+        .opt-btn.correct { background: var(--success-glow); border-color: var(--success); color: var(--success); }
+        .opt-btn.wrong { background: var(--danger-glow); border-color: var(--danger); color: var(--danger); }
+        .opt-btn .opt-en { font-family: var(--font-latin); direction: ltr; }
+        .quiz-feedback { text-align: center; font-weight: 900; font-size: 1.05rem; margin: 16px 0 4px; }
+        .quiz-feedback.good { color: var(--success); }
+        .quiz-feedback.bad { color: var(--danger); }
+        .quiz-correct-answer { text-align: center; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
+
+        /* ===== الملخص والتقدم ===== */
+        .summary-box { text-align: center; padding: 10px 0; }
+        .summary-box .big-xp { font-family: var(--font-latin); font-size: 2.4rem; font-weight: 900; color: var(--gold); line-height: 1.1; }
+        .track-count-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--border); font-weight: 800; }
+        .track-count-row:last-child { border-bottom: 0; }
+        .track-count-row .count { font-family: var(--font-latin); color: var(--primary); font-weight: 900; }
+        .loading-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-weight: 800; }
+        .spinner { width: 46px; height: 46px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== نافذة تسجيل الدخول (نفس نافذة الرئيسية: loginBox) ===== */
+        .popup-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95); opacity: 0; visibility: hidden; z-index: 2010; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 25px 50px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 92%; max-width: 500px; max-height: 85vh; }
+        .popup-box.active { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
+        .popup-header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 14px 20px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: var(--text-main); flex-shrink: 0; }
+        .popup-header i.header-icon { color: var(--primary); margin-left: 10px; font-size: 1.2rem; }
+        .popup-close { cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--bg-body); color: var(--text-muted); transition: 0.2s; border: 1px solid var(--border); }
+        .popup-close:hover { background: var(--danger); color: white; border-color: var(--danger); }
+        .popup-body { padding: 16px; overflow-y: auto; flex: 1; background: var(--bg-body); }
+        .popup-overlay { position: fixed; inset: 0; background: var(--modal-bg); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 2000; display: none; }
+        .popup-overlay.active { display: block; }
+        .qa-input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 16px; margin-bottom: 12px; outline: none; transition: 0.3s; font-weight: 500; box-sizing: border-box; font-family: var(--font-arabic); }
+        .qa-input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+        .pw-wrap { position: relative; }
+        .pw-wrap .qa-input-field { padding-left: 42px; }
+        .pw-toggle { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 6px; line-height: 1; }
+        .pw-toggle:hover { color: var(--primary); }
+        .btn-calc-action { width: 100%; padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer; border: none; color: white; transition: 0.3s; font-size: 0.95rem; display: flex; justify-content: center; align-items: center; gap: 10px; box-sizing: border-box; background: var(--primary); font-family: var(--font-arabic); }
+        .btn-calc-action:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); }
+
+        /* ===== التوست والتنقل السفلي ===== */
+        .toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; transition: 0.3s; opacity: 0; transform: translateY(10px); pointer-events: auto; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-color: var(--success); color: var(--success); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+        .toast.info { border-color: var(--primary); color: var(--primary); }
+        .mobile-bottom-nav { display: none; }
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1500; background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.06); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); justify-content: space-around; }
+            html.dark-mode .mobile-bottom-nav { background: rgba(11,17,32,0.85); box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
+            .mobile-bottom-nav a { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 56px; min-height: 48px; padding: 6px 4px; background: none; border: none; color: var(--text-muted); font-size: 0.68rem; font-weight: 800; font-family: var(--font-arabic); cursor: pointer; text-decoration: none; border-radius: 12px; }
+            .mobile-bottom-nav a i { font-size: 1.25rem; }
+            .mobile-bottom-nav a.active { color: var(--primary); }
+            body { padding-bottom: 90px; }
+            .toast-container { bottom: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="popup-overlay" id="popupOverlay" onclick="closeAllPopups()"></div>
+
+<div class="app-container">
+
+    <header class="topbar">
+        <a href="/" class="brand">
+            <div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
+            <div><h1>Amr Suhail Academy</h1><small>تعلم اللغة مع Amr</small></div>
+            {% if session.get('is_admin') or session.get('is_assistant') %}<span class="admin-indicator-dot"></span>{% endif %}
+        </a>
+        <div class="top-actions">
+            <nav class="top-nav-links">
+                <a href="/">الرئيسية</a>
+                <a href="/?page=services">خدمات</a>
+                <a href="/language" class="active">تعلم اللغة</a>
+            </nav>
+            {% if student_id %}
+            <button class="profile-circle" type="button" onclick="window.location.href='/'" title="ملفي الشخصي" aria-label="ملفي الشخصي">{{ (student_name or '')[:1] }}</button>
+            {% else %}
+            <button type="button" class="topbar-login" onclick="togglePopup('loginBox')"><i class="fa-regular fa-user"></i> دخول</button>
+            {% endif %}
+            <div class="more-menu-wrap">
+                <button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button>
+                <div class="more-menu" id="moreMenu" role="menu">
+                    <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon theme-toggle-icon"></i> تبديل المظهر</button>
+                    <a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="form-msg error" id="langError" role="alert"></div>
+
+    <!-- ===== بطاقة تسجيل الدخول (تظهر للزائر غير المسجل) ===== -->
+    <div class="main-card lang-hero" id="loggedOutCard" style="display:none;">
+        <div class="lang-hero-icon"><i class="fa-solid fa-language"></i></div>
+        <h2>تعلم اللغة مع Amr</h2>
+        <p>كلمات يومية في تخصصك — طب، هندسة، أو عام — مع النطق والترجمة والاختبار. سجّل دخولك ليُحفظ تقدمك ومستواك وسلسلة أيامك.</p>
+        <button type="button" class="btn btn-primary" onclick="closeAllPopups(); togglePopup('loginBox')"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+        <button type="button" class="btn btn-outline" onclick="closeAllPopups(); togglePopup('loginBox'); showRegisterForm();"><i class="fa-solid fa-user-plus"></i> إنشاء حساب جديد</button>
+    </div>
+
+    <!-- ===== التطبيق (للمسجلين فقط) ===== -->
+    <div id="langApp" style="display:none;">
+
+        <div class="main-card lang-hero">
+            <div class="lang-hero-icon"><i class="fa-solid fa-language"></i></div>
+            <h2>تعلم اللغة مع Amr</h2>
+            <p id="heroTrackLine">كلمات يومية في تخصصك مع النطق والترجمة</p>
+            <div><span class="level-badge"><i class="fa-solid fa-trophy"></i> المستوى <span id="levelNum">1</span></span></div>
+            <div class="stat-row">
+                <div class="stat-box"><div class="stat-num" id="statMastered">0</div><div class="stat-label">كلمة متقنة</div></div>
+                <div class="stat-box"><div class="stat-num streak-num"><i class="fa-solid fa-fire"></i> <span id="statStreak">0</span></div><div class="stat-label">أيام متتالية</div></div>
+                <div class="stat-box"><div class="stat-num" id="statXp">0</div><div class="stat-label">XP من اللغة</div></div>
+            </div>
+            <div class="progress-label"><span>التقدم نحو المستوى التالي</span><span id="levelProgressPct">0%</span></div>
+            <div class="progress-track"><div class="progress-bar-fill" id="levelProgressFill"></div></div>
+        </div>
+
+        <div class="main-card">
+            <h3 class="section-title"><i class="fa-solid fa-route" style="color:var(--primary);"></i> مسارك وهدفك اليومي</h3>
+            <p class="section-desc">اختر التخصص الذي تريد تعلم كلماته، وعدد الكلمات الجديدة كل يوم. تغيير أي منهما يحفظ تلقائياً ويعيد تحميل درس اليوم.</p>
+            <div class="picker-grid" id="trackPicker" role="group" aria-label="اختر المسار">
+                <button type="button" class="picker-btn" data-track="medical"><i class="fa-solid fa-stethoscope"></i> طب<small>مصطلحات طبية وجملها</small></button>
+                <button type="button" class="picker-btn" data-track="engineering"><i class="fa-solid fa-gears"></i> هندسة<small>مصطلحات هندسية وجملها</small></button>
+                <button type="button" class="picker-btn" data-track="general"><i class="fa-solid fa-earth-americas"></i> عام<small>كلمات الحياة اليومية</small></button>
+            </div>
+            <div style="height:18px;"></div>
+            <div class="picker-grid target-grid" id="targetPicker" role="group" aria-label="الهدف اليومي">
+                <button type="button" class="picker-btn" data-target="5"><i class="fa-solid fa-list-ol"></i> 5 كلمات<small>في اليوم</small></button>
+                <button type="button" class="picker-btn" data-target="10"><i class="fa-solid fa-list-ol"></i> 10 كلمات<small>في اليوم</small></button>
+                <button type="button" class="picker-btn" data-target="20"><i class="fa-solid fa-list-ol"></i> 20 كلمة<small>في اليوم</small></button>
+            </div>
+        </div>
+
+        <div class="main-card" id="lessonCard">
+            <h3 class="section-title"><i class="fa-solid fa-book-open" style="color:var(--primary);"></i> درس اليوم</h3>
+            <p class="section-desc" id="lessonDesc">راجع كلماتك أولاً، ثم تعلم كلمات جديدة.</p>
+            <div id="lessonBody"><div class="loading-state"><div class="spinner"></div>جارٍ تحميل درس اليوم...</div></div>
+        </div>
+
+        <div class="main-card" id="quizCard" style="display:none;">
+            <h3 class="section-title"><i class="fa-solid fa-circle-question" style="color:var(--primary);"></i> اختبر نفسك</h3>
+            <p class="section-desc" id="quizDesc">أجب عن كل كلمة — ترجمة، استماع، أو إكمال جملة.</p>
+            <div id="quizBody"></div>
+        </div>
+
+        <div class="main-card" id="summaryCard" style="display:none;">
+            <h3 class="section-title"><i class="fa-solid fa-flag-checkered" style="color:var(--primary);"></i> ملخص الدرس</h3>
+            <div class="summary-box" id="summaryBody"></div>
+        </div>
+
+        <div class="main-card">
+            <h3 class="section-title"><i class="fa-solid fa-chart-simple" style="color:var(--primary);"></i> تقدمي</h3>
+            <p class="section-desc">عدد الكلمات المتقنة في كل مسار.</p>
+            <div id="progressBody"><div class="loading-state"><div class="spinner"></div>جارٍ تحميل التقدم...</div></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== نافذة تسجيل الدخول (نفس النافذة في الرئيسية: loginBox) ===== -->
+<div class="popup-box" id="loginBox">
+    <div class="popup-header"><div><i class="fa-solid fa-user header-icon" style="color:var(--primary);"></i> تسجيل الدخول</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="popup-body">
+        <div id="loginForm" style="display:block;">
+            <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
+            <div class="pw-wrap"><input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('login_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
+            <div id="loginError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
+            <button type="button" onclick="studentLogin()" class="btn-calc-action"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
+            <hr style="border-color:var(--border); margin:15px 0;">
+            <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">ليس لديك حساب؟ <span onclick="showRegisterForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل كطالب جديد</span></p>
+        </div>
+        <div id="registerForm" style="display:none;">
+            <input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
+            <div class="pw-wrap"><input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('reg_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
+            <input type="text" id="reg_name" placeholder="الاسم الكامل" class="qa-input-field">
+            <div id="regError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
+            <button type="button" onclick="studentRegister()" class="btn-calc-action" style="background:var(--success);"><i class="fa-solid fa-user"></i> إنشاء حساب</button>
+            <hr style="border-color:var(--border); margin:15px 0;">
+            <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">لديك حساب بالفعل؟ <span onclick="showLoginForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل دخول</span></p>
+        </div>
+    </div>
+</div>
+
+<nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
+    <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+    <a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
+    <a href="/language" class="active"><i class="fa-solid fa-language"></i> اللغة</a>
+</nav>
+
+<script>
+/* ===== تعلم اللغة مع Amr — منطق الصفحة ===== */
+var TRACK_LABELS = { medical: 'طب', engineering: 'هندسة', general: 'عام' };
+var TRACK_ICONS = { medical: 'fa-stethoscope', engineering: 'fa-gears', general: 'fa-earth-americas' };
+var profile = null;          // GET /api/language/profile
+var lessonWords = [];        // review أولاً ثم new
+var studyIndex = 0;
+var quizQuestions = [];      // {word, type, options, correct}
+var quizIndex = 0;
+var quizCorrect = 0;
+var quizAnswered = false;
+var completeCalled = false;
+var lessonXp = 0;
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+}
+function showToast(msg, type, duration) {
+    var c = $('toastContainer');
+    if (!c) return;
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || 'info');
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 50);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 500); }, duration || 3000);
+}
+function showLangError(msg) {
+    var el = $('langError');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+}
+function hideLangError() {
+    var el = $('langError');
+    if (el) { el.textContent = ''; el.classList.remove('show'); }
+}
+
+/* ===== النوافذ والمظهر (نفس نمط الرئيسية) ===== */
+function togglePopup(boxId) {
+    var target = $(boxId);
+    if (!target) return;
+    var isActive = target.classList.contains('active');
+    closeAllPopups();
+    if (!isActive) {
+        target.classList.add('active');
+        var overlay = $('popupOverlay');
+        if (overlay) overlay.classList.add('active');
+    }
+}
+function closeAllPopups() {
+    if (typeof closeMoreMenu === 'function') closeMoreMenu();
+    var boxes = document.querySelectorAll('.popup-box');
+    for (var i = 0; i < boxes.length; i++) boxes[i].classList.remove('active');
+    var overlay = $('popupOverlay');
+    if (overlay) overlay.classList.remove('active');
+}
+function toggleMoreMenu(e) {
+    if (e) e.stopPropagation();
+    var m = $('moreMenu');
+    if (m) m.classList.toggle('open');
+}
+function closeMoreMenu() {
+    var m = $('moreMenu');
+    if (m) m.classList.remove('open');
+}
+document.addEventListener('click', function (e) {
+    var m = $('moreMenu');
+    if (m && m.classList.contains('open') && !e.target.closest('.more-menu-wrap')) closeMoreMenu();
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAllPopups(); });
+function updateThemeIcon() {
+    var isDark = document.documentElement.classList.contains('dark-mode');
+    var icons = document.querySelectorAll('.theme-toggle-icon');
+    for (var i = 0; i < icons.length; i++) {
+        icons[i].classList.toggle('fa-moon', !isDark);
+        icons[i].classList.toggle('fa-sun', isDark);
+    }
+}
+function toggleTheme() {
+    document.documentElement.classList.toggle('dark-mode');
+    try { localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light'); } catch (e) {}
+    updateThemeIcon();
+}
+updateThemeIcon();
+
+/* ===== تسجيل الدخول / التسجيل (نفس نقاط النهاية في الرئيسية) ===== */
+function togglePwVisibility(inputId, btn) {
+    var input = $(inputId);
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    if (btn) btn.innerHTML = show ? '<i class="fa-regular fa-eye-slash"></i>' : '<i class="fa-regular fa-eye"></i>';
+}
+function showLoginError(msg) {
+    showToast(msg, 'error', 5000);
+    var m = $('loginError');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+function showRegError(msg) {
+    showToast(msg, 'error', 5000);
+    var m = $('regError');
+    if (m) { m.textContent = msg; m.style.display = 'block'; }
+}
+function showRegisterForm() { $('loginForm').style.display = 'none'; $('registerForm').style.display = 'block'; }
+function showLoginForm() { $('loginForm').style.display = 'block'; $('registerForm').style.display = 'none'; }
+async function studentLogin() {
+    var errEl = $('loginError');
+    if (errEl) errEl.style.display = 'none';
+    var username = $('login_username').value.trim();
+    var password = $('login_password').value.trim();
+    if (!username || !password) { showLoginError('يرجى ملء جميع الحقول.'); return; }
+    try {
+        var res = await fetch('/student/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        });
+        var data = null;
+        try { data = await res.json(); } catch (e) { data = null; }
+        if (data && data.status === 'success') {
+            showToast('تم تسجيل الدخول بنجاح!', 'success');
+            setTimeout(function () { location.reload(); }, 600);
+        } else showLoginError((data && data.message) || 'بيانات الدخول غير صحيحة');
+    } catch (e) { showLoginError('خطأ في الاتصال بالسيرفر.'); }
+}
+async function studentRegister() {
+    var errEl = $('regError');
+    if (errEl) errEl.style.display = 'none';
+    var username = $('reg_username').value.trim();
+    var password = $('reg_password').value.trim();
+    var name = $('reg_name').value.trim();
+    if (!username || !password || !name) { showRegError('يرجى ملء جميع الحقول.'); return; }
+    try {
+        var res = await fetch('/student/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password, name: name })
+        });
+        var data = null;
+        try { data = await res.json(); } catch (e) { data = null; }
+        if (data && data.status === 'success') { showToast('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.', 'success', 5000); showLoginForm(); }
+        else showRegError((data && data.message) || 'تعذر إنشاء الحساب.');
+    } catch (e) { showRegError('خطأ في الاتصال.'); }
+}
+
+/* ===== النطق (Web Speech API) ===== */
+function speechSupported() { return ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window); }
+function speak(text, rate) {
+    if (!speechSupported()) {
+        var note = $('speechNote');
+        if (note) note.style.display = 'block';
+        return;
+    }
+    try {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = rate || 1;
+        window.speechSynthesis.speak(u);
+    } catch (e) { /* النطق غير متاح — تبقى البطاقة قابلة للقراءة */ }
+}
+
+/* ===== جلب البيانات ===== */
+function isLoggedOutResponse(res) { return res.status === 401 || res.status === 403; }
+function showLoggedOut() {
+    $('langApp').style.display = 'none';
+    $('loggedOutCard').style.display = 'block';
+}
+function showApp() {
+    $('loggedOutCard').style.display = 'none';
+    $('langApp').style.display = 'block';
+}
+function levelFromMastered(mastered) {
+    var m = mastered || 0;
+    return { level: Math.floor(m / 100) + 1, progress: m % 100 };
+}
+function renderHero(p) {
+    var mastered = p.mastered || 0;
+    var lv = (p.level !== undefined && p.level !== null) ? p.level : levelFromMastered(mastered).level;
+    var prog = (p.level_progress !== undefined && p.level_progress !== null) ? p.level_progress : levelFromMastered(mastered).progress;
+    $('levelNum').textContent = lv;
+    $('statMastered').textContent = mastered;
+    $('statStreak').textContent = p.streak || 0;
+    $('statXp').textContent = (p.xp_from_language !== undefined && p.xp_from_language !== null) ? p.xp_from_language : (p.total_points || 0);
+    $('levelProgressPct').textContent = prog + '%';
+    $('levelProgressFill').style.width = prog + '%';
+    var trackName = TRACK_LABELS[p.track] || 'عام';
+    $('heroTrackLine').textContent = 'مسارك الحالي: ' + trackName + ' — ' + (p.daily_target || 10) + ' كلمات جديدة كل يوم';
+}
+function markPicker(containerId, attr, value) {
+    var btns = document.querySelectorAll('#' + containerId + ' .picker-btn');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', String(btns[i].getAttribute(attr)) === String(value));
+    }
+}
+async function loadProfile() {
+    var res = await fetch('/api/language/profile');
+    if (isLoggedOutResponse(res)) { showLoggedOut(); return null; }
+    if (!res.ok) throw new Error('تعذر تحميل الملف');
+    var data = await res.json();
+    profile = data.profile || data;
+    renderHero(profile);
+    markPicker('trackPicker', 'data-track', profile.track || 'general');
+    markPicker('targetPicker', 'data-target', profile.daily_target || 10);
+    return profile;
+}
+async function loadToday() {
+    var res = await fetch('/api/language/today');
+    if (isLoggedOutResponse(res)) { showLoggedOut(); return null; }
+    if (!res.ok) throw new Error('تعذر تحميل درس اليوم');
+    var data = await res.json();
+    var review = data.review || [];
+    var fresh = data.new || [];
+    lessonWords = review.concat(fresh);
+    if (data.mastered !== undefined) {
+        var p = profile || {};
+        p.mastered = data.mastered;
+        if (data.level !== undefined) p.level = data.level;
+        if (data.streak !== undefined) p.streak = data.streak;
+        if (data.track) p.track = data.track;
+        if (data.daily_target) p.daily_target = data.daily_target;
+        profile = p;
+        renderHero(profile);
+        markPicker('trackPicker', 'data-track', profile.track || 'general');
+        markPicker('targetPicker', 'data-target', profile.daily_target || 10);
+    }
+    return data;
+}
+async function loadProgress() {
+    try {
+        var res = await fetch('/api/language/progress');
+        if (!res.ok) return;
+        var data = await res.json();
+        var counts = data.counts || {};
+        var rows = '';
+        var keys = ['medical', 'engineering', 'general'];
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            rows += '<div class="track-count-row"><span><i class="fa-solid ' + TRACK_ICONS[k] + '" style="color:var(--primary); margin-left:8px;"></i>' + TRACK_LABELS[k] + '</span><span class="count">' + (counts[k] || 0) + ' كلمة متقنة</span></div>';
+        }
+        $('progressBody').innerHTML = rows;
+        if (data.mastered !== undefined && profile) {
+            profile.mastered = data.mastered;
+            if (data.level !== undefined) profile.level = data.level;
+            if (data.progress_pct !== undefined) profile.level_progress = data.progress_pct;
+            if (data.streak !== undefined) profile.streak = data.streak;
+            renderHero(profile);
+        }
+    } catch (e) { /* قسم التقدم اختياري — لا يوقف الدرس */ }
+}
+
+/* ===== تغيير المسار / الهدف اليومي ===== */
+async function saveProfile(patch, btn) {
+    hideLangError();
+    if (btn) btn.disabled = true;
+    try {
+        var res = await fetch('/api/language/profile', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch)
+        });
+        if (isLoggedOutResponse(res)) { showLoggedOut(); return; }
+        if (!res.ok) throw new Error('تعذر الحفظ');
+        var data = await res.json();
+        profile = data.profile || data;
+        renderHero(profile);
+        markPicker('trackPicker', 'data-track', profile.track || 'general');
+        markPicker('targetPicker', 'data-target', profile.daily_target || 10);
+        showToast('تم الحفظ — تم تحميل درس جديد حسب اختيارك', 'success');
+        await reloadLesson();
+    } catch (e) {
+        showLangError('تعذر حفظ اختيارك — تحقق من الاتصال وحاول مجدداً.');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+document.querySelectorAll('#trackPicker .picker-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        if (profile && profile.track === btn.getAttribute('data-track')) return;
+        saveProfile({ track: btn.getAttribute('data-track') }, btn);
+    });
+});
+document.querySelectorAll('#targetPicker .picker-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var v = parseInt(btn.getAttribute('data-target'), 10);
+        if (profile && profile.daily_target === v) return;
+        saveProfile({ daily_target: v }, btn);
+    });
+});
+
+/* ===== الدرس: بطاقة كلمة بعد كلمة (مراجعة أولاً ثم جديد) ===== */
+function renderStudyCard() {
+    var body = $('lessonBody');
+    if (!lessonWords.length) {
+        body.innerHTML = '<div class="loading-state"><i class="fa-solid fa-circle-check" style="font-size:2rem; color:var(--success);"></i><br><br>لا توجد كلمات اليوم — كل كلمات هذا المسار متقنة. جرّب مساراً آخر أو ارجع غداً.</div>';
+        return;
+    }
+    var w = lessonWords[studyIndex];
+    var isReview = (w.state === 'review') || (studyIndex < (lessonWords._reviewCount || 0));
+    var total = lessonWords.length;
+    var isLast = studyIndex === total - 1;
+    var speechNote = speechSupported()
+        ? '<div class="speech-note" id="speechNote" style="display:none;">النطق غير مدعوم في هذا المتصفح</div>'
+        : '<div class="speech-note">النطق غير مدعوم في هذا المتصفح</div>';
+    body.innerHTML =
+        '<div class="study-progress">كلمة ' + (studyIndex + 1) + ' من ' + total + (isReview ? ' — مراجعة' : ' — جديدة') + '</div>' +
+        '<div class="word-card">' +
+        '<span class="word-state' + (isReview ? ' review' : '') + '">' + (isReview ? 'مراجعة' : 'كلمة جديدة') + '</span>' +
+        '<p class="word-en">' + esc(w.word) + '</p>' +
+        '<div class="word-pos">' + esc(w.pos || '') + '</div>' +
+        '<p class="word-ar">' + esc(w.translation) + '</p>' +
+        '<div class="speak-row">' +
+        '<button type="button" class="speak-btn" data-speak-word="' + esc(w.word) + '" data-speak-rate="1"><i class="fa-solid fa-volume-high"></i> استمع</button>' +
+        '<button type="button" class="speak-btn slow" data-speak-word="' + esc(w.word) + '" data-speak-rate="0.6"><i class="fa-solid fa-volume-low"></i> استمع ببطء</button>' +
+        '</div>' +
+        speechNote +
+        '<div class="sentence-box">' +
+        '<p class="sentence-en">' + esc(w.sentence || '') + '</p>' +
+        '<p class="sentence-ar">' + esc(w.sentence_translation || '') + '</p>' +
+        '</div></div>' +
+        '<button type="button" class="btn ' + (isLast ? 'btn-success' : 'btn-primary') + '" onclick="' + (isLast ? 'startQuiz()' : 'nextStudyCard()') + '">' +
+        (isLast ? '<i class="fa-solid fa-circle-question"></i> ابدأ الاختبار' : 'التالي <i class="fa-solid fa-arrow-left"></i>') +
+        '</button>';
+    bindSpeakButtons(body);
+}
+function bindSpeakButtons(container) {
+    var btns = container.querySelectorAll('[data-speak-word]');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+            speak(this.getAttribute('data-speak-word'), parseFloat(this.getAttribute('data-speak-rate') || '1'));
+        });
+    }
+}
+function nextStudyCard() {
+    if (studyIndex < lessonWords.length - 1) { studyIndex++; renderStudyCard(); }
+}
+async function reloadLesson() {
+    studyIndex = 0;
+    quizQuestions = [];
+    quizIndex = 0;
+    quizCorrect = 0;
+    completeCalled = false;
+    lessonXp = 0;
+    $('quizCard').style.display = 'none';
+    $('summaryCard').style.display = 'none';
+    $('lessonCard').style.display = 'block';
+    $('lessonBody').innerHTML = '<div class="loading-state"><div class="spinner"></div>جارٍ تحميل درس اليوم...</div>';
+    try {
+        var data = await loadToday();
+        if (!data) return;
+        lessonWords._reviewCount = (data.review || []).length;
+        renderStudyCard();
+    } catch (e) {
+        $('lessonBody').innerHTML = '<div class="loading-state">تعذر تحميل درس اليوم — تحقق من الاتصال وحاول مجدداً.</div>';
+        showLangError('تعذر تحميل درس اليوم — تحقق من الاتصال وحاول مجدداً.');
+    }
+}
+
+/* ===== الاختبار: 3 أنواع أسئلة ===== */
+function blankSentence(sentence, word) {
+    if (!sentence) return '_____';
+    var re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+    if (re.test(sentence)) return sentence.replace(re, '_____');
+    return sentence + ' _____';
+}
+function buildQuiz() {
+    var types = shuffle(['translate', 'listen', 'fill']);
+    quizQuestions = lessonWords.map(function (w, i) {
+        var type = types[i % types.length];
+        var others = shuffle(lessonWords.filter(function (o) { return o.id !== w.id; }));
+        var opts = [];
+        if (type === 'translate') {
+            opts = shuffle([w].concat(others.slice(0, 3))).map(function (o) { return { value: o.id, label: o.translation, en: null }; });
+        } else {
+            opts = shuffle([w].concat(others.slice(0, 3))).map(function (o) { return { value: o.id, label: o.word, en: o.word }; });
+        }
+        return { word: w, type: type, options: opts, correctId: w.id };
+    });
+    quizQuestions = shuffle(quizQuestions);
+}
+function startQuiz() {
+    if (!lessonWords.length) return;
+    buildQuiz();
+    quizIndex = 0;
+    quizCorrect = 0;
+    quizAnswered = false;
+    completeCalled = false;
+    lessonXp = 0;
+    $('lessonCard').style.display = 'none';
+    $('summaryCard').style.display = 'none';
+    $('quizCard').style.display = 'block';
+    $('quizCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderQuizQuestion();
+}
+function renderQuizQuestion() {
+    var body = $('quizBody');
+    var q = quizQuestions[quizIndex];
+    var w = q.word;
+    quizAnswered = false;
+    var head = '';
+    if (q.type === 'translate') {
+        head = '<p class="quiz-q quiz-q-en">' + esc(w.word) + '</p><p class="quiz-hint">ما الترجمة الصحيحة لهذه الكلمة؟</p>';
+    } else if (q.type === 'listen') {
+        head = '<p class="quiz-q">استمع واختر الكلمة التي سمعتها</p>' +
+            '<div class="quiz-listen"><button type="button" class="speak-btn" data-speak-word="' + esc(w.word) + '" data-speak-rate="1"><i class="fa-solid fa-volume-high"></i> استمع للكلمة</button> ' +
+            '<button type="button" class="speak-btn slow" data-speak-word="' + esc(w.word) + '" data-speak-rate="0.6"><i class="fa-solid fa-volume-low"></i> ببطء</button></div>' +
+            (speechSupported() ? '' : '<p class="quiz-hint">النطق غير مدعوم في هذا المتصفح — اقرأ الخيارات واختر الكلمة المطابقة للترجمة «' + esc(w.translation) + '».</p>');
+    } else {
+        head = '<p class="quiz-q quiz-q-en" style="font-size:1.15rem;">' + esc(blankSentence(w.sentence || '', w.word)) + '</p><p class="quiz-hint">أكمل الجملة بالكلمة الصحيحة</p>';
+    }
+    var optsHtml = q.options.map(function (o) {
+        var label = o.en ? '<span class="opt-en">' + esc(o.label) + '</span>' : esc(o.label);
+        return '<button type="button" class="opt-btn" data-value="' + esc(o.value) + '" onclick="chooseOption(this)">' + label + '</button>';
+    }).join('');
+    body.innerHTML =
+        '<div class="study-progress">سؤال ' + (quizIndex + 1) + ' من ' + quizQuestions.length + '</div>' +
+        head +
+        '<div class="opt-list">' + optsHtml + '</div>' +
+        '<div id="quizFeedback"></div>' +
+        '<button type="button" class="btn btn-primary" id="quizNextBtn" style="display:none;" onclick="nextQuizQuestion()">' +
+        (quizIndex === quizQuestions.length - 1 ? 'عرض النتيجة' : 'التالي') + ' <i class="fa-solid fa-arrow-left"></i></button>';
+    bindSpeakButtons(body);
+    if (q.type === 'listen' && speechSupported()) speak(w.word, 1);
+}
+function chooseOption(btn) {
+    if (quizAnswered) return;
+    quizAnswered = true;
+    var q = quizQuestions[quizIndex];
+    var chosen = btn.getAttribute('data-value');
+    var correct = String(chosen) === String(q.correctId);
+    var buttons = document.querySelectorAll('#quizBody .opt-btn');
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+        if (String(buttons[i].getAttribute('data-value')) === String(q.correctId)) buttons[i].classList.add('correct');
+    }
+    if (correct) {
+        quizCorrect++;
+        btn.classList.add('correct');
+    } else {
+        btn.classList.add('wrong');
+    }
+    var fb = $('quizFeedback');
+    var correctLabel = q.type === 'translate' ? q.word.translation : q.word.word;
+    fb.innerHTML = '<div class="quiz-feedback ' + (correct ? 'good' : 'bad') + '">' + (correct ? 'إجابة صحيحة — أحسنت!' : 'إجابة خاطئة') + '</div>' +
+        (correct ? '' : '<div class="quiz-correct-answer">الإجابة الصحيحة: ' + esc(correctLabel) + '</div>');
+    $('quizNextBtn').style.display = 'flex';
+    submitAnswer(q.word.id, correct, q.type);
+}
+async function submitAnswer(wordId, correct, quizType) {
+    try {
+        var res = await fetch('/api/language/answer', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word_id: wordId, correct: correct, quiz_type: quizType })
+        });
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data.mastered !== undefined && profile) { profile.mastered = data.mastered; }
+        if (data.level !== undefined && profile) { profile.level = data.level; }
+        if (data.total_points !== undefined && profile) { profile.xp_from_language = data.total_points; }
+        if (data.xp_awarded) lessonXp += data.xp_awarded;
+        if (profile) renderHero(profile);
+    } catch (e) { /* فشل حفظ إجابة واحدة لا يوقف الاختبار — تُعاد المحاولة في الإجابة التالية */ }
+}
+function nextQuizQuestion() {
+    if (quizIndex < quizQuestions.length - 1) {
+        quizIndex++;
+        renderQuizQuestion();
+    } else {
+        finishQuiz();
+    }
+}
+async function finishQuiz() {
+    $('quizCard').style.display = 'none';
+    var summary = $('summaryCard');
+    summary.style.display = 'block';
+    var body = $('summaryBody');
+    body.innerHTML = '<div class="loading-state"><div class="spinner"></div>جارٍ حفظ نتيجتك...</div>';
+    summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var streak = profile ? (profile.streak || 0) : 0;
+    var xp = lessonXp;
+    if (!completeCalled) {
+        completeCalled = true;
+        try {
+            var res = await fetch('/api/language/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+            if (res.ok) {
+                var data = await res.json();
+                if (data.xp_awarded !== undefined) xp = data.xp_awarded;
+                if (data.streak !== undefined) streak = data.streak;
+                if (data.level !== undefined && profile) profile.level = data.level;
+                if (data.total_points !== undefined && profile) profile.xp_from_language = data.total_points;
+                if (profile) { profile.streak = streak; renderHero(profile); }
+            }
+        } catch (e) { /* الملخص يظهر حتى لو فشل الحفظ */ }
+    }
+    loadProgress();
+    var total = quizQuestions.length;
+    body.innerHTML =
+        '<div class="summary-box">' +
+        '<div style="font-size:2.6rem; color:var(--success);"><i class="fa-solid fa-circle-check"></i></div>' +
+        '<h3 style="margin:10px 0 4px;">أكملت درس اليوم!</h3>' +
+        '<p style="color:var(--text-muted); margin:0 0 16px;">أجبت إجابة صحيحة عن ' + quizCorrect + ' من ' + total + ' كلمات</p>' +
+        '<div class="big-xp">+' + xp + ' XP</div>' +
+        '<p style="color:var(--text-muted); font-weight:700;">نقاط اللغة المكتسبة اليوم</p>' +
+        '<p style="font-weight:800;"><i class="fa-solid fa-fire" style="color:#f97316;"></i> سلسلتك: ' + streak + ' أيام متتالية</p>' +
+        '<button type="button" class="btn btn-primary" onclick="reloadLesson()"><i class="fa-solid fa-rotate-right"></i> درس جديد</button>' +
+        '<button type="button" class="btn btn-outline" onclick="window.location.href=\'/?page=services\'">العودة إلى الخدمات</button>' +
+        '</div>';
+}
+
+/* ===== التشغيل ===== */
+document.addEventListener('DOMContentLoaded', initLanguage);
+if (document.readyState !== 'loading') initLanguage();
+var __langInitDone = false;
+async function initLanguage() {
+    if (__langInitDone) return;
+    __langInitDone = true;
+    /* LOGGED_OUT يأتي من السيرفر عند التقديم؛ وإلا جرّب الـ API —
+       فهو المرجع: 401 تعني زائراً غير مسجل فيُعرض طلب الدخول. */
+    if (LOGGED_OUT) { showLoggedOut(); return; }
+    showApp();
+    try {
+        await loadProfile();
+        if (!$('langApp') || $('langApp').style.display === 'none') return;
+        await reloadLesson();
+        loadProgress();
+    } catch (e) {
+        showLangError('تعذر تحميل صفحة اللغة — تحقق من الاتصال وحاول مجدداً.');
+        $('lessonBody').innerHTML = '<div class="loading-state">تعذر تحميل درس اليوم — تحقق من الاتصال وحاول مجدداً.</div>';
+    }
+}
+</script>
+
+</body>
+</html>

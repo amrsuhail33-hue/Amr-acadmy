@@ -430,8 +430,196 @@ class PointTransaction(db.Model):
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
 
+# ==========================================
+# نظام «تعلم اللغة مع Amr» — تعلم الإنجليزية
+# ==========================================
+# لا يعتمد على أي خدمة ذكاء اصطناعي. الكلمات تُستورد من CSV عبر
+# /admin/import-language-words أو سكربت seed_language_words.py.
+# XP يُمنح فقط عبر UserProfile.add_points (مرة واحدة لكل كلمة + مرة
+# واحدة يومياً لإكمال الدرس) — والسبب الفريد هو ما يضمن عدم التكرار
+# عبر خاصية إزالة التكرار الموجودة في add_points.
+LANGUAGE_TRACKS = ('medical', 'engineering', 'general')
+LANGUAGE_DAILY_TARGETS = (5, 10, 20)
+LANGUAGE_WORD_XP = 2    # إتقان كلمة جديدة لأول مرة
+LANGUAGE_LESSON_XP = 10  # إكمال درس اليوم
+
+class LanguageWord(db.Model):
+    """كلمة إنجليزية واحدة ضمن مسار (طبي / هندسي / عام)."""
+    __tablename__ = 'language_words'
+    __table_args__ = (db.UniqueConstraint('track', 'word', name='uq_language_word_track_word'),)
+    id = db.Column(db.Integer, primary_key=True)
+    track = db.Column(db.String(20), nullable=False)  # medical / engineering / general
+    word = db.Column(db.String(150), nullable=False)
+    translation = db.Column(db.String(300), nullable=False)
+    sentence = db.Column(db.Text, nullable=True)
+    sentence_translation = db.Column(db.Text, nullable=True)
+    pos = db.Column(db.String(50), nullable=True)  # part of speech
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self, state=None):
+        return {
+            "id": self.id,
+            "word": self.word,
+            "translation": self.translation,
+            "sentence": self.sentence or "",
+            "sentence_translation": self.sentence_translation or "",
+            "pos": self.pos or "",
+            "state": state,
+        }
+
+class UserLanguageProfile(db.Model):
+    """ملف اللغة الخاص بطالب: المسار + الهدف اليومي + التتابع."""
+    __tablename__ = 'user_language_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), unique=True, nullable=False)
+    track = db.Column(db.String(20), default='general', nullable=False)
+    daily_target = db.Column(db.Integer, default=10, nullable=False)
+    streak_days = db.Column(db.Integer, default=0, nullable=False)
+    last_lesson_date = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserLanguageWord(db.Model):
+    """حالة طالب مع كلمة: رآها / أتقنها، مع عدّادات المحاولات."""
+    __tablename__ = 'user_language_words'
+    __table_args__ = (db.UniqueConstraint('student_id', 'word_id', name='uq_user_language_word'),)
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    word_id = db.Column(db.Integer, db.ForeignKey('language_words.id'), nullable=False)
+    state = db.Column(db.String(20), default='seen', nullable=False)  # seen / mastered
+    correct_count = db.Column(db.Integer, default=0, nullable=False)
+    seen_count = db.Column(db.Integer, default=0, nullable=False)
+    last_seen = db.Column(db.DateTime, nullable=True)
+    mastered_at = db.Column(db.DateTime, nullable=True)
+
+def _default_language_track(user):
+    """المسار الافتراضي من كلية الطالب: الطب → طبي، الهندسة → هندسي،
+    غير ذلك (أو بلا كلية) → عام."""
+    college = (getattr(user, 'college', '') or '').strip()
+    if college == 'كلية الطب':
+        return 'medical'
+    if college == 'كلية الهندسة':
+        return 'engineering'
+    return 'general'
+
+def _get_or_create_language_profile(user):
+    profile = UserLanguageProfile.query.filter_by(student_id=user.id).first()
+    if not profile:
+        profile = UserLanguageProfile(student_id=user.id, track=_default_language_track(user))
+        db.session.add(profile)
+        db.session.commit()
+    return profile
+
+def _get_or_create_user_profile(student_id):
+    """UserProfile العام (حامل XP) — يُنشأ عند غيابه حتى لا يفشل منح XP."""
+    profile = UserProfile.query.filter_by(student_id=student_id).first()
+    if not profile:
+        profile = UserProfile(student_id=student_id)
+        db.session.add(profile)
+        db.session.commit()
+    return profile
+
+def _language_level(mastered_count):
+    """مستوى اللغة: كل 100 كلمة متقَنة = مستوى. 0-99 → 1، 100-199 → 2 ..."""
+    return math.floor((mastered_count or 0) / 100) + 1
+
+def _mastered_count(student_id, track):
+    return (db.session.query(UserLanguageWord)
+            .join(LanguageWord, UserLanguageWord.word_id == LanguageWord.id)
+            .filter(UserLanguageWord.student_id == student_id,
+                    UserLanguageWord.state == 'mastered',
+                    LanguageWord.track == track)
+            .count())
+
+def _word_counts_by_track():
+    counts = {t: 0 for t in LANGUAGE_TRACKS}
+    for track, n in db.session.query(LanguageWord.track, func.count(LanguageWord.id)).group_by(LanguageWord.track).all():
+        if track in counts:
+            counts[track] = n
+    return counts
+
+def _xp_from_language(student_id):
+    """مجموع XP الممنوح من اللغة فقط (حسب سببي المنح المعروفين)."""
+    total = (db.session.query(func.coalesce(func.sum(PointTransaction.points), 0))
+             .filter(PointTransaction.student_id == student_id)
+             .filter((PointTransaction.reason.like('تعلم كلمة إنجليزية #%'))
+                     | (PointTransaction.reason.like('إكمال درس اللغة %')))
+             .scalar())
+    return int(total or 0)
+
+def _language_profile_payload(user, lang_profile):
+    mastered = _mastered_count(user.id, lang_profile.track)
+    total_in_track = LanguageWord.query.filter_by(track=lang_profile.track).count()
+    return {
+        "track": lang_profile.track,
+        "daily_target": lang_profile.daily_target,
+        "mastered": mastered,
+        "level": _language_level(mastered),
+        "level_progress": mastered % 100,
+        "streak": lang_profile.streak_days or 0,
+        "total_in_track": total_in_track,
+        "xp_from_language": _xp_from_language(user.id),
+    }
+
+def import_language_words_csv(file_storage_or_path, default_track=None):
+    """استيراد كلمات لغة من CSV — مشترك بين رفع المسؤول وسكربت البذر.
+    يقبل: مسار ملف، أو FileStorage من Flask، أو كائن ملف مفتوح.
+    الأعمدة: word,translation,sentence,sentence_translation,track,pos.
+    يُتخطى الصف إن فرغت word/translation أو كان track غير صالح،
+    وتُتخطى المكررات (نفس track+word) دون خطأ.
+    يعيد {"imported": n, "skipped": n, "skipped_invalid": n}.
+    default_track: إن وُجد يُستخدم للصفوف بلا track (ملفات البذر
+    المخصصة لمسار واحد)؛ بدونه الصف بلا track غير صالح."""
+    if isinstance(file_storage_or_path, (str, os.PathLike)):
+        with open(file_storage_or_path, 'rb') as fh:
+            raw = fh.read()
+    elif hasattr(file_storage_or_path, 'read'):
+        raw = file_storage_or_path.read()
+        if hasattr(file_storage_or_path, 'seek'):
+            try:
+                file_storage_or_path.seek(0)
+            except Exception:
+                pass
+    else:
+        raise ValueError("مصدر CSV غير مدعوم")
+    if isinstance(raw, bytes):
+        text = raw.decode('utf-8-sig')
+    else:
+        text = raw
+    reader = csv.DictReader(io.StringIO(text, newline=None))
+    imported = 0
+    skipped = 0
+    skipped_invalid = 0
+    seen_in_file = set()
+    existing = {(w.track, w.word) for w in
+                db.session.query(LanguageWord.track, LanguageWord.word).all()}
+    for row in reader:
+        word = (row.get('word') or '').strip()
+        translation = (row.get('translation') or '').strip()
+        track = (row.get('track') or '').strip() or (default_track or '')
+        if not word or not translation or track not in LANGUAGE_TRACKS:
+            skipped_invalid += 1
+            continue
+        key = (track, word)
+        if key in existing or key in seen_in_file:
+            skipped += 1
+            continue
+        seen_in_file.add(key)
+        db.session.add(LanguageWord(
+            track=track,
+            word=word,
+            translation=translation,
+            sentence=(row.get('sentence') or '').strip() or None,
+            sentence_translation=(row.get('sentence_translation') or '').strip() or None,
+            pos=(row.get('pos') or '').strip() or None,
+        ))
+        imported += 1
+    db.session.commit()
+    return {"imported": imported, "skipped": skipped, "skipped_invalid": skipped_invalid}
+
 class UnifiedTask(db.Model):
     __tablename__ = 'unified_tasks'
+
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     lesson_id = db.Column(db.Integer, db.ForeignKey('custom_lessons.id'), nullable=True)
@@ -777,6 +965,27 @@ with app.app_context():
     except Exception as e:
         db.session.rollback()
         print(f"تعذر بذر الكليات وربط المحتوى القديم: {e}", flush=True)
+
+# بذر كلمات «تعلم اللغة مع Amr» عند أول تشغيل (الجدول فارغ).
+# ملفات CSV المرفقة في المستودع هي البنك التأسيسي (300 كلمة لكل مسار).
+# خاملة: لا تعمل إلا والجدول فارغ، ومحمية بـ try/except حتى لا يُسقط أي
+# خطأ بياناتٍ التشغيل أبداً. النمو لاحقاً عبر رفع المسؤول /admin/import-language-words.
+with app.app_context():
+    try:
+        if LanguageWord.query.count() == 0:
+            _seeded = 0
+            _app_dir = os.path.dirname(os.path.abspath(__file__))
+            for _fname, _track in (("lang_seed_medical.csv", "medical"),
+                                   ("lang_seed_engineering.csv", "engineering"),
+                                   ("lang_seed_general.csv", "general")):
+                _fpath = os.path.join(_app_dir, _fname)
+                if os.path.exists(_fpath):
+                    _res = import_language_words_csv(_fpath, default_track=_track)
+                    _seeded += _res["imported"]
+            print(f"تم بذر كلمات اللغة: {_seeded} كلمة", flush=True)
+    except Exception as _lang_seed_e:
+        db.session.rollback()
+        print(f"تعذر بذر كلمات اللغة (تجاهل): {_lang_seed_e}", flush=True)
 
 # بذر المواد من المحتوى الحالي وربط الدروس والأسئلة بها.
 # قبل هذا كانت المادة مجرد نص على كل صف؛ الآن كل (كلية، سنة، ترم، اسم مادة)
@@ -2874,6 +3083,207 @@ def guide():
         colleges = [{"id": 0, "name": "كلية الهندسة"}]
     return render_template('guide.html', student_id=user.id if user else None,
                            student_name=user.name if user else None, colleges=colleges)
+
+# ==========================================
+# نظام «تعلم اللغة مع Amr» — مسارات API
+# ==========================================
+# كل مسارات API تتطلب تسجيل دخول. GET /language يعرض الصفحة حتى
+# للزائر (مع logged_out=True) فيعرض القالب دعوة لتسجيل الدخول.
+
+@app.route('/language')
+def language_page():
+    user = get_current_user()
+    if not user:
+        return render_template('language.html', student_id=None, student_name=None,
+                               logged_out=True, default_track='general')
+    lang_profile = _get_or_create_language_profile(user)
+    return render_template('language.html', student_id=user.id, student_name=user.name,
+                           logged_out=False, default_track=lang_profile.track)
+
+@app.route('/api/language/profile', methods=['GET'])
+@student_required
+def language_profile_get():
+    user = get_current_user()
+    lang_profile = _get_or_create_language_profile(user)
+    return jsonify({"status": "success", **_language_profile_payload(user, lang_profile)})
+
+@app.route('/api/language/profile', methods=['POST'])
+@student_required
+def language_profile_update():
+    user = get_current_user()
+    data = request.get_json(silent=True) or {}
+    lang_profile = _get_or_create_language_profile(user)
+    if 'track' in data:
+        track = str(data.get('track') or '').strip()
+        if track not in LANGUAGE_TRACKS:
+            return jsonify({"status": "error", "message": "المسار غير صالح (medical / engineering / general)"}), 400
+        lang_profile.track = track
+    if 'daily_target' in data:
+        try:
+            target = int(data.get('daily_target'))
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
+        if target not in LANGUAGE_DAILY_TARGETS:
+            return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
+        lang_profile.daily_target = target
+    lang_profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"status": "success", **_language_profile_payload(user, lang_profile)})
+
+@app.route('/api/language/today', methods=['GET'])
+@student_required
+def language_today():
+    user = get_current_user()
+    lang_profile = _get_or_create_language_profile(user)
+    track = lang_profile.track
+    # المراجعة أولاً: كلمات بحالة seen (غير متقَنة) في هذا المسار،
+    # الأقدم مشاهدة أولاً، بحد أقصى 20.
+    review_rows = (db.session.query(UserLanguageWord, LanguageWord)
+                   .join(LanguageWord, UserLanguageWord.word_id == LanguageWord.id)
+                   .filter(UserLanguageWord.student_id == user.id,
+                           UserLanguageWord.state == 'seen',
+                           LanguageWord.track == track)
+                   .order_by(UserLanguageWord.last_seen.asc().nullsfirst())
+                   .limit(20).all())
+    review = [w.to_dict(state='seen') for _rel, w in review_rows]
+    # الجديد: كلمات في المسار لم يرها الطالب أبداً، بترتيب id، حتى الهدف اليومي.
+    seen_ids = (db.session.query(UserLanguageWord.word_id)
+                .filter_by(student_id=user.id))
+    new_words = (LanguageWord.query
+                 .filter(LanguageWord.track == track,
+                         ~LanguageWord.id.in_(seen_ids))
+                 .order_by(LanguageWord.id)
+                 .limit(lang_profile.daily_target)
+                 .all())
+    new = [w.to_dict(state='new') for w in new_words]
+    payload = _language_profile_payload(user, lang_profile)
+    return jsonify({"status": "success", "review": review, "new": new,
+                    "mastered": payload["mastered"], "level": payload["level"],
+                    "streak": payload["streak"], "daily_target": payload["daily_target"],
+                    "track": payload["track"]})
+
+@app.route('/api/language/answer', methods=['POST'])
+@student_required
+def language_answer():
+    user = get_current_user()
+    data = request.get_json(silent=True) or {}
+    try:
+        word_id = int(data.get('word_id'))
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "word_id غير صالح"}), 400
+    correct = bool(data.get('correct'))
+    # quiz_type يُقبل ويُتجاهل حالياً (محفوظ لتوافق الواجهة).
+    word = LanguageWord.query.get(word_id)
+    if not word:
+        return jsonify({"status": "error", "message": "الكلمة غير موجودة"}), 404
+    lang_profile = _get_or_create_language_profile(user)
+    profile = _get_or_create_user_profile(user.id)
+    now = datetime.utcnow()
+    rel = UserLanguageWord.query.filter_by(student_id=user.id, word_id=word_id).first()
+    if not rel:
+        rel = UserLanguageWord(student_id=user.id, word_id=word_id, state='seen')
+        db.session.add(rel)
+    rel.seen_count = (rel.seen_count or 0) + 1
+    rel.last_seen = now
+    xp_awarded = 0
+    if correct:
+        rel.correct_count = (rel.correct_count or 0) + 1
+        if rel.state != 'mastered':
+            rel.state = 'mastered'
+            rel.mastered_at = now
+            # +2 XP مرة واحدة فقط: السبب فريد لكل كلمة، وadd_points
+            # يتخطى المنح إن وُجدت معاملة بالسبب نفسه من قبل.
+            points_before = profile.points or 0
+            profile.add_points(LANGUAGE_WORD_XP, reason=f"تعلم كلمة إنجليزية #{word_id}")
+            db.session.refresh(profile)
+            xp_awarded = max(0, (profile.points or 0) - points_before)
+        else:
+            db.session.commit()
+    else:
+        # خطأ: لا XP، والحالة تبقى كما هي (seen تبقى seen، والمتقَنة لا تُسحب).
+        db.session.commit()
+    mastered_count = _mastered_count(user.id, lang_profile.track)
+    return jsonify({"status": "success", "mastered": rel.state == 'mastered',
+                    "xp_awarded": xp_awarded, "total_points": profile.total_points or 0,
+                    "level": _language_level(mastered_count), "mastered_count": mastered_count})
+
+@app.route('/api/language/complete', methods=['POST'])
+@student_required
+def language_complete():
+    user = get_current_user()
+    lang_profile = _get_or_create_language_profile(user)
+    profile = _get_or_create_user_profile(user.id)
+    today = datetime.utcnow().date()
+    today_iso = today.isoformat()
+    reason = f"إكمال درس اللغة {today_iso}"
+    if lang_profile.last_lesson_date == today or \
+            PointTransaction.query.filter_by(student_id=user.id, reason=reason).first():
+        return jsonify({"status": "success", "already_completed": True, "xp_awarded": 0,
+                        "streak": lang_profile.streak_days or 0,
+                        "level": _language_level(_mastered_count(user.id, lang_profile.track)),
+                        "total_points": profile.total_points or 0})
+    yesterday = today - timedelta(days=1)
+    if lang_profile.last_lesson_date == yesterday:
+        lang_profile.streak_days = (lang_profile.streak_days or 0) + 1
+    else:
+        lang_profile.streak_days = 1
+    lang_profile.last_lesson_date = today
+    lang_profile.updated_at = datetime.utcnow()
+    # +10 XP مرة واحدة يومياً: التاريخ في السبب يجعل add_points
+    # يتخطى أي منح ثانٍ في اليوم نفسه.
+    points_before = profile.points or 0
+    profile.add_points(LANGUAGE_LESSON_XP, reason=reason)
+    db.session.refresh(profile)
+    xp_awarded = max(0, (profile.points or 0) - points_before)
+    mastered_count = _mastered_count(user.id, lang_profile.track)
+    return jsonify({"status": "success", "already_completed": False, "xp_awarded": xp_awarded,
+                    "streak": lang_profile.streak_days or 0,
+                    "level": _language_level(mastered_count),
+                    "total_points": profile.total_points or 0})
+
+@app.route('/api/language/progress', methods=['GET'])
+@student_required
+def language_progress():
+    user = get_current_user()
+    lang_profile = _get_or_create_language_profile(user)
+    mastered = _mastered_count(user.id, lang_profile.track)
+    return jsonify({"status": "success", "mastered": mastered,
+                    "level": _language_level(mastered),
+                    "progress_pct": mastered % 100,
+                    "streak": lang_profile.streak_days or 0,
+                    "daily_target": lang_profile.daily_target,
+                    "track": lang_profile.track,
+                    "counts": _word_counts_by_track()})
+
+@app.route('/admin/import-language-words', methods=['POST'])
+@admin_required
+def admin_import_language_words():
+    if 'file' not in request.files:
+        return jsonify({"status": "error", "message": "يرجى تحديد ملف CSV"}), 400
+    file = request.files['file']
+    if not file.filename.endswith('.csv'):
+        return jsonify({"status": "error", "message": "يجب أن يكون الملف بصيغة CSV"}), 400
+    try:
+        result = import_language_words_csv(file)
+    except Exception as e:
+        app.logger.exception("فشل استيراد كلمات اللغة")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"خطأ في قراءة الملف: {str(e)}"}), 500
+    msg = f"تم استيراد {result['imported']} كلمة بنجاح"
+    if result['skipped']:
+        msg += f" — تم تخطي {result['skipped']} كلمة مكررة"
+    if result['skipped_invalid']:
+        msg += f" — تم تخطي {result['skipped_invalid']} صفاً غير صالح"
+    return jsonify({"status": "success", "message": msg,
+                    "imported": result['imported'], "skipped": result['skipped'],
+                    "skipped_invalid": result['skipped_invalid']})
+
+@app.route('/admin/language-stats', methods=['GET'])
+@admin_required
+def admin_language_stats():
+    counts = _word_counts_by_track()
+    return jsonify({"status": "success", "counts": counts,
+                    "total": sum(counts.values())})
 
 # ==========================================
 # نظام «خدمات» — متاجر داخل الأكاديمية

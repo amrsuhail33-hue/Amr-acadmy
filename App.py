@@ -2863,6 +2863,49 @@ def delete_store_product(product_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": "تعذر حذف المنتج"}), 500
 
+@app.route('/api/products/<int:product_id>/update', methods=['POST'])
+@store_manager_required
+def update_store_product(product_id):
+    """مدير متجره (أو الأدمن) يعدّل منتجاً قائماً: الاسم/السعر/العملة/التفاصيل/الصورة.
+    حقول جزئية: يُحدَّث فقط ما يُرسَل؛ الاسم (إن أُرسل) غير فارغ، والسعر (إن أُرسل) > 0."""
+    try:
+        user = get_current_user()
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({"status": "error", "message": "المنتج غير موجود"}), 404
+        store = Store.query.get(product.store_id)
+        if not store or not _can_manage_store(user, store):
+            return jsonify({"status": "error", "message": "هذا المنتج ليس في متجرك"}), 403
+        data = request.get_json(silent=True) or {}
+        if 'name' in data:
+            name = _safe_str(data.get('name'))
+            if not name:
+                return jsonify({"status": "error", "message": "اسم المنتج مطلوب"}), 400
+            product.name = name
+        if 'price' in data:
+            try:
+                price = int(data.get('price'))
+            except (TypeError, ValueError):
+                price = 0
+            if not price or price <= 0:
+                return jsonify({"status": "error", "message": "السعر يجب أن يكون رقماً صحيحاً أكبر من صفر"}), 400
+            product.price = price
+        if 'currency' in data:
+            currency = str(data.get('currency') or '').strip().upper()
+            if currency not in ('YER', 'SAR', 'USD'):
+                return jsonify({"status": "error", "message": "العملة غير صالحة — اختر ريال يمني أو ريال سعودي أو دولار"}), 400
+            product.currency = currency
+        if 'image_url' in data:
+            product.image_url = _safe_str(data.get('image_url')) or None
+        if 'details' in data:
+            product.details = _safe_str(data.get('details')) or None
+        db.session.commit()
+        return jsonify({"status": "success", "message": "تم حفظ تعديل المنتج بنجاح", "product": product.to_dict()})
+    except Exception:
+        app.logger.exception("فشل تحديث منتج: product_id=%s", product_id)
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حفظ تعديل المنتج"}), 500
+
 @app.route('/api/stores/<int:store_id>/update', methods=['POST'])
 @store_manager_required
 def update_my_store(store_id):

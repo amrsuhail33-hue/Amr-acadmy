@@ -531,7 +531,6 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     </div>
     <div class="nav-links">
         <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}">الرئيسية</a>
-        <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}">المواد</a>
         <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}">خدمات</a>
     </div>
     <div class="nav-actions">
@@ -546,6 +545,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button>
             <div class="more-menu" id="moreMenu" role="menu">
                 <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button>
+                <button type="button" onclick="closeMoreMenu(); togglePopup('favBox');"><i class="fa-solid fa-heart"></i> المفضلة</button>
                 <button type="button" onclick="closeMoreMenu(); openWhatsNewModal();"><i class="fa-solid fa-bell"></i> التنبيهات</button>
             </div>
         </div>
@@ -585,7 +585,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <div class="profile-header-card">
             <div class="profile-avatar-large"><i class="fa-solid fa-user-graduate"></i></div>
             <div id="profileName" style="font-weight:900; font-size:1.5rem; position:relative; z-index:2; margin-bottom:5px;"></div>
-            <div id="profileUsername" style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2;"></div>
+            <div style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2; display:flex; align-items:center; justify-content:center; gap:6px;"><span id="profileUsername"></span><button type="button" id="profileEditPencil" onclick="revealProfileEdit()" title="تعديل بياناتي" aria-label="تعديل بياناتي" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-grid; place-items:center; cursor:pointer; font-size:0.75rem; flex-shrink:0;"><i class="fa-solid fa-pen"></i></button></div>
             
             <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2; flex-wrap:wrap;">
                 <span class="profile-level-badge" id="profileLevel">—</span>
@@ -624,7 +624,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div id="myVipGrants"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div>
         </div>
 
-        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
+        <div id="profileEditSection" style="display:none; background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
             <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-user-pen" style="color:var(--primary); margin-left:6px;"></i> تعديل بياناتي</div>
             <input type="text" id="edit_profile_name" placeholder="الاسم" class="qa-input-field">
             <input type="text" id="edit_profile_username" placeholder="اسم المستخدم" class="qa-input-field">
@@ -704,9 +704,11 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     </div>
     <div class="popup-body">
         <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+            {% if is_admin or is_assistant or is_supervisor %}
             <button onclick="switchAdminTab('qa', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--primary); color:var(--primary);">الاستفسارات</button>
             <button onclick="switchAdminTab('content', event)" class="btn-calc-outline admin-tab-btn">إدارة المحتوى</button>
             <button onclick="switchAdminTab('quiz_import', event)" class="btn-calc-outline admin-tab-btn">استيراد الأسئلة</button>
+            {% endif %}
             {% if is_admin %}
             <button onclick="switchAdminTab('review', event)" class="btn-calc-outline admin-tab-btn" style="border-color:var(--warning); color:var(--warning);">طابور المراجعة <i class="fa-solid fa-shield-halved"></i></button>
             <button onclick="switchAdminTab('updates', event)" class="btn-calc-outline admin-tab-btn">نشر إعلان</button>
@@ -724,8 +726,11 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             {% endif %}
         </div>
         
+        {% if is_admin or is_assistant or is_supervisor %}
         <div id="adminTab_qa"><div id="adminQuestionsList"><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div></div>
         
+        {% endif %}
+        {% if is_admin or is_assistant or is_supervisor %}
         <div id="adminTab_content" style="display:none;">
             <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
                 <div id="content_form_header" style="font-weight:900; color:var(--primary); margin-bottom:15px;"><i class="fa-solid fa-file-circle-plus"></i> إضافة درس / محتوى:</div>
@@ -764,6 +769,8 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div id="contentDeleteMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
         </div>
         
+        {% endif %}
+        {% if is_admin or is_assistant or is_supervisor %}
         <div id="adminTab_quiz_import" style="display:none;">
              <div class="file-upload-box" onclick="document.getElementById('csvFileInput').click()">
                  <i class="fa-solid fa-file-csv" style="font-size:3rem; color:var(--primary); margin-bottom:15px;"></i>
@@ -787,6 +794,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
              </div>
         </div>
         
+        {% endif %}
         {% if is_admin %}
         <div id="adminTab_review" style="display:none;">
             <div id="reviewQueueList"><div class="sk-row"><div class="skeleton sk-circle"></div><div class="sk-block"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div></div></div>
@@ -1077,7 +1085,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span>
             <div class="card-btn">فتح المختبر</div>
         </a>
-        <a href="/?tool=calculator" class="card">
+        <a href="javascript:void(0)" class="card" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox'); return false;">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
             <h3 class="card-title">حاسبة المعدل</h3>
             <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
@@ -1103,12 +1111,6 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div class="card-subtitle">آراء الطلاب عن الدكاترة</div>
             <span class="vip-badge" data-vip-badge="guide" style="display:none;">VIP</span>
             <div class="card-btn">فتح الدليل</div>
-        </a>
-        <a href="/?tool=fav" class="card">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-heart"></i></div>
-            <h3 class="card-title">المفضلة</h3>
-            <div class="card-subtitle">دروسك وملفاتك المحفوظة</div>
-            <div class="card-btn">فتح المفضلة</div>
         </a>
         <a href="/?tool=updates" class="card">
             <div class="card-icon-wrapper"><i class="fa-solid fa-bell"></i></div>
@@ -1956,6 +1958,12 @@ function cascadeStepHTML(st) {
     }
     document.addEventListener('mouseover', prefetchOnIntent);
     document.addEventListener('focusin', prefetchOnIntent);
+    // جولة 5.3: جلب مسبق خامل لصفحتي الشريطين حتى يكون التنقل بينهما فورياً من الذاكرة
+    (function prefetchNavPages() {
+        function go() { prefetchCatalog(location.origin + '/?page=services'); prefetchCatalog(location.origin + '/'); }
+        if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 3000 });
+        else setTimeout(go, 1500);
+    })();
 
     // ---------- PJAX: لا إخفاء للمحتوى أبداً — ستار فوق المحتوى القديم حتى يصل الجديد ----------
     function applySwappedHtml(html, url, push, hash) {
@@ -1970,7 +1978,8 @@ function cascadeStepHTML(st) {
         if (hash) scrollToHash(hash); else scrollTopNow();
         afterSwap();
     }
-    async function swapTo(url, push, hash) {
+    async function swapTo(url, push, hash, opts) {
+        opts = opts || {};
         if (pjaxBusy) return;
         var cached = pjaxCache.get(url);
         if (cached) {
@@ -1978,17 +1987,17 @@ function cascadeStepHTML(st) {
             return;
         }
         pjaxBusy = true;
-        showVeil();
+        if (!opts.noVeil) showVeil();
         try {
             var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             if (!res.ok) throw new Error('bad status ' + res.status);
             var html = await res.text();
             if (pjaxCache.size > 24) { var k = pjaxCache.keys().next().value; pjaxCache.delete(k); }
             pjaxCache.set(url, html);
-            hideVeil();
+            if (!opts.noVeil) hideVeil();
             applySwappedHtml(html, url, push, hash);
         } catch (e) {
-            hideVeil();
+            if (!opts.noVeil) hideVeil();
             window.location.href = url + (hash || '');
         } finally { pjaxBusy = false; }
     }
@@ -2080,7 +2089,13 @@ function cascadeStepHTML(st) {
         if (!isCatalogUrl(u)) return;
         e.preventDefault();
         closeAllPopups();
-        swapTo(u.origin + u.pathname + u.search, true, u.hash || '');
+        // جولة 5.3: أزرار الشريطين (الرئيسية/خدمات) تنتقل فوراً بلا ستار/لودر — مع تبديل فوري للحالة النشطة كإيحاء بصري
+        var isNavLink = !!(a.closest && a.closest('.nav-links, .mobile-bottom-nav'));
+        if (isNavLink) {
+            document.querySelectorAll('.nav-links a, .mobile-bottom-nav a').forEach(function (x) { x.classList.remove('active'); });
+            a.classList.add('active');
+        }
+        swapTo(u.origin + u.pathname + u.search, true, u.hash || '', { noVeil: isNavLink });
     });
     /* ——— ستار مغادرة أنيق عند التنقّل لصفحة منفصلة (بدل الشاشة البيضاء) ——— */
     document.addEventListener('click', function (e) {
@@ -2680,6 +2695,22 @@ async function loadAllVipGrants() {
 // ==========================================
 // الملف الشخصي — تعديل بياناتي
 // ==========================================
+// جولة 5.3: قلم التعديل بجانب اسم المستخدم يكشف قسم التعديل أسفل النافذة (تعديل جزئي — الاسم فقط يكفي)
+function revealProfileEdit() {
+    var sec = document.getElementById('profileEditSection');
+    if (!sec) return;
+    var hidden = sec.style.display === 'none';
+    sec.style.display = hidden ? 'block' : 'none';
+    if (hidden) {
+        var nameEl = document.getElementById('edit_profile_name');
+        var userEl = document.getElementById('edit_profile_username');
+        if (nameEl && !nameEl.value) { var pn = document.getElementById('profileName'); if (pn) nameEl.value = pn.textContent.trim(); }
+        if (userEl && !userEl.value) { var pu = document.getElementById('profileUsername'); if (pu) userEl.value = pu.textContent.trim().replace(/^@/, ''); }
+        sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (nameEl) nameEl.focus();
+    }
+}
+
 async function submitProfileUpdate() {
     const msgEl = document.getElementById('profileEditMsg');
     const showErr = (msg) => { showToast(msg, 'error', 5000); if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; } };
@@ -3878,12 +3909,33 @@ async function loadMyStoreProducts(storeId) {
             // حالة التسليح مصدرها المتغير العام — فأي إعادة رسم تعيد الزر مسلّحاً كما كان
             const armed = String(pendingProductDeleteId) === String(p.id);
             return `
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <div style="display:flex; gap:10px; align-items:center;">
                     ${p.image_url ? `<img src="${escapeText(p.image_url)}" style="width:48px; height:48px; object-fit:cover; border-radius:10px;" onerror="this.style.display='none';">` : '<span style="width:48px; height:48px; border-radius:10px; background:var(--bg-card); display:grid; place-items:center; color:var(--text-muted);"><i class="fa-solid fa-image"></i></span>'}
                     <div><div style="font-weight:800;">${escapeText(p.name)}</div><div style="font-size:0.85rem; color:var(--text-muted);">${formatPrice(p)}${p.details ? ' · له تفاصيل' : ' · بدون تفاصيل'}</div></div>
                 </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="toggleProductEdit(${p.id})" style="background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                 <button onclick="deleteProduct(${p.id}, this)"${armed ? ' data-armed="1" data-prod-del="1"' : ''} style="background:var(--danger); color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">${armed ? 'تأكيد الحذف؟' : 'حذف'}</button>
+                </div>
+            </div>
+            <div id="prodEditForm_${p.id}" style="display:none; margin-top:10px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px;">
+                <div style="font-weight:800; color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-pen"></i> تعديل المنتج:</div>
+                <input type="text" id="ep_name_${p.id}" value="${escapeText(p.name)}" placeholder="اسم المنتج (مطلوب)" class="qa-input-field">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <input type="number" id="ep_price_${p.id}" value="${p.price}" placeholder="السعر (مطلوب)" class="qa-input-field" style="margin-bottom:0;" min="1" step="1">
+                    <select id="ep_currency_${p.id}" class="qa-input-field" style="margin-bottom:0;">${['YER','SAR','USD'].map(function(c){ return '<option value="' + c + '"' + ((p.currency || 'YER') === c ? ' selected' : '') + '>' + (c === 'YER' ? 'ريال يمني' : c === 'SAR' ? 'ريال سعودي' : 'دولار') + '</option>'; }).join('')}</select>
+                </div>
+                <input type="url" id="ep_image_${p.id}" value="${escapeText(p.image_url || '')}" placeholder="رابط صورة المنتج" class="qa-input-field" oninput="previewProductEditImage(${p.id})">
+                <img id="ep_img_preview_${p.id}" src="${escapeText(p.image_url || '')}" style="${p.image_url ? '' : 'display:none; '}width:100%; max-height:170px; object-fit:cover; border-radius:12px; margin-top:10px;" onerror="this.style.display='none';" alt="">
+                <textarea id="ep_details_${p.id}" rows="2" placeholder="تفاصيل المنتج — الاستخدام وما هو (اختياري)..." class="qa-input-field">${escapeText(p.details || '')}</textarea>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button onclick="submitProductEdit(${p.id}, ${storeId})" class="btn-calc-action" style="background:var(--primary); flex:1;"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديل</button>
+                    <button onclick="toggleProductEdit(${p.id})" class="btn-calc-outline" style="border-color:var(--danger); color:var(--danger);">إلغاء</button>
+                </div>
+                <div id="ep_msg_${p.id}" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+            </div>
             </div>`;
         }).join('');
     } catch (e) {
@@ -3950,6 +4002,53 @@ async function deleteProduct(productId, btn) {
             showMyStoreError(data.message || 'تعذر حذف المنتج.');
         }
     } catch (e) { showMyStoreError('خطأ أثناء حذف المنتج.'); }
+}
+
+// جولة 5.3: تعديل منتج قائم في متجر المدير (نفس نمط الإضافة + تأكيد الحفظ)
+function toggleProductEdit(productId) {
+    const f = document.getElementById('prodEditForm_' + productId);
+    if (!f) return;
+    f.style.display = (f.style.display === 'none' || !f.style.display) ? 'block' : 'none';
+}
+
+function previewProductEditImage(productId) {
+    const input = document.getElementById('ep_image_' + productId);
+    const img = document.getElementById('ep_img_preview_' + productId);
+    if (!input || !img) return;
+    const url = (input.value || '').trim();
+    if (!url) { img.style.display = 'none'; img.removeAttribute('src'); return; }
+    img.src = url;
+    img.style.display = 'block';
+    img.onerror = () => { img.style.display = 'none'; };
+}
+
+async function submitProductEdit(productId, storeId) {
+    const nameEl = document.getElementById('ep_name_' + productId);
+    const priceEl = document.getElementById('ep_price_' + productId);
+    const currencyEl = document.getElementById('ep_currency_' + productId);
+    const imageEl = document.getElementById('ep_image_' + productId);
+    const detailsEl = document.getElementById('ep_details_' + productId);
+    const msgEl = document.getElementById('ep_msg_' + productId);
+    const showErr = (msg) => { showToast(msg, 'error', 5000); if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; } };
+    const name = (nameEl.value || '').trim();
+    const imageUrl = (imageEl.value || '').trim();
+    const details = (detailsEl.value || '').trim();
+    const currency = (currencyEl && currencyEl.value) || 'YER';
+    let price = 0;
+    try { price = parseInt(priceEl.value, 10); } catch (e) { price = 0; }
+    if (!name) { showErr('اسم المنتج مطلوب.'); return; }
+    if (!price || price <= 0) { showErr('السعر يجب أن يكون رقماً صحيحاً أكبر من صفر.'); return; }
+    try {
+        const res = await fetch('/api/products/' + productId + '/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, price, currency, image_url: imageUrl, details }) });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(data.message, 'success', 5000);
+            if (msgEl) msgEl.style.display = 'none';
+            loadMyStoreProducts(storeId);
+        } else {
+            showErr(data.message || 'تعذر حفظ التعديل.');
+        }
+    } catch (e) { showErr('خطأ أثناء حفظ التعديل.'); }
 }
 
 function previewMyStoreImage(storeId) {
@@ -4574,7 +4673,6 @@ window.addEventListener('DOMContentLoaded', () => {
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
     <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}"><i class="fa-solid fa-house"></i> الرئيسية</a>
-    <a href="/#subjects" class="{% if view in ['subjects', 'select_type', 'chapters', 'content', 'terms'] %}active{% endif %}"><i class="fa-solid fa-layer-group"></i> المواد</a>
     <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}"><i class="fa-solid fa-border-all"></i> خدمات</a>
 </nav>
 </body>

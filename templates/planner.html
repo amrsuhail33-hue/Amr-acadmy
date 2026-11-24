@@ -314,6 +314,13 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
 .side-profile-stats span{background:var(--primary-light,rgba(37,99,235,.1));color:var(--primary,#2563eb);font-weight:800;font-size:.85rem;padding:6px 14px;border-radius:50px}
 .side-profile-err{display:none;color:#ef4444;font-weight:700;font-size:.85rem;margin:10px 0 0}
 .side-profile-logout{width:100%;margin-top:14px;border:1px solid #ef4444;background:transparent;color:#ef4444;border-radius:12px;padding:12px;font:inherit;font-weight:800;cursor:pointer}
+.side-profile-edit-pencil{margin:8px auto 0;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:transparent;color:var(--text-muted,#64748b);cursor:pointer;font-size:.8rem}
+.side-profile-edit-pencil:hover{color:var(--blue,#2563eb);border-color:var(--blue,#2563eb)}
+.side-profile-edit{margin-top:14px;text-align:right}
+.side-profile-input{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--border,#e2e8f0);background:var(--bg-card-inner,#f8fafc);color:var(--text-main,#0f172a);font:inherit;margin-bottom:10px;outline:none}
+.side-profile-input:focus{border-color:var(--blue,#2563eb)}
+.side-profile-save{width:100%;border:0;border-radius:12px;padding:12px;background:var(--blue,#2563eb);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.side-profile-edit-msg{display:none;font-weight:700;font-size:.85rem;margin-top:10px;text-align:center}
 .side-profile-logout:hover{background:rgba(239,68,68,.08)}
 .side-profile-close{position:absolute;top:12px;left:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--border,#e2e8f0);background:var(--bg-card,#fff);color:var(--text-main,#0f172a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
 </style>
@@ -332,7 +339,7 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
         <div class="top-actions">
             <nav class="top-nav-links">
                 <a href="/">الرئيسية</a>
-                <a href="/#subjects">المواد</a>
+                
                 <a href="/?page=services">خدمات</a>
             </nav>
             <div class="brand-user" id="userDisplay">
@@ -353,8 +360,18 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
     <div class="side-profile-avatar" id="sideProfileAvatar"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:1.6rem"></i></div>
     <div class="side-profile-name" id="sideProfileName">جارٍ تحميل البيانات...</div>
     <div class="side-profile-user" id="sideProfileUser"></div>
+    <button type="button" id="sideProfileEditPencil" class="side-profile-edit-pencil" onclick="toggleSideProfileEdit()" title="تعديل بياناتي" aria-label="تعديل بياناتي"><i class="fa-solid fa-pen"></i></button>
     <div class="side-profile-stats"><span id="sideProfileLevel">—</span><span id="sideProfileXp">—</span></div>
     <div class="side-profile-err" id="sideProfileErr"></div>
+    <div class="side-profile-edit" id="sideProfileEditSection" style="display:none;">
+      <input type="text" id="side_edit_name" placeholder="الاسم" class="side-profile-input">
+      <input type="text" id="side_edit_username" placeholder="اسم المستخدم" class="side-profile-input">
+      <input type="password" id="side_edit_current_pw" placeholder="كلمة المرور الحالية (لازمة فقط عند تغيير كلمة السر)" class="side-profile-input" autocomplete="current-password">
+      <input type="password" id="side_edit_new_pw" placeholder="كلمة المرور الجديدة (اتركها فارغة إن لم تغيّرها)" class="side-profile-input" autocomplete="new-password">
+      <input type="password" id="side_edit_confirm_pw" placeholder="تأكيد كلمة المرور الجديدة" class="side-profile-input" autocomplete="new-password">
+      <button type="button" class="side-profile-save" onclick="submitSideProfileUpdate()">حفظ بياناتي</button>
+      <div class="side-profile-edit-msg" id="sideProfileEditMsg"></div>
+    </div>
     <button type="button" class="side-profile-logout" id="sideProfileLogoutBtn" onclick="sideLogout(this)"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
   </div>
 </div>
@@ -686,6 +703,8 @@ document.addEventListener('click', function (e) {
     var a = e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || (a.target && a.target !== '_self')) return;
     if (a.closest('.popup-box, [data-no-pjax]')) return;
+    /* جولة 5.3: أزرار الشريطين (الرئيسية/خدمات) تنتقل فوراً بلا ستار — يبقى الستار لروابط المحتوى الحقيقي */
+    if (a.closest('.top-nav-links, .mobile-bottom-nav')) return;
     var href = a.getAttribute('href') || '';
     if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
     var u; try { u = new URL(href, location.href); } catch (err) { return; }
@@ -1571,7 +1590,6 @@ window.addEventListener('focus', () => {
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
 <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
-<a href="/#subjects"><i class="fa-solid fa-layer-group"></i> المواد</a>
 <a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
 
 </nav>
@@ -1625,6 +1643,38 @@ async function sideLogout(btn){
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
+/* جولة 5.3: قلم التعديل في النافذة المدمجة + تعديل جزئي (الاسم فقط يكفي) */
+function toggleSideProfileEdit(){
+  var sec=document.getElementById('sideProfileEditSection'); if(!sec) return;
+  var hidden=sec.style.display==='none';
+  sec.style.display=hidden?'block':'none';
+  if(hidden){
+    var d=__sideProfileData && __sideProfileData.student ? __sideProfileData.student : null;
+    var n=document.getElementById('side_edit_name'); if(n && !n.value && d) n.value=d.name||'';
+    var u=document.getElementById('side_edit_username'); if(u && !u.value && d) u.value=d.username||'';
+  }
+}
+async function submitSideProfileUpdate(){
+  var msg=document.getElementById('sideProfileEditMsg');
+  var showMsg=function(t,ok){ if(msg){ msg.textContent=t; msg.style.display='block'; msg.style.color=ok?'#10b981':'#ef4444'; } };
+  var payload={
+    name:(document.getElementById('side_edit_name')||{}).value ? document.getElementById('side_edit_name').value.trim() : '',
+    username:(document.getElementById('side_edit_username')||{}).value ? document.getElementById('side_edit_username').value.trim() : '',
+    current_password:(document.getElementById('side_edit_current_pw')||{}).value || '',
+    new_password:(document.getElementById('side_edit_new_pw')||{}).value || '',
+    confirm_password:(document.getElementById('side_edit_confirm_pw')||{}).value || ''
+  };
+  if(!payload.name && !payload.username && !payload.new_password){ showMsg('لا يوجد شيء لتحديثه'); return; }
+  try{
+    var res=await fetch('/api/profile/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var data=await res.json();
+    if(data.status==='success'){
+      showMsg(data.message,true);
+      ['side_edit_current_pw','side_edit_new_pw','side_edit_confirm_pw'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+      __sideProfileData=null; __sideProfileLoaded=false; loadSideProfile();
+    } else showMsg(data.message||'تعذر تحديث البيانات.');
+  }catch(e){ showMsg('خطأ بالاتصال'); }
+}
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSideProfile(); });
 </script>
 

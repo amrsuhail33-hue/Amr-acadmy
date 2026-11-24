@@ -11,9 +11,10 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import (
     Flask, render_template, request, jsonify,
-    send_from_directory, redirect, url_for, session,
+    send_from_directory, send_file, redirect, url_for, session,
     make_response
 )
+from urllib.parse import quote as _url_quote, unquote as _url_unquote
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, Uuid, func
 from sqlalchemy.sql import text
@@ -1270,7 +1271,7 @@ def _check_session_account_active():
     """إن حُظر حساب مسجَّل دخول أو حُذف، أول طلب تالٍ ينهي جلسته ويعرض
     له رسالة الحظر/الحذف. الصفحة الرئيسية تعرض الرسالة مرة واحدة عبر
     terminated_reason؛ مسارات API تعيدها JSON فوراً."""
-    if request.path.startswith('/static') or request.path in ('/health',):
+    if request.path.startswith(('/static', '/audio/')) or request.path in ('/health',):
         return None
     uid = session.get('student_id')
     if not uid:
@@ -1544,7 +1545,7 @@ def get_platform_data(user):
 
 @app.after_request
 def add_header(response):
-    if request.path.startswith('/') and not request.path.startswith('/static'):
+    if request.path.startswith('/') and not request.path.startswith(('/static', '/audio/')):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
@@ -3089,6 +3090,99 @@ def guide():
 # ==========================================
 # كل مسارات API تتطلب تسجيل دخول. GET /language يعرض الصفحة حتى
 # للزائر (مع logged_out=True) فيعرض القالب دعوة لتسجيل الدخول.
+
+# ==========================================
+# وكيل صوتي للنطق — GET /audio/en/<word>.mp3
+# ==========================================
+# لماذا وكيل من الخادم؟ ملفات MP3 ثنائية ولا يمكن دفعها إلى GitHub
+# عبر أدوات الدفع المتاحة (نص UTF-8 فقط)، وهاتف عمرو في اليمن لا يصل
+# إلى Google TTS ولا يملك صوت TTS إنجليزياً. الخادم (Render) يجلب
+# الصوت من Google ويقدّمه من نفس المصدر للهاتف.
+# ليس وكيلاً مفتوحاً: الكلمة يجب أن تكون موجودة في جدول LanguageWord
+# وأن تطابق ^[A-Za-z0-9 \-']+$ بعد فك ترميز URL. أي فشل في الجلب
+# يعيد 502 فينتقل المتصفح للطريقة التالية في سلسلة النطق.
+# لا يتطلب تسجيل دخول (مستثنى في before_request و after_request مثل
+# /static). التخزين المؤقت على قرص مؤقت (/tmp/lang_audio) — يعيد
+# الجلب بعد كل إعادة نشر، وهذا مقبول.
+
+_AUDIO_CACHE_DIR = os.environ.get('LANG_AUDIO_CACHE_DIR') or '/tmp/lang_audio'
+_AUDIO_TTS_URL = ('https://translate.google.com/translate_tts'
+                  '?ie=UTF-8&tl=en&client=tw-ob&q={q}')
+_AUDIO_TTS_UA = ('Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
+                 '(KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36')
+_AUDIO_WORD_RE = re.compile(r"^[A-Za-z0-9 \-']+$")
+
+
+def _audio_is_mp3(data):
+    """فحص سحري بسيط: رأس ID3 أو مزامنة إطار MPEG (0xFF ثم 0xE0+)."""
+    if not data or len(data) <= 1024:
+        return False
+    if data[:3] == b'ID3':
+        return True
+    return data[0] == 0xFF and (data[1] & 0xE0) == 0xE0
+
+
+@app.route('/audio/en/<path:filename>')
+def language_audio(filename):
+    """يخدم نطق كلمة من كلمات اللغة عبر وكيل Google TTS مع تخزين مؤقت.
+
+    /audio/en/house.mp3 — 200 + audio/mpeg عند النجاح،
+    404 لكلمة غير معروفة أو غير صالحة، 502 عند فشل جلب Google."""
+    if not filename.endswith('.mp3'):
+        return jsonify({"status": "error", "message": "not found"}), 404
+    word = _url_unquote(filename[:-4])
+    if not _AUDIO_WORD_RE.match(word):
+        return jsonify({"status": "error", "message": "not found"}), 404
+    try:
+        known = LanguageWord.query.filter_by(word=word).first() is not None
+    except Exception:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "audio unavailable"}), 502
+    if not known:
+        return jsonify({"status": "error", "message": "not found"}), 404
+
+    try:
+        os.makedirs(_AUDIO_CACHE_DIR, exist_ok=True)
+    except Exception:
+        return jsonify({"status": "error", "message": "audio unavailable"}), 502
+    cache_name = _url_quote(word, safe="-_.!~*'()") + '.mp3'
+    cache_path = os.path.join(_AUDIO_CACHE_DIR, cache_name)
+
+    try:
+        if os.path.isfile(cache_path):
+            with open(cache_path, 'rb') as fh:
+                cached = fh.read()
+            if _audio_is_mp3(cached):
+                return send_file(cache_path, mimetype='audio/mpeg', max_age=86400)
+    except Exception:
+        pass
+
+    try:
+        resp = requests.get(
+            _AUDIO_TTS_URL.format(q=_url_quote(word, safe='')),
+            headers={'User-Agent': _AUDIO_TTS_UA}, timeout=10)
+    except Exception:
+        return jsonify({"status": "error", "message": "audio unavailable"}), 502
+    ctype = (resp.headers.get('Content-Type') or '')
+    if (resp.status_code != 200 or 'audio/mpeg' not in ctype
+            or not _audio_is_mp3(resp.content)):
+        return jsonify({"status": "error", "message": "audio unavailable"}), 502
+
+    tmp_path = cache_path + '.tmp.%d' % os.getpid()
+    try:
+        with open(tmp_path, 'wb') as fh:
+            fh.write(resp.content)
+        os.replace(tmp_path, cache_path)
+    except Exception:
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+        return send_file(io.BytesIO(resp.content), mimetype='audio/mpeg',
+                         max_age=86400)
+    return send_file(cache_path, mimetype='audio/mpeg', max_age=86400)
+
 
 @app.route('/language')
 def language_page():

@@ -517,19 +517,23 @@ async function studentRegister() {
     } catch (e) { showRegError('خطأ في الاتصال.'); }
 }
 
-/* ===== النطق (Web Speech API + بديل صوتي عبر الإنترنت) ===== */
+/* ===== النطق (ملف صوتي مضمّن + Web Speech API + بديل صوتي عبر الإنترنت) ===== */
 function speechSupported() { return ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window); }
 
 /* السبب الجذري للصمت (مثبت من الكود + من هاتف عمرو ومتصفح الفحص):
    لم يُختر أي صوت أبداً، وأصوات المتصفح تُحمَّل بشكل غير متزامن،
    وكل الأخطاء كانت تُبتلع بصمت — فإذا لم يكن في الهاتف صوت إنجليزي
    مثبّت (محتمل جداً في هاتف لغته العربية) بقي النطق صامتاً دون أي
-   أثر. الإصلاح يختار صوتاً إنجليزياً صراحةً، وينتظر تحميل الأصوات،
-   وإن غاب الصوت الإنجليزي يستخدم ملفاً صوتياً عبر الإنترنت، وإن فشل
-   كلاهما يُظهر رسالة واضحة بدل الصمت. */
+   أثر. ثم تبيّن أن بديل الإنترنت نفسه لا يصل من اليمن (Google TTS
+   محجوب/غير متاح)، فصار الاعتماد عليه بلا فائدة هناك.
+   ترتيب التشغيل الآن: (1) ملف MP3 مضمّن داخل التطبيق (نفس المصدر،
+   لا يحتاج صوتاً إنجليزياً مثبّتاً ولا خدمة خارجية)، (2) النطق
+   المحلي بصوت إنجليزي مختار صراحةً، (3) ملف صوتي عبر الإنترنت،
+   وإن فشلت الطرق الثلاث يُظهر رسالة واضحة بدل الصمت. */
 var __voicesReady = null;
 var __englishVoice = null;
 var __speakSeq = 0;
+var __speakCancelAt = 0; /* وقت آخر إلغاء لنطق سابق — يُحترم فاصل 120ms بعده */
 var __audioEl = null;
 
 function pickEnglishVoice(voices) {
@@ -581,14 +585,39 @@ function showSpeechNote(msg) {
 
 var SPEECH_NO_VOICE_MSG = 'لا يوجد صوت إنجليزي في هذا الجهاز، وتعذّر تشغيل النطق عبر الإنترنت — فعّل صوتاً إنجليزياً من إعدادات تحويل النص إلى كلام في هاتفك ثم أعد المحاولة.';
 
-/* بديل صوتي عبر الإنترنت (يُستخدم فقط عند غياب صوت إنجليزي محلي أو
-   فشل النطق المحلي): ملف صوتي من خدمة النطق العامة، يُشغَّل بعنصر
-   <audio> دون أي مفتاح. */
-function playOnlineAudio(text, rate) {
+/* النطق من وكيل الصوت في الخادم (نفس المصدر، /audio/en/):
+   يُجرَّب أولاً لأنه لا يحتاج صوتاً إنجليزياً مثبّتاً ولا وصولاً
+   مباشراً إلى Google من الهاتف — الخادم يجلب الصوت ويقدّمه.
+   إن غاب الملف (404) أو تعذّر تشغيله يستدعي onFail للانتقال إلى
+   الطريقة التالية؛ رفض play() أو حدث 'error' لا يُعتبران فشلاً نهائياً. */
+function playBundledAudio(text, rate, mySeq, onFail) {
     var failed = false;
     function failOnce() {
         if (failed) return;
         failed = true;
+        if (mySeq !== __speakSeq) return; /* طلب أحدث حلّ محل هذا الطلب */
+        onFail();
+    }
+    try {
+        if (!__audioEl) { __audioEl = new Audio(); }
+        __audioEl.onerror = failOnce;
+        __audioEl.pause();
+        __audioEl.playbackRate = (rate && rate < 1) ? 0.6 : 1;
+        __audioEl.src = '/audio/en/' + encodeURIComponent(text) + '.mp3';
+        var p = __audioEl.play();
+        if (p && typeof p.catch === 'function') p.catch(failOnce);
+    } catch (e) { failOnce(); }
+}
+
+/* بديل صوتي عبر الإنترنت (يُستخدم فقط عند فشل الملف المضمّن وغياب
+   صوت إنجليزي محلي أو فشل النطق المحلي): ملف صوتي من خدمة النطق
+   العامة، يُشغَّل بعنصر <audio> دون أي مفتاح. */
+function playOnlineAudio(text, rate, mySeq) {
+    var failed = false;
+    function failOnce() {
+        if (failed) return;
+        failed = true;
+        if (mySeq !== undefined && mySeq !== __speakSeq) return; /* طلب أحدث حلّ محل هذا الطلب */
         showSpeechNote(SPEECH_NO_VOICE_MSG);
     }
     try {
@@ -602,10 +631,11 @@ function playOnlineAudio(text, rate) {
     } catch (e) { failOnce(); }
 }
 
-/* النطق المحلي بصوت إنجليزي مختار صراحةً. */
-function speakLocal(text, rate, voice, silent) {
+/* النطق المحلي بصوت إنجليزي مختار صراحةً. mySeq هو رقم طلب speak()
+   الذي بدأ هذه المحاولة — تُتجاهل كل الاستدعاءات المتأخرة منه إن
+   حلّ طلب أحدث محلّه. */
+function speakLocal(text, rate, voice, silent, mySeq) {
     var synth = window.speechSynthesis;
-    var mySeq = ++__speakSeq;
     function doSpeak() {
         if (mySeq !== __speakSeq) return; /* طلب أحدث حلّ محل هذا الطلب */
         var ended = false;
@@ -619,7 +649,7 @@ function speakLocal(text, rate, voice, silent) {
                 ended = true;
                 if (mySeq !== __speakSeq) return;
                 if (ev && (ev.error === 'canceled' || ev.error === 'interrupted')) return; /* إلغاء مقصود من نقرة أحدث */
-                if (!silent) playOnlineAudio(text, rate);
+                if (!silent) playOnlineAudio(text, rate, mySeq);
             };
             synth.speak(u);
             /* حارس: إن علق النطق أو أُسقط دون نهاية أو خطأ (حالة معروفة
@@ -627,39 +657,60 @@ function speakLocal(text, rate, voice, silent) {
             setTimeout(function () {
                 if (ended || mySeq !== __speakSeq) return;
                 if (synth.speaking || synth.pending) { try { synth.cancel(); } catch (e) {} }
-                if (!silent) playOnlineAudio(text, rate);
+                if (!silent) playOnlineAudio(text, rate, mySeq);
             }, Math.ceil(5000 / (rate || 1)));
         } catch (e) {
-            if (!silent) playOnlineAudio(text, rate);
+            if (!silent) playOnlineAudio(text, rate, mySeq);
         }
     }
     try {
+        var gap = 0;
         if (synth.speaking || synth.pending || synth.paused) {
             /* لا تُلغِ ثم تنطق في نفس النبضة — كروم/أندرويد يُسقط الطلب.
                ألغِ ثم انتظر قليلاً قبل النطق. */
             synth.cancel();
-            setTimeout(doSpeak, 120);
-        } else {
-            doSpeak();
+            __speakCancelAt = Date.now();
+            gap = 120;
+        } else if (__speakCancelAt) {
+            /* أُلغي نطق سابق في speak() قبل لحظات — أكمل فاصل الـ120ms
+               قبل النطق الجديد حتى لا يُسقطه الإلغاء. */
+            gap = Math.max(0, 120 - (Date.now() - __speakCancelAt));
         }
+        if (gap > 0) setTimeout(doSpeak, gap);
+        else doSpeak();
     } catch (e) {
-        if (!silent) playOnlineAudio(text, rate);
+        if (!silent) playOnlineAudio(text, rate, mySeq);
     }
 }
 
 /* speak(text, rate, silent): silent=true للنطق التلقائي في أسئلة
-   الاستماع (بدون إيماءة مستخدم قد يحظره المتصفح — يبقى زر «استمع»
-   اليدوي هو المسار الموثوق، ويفشل بصمت دون إزعاج الطالب). */
+   الاستماع (يفشل بصمت دون رسالة أو تنبيه — يبقى زر «استمع» اليدوي
+   هو المسار الموثوق). ترتيب التشغيل: (1) ملف MP3 مضمّن، (2) نطق
+   محلي بصوت إنجليزي، (3) صوت عبر الإنترنت؛ والرسالة الظاهرة لا
+   تظهر إلا إن فشلت الطرق الثلاث كلها. */
 function speak(text, rate, silent) {
     rate = rate || 1;
-    if (!speechSupported()) {
-        if (silent) return;
-        showSpeechNote('النطق غير مدعوم في هذا المتصفح');
-        return;
-    }
-    loadVoices().then(function (voice) {
-        if (voice) speakLocal(text, rate, voice, silent);
-        else if (!silent) playOnlineAudio(text, rate);
+    var mySeq = ++__speakSeq; /* طلب أحدث يُبطل أي محاولة سابقة معلّقة */
+    /* أوقف أي تشغيل سابق (ملف صوتي أو نطق محلي) قبل بدء الجديد. */
+    try { if (__audioEl) __audioEl.pause(); } catch (e) {}
+    try {
+        if (speechSupported()) {
+            var s = window.speechSynthesis;
+            if (s.speaking || s.pending || s.paused) { s.cancel(); __speakCancelAt = Date.now(); }
+        }
+    } catch (e) {}
+    playBundledAudio(text, rate, mySeq, function () {
+        if (mySeq !== __speakSeq) return;
+        if (!speechSupported()) {
+            /* لا نطق محلياً في هذا المتصفح — جرّب البديل عبر الإنترنت مباشرةً. */
+            if (!silent) playOnlineAudio(text, rate, mySeq);
+            return;
+        }
+        loadVoices().then(function (voice) {
+            if (mySeq !== __speakSeq) return;
+            if (voice) speakLocal(text, rate, voice, silent, mySeq);
+            else if (!silent) playOnlineAudio(text, rate, mySeq);
+        });
     });
 }
 
@@ -805,9 +856,7 @@ function renderStudyCard() {
     var isReview = (w.state === 'review') || (studyIndex < (lessonWords._reviewCount || 0));
     var total = lessonWords.length;
     var isLast = studyIndex === total - 1;
-    var speechNote = speechSupported()
-        ? '<div class="speech-note" id="speechNote" style="display:none;">النطق غير مدعوم في هذا المتصفح</div>'
-        : '<div class="speech-note">النطق غير مدعوم في هذا المتصفح</div>';
+    var speechNote = '<div class="speech-note" id="speechNote" style="display:none;"></div>'; /* تظهر فيها رسالة الفشل فقط إن فشلت طرق النطق الثلاث */
     body.innerHTML =
         '<div class="study-progress">كلمة ' + (studyIndex + 1) + ' من ' + total + (isReview ? ' — مراجعة' : ' — جديدة') + '</div>' +
         '<div class="word-card">' +
@@ -911,8 +960,7 @@ function renderQuizQuestion() {
     } else if (q.type === 'listen') {
         head = '<p class="quiz-q">استمع واختر الكلمة التي سمعتها</p>' +
             '<div class="quiz-listen"><button type="button" class="speak-btn" data-speak-word="' + esc(w.word) + '" data-speak-rate="1"><i class="fa-solid fa-volume-high"></i> استمع للكلمة</button> ' +
-            '<button type="button" class="speak-btn slow" data-speak-word="' + esc(w.word) + '" data-speak-rate="0.6"><i class="fa-solid fa-volume-low"></i> ببطء</button></div>' +
-            (speechSupported() ? '' : '<p class="quiz-hint">النطق غير مدعوم في هذا المتصفح — اقرأ الخيارات واختر الكلمة المطابقة للترجمة «' + esc(w.translation) + '».</p>');
+            '<button type="button" class="speak-btn slow" data-speak-word="' + esc(w.word) + '" data-speak-rate="0.6"><i class="fa-solid fa-volume-low"></i> ببطء</button></div>';
     } else {
         head = '<p class="quiz-q quiz-q-en" style="font-size:1.15rem;">' + esc(blankSentence(w.sentence || '', w.word)) + '</p><p class="quiz-hint">أكمل الجملة بالكلمة الصحيحة</p>';
     }
@@ -928,7 +976,7 @@ function renderQuizQuestion() {
         '<button type="button" class="btn btn-primary" id="quizNextBtn" style="display:none;" onclick="nextQuizQuestion()">' +
         (quizIndex === quizQuestions.length - 1 ? 'عرض النتيجة' : 'التالي') + ' <i class="fa-solid fa-arrow-left"></i></button>';
     bindSpeakButtons(body);
-    if (q.type === 'listen' && speechSupported()) speak(w.word, 1, true); /* تلقائي صامت: زر «استمع» اليدوي هو المسار الموثوق */
+    if (q.type === 'listen') speak(w.word, 1, true); /* تلقائي صامت: زر «استمع» اليدوي هو المسار الموثوق */
 }
 function chooseOption(btn) {
     if (quizAnswered) return;

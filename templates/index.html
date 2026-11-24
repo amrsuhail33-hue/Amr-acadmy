@@ -72,7 +72,7 @@
         html.dark-mode {
             --bg-body: #0b1120; --bg-card: #162032; --bg-card-inner: #1e293b;
             --text-main: #f8fafc; --text-muted: #94a3b8;
-            --primary: #3b82f6; --primary-light: rgba(59,130,246,0.1); --primary-hover: #60a5fa;
+            --primary: #3b82f6; --primary-light: rgba(59,130,246,0.1); --primary-hover: #2563eb;
             --primary-soft: rgba(59,130,246,0.12);
             --nav-bg: rgba(11,17,32,0.85); --border: #1e293b;
             --accent-light: rgba(16,185,129,0.1);
@@ -169,7 +169,7 @@
         
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
         .grid-container.grid-2col { grid-template-columns: repeat(2, 1fr); }
-        .card { background: var(--bg-card); padding: 30px 20px; border-radius: var(--radius-lg); text-decoration: none; box-shadow: var(--card-shadow); border: 1px solid var(--border); transition: all 0.3s; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; z-index: 1;}
+        .card { background: var(--bg-card); color: var(--text-main); padding: 30px 20px; border-radius: var(--radius-lg); text-decoration: none; box-shadow: var(--card-shadow); border: 1px solid var(--border); transition: all 0.3s; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; z-index: 1;}
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: transparent; transition: 0.3s; }
         .card:hover { transform: translateY(-6px); border-color: transparent; box-shadow: var(--hover-shadow); }
         .card:hover::before { background: var(--primary); }
@@ -180,13 +180,38 @@
         .card:hover .card-icon-wrapper { background: var(--primary); color: white; transform: scale(1.1) rotate(-5deg); box-shadow: 0 10px 20px rgba(37,99,235,0.2); }
         .card-title { font-size: 1.2rem; font-weight: 900; color: var(--text-main); margin: 0 0 8px; }
         .card-subtitle { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 20px; }
-        .card-btn { background: var(--bg-body); color: var(--primary); padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; width: 100%; transition: 0.3s; border: 1px solid var(--border); }
+        .card-btn { background: var(--bg-body); color: var(--primary); padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; width: 100%; margin-top: auto; transition: 0.3s; border: 1px solid var(--border); }
         .card:hover .card-btn { background: var(--primary); color: white; border-color: var(--primary); }
+        /* بطاقة فارغة: لا تبدو قابلة للنقر — باهتة بلا رفع عند التحويم وبلا زر فعّال */
+        .card-disabled { opacity: .62; cursor: not-allowed; }
+        .card-disabled:hover { transform: none; border-color: var(--border); box-shadow: var(--card-shadow); }
+        .card-disabled:hover::before { background: transparent; }
+        .card-disabled:hover .card-icon-wrapper { background: var(--primary-light); color: var(--primary); transform: none; box-shadow: none; }
+        .card-disabled.green:hover .card-icon-wrapper { background: var(--accent-light); color: var(--accent); transform: none; box-shadow: none; }
+        .card-disabled:hover .card-btn { background: var(--bg-body); color: var(--text-muted); border-color: var(--border); }
+        .card-btn-disabled { background: var(--bg-body) !important; color: var(--text-muted) !important; border: 1px dashed var(--border) !important; cursor: not-allowed; }
+        /* زر حذف صف في حاسبة المعدل */
+        .calc-row-del { flex: 0 0 auto; width: 38px; min-height: 38px; align-self: center; background: none; border: 1px solid var(--border); color: var(--danger); border-radius: 10px; cursor: pointer; font-size: 0.95rem; }
+        .calc-row-del:hover { background: rgba(239,68,68,0.08); border-color: var(--danger); }
+        /* إظهار/إخفاء كلمة المرور */
+        .pw-wrap { position: relative; }
+        .pw-wrap .qa-input-field { padding-left: 42px; }
+        .pw-toggle { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 6px; line-height: 1; }
+        .pw-toggle:hover { color: var(--primary); }
         .card.green:hover::before { background: var(--accent); }
         .card.green .card-icon-wrapper { background: var(--accent-light); color: var(--accent); }
         .card.green:hover .card-icon-wrapper { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(16,185,129,0.2); }
         .card.green:hover .card-btn { background: var(--accent); border-color: var(--accent); color: white; }
         .card.green .card-btn { color: var(--accent); }
+/* ---------- إصلاحات B2: تباين زر الاختبار ومحاذاة البطاقات ---------- */
+/* زر «بدء الاختبار»: لون تحذيري في الحالة العادية، وعند التحويم خلفية كهرمانية ونص داكن (تباين ~6.8:1) — كان النمط المضمّن يتغلّب على لون التحويم الأبيض فيبقى النص برتقالياً على أزرق ساطع. */
+.card-btn.btn-warning { color: var(--warning); border-color: var(--warning); }
+.card:hover .card-btn.btn-warning { background: var(--warning); border-color: var(--warning); color: #1f2937; }
+/* رسائل الفراغ (كلية بلا سنوات/مواد): كانت عنصر شبكة بعرض نصف الشاشة — الآن بعرض كامل وموسّطة. */
+.grid-container > p[role="status"] { grid-column: 1 / -1; }
+p[role="status"] { text-align: center; color: var(--text-muted); font-weight: 700; padding: 30px 20px; margin: 0; }
+/* بطاقة وحيدة في شبكة عمودين (فصل واحد / كلية واحدة / نتيجة بحث واحدة): موسّطة بدل نصف العرض. */
+.grid-container.grid-2col > .card:only-child { grid-column: 1 / -1; width: 100%; max-width: 560px; margin-inline: auto; }
         
         .content-list { display: flex; flex-direction: column; gap: 12px; }
         .list-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--card-shadow); transition: 0.3s; position: relative; overflow: hidden; flex-wrap: wrap; gap: 10px;}
@@ -516,8 +541,8 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 <div id="splash-screen" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-card);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
     <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo" style="width: 100px; margin-bottom: 20px;">
     <div style="font-size:2rem; font-weight:900; color:var(--primary); font-family:'Outfit', sans-serif;">Amr Suhail Academy</div>
-    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:40px; letter-spacing:1px; font-family:'Outfit', sans-serif;">From nothing to be something</div>
-    <button onclick="document.getElementById('splash-screen').classList.add('hidden'); sessionStorage.setItem('visited', 'true'); checkForNewPlatformUpdates();" class="btn-calc-action" style="width:auto; padding:14px 35px; background:var(--primary);">دخول المنصة <i class="fa-solid fa-arrow-left"></i></button>
+    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:40px; letter-spacing:1px; font-family:'Outfit', sans-serif;">From Nothing to Something</div>
+    <button onclick="dismissSplash()" class="btn-calc-action" style="width:auto; padding:14px 35px; background:var(--primary);">دخول المنصة <i class="fa-solid fa-arrow-left"></i></button>
 </div>
 
 <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
@@ -544,7 +569,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         <div class="more-menu-wrap">
             <button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button>
             <div class="more-menu" id="moreMenu" role="menu">
-                <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button>
+                <button type="button" onclick="toggleTheme(); closeMoreMenu();"><i class="fa-solid fa-moon theme-toggle-icon"></i> تبديل المظهر</button>
                 {% if view != 'services_hub' %}<button type="button" onclick="closeMoreMenu(); togglePopup('favBox');"><i class="fa-solid fa-heart"></i> المفضلة</button>{% endif %}
                 <button type="button" onclick="closeMoreMenu(); openWhatsNewModal();"><i class="fa-solid fa-bell"></i> التنبيهات</button>
             </div>
@@ -554,19 +579,19 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
 <!-- Login / Register Box -->
 <div class="popup-box" id="loginBox">
-    <div class="popup-header"><div><i class="fa-solid fa-user header-icon" style="color:var(--primary);"></i> حساب الطالب / المشرف</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
+    <div class="popup-header"><div><i class="fa-solid fa-user header-icon" style="color:var(--primary);"></i> تسجيل الدخول</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
     <div class="popup-body">
         <div id="loginForm" style="display:block;">
-            <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field">
-            <input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field">
+            <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
+            <div class="pw-wrap"><input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('login_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
             <div id="loginError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentLogin()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">ليس لديك حساب؟ <span onclick="showRegisterForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل كطالب جديد</span></p>
         </div>
         <div id="registerForm" style="display:none;">
-            <input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field">
-            <input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field">
+            <input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
+            <div class="pw-wrap"><input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('reg_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
             <input type="text" id="reg_name" placeholder="الاسم الكامل" class="qa-input-field">
             <div id="regError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentRegister()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-regular fa-user"></i> إنشاء حساب</button>
@@ -679,9 +704,21 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 <div class="popup-box" id="calcBox">
     <div class="popup-header"><div><i class="fa-solid fa-calculator header-icon"></i> حاسبة المعدل الجامعي</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
     <div class="popup-body">
+        <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
+            <div style="font-weight:900; font-size:0.95rem; margin-bottom:10px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> معدلك السابق (اختياري — لحساب المعدل التراكمي)</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="number" id="prevGpa" placeholder="المعدل السابق" class="qa-input-field" style="margin:0; flex:1; min-width:120px;" min="0" step="0.01" inputmode="decimal">
+                <input type="number" id="prevHours" placeholder="الساعات المنجزة سابقاً" class="qa-input-field" style="margin:0; flex:1; min-width:120px;" min="0" step="1" inputmode="numeric">
+                <select id="gpaScale" class="qa-input-field" style="margin:0; flex:0 0 auto; min-width:110px;" title="سلم التقدير">
+                    <option value="5" selected>السلم: من 5</option>
+                    <option value="4">السلم: من 4</option>
+                </select>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">اترك الحقلين فارغين إن لم يكن لديك معدل سابق — يُحسب معدل هذا الفصل فقط.</div>
+        </div>
         <div id="subjectsList" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-            <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;"></div>
-            <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;"></div>
+            <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;" min="0" step="1"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;" min="0" max="100" step="0.5"><button type="button" class="calc-row-del" onclick="deleteCalcRow(this)" title="حذف المادة" aria-label="حذف المادة"><i class="fa-solid fa-trash"></i></button></div>
+            <div class="calc-row" style="display:flex; gap:10px;"><input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;" min="0" step="1"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;" min="0" max="100" step="0.5"><button type="button" class="calc-row-del" onclick="deleteCalcRow(this)" title="حذف المادة" aria-label="حذف المادة"><i class="fa-solid fa-trash"></i></button></div>
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
             <button class="btn-calc-outline" onclick="addRow()"><i class="fa-solid fa-plus"></i> مادة أخرى</button>
@@ -1014,12 +1051,21 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>
     <div class="grid-container grid-2col" id="subjects">
         {% for c in colleges %}
+            {% if c.subject_count == 0 %}
+            <div class="card year-card card-disabled" aria-disabled="true" title="لا توجد مواد بعد في هذه الكلية">
+                <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
+                <h3 class="card-title year-card-title">{{ c.name }}</h3>
+                <div class="card-subtitle">لا توجد مواد بعد</div>
+                <div class="card-btn card-btn-disabled">لا توجد مواد بعد</div>
+            </div>
+            {% else %}
             <a href="/?college={{ c.name|urlencode }}" class="card year-card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
                 <h3 class="card-title year-card-title">{{ c.name }}</h3>
                 <div class="card-subtitle">{% if c.subject_count == 1 %}مادة واحدة{% elif c.subject_count == 2 %}مادتان{% elif c.subject_count %}{{ c.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
                 <div class="card-btn">استعرض الكلية</div>
             </a>
+            {% endif %}
         {% else %}<p role="status">{{ "تعذر تحميل الكليات. حاول تحديث الصفحة." if catalog_error else "ستظهر الكليات هنا عند إضافة أول كلية." }}</p>
         {% endfor %}
     </div>
@@ -1027,12 +1073,21 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="section-header" id="years-grid"><h2>اختر السنة الدراسية — {{ college_name }}</h2><p>حدد مسارك الأكاديمي لاستعراض المواد والمحتوى</p></div>
     <div class="grid-container grid-2col" id="subjects">
         {% for id, year in years.items() %}
+            {% if year.subject_count == 0 %}
+            <div class="card year-card card-disabled" aria-disabled="true" title="لا توجد مواد بعد في هذه السنة">
+                <div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
+                <h3 class="card-title year-card-title">{{ year.name }}</h3>
+                <div class="card-subtitle">لا توجد مواد بعد</div>
+                <div class="card-btn card-btn-disabled">لا توجد مواد بعد</div>
+            </div>
+            {% else %}
             <a href="/?college={{ college_name|urlencode }}&year={{ id|urlencode }}" class="card year-card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>
                 <h3 class="card-title year-card-title">{{ year.name }}</h3>
                 <div class="card-subtitle">{% if year.subject_count == 1 %}مادة واحدة{% elif year.subject_count == 2 %}مادتان{% elif year.subject_count %}{{ year.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
                 <div class="card-btn">استعرض المواد</div>
             </a>
+            {% endif %}
         {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "لا توجد سنوات بعد في " + college_name + ". سيتم إضافة المقررات قريباً." }}</p>
         {% endfor %}
     </div>
@@ -1043,12 +1098,21 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="section-header"><h2>اختر الفصل الدراسي</h2><p>{{ college_name }}</p></div>
     <div class="grid-container grid-2col">
         {% for t_id, term_data in terms.items() %}
+        {% if term_data.subject_count == 0 %}
+        <div class="card card-disabled" aria-disabled="true" title="لا توجد مواد بعد في هذا الفصل">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
+            <h3 class="card-title">{{ term_data.name }}</h3>
+            <div class="card-subtitle">لا توجد مواد بعد</div>
+            <div class="card-btn card-btn-disabled">لا توجد مواد بعد</div>
+        </div>
+        {% else %}
         <a href="/?college={{ college_name|urlencode }}&year={{ y_id|urlencode }}&term={{ t_id|urlencode }}" class="card">
             <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>
             <h3 class="card-title">{{ term_data.name }}</h3>
             <div class="card-subtitle">{% if term_data.subject_count == 1 %}مادة واحدة{% elif term_data.subject_count == 2 %}مادتان{% elif term_data.subject_count %}{{ term_data.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
             <div class="card-btn">تصفح الفصل</div>
         </a>
+        {% endif %}
         {% endfor %}
     </div>
     {% endif %}
@@ -1063,13 +1127,14 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         {% for subject in subjects %}
             <a href="/?subject={{ subject.id|urlencode }}" class="card">
                 <div class="card-icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
-                <h3 class="card-title">{{ subject.name }}</h3>
+                <h3 class="card-title">{{ subject.name|display_name }}</h3>
                 <div class="card-subtitle">{{ subject.video_count or 0 }} فيديو · {{ subject.file_count or 0 }} ملفات · {{ subject.question_count or 0 }} سؤال{% if subject.test_count == 1 %} · اختبار واحد{% elif subject.test_count == 2 %} · اختباران{% elif subject.test_count %} · {{ subject.test_count }} اختبارات{% endif %}</div>
                 {% if subject.has_vip %}<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}
                 {% if subject.lesson_count == 0 and not subject.types.quiz.chapters %}
-                <div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>
-                {% endif %}
+                <div class="card-btn card-btn-disabled" style="margin-top:15px;">لا توجد دروس بعد في هذه المادة</div>
+                {% else %}
                 <div class="card-btn">دخول للمادة</div>
+                {% endif %}
             </a>
         {% endfor %}
     </div>
@@ -1126,7 +1191,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div class="card-btn">فتح واتساب</div>
         </a>
         <div class="card" role="button" tabindex="0" onclick="toggleTheme()" style="cursor:pointer;">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-moon"></i></div>
+            <div class="card-icon-wrapper"><i class="fa-solid fa-moon theme-toggle-icon"></i></div>
             <h3 class="card-title">المظهر</h3>
             <div class="card-subtitle">تبديل الوضع الفاتح / الليلي</div>
             <div class="card-btn">تبديل المظهر</div>
@@ -1135,23 +1200,50 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     {% endif %}
 
     {% if view == 'select_type' %}
-    <div class="section-header"><h2>{{ subject.name }}</h2><p>اختر نوع المحتوى</p></div>
+    <div class="section-header"><h2>{{ subject.name|display_name }}</h2><p>اختر نوع المحتوى</p></div>
+    {% set _v_ch = subject.types.videos.chapters|length %}
+    {% set _f_ch = subject.types.files.chapters|length %}
+    {% set _q_ch = subject.types.quiz.chapters|length %}
     <div class="grid-container grid-2col">
+        {% if _v_ch == 0 %}
+        <div class="card card-disabled" aria-disabled="true" title="لا توجد محاضرات بعد في هذه المادة">
+            <div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>
+            <h3 class="card-title">المحاضرات</h3>
+            <div class="card-btn card-btn-disabled">لا توجد محاضرات بعد</div>
+        </div>
+        {% else %}
         <a href="/?subject={{ subject.id|urlencode }}&type=videos" class="card">
             <div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>
             <h3 class="card-title">المحاضرات</h3>
             <div class="card-btn">تصفح الفيديوهات</div>
         </a>
+        {% endif %}
+        {% if _f_ch == 0 %}
+        <div class="card green card-disabled" aria-disabled="true" title="لا توجد ملفات بعد في هذه المادة">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>
+            <h3 class="card-title">الملفات</h3>
+            <div class="card-btn card-btn-disabled">لا توجد ملفات بعد</div>
+        </div>
+        {% else %}
         <a href="/?subject={{ subject.id|urlencode }}&type=files" class="card green">
             <div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>
             <h3 class="card-title">الملفات</h3>
             <div class="card-btn">تصفح الملفات</div>
         </a>
+        {% endif %}
+        {% if _q_ch == 0 %}
+        <div class="card card-disabled" aria-disabled="true" title="لا توجد اختبارات بعد في هذه المادة">
+            <div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>
+            <h3 class="card-title">اختبار</h3>
+            <div class="card-btn card-btn-disabled">لا توجد اختبارات بعد</div>
+        </div>
+        {% else %}
         <a href="/?subject={{ subject.id|urlencode }}&type=quiz" class="card" style="border-color:transparent;">
             <div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>
             <h3 class="card-title">اختبار</h3>
-            <div class="card-btn" style="color:var(--warning); border-color:var(--warning);">بدء الاختبار</div>
+            <div class="card-btn btn-warning">بدء الاختبار</div>
         </a>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -1160,7 +1252,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="grid-container grid-2col">
         {% for chapter in chapters %}
             <a href="/?subject={{ subject.id|urlencode }}&type={{ content_type|urlencode }}&chapter={{ chapter.name|urlencode }}" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px; position:relative;">
-                <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name }}{% if chapter.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}</span>
+                <span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> {{ chapter.name|display_name }}{% if chapter.vip_locked %} <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>{% endif %}</span>
                 <i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i>
             </a>
         {% else %}
@@ -1173,9 +1265,9 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="section-header" style="text-align:right; background:var(--bg-card); padding:16px 20px; border-radius:var(--radius-lg); border:1px solid var(--border);">
         <h2 style="color:var(--primary); font-size:1.2rem; margin:0;">
             {% if content_type == 'videos' %}<i class="fa-solid fa-play-circle" style="margin-left:8px;"></i>{% else %}<i class="fa-solid fa-book-open" style="margin-left:8px;"></i>{% endif %}
-            {{ subject.name }}
+            {{ subject.name|display_name }}
         </h2>
-        <p style="font-weight:700; color:var(--text-muted); margin:0; font-size:0.95rem;"><i class="fa-solid fa-thumbtack" style="margin-left:8px;"></i> {{ chapter.name }}</p>
+        <p style="font-weight:700; color:var(--text-muted); margin:0; font-size:0.95rem;"><i class="fa-solid fa-thumbtack" style="margin-left:8px;"></i> {{ chapter.name|display_name }}</p>
     </div>
     
     {% if content_type == 'quiz' %}
@@ -1185,7 +1277,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
                 <span class="vip-badge-inline" style="font-size:0.85rem; padding:5px 14px;"><i class="fa-solid fa-crown"></i> VIP</span>
                 <div style="width:70px; height:70px; background:rgba(245,158,11,0.1); color:var(--warning); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:18px auto 15px;"><i class="fa-solid fa-lock"></i></div>
                 <h3 style="margin-bottom:12px; font-size:1.4rem; font-weight:900;">هذا المحتوى مدفوع، للفتح تواصل معنا</h3>
-                <p style="color:var(--text-muted); font-weight:700; margin-bottom:20px;">اختبار «{{ chapter.name }}» من المحتوى المدفوع — تواصل معنا عبر واتساب لتفعيله.</p>
+                <p style="color:var(--text-muted); font-weight:700; margin-bottom:20px;">اختبار «{{ chapter.name|display_name }}» من المحتوى المدفوع — تواصل معنا عبر واتساب لتفعيله.</p>
                 <a href="https://wa.me/967774485611?text={{ ('أريد تفعيل أسئلة ' + chapter.name)|urlencode }}" target="_blank" class="btn-calc-action" style="background:#25D366; max-width:320px; margin:0 auto; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="fa-brands fa-whatsapp"></i> تواصل عبر واتساب</a>
             </div>
             {% else %}
@@ -1399,6 +1491,12 @@ function closeAllPopups() {
 // 3. المظهر وتصفح المواد
 function updateThemeIcon() {
     const isDark = document.documentElement.classList.contains('dark-mode');
+    // أيقونة تبديل المظهر داخل قائمة النقاط الثلاث (وبطاقة «المظهر» في الرئيسية):
+    // هلال في الوضع الفاتح، وشمس في الوضع الليلي.
+    document.querySelectorAll('.theme-toggle-icon').forEach(function (el) {
+        el.classList.toggle('fa-moon', !isDark);
+        el.classList.toggle('fa-sun', isDark);
+    });
     const m = document.getElementById('moon-icon');
     const s = document.getElementById('sun-icon');
     if (m) m.style.display = isDark ? 'none' : 'block';
@@ -1438,6 +1536,21 @@ var CATALOG_PARAMS = ['college', 'year', 'term', 'subject', 'type', 'chapter'];
 // ---------- أدوات نصية نقية (بلا DOM — قابلة للاختبار في node) ----------
 function escHtml(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+/* اسم مادة/فصل للعرض فقط: يزيل نقطة زائدة في النهاية (مثل «Electronic.») دون
+   تغيير القيم المستخدمة في الروابط والاستعلامات — مطابقة لفلتر display_name في App.py */
+function displayName(s) {
+    var t = String(s == null ? '' : s).trim();
+    while (t.length && (t.charAt(t.length - 1) === '.' || t.charAt(t.length - 1) === '。')) t = t.slice(0, -1).trim();
+    return t;
+}
+/* بطاقة معطّلة لعنصر فارغ (كلية/سنة/فصل بلا مواد، أو نوع محتوى بلا فصول): div باهت بلا رابط وبلا زر فعّال */
+function disabledCardHTML(icon, title, emptyText, extraCls) {
+    return '<div class="card ' + (extraCls || 'year-card') + ' card-disabled" aria-disabled="true" title="' + escHtml(emptyText) + '">' +
+        '<div class="card-icon-wrapper">' + icon + '</div>' +
+        '<h3 class="card-title year-card-title">' + escHtml(title) + '</h3>' +
+        '<div class="card-subtitle">' + escHtml(emptyText) + '</div>' +
+        '<div class="card-btn card-btn-disabled">' + escHtml(emptyText) + '</div></div>';
 }
 function pluralSubjects(n) {
     n = n || 0;
@@ -1534,11 +1647,15 @@ function cascadeCollegesHTML(data) {
     }
     names.forEach(function (name) {
         var n = collegeSubjectCount(data, name);
-        h += '<a href="/?college=' + encodeURIComponent(name) + '" class="card year-card">' +
-            '<div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>' +
-            '<h3 class="card-title year-card-title">' + escHtml(name) + '</h3>' +
-            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
-            '<div class="card-btn">استعرض الكلية</div></a>';
+        if (n === 0) {
+            h += disabledCardHTML('<i class="fa-solid fa-building-columns"></i>', name, 'لا توجد مواد بعد');
+        } else {
+            h += '<a href="/?college=' + encodeURIComponent(name) + '" class="card year-card">' +
+                '<div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>' +
+                '<h3 class="card-title year-card-title">' + escHtml(name) + '</h3>' +
+                '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+                '<div class="card-btn">استعرض الكلية</div></a>';
+        }
     });
     return h + '</div>';
 }
@@ -1558,11 +1675,15 @@ function cascadeYearsHTML(data, college) {
     keys.forEach(function (yk) {
         var y = years[yk];
         var n = (y && typeof y.subject_count === 'number') ? y.subject_count : 0;
-        h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(yk) + '" class="card year-card">' +
-            '<div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>' +
-            '<h3 class="card-title year-card-title">' + escHtml((y && y.name) || yk) + '</h3>' +
-            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
-            '<div class="card-btn">استعرض المواد</div></a>';
+        if (n === 0) {
+            h += disabledCardHTML('<i class="fa-solid fa-layer-group"></i>', (y && y.name) || yk, 'لا توجد مواد بعد');
+        } else {
+            h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(yk) + '" class="card year-card">' +
+                '<div class="card-icon-wrapper"><i class="fa-solid fa-layer-group"></i></div>' +
+                '<h3 class="card-title year-card-title">' + escHtml((y && y.name) || yk) + '</h3>' +
+                '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+                '<div class="card-btn">استعرض المواد</div></a>';
+        }
     });
     return h + '</div>';
 }
@@ -1577,11 +1698,15 @@ function cascadeTermsHTML(data, college, year) {
     keys.forEach(function (tk) {
         var t = terms[tk];
         var n = (t && typeof t.subject_count === 'number') ? t.subject_count : ((t && t.subjects) || []).length;
-        h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(year) + '&term=' + encodeURIComponent(tk) + '" class="card">' +
-            '<div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>' +
-            '<h3 class="card-title">' + escHtml((t && t.name) || tk) + '</h3>' +
-            '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
-            '<div class="card-btn">تصفح الفصل</div></a>';
+        if (n === 0) {
+            h += disabledCardHTML('<i class="fa-solid fa-calendar-days"></i>', (t && t.name) || tk, 'لا توجد مواد بعد', '');
+        } else {
+            h += '<a href="/?college=' + encodeURIComponent(college) + '&year=' + encodeURIComponent(year) + '&term=' + encodeURIComponent(tk) + '" class="card">' +
+                '<div class="card-icon-wrapper"><i class="fa-solid fa-calendar-days"></i></div>' +
+                '<h3 class="card-title">' + escHtml((t && t.name) || tk) + '</h3>' +
+                '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
+                '<div class="card-btn">تصفح الفصل</div></a>';
+        }
     });
     return h + '</div>';
 }
@@ -1600,32 +1725,55 @@ function cascadeSubjectsGridHTML(data, college, year, term) {
     subs.forEach(function (s) {
         h += '<a href="/?subject=' + encodeURIComponent(s.id) + '" class="card">' +
             '<div class="card-icon-wrapper"><i class="fa-solid fa-book-open"></i></div>' +
-            '<h3 class="card-title">' + escHtml(s.name) + '</h3>' +
+            '<h3 class="card-title">' + escHtml(displayName(s.name)) + '</h3>' +
             '<div class="card-subtitle">' + escHtml(subjectSubtitle(s)) + '</div>';
         if (s.has_vip) h += '<span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>';
         var quizCh = (s.types && s.types.quiz && s.types.quiz.chapters) ? s.types.quiz.chapters.length : 0;
         if ((s.lesson_count || 0) === 0 && !quizCh) {
-            h += '<div style="font-size:0.9rem; color:var(--text-muted); font-weight:700; margin-bottom:15px;">لا توجد دروس بعد في هذه المادة</div>';
+            h += '<div class="card-btn card-btn-disabled" style="margin-top:15px;">لا توجد دروس بعد في هذه المادة</div>';
+        } else {
+            h += '<div class="card-btn">دخول للمادة</div>';
         }
-        h += '<div class="card-btn">دخول للمادة</div></a>';
+        h += '</a>';
     });
     return h + '</div>';
 }
 function cascadeSelectTypeHTML(found) {
     var s = found.subject;
-    return cascadeNavBtnsHTML() +
-        '<div class="section-header"><h2>' + escHtml(s.name) + '</h2><p>اختر نوع المحتوى</p></div>' +
-        '<div class="grid-container grid-2col">' +
-        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=videos" class="card">' +
+    var vCh = (s.types && s.types.videos && s.types.videos.chapters) ? s.types.videos.chapters.length : 0;
+    var fCh = (s.types && s.types.files && s.types.files.chapters) ? s.types.files.chapters.length : 0;
+    var qCh = (s.types && s.types.quiz && s.types.quiz.chapters) ? s.types.quiz.chapters.length : 0;
+    var h = cascadeNavBtnsHTML() +
+        '<div class="section-header"><h2>' + escHtml(displayName(s.name)) + '</h2><p>اختر نوع المحتوى</p></div>' +
+        '<div class="grid-container grid-2col">';
+    if (vCh === 0) {
+        h += '<div class="card card-disabled" aria-disabled="true" title="لا توجد محاضرات بعد في هذه المادة">' +
             '<div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>' +
-            '<h3 class="card-title">المحاضرات</h3><div class="card-btn">تصفح الفيديوهات</div></a>' +
-        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=files" class="card green">' +
+            '<h3 class="card-title">المحاضرات</h3><div class="card-btn card-btn-disabled">لا توجد محاضرات بعد</div></div>';
+    } else {
+        h += '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=videos" class="card">' +
+            '<div class="card-icon-wrapper" style="background:rgba(37,99,235,0.1); color:var(--primary);"><i class="fa-solid fa-circle-play"></i></div>' +
+            '<h3 class="card-title">المحاضرات</h3><div class="card-btn">تصفح الفيديوهات</div></a>';
+    }
+    if (fCh === 0) {
+        h += '<div class="card green card-disabled" aria-disabled="true" title="لا توجد ملفات بعد في هذه المادة">' +
             '<div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>' +
-            '<h3 class="card-title">الملفات</h3><div class="card-btn">تصفح الملفات</div></a>' +
-        '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=quiz" class="card" style="border-color:transparent;">' +
+            '<h3 class="card-title">الملفات</h3><div class="card-btn card-btn-disabled">لا توجد ملفات بعد</div></div>';
+    } else {
+        h += '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=files" class="card green">' +
+            '<div class="card-icon-wrapper"><i class="fa-solid fa-file-pdf"></i></div>' +
+            '<h3 class="card-title">الملفات</h3><div class="card-btn">تصفح الملفات</div></a>';
+    }
+    if (qCh === 0) {
+        h += '<div class="card card-disabled" aria-disabled="true" title="لا توجد اختبارات بعد في هذه المادة">' +
             '<div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>' +
-            '<h3 class="card-title">اختبار</h3><div class="card-btn" style="color:var(--warning); border-color:var(--warning);">بدء الاختبار</div></a>' +
-        '</div>';
+            '<h3 class="card-title">اختبار</h3><div class="card-btn card-btn-disabled">لا توجد اختبارات بعد</div></div>';
+    } else {
+        h += '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=quiz" class="card" style="border-color:transparent;">' +
+            '<div class="card-icon-wrapper" style="background:rgba(245,158,11,0.1); color:var(--warning);"><i class="fa-solid fa-trophy"></i></div>' +
+            '<h3 class="card-title">اختبار</h3><div class="card-btn btn-warning">بدء الاختبار</div></a>';
+    }
+    return h + '</div>';
 }
 function cascadeChaptersHTML(found, type) {
     var s = found.subject;
@@ -1638,7 +1786,7 @@ function cascadeChaptersHTML(found, type) {
     }
     chs.forEach(function (ch) {
         h += '<a href="/?subject=' + encodeURIComponent(s.id) + '&type=' + encodeURIComponent(type) + '&chapter=' + encodeURIComponent(ch.name) + '" class="card" style="flex-direction:row; justify-content:space-between; padding:16px 20px; position:relative;">' +
-            '<span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> ' + escHtml(ch.name);
+            '<span style="font-size:1.1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-bookmark" style="color:var(--primary); margin-left:10px;"></i> ' + escHtml(displayName(ch.name));
         if (ch.vip_locked) h += ' <span class="vip-badge-inline"><i class="fa-solid fa-crown"></i> VIP</span>';
         h += '</span><i class="fa-solid fa-chevron-left" style="color:var(--text-muted);"></i></a>';
     });
@@ -2206,7 +2354,7 @@ function searchItems() {
                                 if (lesson.title.toLowerCase().includes(term))
                                     add(lesson.title + ' · ' + subject.name, {subject:subject.id, type, chapter:chapter.name});
                 }
-        if (!results.childElementCount) results.textContent = 'لا توجد نتائج مطابقة';
+        if (!results.childElementCount) results.innerHTML = '<p role="status">لا توجد نتائج مطابقة</p>';
         return;
     }
     document.querySelectorAll(".grid-container .card, .content-list .list-item").forEach(c => {
@@ -2218,24 +2366,31 @@ function searchItems() {
 function addRow() {
     const list = document.getElementById('subjectsList');
     if (!list) return;
-    const div = document.createElement('div'); 
-    div.className = "calc-row"; 
-    div.style.display = "flex"; 
-    div.style.gap = "10px"; 
+    const div = document.createElement('div');
+    div.className = "calc-row";
+    div.style.display = "flex";
+    div.style.gap = "10px";
     div.style.marginTop = "12px";
-    div.innerHTML = `<input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;">`;
+    div.innerHTML = `<input type="number" placeholder="الساعات المعتمدة" class="qa-input-field s-hours" style="margin:0;" min="0" step="1"><input type="number" placeholder="الدرجة من 100" class="qa-input-field s-grade" style="margin:0;" min="0" max="100" step="0.5"><button type="button" class="calc-row-del" onclick="deleteCalcRow(this)" title="حذف المادة" aria-label="حذف المادة"><i class="fa-solid fa-trash"></i></button>`;
     list.appendChild(div);
 }
 
+function deleteCalcRow(btn) {
+    const row = btn ? btn.closest('.calc-row') : null;
+    if (row) row.remove();
+}
+
 function calcFinalGPA() {
+    const scaleEl = document.getElementById('gpaScale');
+    const scale = (scaleEl && (scaleEl.value === '4' || scaleEl.value === '5')) ? parseFloat(scaleEl.value) : 5;
     let totalWeighted = 0;
     let totalHours = 0;
     document.querySelectorAll('#subjectsList .calc-row').forEach(r => {
         const h = parseFloat(r.querySelector('.s-hours')?.value);
         const g = parseFloat(r.querySelector('.s-grade')?.value);
-        if(!isNaN(h) && !isNaN(g) && h > 0) { 
-            totalWeighted += (h * g); 
-            totalHours += h; 
+        if(!isNaN(h) && !isNaN(g) && h > 0 && g >= 0 && g <= 100) {
+            totalWeighted += (h * g);
+            totalHours += h;
         }
     });
 
@@ -2244,27 +2399,61 @@ function calcFinalGPA() {
     const resDet = document.getElementById('resDetails');
     if (!resBox || !resGrade || !resDet) return;
 
-    if (totalHours === 0) {
+    const showError = (msg) => {
         resGrade.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> خطأ';
         resGrade.style.color = "var(--danger)";
-        resDet.innerText = "يرجى إدخال ساعات ودرجات صالحة لحساب المعدل.";
-    } else {
-        const avg = totalWeighted / totalHours;
-        const gpa = (avg / 100) * 5;
-        let letter = '', color = '';
-        if (avg >= 90) { letter = 'A (ممتاز)'; color = 'var(--accent)'; }
-        else if (avg >= 80) { letter = 'B (جيد جداً)'; color = 'var(--primary)'; }
-        else if (avg >= 65) { letter = 'C (جيد)'; color = 'var(--warning)'; }
-        else if (avg >= 50) { letter = 'D (مقبول)'; color = '#f97316'; }
-        else { letter = 'F (راسب)'; color = 'var(--danger)'; }
+        resDet.innerText = msg;
+        resBox.style.display = 'block';
+    };
 
-        resGrade.innerText = letter;
-        resGrade.style.color = color;
-        resDet.innerHTML = `النسبة المئوية: <b style="color:${color}">${avg.toFixed(2)}%</b><br>المعدل التراكمي: <b style="color:${color}; font-size:1.3rem;">${gpa.toFixed(2)} / 5</b>`;
+    // المعدل السابق + ساعاته المنجزة: اختياريان، لكن يُدخلان معاً
+    const prevGpaRaw = document.getElementById('prevGpa')?.value;
+    const prevHoursRaw = document.getElementById('prevHours')?.value;
+    const prevGpa = (prevGpaRaw === '' || prevGpaRaw == null) ? NaN : parseFloat(prevGpaRaw);
+    const prevHours = (prevHoursRaw === '' || prevHoursRaw == null) ? NaN : parseFloat(prevHoursRaw);
+    const hasPrev = !isNaN(prevGpa) || !isNaN(prevHours);
+    if (hasPrev && (isNaN(prevGpa) || isNaN(prevHours) || prevGpa < 0 || prevGpa > scale || prevHours <= 0)) {
+        showError('أدخل معدلك السابق (من 0 إلى ' + scale + ') وعدد ساعاته المنجزة معاً، أو اتركهما فارغين.');
+        return;
     }
+
+    if (totalHours === 0) {
+        showError("يرجى إدخال ساعات ودرجات صالحة لحساب المعدل.");
+        return;
+    }
+
+    const avg = totalWeighted / totalHours;
+    const termGpa = (avg / 100) * scale;
+    let letter = '', color = '';
+    if (avg >= 90) { letter = 'A (ممتاز)'; color = 'var(--accent)'; }
+    else if (avg >= 80) { letter = 'B (جيد جداً)'; color = 'var(--primary)'; }
+    else if (avg >= 65) { letter = 'C (جيد)'; color = 'var(--warning)'; }
+    else if (avg >= 50) { letter = 'D (مقبول)'; color = '#f97316'; }
+    else { letter = 'F (راسب)'; color = 'var(--danger)'; }
+
+    resGrade.innerText = letter;
+    resGrade.style.color = color;
+    let details = `النسبة المئوية لهذا الفصل: <b style="color:${color}">${avg.toFixed(2)}%</b><br>معدل الفصل: <b style="color:${color}; font-size:1.3rem;">${termGpa.toFixed(2)} / ${scale}</b>`;
+    if (hasPrev) {
+        // المعدل التراكمي = (المعدل السابق × ساعاته + معدل الفصل × ساعاته) ÷ مجموع الساعات
+        const cumGpa = (prevGpa * prevHours + termGpa * totalHours) / (prevHours + totalHours);
+        details += `<br>المعدل التراكمي: <b style="color:${color}; font-size:1.3rem;">${cumGpa.toFixed(2)} / ${scale}</b><br><span style="font-size:0.9rem; color:var(--text-muted);">(${prevHours} ساعة سابقة + ${totalHours} ساعة هذا الفصل)</span>`;
+    }
+    resDet.innerHTML = details;
     resBox.style.display = 'block';
 }
 
+// إظهار/إخفاء كلمة المرور في حقول الدخول والتسجيل (زر العين)
+function togglePwVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input || !btn) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? '<i class="fa-regular fa-eye-slash"></i>' : '<i class="fa-regular fa-eye"></i>';
+    btn.title = show ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';
+    btn.setAttribute('aria-label', btn.title);
+    input.focus();
+}
 // 5. تسجيل الدخول والتسجيل الموحد
 // رسالة خطأ الدخول: توست + عنصر ثابت داخل نافذة الدخول يبقى ظاهراً
 // حتى المحاولة التالية — alert() كانت تُبتلع فلا تظهر رسالة الحظر/الحذف.
@@ -2891,27 +3080,36 @@ async function deleteAdminContent(id, btn) {
 // 6b-1. التتابع كلية ← سنة ← ترم في إدارة المحتوى — القوائم تُبنى من المواد
 // الموجودة (cachedSubjects) فتتحدث تلقائياً عند إضافة مادة أو إعادة تسميتها
 // أو حذفها، دون إعادة تحميل الصفحة. لا نص حر للسنة/الترم في هذا القسم.
+// ترتيب رقمي ثابت + تطبيع عرض السنة: الترتيب الأبجدي يعرض 1، 3، 2،
+// والسنة المخزنة بإملاء خاطئ «السنة الاولئ» تُعرض «السنة الأولى».
+const YEAR_NAME_FIX_JS = { 'السنة الاولئ': 'السنة الأولى' };
+const YEAR_ORDER_JS = { 'السنة الأولى': 1, 'السنة الثانية': 2, 'السنة الثالثة': 3, 'السنة الرابعة': 4, 'السنة الخامسة': 5, 'السنة السادسة': 6 };
+const TERM_ORDER_JS = { 'الترم الأول': 1, 'الترم الثاني': 2 };
+function fixYearNameJS(y) { const v = (y || '').trim(); return YEAR_NAME_FIX_JS[v] || y; }
+function _sortYearsJS(years) { years.sort((a, b) => ((YEAR_ORDER_JS[a] || 99) - (YEAR_ORDER_JS[b] || 99)) || String(a).localeCompare(String(b), 'ar')); return years; }
+function _sortTermsJS(terms) { terms.sort((a, b) => ((TERM_ORDER_JS[a] || 99) - (TERM_ORDER_JS[b] || 99)) || String(a).localeCompare(String(b), 'ar')); return terms; }
 function _cascadeYears(college) {
     const years = [];
     (cachedSubjects || []).forEach(s => {
         if (college && s.college !== college) return;
-        if (!years.includes(s.year)) years.push(s.year);
+        const y = fixYearNameJS(s.year);
+        if (y && !years.includes(y)) years.push(y);
     });
-    return years;
+    return _sortYearsJS(years);
 }
 function _cascadeTerms(college, year) {
     const terms = [];
     (cachedSubjects || []).forEach(s => {
         if (college && s.college !== college) return;
-        if (year && s.year !== year) return;
+        if (year && fixYearNameJS(s.year) !== fixYearNameJS(year)) return;
         if (!terms.includes(s.term)) terms.push(s.term);
     });
-    return terms;
+    return _sortTermsJS(terms);
 }
 function _filteredSubjects(college, year, term) {
     return (cachedSubjects || []).filter(s =>
         (!college || s.college === college) &&
-        (!year || s.year === year) &&
+        (!year || fixYearNameJS(s.year) === fixYearNameJS(year)) &&
         (!term || s.term === term));
 }
 function _fillSelectOptions(sel, values, allLabel) {
@@ -4265,10 +4463,13 @@ async function sendAIMessage() {
 
     try {
         const res = await fetch('/ask-ai', { method: 'POST', body: fd });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         document.getElementById(loadId)?.remove();
         const rId = 'r_' + Date.now();
-        b.innerHTML += `<div style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;"><div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-robot"></i></div><div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; max-width:85%; line-height:1.6;" id="${rId}">${escapeText(data.reply || data.error).replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}</div></div>`;
+        // أي فشل من الخادم (بما فيه خطأ مفتاح API) يُعرض رسالة عامة فقط —
+        // لا يُعرض نص الخطأ الخام للمستخدم أبداً.
+        const replyText = (res.ok && data.reply) ? data.reply : 'عذراً، الخدمة غير متاحة حالياً، حاول لاحقاً';
+        b.innerHTML += `<div style="display:flex; gap:15px; align-items:flex-end; margin-top:10px;"><div style="width:35px; height:35px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-robot"></i></div><div style="background:var(--bg-card); border:1px solid var(--border); padding:15px; border-radius:16px; max-width:85%; line-height:1.6;" id="${rId}">${escapeText(replyText).replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>')}</div></div>`;
         if(window.MathJax) MathJax.typesetPromise([document.getElementById(rId)]);
     } catch(e) {
         document.getElementById(loadId)?.remove();
@@ -4514,7 +4715,9 @@ async function renderFavLists() {
     const vList = document.getElementById('favVideosList');
     const fList = document.getElementById('favFilesList');
     if (!isStudentLoggedIn()) {
-        if(vList) vList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لعرض مفضلتك.</div>';
+        const loginCta = '<div style="text-align:center; padding:20px; color:var(--text-muted);">يرجى تسجيل الدخول لعرض مفضلتك.</div><button class="btn-calc-action" style="background:var(--primary);" onclick="closeAllPopups(); togglePopup(\'loginBox\')"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>';
+        if(vList) vList.innerHTML = loginCta;
+        if(fList) fList.innerHTML = loginCta;
         return;
     }
     try {
@@ -4669,6 +4872,37 @@ async function toggleLeaderboardVisibility() {
 }
 
 // 11. التهيئة عند فتح الصفحة
+// شاشة الترحيب: تظهر مرة واحدة فقط في الجلسة (sessionStorage) فلا تعود عند
+// الرجوع من صفحة فرعية مثل /planner، ويُقفل تمرير الخلفية أثناء ظهورها.
+function lockSplashScroll(lock) {
+    document.body.style.overflow = lock ? 'hidden' : '';
+    document.documentElement.style.overflow = lock ? 'hidden' : '';
+}
+function dismissSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) splash.classList.add('hidden');
+    lockSplashScroll(false);
+    try { sessionStorage.setItem('visited', 'true'); } catch (e) {}
+    checkForNewPlatformUpdates();
+}
+function showSplashIfNeeded() {
+    let seen = false;
+    try { seen = !!sessionStorage.getItem('visited'); } catch (e) {}
+    if (seen) return;
+    const splash = document.getElementById('splash-screen');
+    if (splash) { splash.classList.remove('hidden'); lockSplashScroll(true); }
+}
+// الرجوع بزر المتصفح قد يستعيد الصفحة من الذاكرة المؤقتة دون إعادة تحميل؛
+// إن كانت الشاشة قد أُغلقت في هذه الجلسة تبقى مخفية ويبقى التمرير مفتوحاً.
+window.addEventListener('pageshow', function () {
+    let seen = false;
+    try { seen = !!sessionStorage.getItem('visited'); } catch (e) {}
+    if (seen) {
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.classList.add('hidden');
+        lockSplashScroll(false);
+    }
+});
 window.addEventListener('DOMContentLoaded', () => {
     updateThemeIcon();
     applyYearBadges();
@@ -4677,10 +4911,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (TERMINATED_REASON === 'banned') showToast('تم حظر هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
     else if (TERMINATED_REASON === 'deleted') showToast('تم حذف هذا الحساب لمخالفة سياسة الموقع', 'error', 8000);
     {% if not student_id %}
-    if (!sessionStorage.getItem('visited')) {
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.classList.remove('hidden');
-    }
+    showSplashIfNeeded();
     {% endif %}
     if (isStudentLoggedIn()) {
         loadProfile();

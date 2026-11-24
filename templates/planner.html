@@ -55,7 +55,7 @@
             --radius-lg: 24px;
             --radius-sm: 12px;
             --gold: #e79a2e;
-            --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255, 255, 255, 0.85);
+            --primary-light: #eff6ff; --primary-hover: #1d4ed8; --nav-bg: rgba(255, 255, 255, 0.85); --gradient-profile: linear-gradient(135deg, #2563eb, #1d4ed8);
             --font-arabic: 'IBM Plex Sans Arabic', 'Tajawal', sans-serif;
             --font-latin: 'Outfit', sans-serif;
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -83,7 +83,7 @@
             --border: #1e293b;
             --modal-bg: rgba(11, 17, 32, 0.85);
             --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
-            --primary-light: rgba(59, 130, 246, 0.1); --primary-hover: #60a5fa; --nav-bg: rgba(11, 17, 32, 0.85);
+            --primary-light: rgba(59, 130, 246, 0.1); --primary-hover: #2563eb; --nav-bg: rgba(11, 17, 32, 0.85); --gradient-profile: linear-gradient(135deg, #3b82f6, #1d4ed8);
             --skeleton-base: #1e293b; --skeleton-shine: #162032;
         }
 
@@ -101,16 +101,20 @@
         .brand-user .login-link { color: var(--primary); font-weight: 800; text-decoration: none; }
         .brand-user .login-link:hover { text-decoration: underline; }
         /* ===== الشريط العلوي الموحد (نفس الرئيسية) ===== */
-        .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; background: var(--nav-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+        .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 64px; padding: 12px 0; background: var(--nav-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; position: relative; }
         .brandmark { width: 38px; height: 38px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(37,99,235,0.2); flex-shrink: 0; }
         .brandmark img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .brand h1 { font-size: 1.05rem; margin: 0; font-weight: 900; font-family: 'Outfit', sans-serif; color: var(--primary); }
+        .brand h1 { font-size: 1.2rem; margin: 0; font-weight: 900; font-family: 'Outfit', sans-serif; color: var(--primary); }
         .brand small { display: block; color: var(--text-muted); font-size: 0.73rem; margin-top: 2px; }
         .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
         .top-nav-links { display: flex; gap: 2px; align-items: center; }
-        .top-nav-links a { padding: 8px 12px; border-radius: 10px; font-weight: 800; font-size: 0.88rem; color: var(--text-muted); text-decoration: none; font-family: var(--font-arabic); }
+        .top-nav-links a { padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 0.9rem; color: var(--text-muted); text-decoration: none; font-family: var(--font-arabic); }
         .top-nav-links a:hover { color: var(--primary); background: var(--primary-light); }
+        .top-nav-links a.active { color: var(--primary); background: var(--primary-light); }
+        .admin-indicator-dot { width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; position: absolute; right: -8px; top: 6px; box-shadow: 0 0 8px var(--success); }
+        .topbar-login { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 0.9rem; border: 0; cursor: pointer; text-decoration: none; box-shadow: 0 4px 12px rgba(37,99,235,0.2); display: inline-flex; align-items: center; }
+        .topbar-login:hover { background: var(--primary-hover); }
         .topbar .theme-toggle-btn { margin-top: 0; }
         .topbar .brand-user { margin-top: 0; }
 .more-menu-wrap{position:relative;display:inline-flex;flex-shrink:0}
@@ -241,7 +245,7 @@
 .cl-count{font-weight:900;color:var(--primary);font-family:Outfit,sans-serif;margin-bottom:10px}
 .cl-bar{max-width:280px;height:8px;background:var(--border);border-radius:20px;margin:0 auto 18px;overflow:hidden}
 .cl-fill{display:block;height:100%;width:0;background:var(--primary);border-radius:20px;transition:width .25s}
-.profile-circle{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(37,99,235,.3);text-decoration:none;flex-shrink:0}
+.profile-circle{width:42px;height:42px;border-radius:50%;background:var(--gradient-profile);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(37,99,235,.3);text-decoration:none;flex-shrink:0}
 .profile-letter{color:#fff;font-weight:900;font-size:1.2rem}
 .page-veil{position:fixed;inset:0;background:rgba(248,250,252,.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:3000;display:flex;align-items:center;justify-content:center}
 html.dark-mode .page-veil{background:rgba(11,17,32,.86)}
@@ -335,6 +339,7 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
         <a href="/" class="brand">
             <div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
             <div><h1>Amr Suhail Academy</h1></div>
+            {% if session.get('is_admin') or session.get('is_assistant') %}<span class="admin-indicator-dot"></span>{% endif %}
         </a>
         <div class="top-actions">
             <nav class="top-nav-links">
@@ -345,10 +350,10 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
             <div class="brand-user" id="userDisplay">
             {% if student_id %}
                 <button class="profile-circle" type="button" onclick="openSideProfile(event)" title="ملفي الشخصي" aria-label="ملفي الشخصي"><span class="profile-letter" id="sideProfileLetter">{{ (student_name or '')[:1] }}</span></button>
-                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
+                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon theme-toggle-icon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
             {% else %}
-                <a href="/" class="login-link">دخول</a>
-                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
+                <a href="/" class="topbar-login">دخول</a>
+                <div class="more-menu-wrap"><button class="more-menu-btn" type="button" onclick="toggleMoreMenu(event)" title="خيارات إضافية" aria-label="خيارات إضافية"><i class="fa-solid fa-ellipsis"></i></button><div class="more-menu" id="moreMenu" role="menu"><button type="button" onclick="togglePlannerTheme(); closeMoreMenu();"><i class="fa-solid fa-moon theme-toggle-icon"></i> تبديل المظهر</button><a href="/?tool=updates"><i class="fa-solid fa-bell"></i> التنبيهات</a></div></div>
             {% endif %}
         </div>
         </div>
@@ -714,9 +719,23 @@ document.addEventListener('click', function (e) {
 });
 window.addEventListener('pageshow', hidePageVeil);
 
+function updateThemeIcon() {
+    const isDark = document.documentElement.classList.contains('dark-mode');
+    // أيقونة تبديل المظهر داخل قائمة النقاط الثلاث (وبطاقة «المظهر» في الرئيسية):
+    // هلال في الوضع الفاتح، وشمس في الوضع الليلي.
+    document.querySelectorAll('.theme-toggle-icon').forEach(function (el) {
+        el.classList.toggle('fa-moon', !isDark);
+        el.classList.toggle('fa-sun', isDark);
+    });
+    const m = document.getElementById('moon-icon');
+    const s = document.getElementById('sun-icon');
+    if (m) m.style.display = isDark ? 'none' : 'block';
+    if (s) s.style.display = isDark ? 'block' : 'none';
+}
 function togglePlannerTheme() {
     document.documentElement.classList.toggle('dark-mode');
     localStorage.setItem('theme', document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light');
+    updateThemeIcon();
 }
 // قائمة النقاط الثلاث بجانب البروفايل (المظهر + التنبيهات)
 function toggleMoreMenu(e) {
@@ -733,6 +752,7 @@ function closeMoreMenu() {
 document.addEventListener('click', function (e) {
     if (!e.target.closest('.more-menu-wrap')) closeMoreMenu();
 });
+updateThemeIcon();
 
 
 // رسالة خطأ ثابتة داخل الصفحة (تبقى ظاهرة حتى المحاولة التالية) — التوست وحده قد يختفي دون أن يُرى
@@ -1251,8 +1271,9 @@ async function generatePlannerPlan(event) {
             await loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
-            let msg = data.error || 'غير معروف';
-            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            // أخطاء الخادم (500/503 — بما فيها فشل خدمة الذكاء الاصطناعي)
+            // تُعرض رسالة عامة فقط، دون نص الخطأ الخام أو ذكر مفتاح API.
+            const msg = (res.status >= 500) ? 'عذراً، الخدمة غير متاحة حالياً، حاول لاحقاً' : (data.error || 'غير معروف');
             showPlannerError('حدث خطأ: ' + msg);
         }
     } catch(e) { showPlannerError('خطأ في الاتصال بالخادم. تأكد من أنك مسجل الدخول.'); } 
@@ -1326,8 +1347,8 @@ async function generateExamPlan(event) {
             await loadTasks();
             document.querySelector('[data-tab="my-plans"]').click();
         } else {
-            let msg = data.message || data.error || 'غير معروف';
-            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            // أخطاء الخادم (500/503) تُعرض رسالة عامة فقط دون نص الخطأ الخام.
+            const msg = (res.status >= 500) ? 'عذراً، الخدمة غير متاحة حالياً، حاول لاحقاً' : (data.message || data.error || 'غير معروف');
             showPlannerError('حدث خطأ: ' + msg);
         }
     } catch(e) { showPlannerError('خطأ في الاتصال بالخادم.'); } 
@@ -1396,8 +1417,8 @@ async function rescheduleTasks(event) {
                 await loadTasks();
             } else showToast('لا توجد أيام متاحة لإعادة التوزيع.', 'info');
         } else {
-            let msg = data.error || 'حدث خطأ في إعادة التوزيع.';
-            if (res.status === 503) msg += ' — يلزم إضافة مفتاح Groq في إعدادات الخادم لتعمل هذه الميزة.';
+            // أخطاء الخادم (500/503) تُعرض رسالة عامة فقط دون نص الخطأ الخام.
+            const msg = (res.status >= 500) ? 'عذراً، الخدمة غير متاحة حالياً، حاول لاحقاً' : (data.error || 'حدث خطأ في إعادة التوزيع.');
             showPlannerError(msg);
         }
     } catch(e) { showPlannerError('خطأ في الاتصال بالخادم.'); } 

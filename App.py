@@ -71,6 +71,11 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 GROQ_MODEL = "openai/gpt-oss-120b"
 
+# رسالة عامة واحدة لكل فشل في خدمات الذكاء الاصطناعي (بوت / توليد الخطط /
+# إعادة التوزيع). لا يُعرض أي نص خطأ خام للمستخدم أبداً — لا رمز حالة،
+# لا رسالة استثناء، ولا أي ذكر لمفتاح API؛ التفاصيل تُسجَّل في سجل الخادم فقط.
+AI_UNAVAILABLE_MSG = "عذراً، الخدمة غير متاحة حالياً، حاول لاحقاً"
+
 # ==========================================
 # Database Models
 # ==========================================
@@ -156,7 +161,9 @@ class Subject(db.Model):
             "id": self.id,
             "name": self.name,
             "college": self.college,
-            "year": self.year,
+            # عرض فقط: سنة مخزنة بإملاء خاطئ («السنة الاولئ») تُعرض صحيحة
+            # دون تغيير الصف المخزن حتى لا تنكسر روابط الدروس/الأسئلة.
+            "year": _display_year(self.year),
             "term": self.term,
             "lesson_count": _subject_lesson_count(self),
             "question_count": _subject_question_count(self),
@@ -570,7 +577,8 @@ class CustomLesson(db.Model):
         date_str = self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         return {
             "id": self.id,
-            "year": self.year,
+            # عرض فقط: تطبيع إملاء السنة المخزنة (انظر _display_year).
+            "year": _display_year(self.year),
             "term": self.term,
             "college": self.college or "",
             "subject_name": self.subject_name,
@@ -643,7 +651,8 @@ class QuizQuestion(db.Model):
 
         return {
             "id": self.id,
-            "year": self.year,
+            # عرض فقط: تطبيع إملاء السنة المخزنة (انظر _display_year).
+            "year": _display_year(self.year),
             "term": self.term,
             "college": self.college or "",
             "subject_name": self.subject_name,
@@ -1076,6 +1085,47 @@ def _check_session_account_active():
 # تصحيح أسماء سنوات مخزنة بإملاء خاطئ في البيانات (تعرض كما هي في الواجهة)
 YEAR_NAME_FIXES = {"السنة الاولئ": "السنة الأولى"}
 
+# ترتيب عرض ثابت للسنوات والفصول (رقمي، لا أبجدي): الترتيب الأبجدي للنص
+# العربي يضع «السنة الثالثة» قبل «السنة الثانية» فيعرض السنوات 1، 3، 2،
+# وبغياب ORDER BY يعيد Postgres الصفوف بترتيب غير مضمون يتغير بين الطلبات.
+CANONICAL_YEAR_ORDER = {
+    'السنة الأولى': 1, 'السنة الثانية': 2, 'السنة الثالثة': 3,
+    'السنة الرابعة': 4, 'السنة الخامسة': 5, 'السنة السادسة': 6,
+}
+CANONICAL_TERM_ORDER = {'الترم الأول': 1, 'الترم الثاني': 2}
+
+def _display_year(value):
+    """اسم السنة كما يُعرض للمستخدم (تطبيع إملائي للعرض فقط — لا يغيّر المخزن)."""
+    return YEAR_NAME_FIXES.get((value or '').strip(), (value or '').strip())
+
+def _year_order(name):
+    """مفتاح ترتيب سنة: رقمها القياسي أولاً؛ السنوات المخصصة (مثل
+    «سنة تحضيرية») بعد القياسية ومرتبة أبجدياً فيما بينها."""
+    fixed = _display_year(name)
+    return (CANONICAL_YEAR_ORDER.get(fixed, 99), fixed)
+
+def _term_order(name):
+    """مفتاح ترتيب ترم: الأول ثم الثاني، ثم أي قيمة أخرى أبجدياً."""
+    n = (name or '').strip()
+    return (CANONICAL_TERM_ORDER.get(n, 99), n)
+
+def display_year(value):
+    """سنة دراسية للعرض فقط: تطبيع الإملاء الخاطئ المخزن دون تغيير البيانات."""
+    text = '' if value is None else str(value).strip()
+    return YEAR_NAME_FIXES.get(text, text)
+
+def display_name(value):
+    """اسم مادة/فصل للعرض فقط (لا يمسّ البيانات ولا روابط البحث):
+    يزيل نقطة زائدة في النهاية (مثل «Electronic.») ومسافات زائدة.
+    لا يعيد تسمية أي شيء — القيم المستخدمة في الروابط والاستعلامات تبقى كما هي."""
+    text = '' if value is None else str(value).strip()
+    while text.endswith(('.', '。')):
+        text = text[:-1].rstrip()
+    return text
+
+app.template_filter('display_name')(display_name)
+app.template_filter('display_year')(display_year)
+
 def get_platform_data(user):
     # البنية: كلية -> سنوات -> فصول دراسية -> مواد -> أنواع محتوى -> فصول -> دروس
     data = {}
@@ -1254,6 +1304,28 @@ def get_platform_data(user):
                 _y["subject_count"] = sum(len(_t.get("subjects", [])) for _t in _y["terms"].values())
                 for _t in _y["terms"].values():
                     _t["subject_count"] = len(_t.get("subjects", []))
+        # ترتيب عرض ثابت: قواميس بايثون تحفظ ترتيب الإدراج، والسنوات كانت
+        # تُدرَج بترتيب إدراج المواد (فيعرض 1، 3، 2) والكليات بترتيب ظهورها
+        # في المحتوى؛ نعيد البناء هنا: الكليات بترتيب جدول الكليات (id)
+        # ثم أي كلية أخرى أبجدياً، والسنوات رقمياً، والترم رقمياً، والمواد أبجدياً.
+        _ordered_data = {}
+        _college_names = [c for c in known_colleges if c in data]
+        _college_names += sorted(c for c in data if c not in known_colleges)
+        for _cname in _college_names:
+            _c = data[_cname]
+            _years = {}
+            for _yname in sorted(_c.get("years", {}), key=_year_order):
+                _y = _c["years"][_yname]
+                _terms = {}
+                for _tname in sorted(_y.get("terms", {}), key=_term_order):
+                    _t = _y["terms"][_tname]
+                    _t["subjects"] = sorted(_t.get("subjects", []), key=lambda s: (s.get("name") or ""))
+                    _terms[_tname] = _t
+                _y["terms"] = _terms
+                _years[_yname] = _y
+            _c["years"] = _years
+            _ordered_data[_cname] = _c
+        data = _ordered_data
     except Exception as e:
         db.session.rollback()
 
@@ -1926,7 +1998,11 @@ def get_subjects():
             else:
                 query = query.filter_by(college=(user.supervisor_college or ''),
                                         name=(user.supervisor_specialization or ''))
-        return jsonify([s.to_dict() for s in query.order_by(Subject.college, Subject.year, Subject.term, Subject.name).all()])
+        # ترتيب ثابت رقمياً للسنة/الترم: ORDER BY النصي في SQL يضع
+        # «السنة الثالثة» قبل «السنة الثانية» فيعرض 1، 3، 2.
+        rows = query.all()
+        rows.sort(key=lambda s: ((s.college or ""), _year_order(s.year), _term_order(s.term), (s.name or "")))
+        return jsonify([s.to_dict() for s in rows])
     except Exception:
         db.session.rollback()
         return jsonify([])
@@ -2738,8 +2814,9 @@ def ask_ai():
 
         reply = response.choices[0].message.content
         return jsonify({"reply": reply})
-    except Exception as e:
-        return jsonify({"reply": f"عذراً، تعذر الرد حالياً: {str(e)}"}), 500
+    except Exception:
+        app.logger.exception("ask_ai: failed")
+        return jsonify({"reply": AI_UNAVAILABLE_MSG}), 500
 
 # ==========================================
 # نظام التخطيط الدراسي والذكاء الاصطناعي الكامل
@@ -3624,16 +3701,16 @@ def generate_plan():
                         db.session.add(unified_task)
                 db.session.commit()
                 return jsonify({"status": "success", "plan": plan_data})
-            except Exception as e:
+            except Exception:
                 db.session.rollback()
                 app.logger.exception("generate_plan: failed to save generated tasks")
-                return jsonify({"error": f"Error saving tasks: {str(e)}"}), 500
+                return jsonify({"error": "تعذر حفظ الخطة، حاول لاحقاً"}), 500
 
         return jsonify({"status": "success", "plan": plan_data})
 
-    except Exception as e:
+    except Exception:
         app.logger.exception("generate_plan: failed")
-        return jsonify({"error": f"Error generating plan: {str(e)}"}), 500
+        return jsonify({"error": AI_UNAVAILABLE_MSG}), 500
 
 @app.route('/reschedule_plan', methods=['POST'])
 def reschedule_plan():
@@ -3670,9 +3747,9 @@ def reschedule_plan():
         reply_text = response.choices[0].message.content
         plan_data = json.loads(reply_text)
         return jsonify({"status": "success", "plan": plan_data})
-    except Exception as e:
+    except Exception:
         app.logger.exception("reschedule_plan: failed")
-        return jsonify({"error": f"Error rescheduling plan: {str(e)}"}), 500
+        return jsonify({"error": AI_UNAVAILABLE_MSG}), 500
 
 @app.route('/api/tasks/complete/<int:task_id>', methods=['POST'])
 @student_required
@@ -3873,7 +3950,7 @@ def get_all_lessons():
                 "content_type": l.content_type,
                 "is_vip": bool(l.is_vip),
                 "vip_locked": _lesson_vip_locked(user, l),
-                "year": l.year,
+                "year": display_year(l.year),
                 "term": l.term,
                 "college": l.college or "كلية الهندسة"
             })
@@ -3967,10 +4044,10 @@ def generate_exam_plan():
 
         return jsonify({"status": "success", "plan": plan_data})
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         app.logger.exception("generate_exam_plan: failed")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": AI_UNAVAILABLE_MSG}), 500
 
 # ==========================================
 # الملف الشخصي ولوحة المتصدرين والتقدم

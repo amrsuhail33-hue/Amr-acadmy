@@ -590,6 +590,17 @@ var SPEECH_NO_VOICE_MSG = 'لا يوجد صوت إنجليزي في هذا ال�
    مباشراً إلى Google من الهاتف — الخادم يجلب الصوت ويقدّمه.
    إن غاب الملف (404) أو تعذّر تشغيله يستدعي onFail للانتقال إلى
    الطريقة التالية؛ رفض play() أو حدث 'error' لا يُعتبران فشلاً نهائياً. */
+/* سرعة التشغيل: المتصفح يعيد ضبط playbackRate إلى 1 عند تحميل ملف
+   صوتي جديد، لذلك نثبّت السرعة في defaultPlaybackRate أيضاً ونعيد
+   تطبيقها عند اكتمال تحميل البيانات وعند بدء التشغيل — وإلا يضيع
+   البطء ويُسمع الصوت بسرعته العادية. */
+function applyAudioRate(rate) {
+    var r = (rate && rate < 1) ? 0.6 : 1;
+    try { __audioEl.defaultPlaybackRate = r; } catch (e) {}
+    try { __audioEl.playbackRate = r; } catch (e) {}
+    return r;
+}
+
 function playBundledAudio(text, rate, mySeq, onFail) {
     var failed = false;
     function failOnce() {
@@ -601,10 +612,12 @@ function playBundledAudio(text, rate, mySeq, onFail) {
     try {
         if (!__audioEl) { __audioEl = new Audio(); }
         __audioEl.onerror = failOnce;
+        __audioEl.onloadedmetadata = function () { applyAudioRate(rate); };
         __audioEl.pause();
-        __audioEl.playbackRate = (rate && rate < 1) ? 0.6 : 1;
+        applyAudioRate(rate);
         __audioEl.src = '/audio/en/' + encodeURIComponent(text) + '.mp3';
         var p = __audioEl.play();
+        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); });
         if (p && typeof p.catch === 'function') p.catch(failOnce);
     } catch (e) { failOnce(); }
 }
@@ -623,10 +636,12 @@ function playOnlineAudio(text, rate, mySeq) {
     try {
         if (!__audioEl) { __audioEl = new Audio(); }
         __audioEl.onerror = failOnce;
+        __audioEl.onloadedmetadata = function () { applyAudioRate(rate); };
         __audioEl.pause();
-        __audioEl.playbackRate = (rate && rate < 1) ? 0.6 : 1;
+        applyAudioRate(rate);
         __audioEl.src = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=' + encodeURIComponent(text);
         var p = __audioEl.play();
+        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); });
         if (p && typeof p.catch === 'function') p.catch(failOnce);
     } catch (e) { failOnce(); }
 }

@@ -687,6 +687,23 @@ def import_language_words_csv(file_storage_or_path, default_track=None):
     db.session.commit()
     return {"imported": imported, "skipped": skipped, "skipped_invalid": skipped_invalid}
 
+def _seed_language_words():
+    """بذر/تحديث كلمات اللغة من ملفات CSV المرفقة عند كل تشغيل:
+    يستورد الصفوف الجديدة فقط (import_language_words_csv يتخطى
+    أزواج (track, word) الموجودة)، فيعمل على جدول فارغ وعلى جدول
+    يحوي صفوفاً قديمة — فإضافة كلمات جديدة للملفات تكفي لاستيرادها
+    عند النشر التالي دون مسح الجدول. يعيد عدد الكلمات المستوردة."""
+    seeded = 0
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    for fname, track in (("lang_seed_medical.csv", "medical"),
+                         ("lang_seed_engineering.csv", "engineering"),
+                         ("lang_seed_general.csv", "general")):
+        fpath = os.path.join(app_dir, fname)
+        if os.path.exists(fpath):
+            res = import_language_words_csv(fpath, default_track=track)
+            seeded += res["imported"]
+    return seeded
+
 class UnifiedTask(db.Model):
     __tablename__ = 'unified_tasks'
 
@@ -1036,22 +1053,15 @@ with app.app_context():
         db.session.rollback()
         print(f"تعذر بذر الكليات وربط المحتوى القديم: {e}", flush=True)
 
-# بذر كلمات «تعلم اللغة مع Amr» عند أول تشغيل (الجدول فارغ).
-# ملفات CSV المرفقة في المستودع هي البنك التأسيسي (300 كلمة لكل مسار).
-# خاملة: لا تعمل إلا والجدول فارغ، ومحمية بـ try/except حتى لا يُسقط أي
-# خطأ بياناتٍ التشغيل أبداً. النمو لاحقاً عبر رفع المسؤول /admin/import-language-words.
+# بذر كلمات «تعلم اللغة مع Amr» عند كل تشغيل (يستورد الجديد فقط).
+# ملفات CSV المرفقة في المستودع هي بنك الكلمات (3000 كلمة لكل مسار).
+# خامل: يستورد الصفوف الجديدة فقط، ومحمي بـ try/except حتى لا يُسقط أي
+# خطأ بياناتٍ التشغيل أبداً. النمو لاحقاً عبر إضافة صفوف للملفات
+# (تُستورد عند النشر التالي) أو رفع المسؤول /admin/import-language-words.
 with app.app_context():
     try:
-        if LanguageWord.query.count() == 0:
-            _seeded = 0
-            _app_dir = os.path.dirname(os.path.abspath(__file__))
-            for _fname, _track in (("lang_seed_medical.csv", "medical"),
-                                   ("lang_seed_engineering.csv", "engineering"),
-                                   ("lang_seed_general.csv", "general")):
-                _fpath = os.path.join(_app_dir, _fname)
-                if os.path.exists(_fpath):
-                    _res = import_language_words_csv(_fpath, default_track=_track)
-                    _seeded += _res["imported"]
+        _seeded = _seed_language_words()
+        if _seeded:
             print(f"تم بذر كلمات اللغة: {_seeded} كلمة", flush=True)
     except Exception as _lang_seed_e:
         db.session.rollback()

@@ -16,6 +16,7 @@
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
         const LOGGED_OUT = {% if logged_out %}true{% else %}false{% endif %};
+        const DEFAULT_TRACK = '{{ default_track }}';
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Outfit:wght@400;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -131,17 +132,22 @@
         .progress-label { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.9rem; }
         .progress-label span:last-child { color: var(--primary); font-family: var(--font-latin); }
 
-        /* ===== اختيار المسار والهدف اليومي ===== */
-        .picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        @media (max-width: 600px) { .picker-grid, .target-grid { grid-template-columns: 1fr; } .main-card { padding: 20px; } .stat-row { grid-template-columns: 1fr 1fr 1fr; gap: 8px; } }
-        .picker-btn { border: 2px solid var(--border); background: var(--bg-card-inner); border-radius: var(--radius); padding: 16px 10px; cursor: pointer; font-family: var(--font-arabic); font-weight: 800; font-size: 1rem; color: var(--text-main); display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.25s; }
-        .picker-btn i { font-size: 1.5rem; color: var(--primary); }
-        .picker-btn small { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
-        .picker-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .picker-btn.active { background: var(--primary-glow); border-color: var(--primary); color: var(--primary); box-shadow: 0 10px 25px var(--primary-glow); }
-        .picker-btn.active small { color: var(--text-muted); }
-        .picker-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        /* ===== إنشاء خطة تعلم + شرائح الخطط ===== */
+        @media (max-width: 600px) { .main-card { padding: 20px; } .stat-row { grid-template-columns: 1fr 1fr 1fr; gap: 8px; } }
+        .plan-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .plan-field { display: flex; flex-direction: column; gap: 6px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); }
+        .plan-field select { font-family: var(--font-arabic); font-weight: 800; font-size: 1rem; color: var(--text-main); background: var(--bg-card-inner); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; min-width: 170px; cursor: pointer; }
+        .plan-field select:focus { outline: none; border-color: var(--primary); }
+        .plan-chips { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .plan-chip { border: 2px solid var(--border); background: var(--bg-card-inner); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-family: var(--font-arabic); font-weight: 800; font-size: 0.95rem; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; transition: 0.25s; }
+        .plan-chip i { color: var(--primary); }
+        .plan-chip small { color: var(--text-muted); font-weight: 600; }
+        .plan-chip:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .plan-chip.active { background: var(--primary-glow); border-color: var(--primary); color: var(--primary); box-shadow: 0 10px 25px var(--primary-glow); }
+        .plan-chip.active small { color: var(--text-muted); }
+        .plan-chip:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .plan-add-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px dashed var(--primary); background: transparent; color: var(--primary); font-size: 1.5rem; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.25s; font-family: var(--font-arabic); line-height: 1; flex-shrink: 0; }
+        .plan-add-btn:hover { background: var(--primary-glow); transform: translateY(-2px); }
 
         /* ===== بطاقة الكلمة ===== */
         .word-card { background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 22px; text-align: center; margin-bottom: 16px; }
@@ -288,19 +294,34 @@
             <div class="progress-track"><div class="progress-bar-fill" id="levelProgressFill"></div></div>
         </div>
 
-        <div class="main-card">
-            <h3 class="section-title"><i class="fa-solid fa-route" style="color:var(--primary);"></i> مسارك وهدفك اليومي</h3>
-            <p class="section-desc">اختر التخصص الذي تريد تعلم كلماته، وعدد الكلمات الجديدة كل يوم. تغيير أي منهما يحفظ تلقائياً ويعيد تحميل درس اليوم.</p>
-            <div class="picker-grid" id="trackPicker" role="group" aria-label="اختر المسار">
-                <button type="button" class="picker-btn" data-track="medical"><i class="fa-solid fa-stethoscope"></i> طب<small>مصطلحات طبية وجملها</small></button>
-                <button type="button" class="picker-btn" data-track="engineering"><i class="fa-solid fa-gears"></i> هندسة<small>مصطلحات هندسية وجملها</small></button>
-                <button type="button" class="picker-btn" data-track="general"><i class="fa-solid fa-earth-americas"></i> عام<small>كلمات الحياة اليومية</small></button>
+        <div class="main-card" id="planCard">
+            <h3 class="section-title"><i class="fa-solid fa-route" style="color:var(--primary);"></i> خطط تعلمي</h3>
+            <div id="planCreateBox">
+                <p class="section-desc">أنشئ خطتك: اختر المسار وعدد الكلمات الجديدة كل يوم، ثم اضغط «ابدأ». يمكنك إضافة خطط أخرى لاحقاً من زر +.</p>
+                <div class="plan-form">
+                    <label class="plan-field">المسار
+                        <select id="planTrackSelect" aria-label="اختر المسار">
+                            <option value="medical">طب</option>
+                            <option value="engineering">هندسة</option>
+                            <option value="general">عام</option>
+                        </select>
+                    </label>
+                    <label class="plan-field">الهدف اليومي
+                        <select id="planTargetSelect" aria-label="الهدف اليومي">
+                            <option value="5">5 كلمات في اليوم</option>
+                            <option value="10" selected>10 كلمات في اليوم</option>
+                            <option value="20">20 كلمة في اليوم</option>
+                        </select>
+                    </label>
+                    <button type="button" class="btn btn-primary" id="planStartBtn" onclick="createPlan()"><i class="fa-solid fa-play"></i> ابدأ</button>
+                </div>
             </div>
-            <div style="height:18px;"></div>
-            <div class="picker-grid target-grid" id="targetPicker" role="group" aria-label="الهدف اليومي">
-                <button type="button" class="picker-btn" data-target="5"><i class="fa-solid fa-list-ol"></i> 5 كلمات<small>في اليوم</small></button>
-                <button type="button" class="picker-btn" data-target="10"><i class="fa-solid fa-list-ol"></i> 10 كلمات<small>في اليوم</small></button>
-                <button type="button" class="picker-btn" data-target="20"><i class="fa-solid fa-list-ol"></i> 20 كلمة<small>في اليوم</small></button>
+            <div id="planSummaryBox" style="display:none;">
+                <p class="section-desc">خططك الحالية — اضغط على خطة لتفعيلها، أو زر + لإضافة خطة تعلم أخرى.</p>
+                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <div class="plan-chips" id="planChips"></div>
+                    <button type="button" class="plan-add-btn" id="addPlanBtn" title="إضافة خطة تعلم أخرى" aria-label="إضافة خطة تعلم أخرى" onclick="showPlanCreate()">+</button>
+                </div>
             </div>
         </div>
 
@@ -365,6 +386,7 @@
 var TRACK_LABELS = { medical: 'طب', engineering: 'هندسة', general: 'عام' };
 var TRACK_ICONS = { medical: 'fa-stethoscope', engineering: 'fa-gears', general: 'fa-earth-americas' };
 var profile = null;          // GET /api/language/profile
+var plans = [];              // GET /api/language/plans
 var lessonWords = [];        // review أولاً ثم new
 var studyIndex = 0;
 var quizQuestions = [];      // {word, type, options, correct}
@@ -617,7 +639,7 @@ function playBundledAudio(text, rate, mySeq, onFail) {
         applyAudioRate(rate);
         __audioEl.src = '/audio/en/' + encodeURIComponent(text) + '.mp3';
         var p = __audioEl.play();
-        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); });
+        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); }, function () {}); /* رفض play() يُعالَج أصلاً عبر p.catch — هذا يمنع فقط رفضاً غير معالَج من الوعد المشتق */
         if (p && typeof p.catch === 'function') p.catch(failOnce);
     } catch (e) { failOnce(); }
 }
@@ -641,7 +663,7 @@ function playOnlineAudio(text, rate, mySeq) {
         applyAudioRate(rate);
         __audioEl.src = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=' + encodeURIComponent(text);
         var p = __audioEl.play();
-        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); });
+        if (p && typeof p.then === 'function') p.then(function () { applyAudioRate(rate); }, function () {}); /* رفض play() يُعالَج أصلاً عبر p.catch — هذا يمنع فقط رفضاً غير معالَج من الوعد المشتق */
         if (p && typeof p.catch === 'function') p.catch(failOnce);
     } catch (e) { failOnce(); }
 }
@@ -759,12 +781,6 @@ function renderHero(p) {
     var trackName = TRACK_LABELS[p.track] || 'عام';
     $('heroTrackLine').textContent = 'مسارك الحالي: ' + trackName + ' — ' + (p.daily_target || 10) + ' كلمات جديدة كل يوم';
 }
-function markPicker(containerId, attr, value) {
-    var btns = document.querySelectorAll('#' + containerId + ' .picker-btn');
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].classList.toggle('active', String(btns[i].getAttribute(attr)) === String(value));
-    }
-}
 async function loadProfile() {
     var res = await fetch('/api/language/profile');
     if (isLoggedOutResponse(res)) { showLoggedOut(); return null; }
@@ -772,8 +788,6 @@ async function loadProfile() {
     var data = await res.json();
     profile = data.profile || data;
     renderHero(profile);
-    markPicker('trackPicker', 'data-track', profile.track || 'general');
-    markPicker('targetPicker', 'data-target', profile.daily_target || 10);
     return profile;
 }
 async function loadToday() {
@@ -793,8 +807,6 @@ async function loadToday() {
         if (data.daily_target) p.daily_target = data.daily_target;
         profile = p;
         renderHero(profile);
-        markPicker('trackPicker', 'data-track', profile.track || 'general');
-        markPicker('targetPicker', 'data-target', profile.daily_target || 10);
     }
     return data;
 }
@@ -822,43 +834,86 @@ async function loadProgress() {
     } catch (e) { /* قسم التقدم اختياري — لا يوقف الدرس */ }
 }
 
-/* ===== تغيير المسار / الهدف اليومي ===== */
-async function saveProfile(patch, btn) {
+/* ===== خطط التعلم: إنشاء / تفعيل / عرض ===== */
+async function loadPlans() {
+    var res = await fetch('/api/language/plans');
+    if (isLoggedOutResponse(res)) { showLoggedOut(); return null; }
+    if (!res.ok) throw new Error('تعذر تحميل الخطط');
+    var data = await res.json();
+    plans = data.plans || [];
+    renderPlans();
+    return plans;
+}
+function renderPlans() {
+    var hasPlans = plans.length > 0;
+    $('planCreateBox').style.display = hasPlans ? 'none' : 'block';
+    $('planSummaryBox').style.display = hasPlans ? 'block' : 'none';
+    $('lessonCard').style.display = hasPlans ? 'block' : 'none';
+    if (!hasPlans) {
+        $('progressBody').innerHTML = '<div class="loading-state">أنشئ خطتك أولاً لتبدأ التعلم وتظهر تقدمك هنا.</div>';
+    }
+    var wrap = $('planChips');
+    if (!wrap) return;
+    var html = '';
+    for (var i = 0; i < plans.length; i++) {
+        var p = plans[i];
+        html += '<button type="button" class="plan-chip' + (p.is_current ? ' active' : '') + '" data-plan-id="' + p.id + '" onclick="activatePlan(' + p.id + ')">' +
+            '<i class="fa-solid ' + TRACK_ICONS[p.track] + '"></i>' + TRACK_LABELS[p.track] +
+            '<small>' + p.daily_target + ' كلمات/يوم · ' + (p.mastered || 0) + '/' + (p.total_in_track || 0) + ' متقنة</small></button>';
+    }
+    wrap.innerHTML = html;
+}
+function showPlanCreate() {
+    /* القيم الافتراضية: مسار الطالب الحالي (أو الافتراضي من الكلية) + 10 كلمات. */
+    var ts = $('planTrackSelect');
+    if (ts) ts.value = (profile && profile.track) || (typeof DEFAULT_TRACK !== 'undefined' ? DEFAULT_TRACK : 'general') || 'general';
+    $('planCreateBox').style.display = 'block';
+    $('planCreateBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function createPlan() {
     hideLangError();
-    if (btn) btn.disabled = true;
+    var track = $('planTrackSelect').value;
+    var target = parseInt($('planTargetSelect').value, 10);
+    var btn = $('planStartBtn');
+    btn.disabled = true;
     try {
-        var res = await fetch('/api/language/profile', {
+        var res = await fetch('/api/language/plans', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(patch)
+            body: JSON.stringify({ track: track, daily_target: target })
         });
+        var data = {};
+        try { data = await res.json(); } catch (e) {}
         if (isLoggedOutResponse(res)) { showLoggedOut(); return; }
-        if (!res.ok) throw new Error('تعذر الحفظ');
-        var data = await res.json();
-        profile = data.profile || data;
-        renderHero(profile);
-        markPicker('trackPicker', 'data-track', profile.track || 'general');
-        markPicker('targetPicker', 'data-target', profile.daily_target || 10);
-        showToast('تم الحفظ — تم تحميل درس جديد حسب اختيارك', 'success');
+        if (!res.ok) throw new Error((data && data.message) || 'تعذر إنشاء الخطة');
+        showToast('تم إنشاء خطتك — بالتوفيق!', 'success');
+        await loadPlans();
+        await loadProfile();
         await reloadLesson();
+        loadProgress();
     } catch (e) {
-        showLangError('تعذر حفظ اختيارك — تحقق من الاتصال وحاول مجدداً.');
+        showLangError(e.message || 'تعذر إنشاء الخطة — تحقق من الاتصال وحاول مجدداً.');
     } finally {
-        if (btn) btn.disabled = false;
+        btn.disabled = false;
     }
 }
-document.querySelectorAll('#trackPicker .picker-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        if (profile && profile.track === btn.getAttribute('data-track')) return;
-        saveProfile({ track: btn.getAttribute('data-track') }, btn);
-    });
-});
-document.querySelectorAll('#targetPicker .picker-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        var v = parseInt(btn.getAttribute('data-target'), 10);
-        if (profile && profile.daily_target === v) return;
-        saveProfile({ daily_target: v }, btn);
-    });
-});
+async function activatePlan(planId) {
+    var current = null;
+    for (var i = 0; i < plans.length; i++) { if (plans[i].is_current) current = plans[i]; }
+    if (current && current.id === planId) return;
+    hideLangError();
+    try {
+        var res = await fetch('/api/language/plans/' + planId + '/activate', { method: 'POST' });
+        if (isLoggedOutResponse(res)) { showLoggedOut(); return; }
+        if (!res.ok) throw new Error('تعذر تفعيل الخطة');
+        showToast('تم تفعيل الخطة', 'success');
+        await loadPlans();
+        await loadProfile();
+        await reloadLesson();
+        loadProgress();
+    } catch (e) {
+        showLangError('تعذر تفعيل الخطة — تحقق من الاتصال وحاول مجدداً.');
+    }
+}
 
 /* ===== الدرس: بطاقة كلمة بعد كلمة (مراجعة أولاً ثم جديد) ===== */
 function renderStudyCard() {
@@ -1109,10 +1164,16 @@ async function initLanguage() {
     if (LOGGED_OUT) { showLoggedOut(); return; }
     showApp();
     try {
-        await loadProfile();
+        /* الخطط أولاً: طالب بلا خطط يرى بطاقة إنشاء الخطة فقط
+           (لا درس ولا تقدم حتى يضغط «ابدأ»)، ومن له خطط يُحمَّل
+           ملفه ودرسه كالمعتاد. */
+        var loadedPlans = await loadPlans();
         if (!$('langApp') || $('langApp').style.display === 'none') return;
-        await reloadLesson();
-        loadProgress();
+        if (loadedPlans && loadedPlans.length) {
+            await loadProfile();
+            await reloadLesson();
+            loadProgress();
+        }
     } catch (e) {
         showLangError('تعذر تحميل صفحة اللغة — تحقق من الاتصال وحاول مجدداً.');
         $('lessonBody').innerHTML = '<div class="loading-state">تعذر تحميل درس اليوم — تحقق من الاتصال وحاول مجدداً.</div>';

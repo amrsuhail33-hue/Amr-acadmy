@@ -480,6 +480,31 @@ class UserLanguageProfile(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class LanguagePlan(db.Model):
+    """خطة تعلم لغة واحدة: مسار + هدف يومي. للطالب عدة خطط (طب +
+    هندسة + عام)، وواحدة منها فقط هي الحالية (is_current). التقدم
+    والـ XP يبقيان على مستوى الطالب/الكلمة (UserLanguageWord)، فحذف
+    خطة لا يمسح كلمات متقَنة ولا نقاطاً."""
+    __tablename__ = 'language_plans'
+    __table_args__ = (db.UniqueConstraint('student_id', 'track', name='uq_language_plan_student_track'),)
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    track = db.Column(db.String(20), nullable=False)  # medical / engineering / general
+    daily_target = db.Column(db.Integer, default=10, nullable=False)
+    is_current = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self, mastered=None, total_in_track=None):
+        return {
+            "id": self.id,
+            "track": self.track,
+            "daily_target": self.daily_target,
+            "is_current": bool(self.is_current),
+            "mastered": mastered if mastered is not None else 0,
+            "total_in_track": total_in_track if total_in_track is not None else 0,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+        }
+
 class UserLanguageWord(db.Model):
     """حالة طالب مع كلمة: رآها / أتقنها، مع عدّادات المحاولات."""
     __tablename__ = 'user_language_words'
@@ -510,6 +535,46 @@ def _get_or_create_language_profile(user):
         db.session.add(profile)
         db.session.commit()
     return profile
+
+def _ensure_language_plan(user):
+    """الخطة الحالية للطالب، مع إنشائها عند غيابها. ترحيل: إن كان
+    للطالب ملف لغة قديم (UserLanguageProfile) بلا خطط، تُنشأ خطة
+    واحدة من مساره وهدفه وتُجعل حالية. وإن لم يوجد ملف أصلاً، يُنشأ
+    الملف أولاً (بالمسار الافتراضي من الكلية) ثم الخطة منه.
+    تُستخدم من مسارات الدرس/الإجابة/الإكمال/التقدم — وليس من
+    GET /api/language/plans، حتى يرى الطالب الجديد بطاقة إنشاء
+    الخطة أولاً بدل أن تُنشأ له خطة تلقائياً."""
+    plans = LanguagePlan.query.filter_by(student_id=user.id).order_by(LanguagePlan.id).all()
+    if plans:
+        current = next((p for p in plans if p.is_current), None)
+        if current is None:
+            current = plans[0]
+            current.is_current = True
+            db.session.commit()
+        return current
+    profile = _get_or_create_language_profile(user)
+    plan = LanguagePlan(student_id=user.id, track=profile.track,
+                        daily_target=profile.daily_target, is_current=True)
+    db.session.add(plan)
+    db.session.commit()
+    return plan
+
+def _sync_profile_to_plan(user, plan):
+    """مرآة الخطة الحالية في ملف اللغة القديم (track/daily_target)،
+    حتى تبقى أي مسارات قديمة تقرأ الملف صحيحة."""
+    profile = _get_or_create_language_profile(user)
+    profile.track = plan.track
+    profile.daily_target = plan.daily_target
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    return profile
+
+def _plans_with_progress(user):
+    """كل خطط الطالب مع تقدم كل خطة (متقَن / إجمالي مسارها)."""
+    plans = LanguagePlan.query.filter_by(student_id=user.id).order_by(LanguagePlan.id).all()
+    totals = _word_counts_by_track()
+    return [p.to_dict(mastered=_mastered_count(user.id, p.track),
+                      total_in_track=totals.get(p.track, 0)) for p in plans]
 
 def _get_or_create_user_profile(student_id):
     """UserProfile العام (حامل XP) — يُنشأ عند غيابه حتى لا يفشل منح XP."""
@@ -549,17 +614,21 @@ def _xp_from_language(student_id):
     return int(total or 0)
 
 def _language_profile_payload(user, lang_profile):
-    mastered = _mastered_count(user.id, lang_profile.track)
-    total_in_track = LanguageWord.query.filter_by(track=lang_profile.track).count()
+    """حمولة الملف: المسار والهدف اليومي من الخطة الحالية للطالب،
+    والتتابع ونقاط اللغة من ملفه (مشتركة بين كل خططه)."""
+    plan = _ensure_language_plan(user)
+    mastered = _mastered_count(user.id, plan.track)
+    total_in_track = LanguageWord.query.filter_by(track=plan.track).count()
     return {
-        "track": lang_profile.track,
-        "daily_target": lang_profile.daily_target,
+        "track": plan.track,
+        "daily_target": plan.daily_target,
         "mastered": mastered,
         "level": _language_level(mastered),
         "level_progress": mastered % 100,
         "streak": lang_profile.streak_days or 0,
         "total_in_track": total_in_track,
         "xp_from_language": _xp_from_language(user.id),
+        "current_plan_id": plan.id,
     }
 
 def import_language_words_csv(file_storage_or_path, default_track=None):
@@ -3190,9 +3259,17 @@ def language_page():
     if not user:
         return render_template('language.html', student_id=None, student_name=None,
                                logged_out=True, default_track='general')
-    lang_profile = _get_or_create_language_profile(user)
+    # لا ننشئ ملف اللغة هنا: الطالب الجديد بلا خطط يجب أن يرى بطاقة
+    # إنشاء الخطة أولاً (لا خطة تُرحَّل له قبل أن يختار).
+    plans = LanguagePlan.query.filter_by(student_id=user.id).order_by(LanguagePlan.id).all()
+    if plans:
+        current = next((p for p in plans if p.is_current), plans[0])
+        default_track = current.track
+    else:
+        prof = UserLanguageProfile.query.filter_by(student_id=user.id).first()
+        default_track = prof.track if prof else _default_language_track(user)
     return render_template('language.html', student_id=user.id, student_name=user.name,
-                           logged_out=False, default_track=lang_profile.track)
+                           logged_out=False, default_track=default_track)
 
 @app.route('/api/language/profile', methods=['GET'])
 @student_required
@@ -3211,7 +3288,17 @@ def language_profile_update():
         track = str(data.get('track') or '').strip()
         if track not in LANGUAGE_TRACKS:
             return jsonify({"status": "error", "message": "المسار غير صالح (medical / engineering / general)"}), 400
-        lang_profile.track = track
+        # تغيير المسار = تبديل الخطة: إن وُجدت خطة بهذا المسار فعّلها،
+        # وإلا غيّر مسار الخطة الحالية إليه (لا خطة أخرى تحمل هذا المسار).
+        existing = LanguagePlan.query.filter_by(student_id=user.id, track=track).first()
+        if existing:
+            LanguagePlan.query.filter_by(student_id=user.id).update({"is_current": False})
+            existing.is_current = True
+            lang_profile.track = track
+        else:
+            plan = _ensure_language_plan(user)
+            plan.track = track
+            lang_profile.track = track
     if 'daily_target' in data:
         try:
             target = int(data.get('daily_target'))
@@ -3219,17 +3306,118 @@ def language_profile_update():
             return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
         if target not in LANGUAGE_DAILY_TARGETS:
             return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
+        plan = _ensure_language_plan(user)
+        plan.daily_target = target
         lang_profile.daily_target = target
     lang_profile.updated_at = datetime.utcnow()
     db.session.commit()
     return jsonify({"status": "success", **_language_profile_payload(user, lang_profile)})
 
+@app.route('/api/language/plans', methods=['GET'])
+@student_required
+def language_plans_list():
+    """كل خطط الطالب مع تقدم كل خطة. ترحيل لمرة واحدة: ملف لغة قديم
+    بلا خطط يتحول إلى خطة واحدة حالية من مساره وهدفه. الطالب الجديد
+    بلا ملف أصلاً يرجع قائمة فارغة (فيرى بطاقة إنشاء الخطة)."""
+    user = get_current_user()
+    plans = LanguagePlan.query.filter_by(student_id=user.id).order_by(LanguagePlan.id).all()
+    if not plans:
+        profile = UserLanguageProfile.query.filter_by(student_id=user.id).first()
+        if profile is not None:
+            plan = LanguagePlan(student_id=user.id, track=profile.track,
+                                daily_target=profile.daily_target, is_current=True)
+            db.session.add(plan)
+            db.session.commit()
+            plans = [plan]
+    out = _plans_with_progress(user)
+    current_id = next((p["id"] for p in out if p["is_current"]), out[0]["id"] if out else None)
+    return jsonify({"status": "success", "plans": out, "current_plan_id": current_id})
+
+@app.route('/api/language/plans', methods=['POST'])
+@student_required
+def language_plan_create():
+    """إنشاء خطة تعلم (مسار + هدف يومي). مسار واحد لكل خطة؛
+    أول خطة للطالب تصبح الحالية تلقائياً."""
+    user = get_current_user()
+    data = request.get_json(silent=True) or {}
+    track = str(data.get('track') or '').strip()
+    if track not in LANGUAGE_TRACKS:
+        return jsonify({"status": "error", "message": "المسار غير صالح (medical / engineering / general)"}), 400
+    try:
+        target = int(data.get('daily_target'))
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
+    if target not in LANGUAGE_DAILY_TARGETS:
+        return jsonify({"status": "error", "message": "الهدف اليومي غير صالح (5 أو 10 أو 20)"}), 400
+    if LanguagePlan.query.filter_by(student_id=user.id, track=track).first():
+        return jsonify({"status": "error", "message": "لديك خطة بهذا المسار بالفعل — فعّلها بدل إنشاء واحدة جديدة"}), 400
+    first = LanguagePlan.query.filter_by(student_id=user.id).count() == 0
+    plan = LanguagePlan(student_id=user.id, track=track, daily_target=target, is_current=first)
+    db.session.add(plan)
+    # مرآة الملف القديم مع الخطة الحالية (أو إنشاؤه للطالب الجديد).
+    profile = _get_or_create_language_profile(user)
+    if first:
+        profile.track = track
+        profile.daily_target = target
+        profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    totals = _word_counts_by_track()
+    return jsonify({"status": "success",
+                    "plan": plan.to_dict(mastered=_mastered_count(user.id, track),
+                                         total_in_track=totals.get(track, 0))}), 201
+
+@app.route('/api/language/plans/<int:plan_id>/activate', methods=['POST'])
+@student_required
+def language_plan_activate(plan_id):
+    """تفعيل خطة (جعلها الحالية)؛ الدرس والملف يتبعانها فوراً."""
+    user = get_current_user()
+    plan = LanguagePlan.query.filter_by(id=plan_id, student_id=user.id).first()
+    if not plan:
+        return jsonify({"status": "error", "message": "الخطة غير موجودة"}), 404
+    LanguagePlan.query.filter_by(student_id=user.id).update({"is_current": False})
+    plan.is_current = True
+    db.session.commit()
+    _sync_profile_to_plan(user, plan)
+    totals = _word_counts_by_track()
+    return jsonify({"status": "success",
+                    "plan": plan.to_dict(mastered=_mastered_count(user.id, plan.track),
+                                         total_in_track=totals.get(plan.track, 0)),
+                    "current_plan_id": plan.id})
+
+@app.route('/api/language/plans/<int:plan_id>', methods=['DELETE'])
+@student_required
+def language_plan_delete(plan_id):
+    """حذف خطة. الكلمات المتقَنة والـ XP لا تُمس (مربوطة بالطالب
+    والكلمة، لا بالخطة). إن حُذفت الخطة الحالية وبقيت خطط أخرى،
+    تُفعَّل أقدمها."""
+    user = get_current_user()
+    plan = LanguagePlan.query.filter_by(id=plan_id, student_id=user.id).first()
+    if not plan:
+        return jsonify({"status": "error", "message": "الخطة غير موجودة"}), 404
+    was_current = bool(plan.is_current)
+    db.session.delete(plan)
+    db.session.commit()
+    remaining = LanguagePlan.query.filter_by(student_id=user.id).order_by(LanguagePlan.id).all()
+    new_current = None
+    if remaining:
+        if was_current:
+            new_current = remaining[0]
+            new_current.is_current = True
+            db.session.commit()
+            _sync_profile_to_plan(user, new_current)
+        else:
+            new_current = next((p for p in remaining if p.is_current), remaining[0])
+    out = _plans_with_progress(user)
+    return jsonify({"status": "success", "plans": out,
+                    "current_plan_id": new_current.id if new_current else None})
+
 @app.route('/api/language/today', methods=['GET'])
 @student_required
 def language_today():
     user = get_current_user()
+    plan = _ensure_language_plan(user)
     lang_profile = _get_or_create_language_profile(user)
-    track = lang_profile.track
+    track = plan.track
     # المراجعة أولاً: كلمات بحالة seen (غير متقَنة) في هذا المسار،
     # الأقدم مشاهدة أولاً، بحد أقصى 20.
     review_rows = (db.session.query(UserLanguageWord, LanguageWord)
@@ -3247,7 +3435,7 @@ def language_today():
                  .filter(LanguageWord.track == track,
                          ~LanguageWord.id.in_(seen_ids))
                  .order_by(LanguageWord.id)
-                 .limit(lang_profile.daily_target)
+                 .limit(plan.daily_target)
                  .all())
     new = [w.to_dict(state='new') for w in new_words]
     payload = _language_profile_payload(user, lang_profile)
@@ -3270,6 +3458,7 @@ def language_answer():
     word = LanguageWord.query.get(word_id)
     if not word:
         return jsonify({"status": "error", "message": "الكلمة غير موجودة"}), 404
+    plan = _ensure_language_plan(user)
     lang_profile = _get_or_create_language_profile(user)
     profile = _get_or_create_user_profile(user.id)
     now = datetime.utcnow()
@@ -3296,7 +3485,7 @@ def language_answer():
     else:
         # خطأ: لا XP، والحالة تبقى كما هي (seen تبقى seen، والمتقَنة لا تُسحب).
         db.session.commit()
-    mastered_count = _mastered_count(user.id, lang_profile.track)
+    mastered_count = _mastered_count(user.id, plan.track)
     return jsonify({"status": "success", "mastered": rel.state == 'mastered',
                     "xp_awarded": xp_awarded, "total_points": profile.total_points or 0,
                     "xp_from_language": _xp_from_language(user.id),
@@ -3306,6 +3495,7 @@ def language_answer():
 @student_required
 def language_complete():
     user = get_current_user()
+    plan = _ensure_language_plan(user)
     lang_profile = _get_or_create_language_profile(user)
     profile = _get_or_create_user_profile(user.id)
     today = datetime.utcnow().date()
@@ -3315,7 +3505,7 @@ def language_complete():
             PointTransaction.query.filter_by(student_id=user.id, reason=reason).first():
         return jsonify({"status": "success", "already_completed": True, "xp_awarded": 0,
                         "streak": lang_profile.streak_days or 0,
-                        "level": _language_level(_mastered_count(user.id, lang_profile.track)),
+                        "level": _language_level(_mastered_count(user.id, plan.track)),
                         "total_points": profile.total_points or 0,
                         "xp_from_language": _xp_from_language(user.id)})
     yesterday = today - timedelta(days=1)
@@ -3331,7 +3521,7 @@ def language_complete():
     profile.add_points(LANGUAGE_LESSON_XP, reason=reason)
     db.session.refresh(profile)
     xp_awarded = max(0, (profile.points or 0) - points_before)
-    mastered_count = _mastered_count(user.id, lang_profile.track)
+    mastered_count = _mastered_count(user.id, plan.track)
     return jsonify({"status": "success", "already_completed": False, "xp_awarded": xp_awarded,
                     "streak": lang_profile.streak_days or 0,
                     "level": _language_level(mastered_count),
@@ -3342,14 +3532,16 @@ def language_complete():
 @student_required
 def language_progress():
     user = get_current_user()
+    plan = _ensure_language_plan(user)
     lang_profile = _get_or_create_language_profile(user)
-    mastered = _mastered_count(user.id, lang_profile.track)
+    mastered = _mastered_count(user.id, plan.track)
     return jsonify({"status": "success", "mastered": mastered,
                     "level": _language_level(mastered),
                     "progress_pct": mastered % 100,
                     "streak": lang_profile.streak_days or 0,
-                    "daily_target": lang_profile.daily_target,
-                    "track": lang_profile.track,
+                    "daily_target": plan.daily_target,
+                    "track": plan.track,
+                    "current_plan_id": plan.id,
                     "counts": _word_counts_by_track(),
                     "mastered_by_track": {t: _mastered_count(user.id, t) for t in LANGUAGE_TRACKS}})
 

@@ -1641,6 +1641,86 @@ def add_header(response):
 # Main Routes
 # ==========================================
 
+def _build_dashboard_data(user):
+    """بيانات لوحة الرئيسية للطالب (تُضمَّن JSON في DASH_DATA وتُعرض Jinja):
+    نقاط/مستوى/تتابع + مواد بدأها + «تابع من حيث توقفت» (أحدث 3:
+    دروس بتقدم >0 وآخر محاولات اختبار). لا قيم تجريبية — كلها من قاعدة البيانات."""
+    if not user:
+        return None
+    try:
+        profile = UserProfile.query.filter_by(student_id=user.id).first()
+        if profile:
+            p = profile.to_dict()
+            points = p.get("points") or 0
+            level = p.get("level") or 1
+            level_progress = p.get("level_progress") or 0
+            next_level = p.get("next_level_points") or ((math.floor(points / 100) + 1) * 100)
+            streak = p.get("streak_days") or 0
+        else:
+            points, level, level_progress, next_level, streak = 0, 1, 0, 100, 0
+        # مواد بدأها الطالب: أزواج (كلية، مادة) مميزة لها أي صف تقدم.
+        started_pairs = db.session.query(CustomLesson.college, CustomLesson.subject_name).join(
+            Progress, Progress.lesson_id == CustomLesson.id).filter(
+            Progress.student_id == user.id).distinct().all()
+        items = []
+        prog_rows = (Progress.query.filter_by(student_id=user.id)
+                     .filter(Progress.progress_percent > 0)
+                     .order_by(Progress.last_accessed.desc()).limit(3).all())
+        for pr in prog_rows:
+            lesson = pr.lesson
+            if not lesson:
+                continue
+            url = None
+            subj_id = getattr(lesson, 'subject_id', None)
+            if not subj_id:
+                subj = Subject.query.filter_by(name=lesson.subject_name).first()
+                subj_id = subj.id if subj else None
+            if subj_id:
+                url = ('/?subject=' + _url_quote(str(subj_id)) + '&type=' + _url_quote(lesson.content_type or 'videos')
+                       + '&chapter=' + _url_quote(lesson.chapter_name or 'عام'))
+            items.append({
+                "kind": "lesson",
+                "title": lesson.title or "",
+                "sub": (lesson.subject_name or "") + " · " + _display_year(lesson.year) + " · " + (lesson.term or ""),
+                "pct": int(pr.progress_percent or 0),
+                "url": url,
+                "ts": (pr.last_accessed or datetime.min).isoformat(),
+            })
+        attempts = (QuizAttempt.query.filter_by(student_id=user.id)
+                    .order_by(QuizAttempt.created_at.desc()).limit(3).all())
+        for a in attempts:
+            url = None
+            subj = Subject.query.filter_by(name=a.subject_name).first() if a.subject_name else None
+            if subj:
+                url = ('/?subject=' + _url_quote(str(subj.id)) + '&type=quiz&chapter=' + _url_quote(a.chapter_name or ''))
+            items.append({
+                "kind": "quiz",
+                "title": (a.subject_name or "") + (" — " + a.chapter_name if a.chapter_name else ""),
+                "sub": "اختبار: " + str(a.total_questions or 0) + " سؤالاً",
+                "pct": int(round(a.percentage or 0)),
+                "url": url,
+                "ts": (a.created_at or datetime.min).isoformat(),
+            })
+        items.sort(key=lambda x: x["ts"], reverse=True)
+        cont = [{k: v for k, v in it.items() if k != "ts"} for it in items[:3]]
+        # الترويسة: الكلية (+ أحدث سنة/ترم من التقدم إن وُجد، وإلا الكلية فقط).
+        college = (getattr(user, 'college', '') or '').strip()
+        subtitle = ("واصل تقدّمك في " + college) if college else "واصل تقدّمك خطوة بخطوة"
+        latest = prog_rows[0].lesson if prog_rows and prog_rows[0].lesson else None
+        if latest and (latest.year or '').strip() and (latest.term or '').strip():
+            subtitle += " — " + _display_year(latest.year) + "، " + (latest.term or '').strip()
+        return {
+            "points": points, "level": level, "level_progress": level_progress,
+            "next_level_points": next_level, "remaining": max(0, next_level - points),
+            "ring_offset": round(232.5 * (1 - min(100, max(0, level_progress)) / 100), 1),
+            "streak": streak, "started_subjects": len(started_pairs),
+            "subtitle": subtitle, "continue": cont,
+        }
+    except Exception:
+        app.logger.exception("dashboard data failed")
+        return None
+
+
 @app.route('/')
 def home():
     user = get_current_user()
@@ -1699,6 +1779,9 @@ def home():
         'supervisor_specialization': (user.supervisor_specialization or '') if user else '',
         'student_id': user.id if user else None,
         'student_name': user.name if user else None,
+        'student_college': (user.college or '') if user else '',
+        # بيانات لوحة الرئيسية للطالب (Jinja + DASH_DATA للمسار الجافاسكربتي).
+        'dash_data': _build_dashboard_data(user),
         'colleges': colleges,
         'data': data,
         'catalog_json': catalog_json,
@@ -1721,6 +1804,9 @@ def home():
 
     if request.args.get('page') == 'services':
         return render_template('index.html', view='services_hub', **view_context)
+
+    if request.args.get('page') == 'profile':
+        return render_template('index.html', view='profile', **view_context)
 
     def _find_subject(sid):
         for c in data.values():
@@ -4969,6 +5055,46 @@ def manage_progress():
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/quiz/attempts', methods=['GET'])
+@student_required
+def get_quiz_attempts():
+    """أحدث محاولات الاختبار للطالب الحالي (الأحدث أولاً) + العدد الإجمالي."""
+    student_id = session['student_id']
+    attempts = (QuizAttempt.query.filter_by(student_id=student_id)
+                .order_by(QuizAttempt.created_at.desc()).limit(50).all())
+    total = QuizAttempt.query.filter_by(student_id=student_id).count()
+    return jsonify({"status": "success",
+                    "attempts": [a.to_dict() for a in attempts],
+                    "attempts_count": total})
+
+
+@app.route('/api/activity/week', methods=['GET'])
+@student_required
+def get_activity_week():
+    """نشاط آخر 7 أيام: عدد حركات النقاط في كل يوم (مع الأيام الصفرية).
+    الأيام بتوقيت آسيا/عدن (UTC+3 ثابت)؛ التسمية «أنشطة» — لا بيانات دقائق أصلاً."""
+    student_id = session['student_id']
+    aden_now = datetime.utcnow() + timedelta(hours=3)
+    today = aden_now.date()
+    days = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    start_utc = datetime(days[0].year, days[0].month, days[0].day) - timedelta(hours=3)
+    rows = PointTransaction.query.filter(
+        PointTransaction.student_id == student_id,
+        PointTransaction.created_at >= start_utc).all()
+    counts = {d: 0 for d in days}
+    for r in rows:
+        if not r.created_at:
+            continue
+        d = (r.created_at + timedelta(hours=3)).date()
+        if d in counts:
+            counts[d] += 1
+    _ar_days = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+    out = [{"date": d.isoformat(),
+            "label": "اليوم" if i == 6 else _ar_days[d.weekday()],
+            "count": counts[d]} for i, d in enumerate(days)]
+    return jsonify({"status": "success", "days": out, "total": sum(counts.values())})
+
 
 @app.route('/api/updates', methods=['GET'])
 def get_platform_updates():

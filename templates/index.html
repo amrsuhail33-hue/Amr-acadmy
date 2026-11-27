@@ -31,6 +31,7 @@
         const USER_ROLE = {{ user_role|tojson }};
         const STUDENT_ID = {% if student_id %}{{ student_id }}{% else %}null{% endif %};
         const STUDENT_NAME = {{ student_name|tojson }};
+        const DASH_DATA = {{ dash_data|tojson }};
         const CATALOG_DATA = {{ catalog_json | safe }};
         const COLLEGE_ORDER_JS = {{ college_order|tojson }};
         const CURRENT_SUBJECT = {{ (subject.name if subject else "")|tojson }};
@@ -155,10 +156,11 @@
         .nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px); }
 .nav-back-btn { width: auto; padding: 0 18px; gap: 8px; font-size: 0.95rem; font-weight: 800; }
 /* فقاعة المساعد — الصفحة الرئيسية فقط */
-.bot-bubble { position: fixed; left: 20px; bottom: 20px; z-index: 1400; width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .55); cursor: pointer; background: linear-gradient(135deg, rgba(37, 99, 235, .92), rgba(29, 78, 216, .92)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(37, 99, 235, .45), 0 0 0 6px rgba(37, 99, 235, .12); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, opacity .25s ease; animation: botBubblePop .45s cubic-bezier(.34, 1.56, .64, 1); }
+.bot-bubble { position: fixed; left: 20px; bottom: 20px; z-index: 1400; width: 57px; height: 57px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #38bdf8, #2563eb 60%, #1d4ed8); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 32px rgba(37, 99, 235, .45); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, opacity .25s ease; animation: botBubblePop .45s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes botBubblePop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .bot-bubble:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 18px 38px rgba(37, 99, 235, .55), 0 0 0 8px rgba(37, 99, 235, .14); }
 .bot-bubble:active { transform: scale(.96); }
+.bot-bubble::after { content: ''; position: absolute; top: 1px; inset-inline-end: 1px; width: 13px; height: 13px; border-radius: 50%; background: #22c55e; border: 2.5px solid var(--bg-card); }
 .bot-bubble.bubble-hidden{opacity:0;pointer-events:none;transform:scale(.7)}
 .bot-bubble i { pointer-events: none; }
 /* زر إرسال المساعد — نص واضح «إرسال» مع أيقونة، حتى لا يعتمد الزر على الأيقونة وحدها */
@@ -166,7 +168,7 @@
 .ai-send-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37,99,235,0.4); }
 .ai-send-btn:disabled { opacity: .6; cursor: default; transform: none; box-shadow: 0 5px 15px rgba(37,99,235,0.2); }
 .ai-send-btn i { pointer-events: none; }
-@media (max-width: 768px) { .bot-bubble { bottom: 88px; } }
+@media (max-width: 768px) { .bot-bubble { bottom: 106px; } }
 /* أنيميشن تحميل أنيق مصغّر (قوائم الإدارة والنوافذ المنبثقة) */
 .cl-mini { text-align: center; padding: 18px 10px; }
 .cl-mini .cl-spinner { width: 34px; height: 34px; border-width: 3px; margin-bottom: 10px; }
@@ -583,6 +585,188 @@ html.dark-mode .card:hover, html.dark-mode .opinion-card:hover, html.dark-mode .
 html.dark-mode .mobile-bottom-nav { box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
 html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
+/* ============================================================
+   REBUILD-V22-ENTRY30 — Dashboard V22 rebuild
+   (من النموذج tsmym-mqtrh-lldkhwl-wltnql — الشكل فقط، كل البيانات حقيقية)
+   زجاج: سطح rgba(255,255,255,.72) + حد rgba(255,255,255,.65) + blur 18px
+   بطل أزرق متدرج #2f6bff → #2563eb → #173f9e — الذهبي #e79a2e لـ VIP فقط
+   ============================================================ */
+:root {
+    --glass-surface: rgba(255,255,255,.72);
+    --glass-brd: rgba(255,255,255,.65);
+    --glass-shadow: 0 10px 30px rgba(23,48,110,.10);
+    --glass-shadow-lg: 0 18px 50px rgba(23,48,110,.16);
+    --hero-grad: linear-gradient(140deg, #2f6bff, #2563eb 55%, #173f9e);
+}
+html.dark-mode {
+    --glass-surface: rgba(255,255,255,.055);
+    --glass-brd: rgba(255,255,255,.13);
+    --glass-shadow: 0 10px 30px rgba(0,0,0,.35);
+    --glass-shadow-lg: 0 18px 50px rgba(0,0,0,.5);
+}
+.glass-card {
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-brd);
+    border-radius: 22px;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+.en { font-family: 'Outfit', 'IBM Plex Sans Arabic', sans-serif; }
+
+/* ---------- شاشة البداية: كحلي داكن + حلقات نابضة + شريط تحميل ---------- */
+#splash-screen { background: radial-gradient(560px 380px at 50% 18%, rgba(37,99,235,.35), transparent 65%), radial-gradient(420px 320px at 80% 90%, rgba(56,160,255,.14), transparent 60%), #060d21; color: #eef3ff; }
+#splash-screen .splash-logo-wrap { width: 132px; height: 132px; display: grid; place-items: center; }
+#splash-screen .splash-logo-wrap::before, #splash-screen .splash-logo-wrap::after { content: ""; position: absolute; inset: 0; border-radius: 36px; border: 1.5px solid rgba(96,165,250,.5); animation: splashRingPulse 2.4s ease-out infinite; }
+#splash-screen .splash-logo-wrap::after { animation-delay: 1.2s; }
+@keyframes splashRingPulse { 0% { transform: scale(.82); opacity: .9; } 70% { transform: scale(1.35); opacity: 0; } 100% { transform: scale(1.35); opacity: 0; } }
+#splash-screen .splash-logo-wrap img { width: 118px; height: 118px; border-radius: 30px; }
+#splash-screen .splash-brand { color: #fff; text-shadow: 0 4px 24px rgba(56,189,248,.45); letter-spacing: .32em; text-indent: .32em; }
+#splash-screen .splash-tagline { color: #7fb0ff; font-family: 'Outfit', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: .3em; text-indent: .3em; text-transform: uppercase; }
+.splash-bar { width: 168px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 44px; position: relative; z-index: 2; animation: splashFadeUp .8s .7s ease both; }
+.splash-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #38bdf8, #2563eb); animation: splashLoadFill 1.9s .3s cubic-bezier(.3,.7,.3,1) forwards; }
+@keyframes splashLoadFill { to { width: 100%; } }
+.splash-dots { display: flex; gap: 6px; margin-top: 18px; position: relative; z-index: 2; animation: splashFadeUp .8s .8s ease both; }
+.splash-dots span { width: 6px; height: 6px; border-radius: 50%; background: #5b7fc4; animation: splashDotB 1.2s ease-in-out infinite; }
+.splash-dots span:nth-child(2) { animation-delay: .15s; }
+.splash-dots span:nth-child(3) { animation-delay: .3s; }
+@keyframes splashDotB { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-5px); opacity: 1; } }
+.splash-ver { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font-family: 'Outfit', sans-serif; font-size: 10.5px; letter-spacing: .26em; text-indent: .26em; color: #46639c; text-transform: uppercase; animation: splashFadeUp .8s .95s ease both; }
+@keyframes splashFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ---------- الشريط العلوي: زجاج + عنوان فرعي + جرس ---------- */
+.navbar { background: var(--glass-surface); border-bottom: 1px solid var(--glass-brd); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); box-shadow: var(--glass-shadow); }
+.nav-subtitle { display: block; font-family: 'Outfit', sans-serif; font-size: 11px; letter-spacing: .14em; color: var(--text-muted); line-height: 1.15; }
+.nav-actions .more-menu-btn { position: relative; }
+
+/* ---------- نافذة الدخول: بطاقة زجاجية (CSS فقط) ---------- */
+#loginBox { background: var(--glass-surface); border: 1px solid var(--glass-brd); border-radius: 22px; box-shadow: var(--glass-shadow-lg); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); }
+#loginBox .popup-header, #loginBox .popup-body { background: transparent; }
+
+/* ---------- شريط التنقل السفلي: حبة زجاجية + مؤشر منزلق ---------- */
+@media (max-width: 768px) {
+    .mobile-bottom-nav { left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom)); top: auto; padding: 7px; border-radius: 24px; background: var(--glass-surface); border: 1px solid var(--glass-brd); box-shadow: 0 16px 40px rgba(10,25,70,.22); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); justify-content: normal; }
+    .mobile-bottom-nav a { flex: 1; position: relative; z-index: 1; padding: 8px 2px; border-radius: 17px; font-size: 11.5px; }
+    .mobile-bottom-nav a svg { width: 22px; height: 22px; }
+    .mobile-bottom-nav a.active { color: #fff; }
+    .nav-ind { position: absolute; top: 7px; bottom: 7px; right: 7px; border-radius: 17px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 8px 20px rgba(37,99,235,.4); transition: right .45s cubic-bezier(.3,1.2,.35,1), width .45s cubic-bezier(.3,1.2,.35,1); display: none; z-index: 0; }
+}
+
+/* ---------- لوحة الرئيسية: ترحيب + بطاقة بطل + أدوات سريعة ---------- */
+.dash-hello { margin: 8px 2px 16px; }
+.dash-hello h2 { font-size: 22px; margin: 0 0 3px; font-weight: 700; }
+.dash-hello p { margin: 0; color: var(--text-muted); font-size: 14px; }
+.hero-card { background: var(--hero-grad); border: none; color: #fff; position: relative; overflow: hidden; padding: 18px; margin-bottom: 14px; }
+.hero-card::after { content: ""; position: absolute; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.13); top: -90px; inset-inline-end: -60px; }
+.hero-card::before { content: ""; position: absolute; width: 120px; height: 120px; border-radius: 50%; background: rgba(56,189,248,.35); bottom: -60px; inset-inline-start: 24px; }
+.hero-flex { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
+.ring-wrap { position: relative; width: 86px; height: 86px; flex: none; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-bg { stroke: rgba(255,255,255,.25); }
+.ring-fg { stroke: #fff; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.3,.8,.3,1); }
+.ring-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.ring-center b { font-size: 19px; line-height: 1; }
+.ring-center small { font-size: 10.5px; opacity: .85; display: block; margin-top: 3px; }
+.hero-info { flex: 1; min-width: 0; }
+.hero-info .lvl { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+.hero-info p { margin: 0; font-size: 13px; opacity: .88; line-height: 1.8; }
+.hero-stats { display: flex; gap: 8px; margin-top: 13px; position: relative; z-index: 1; }
+.hero-stats .st { flex: 1; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); border-radius: 13px; padding: 9px 6px; text-align: center; }
+.hero-stats .st b { display: block; font-size: 16px; }
+.hero-stats .st span { font-size: 11px; opacity: .85; }
+.sec-title { display: flex; align-items: center; justify-content: space-between; margin: 20px 2px 12px; }
+.sec-title h3 { font-size: 17px; margin: 0; font-weight: 700; }
+.quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.quick { border: 1px solid var(--glass-brd); background: var(--glass-surface); border-radius: 18px; padding: 13px 4px 11px; display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--text-main); box-shadow: var(--glass-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: transform .15s; cursor: pointer; text-decoration: none; font-family: inherit; }
+.quick:active { transform: scale(.95); }
+.quick .qicon { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 1.15rem; }
+.dash-colleges .card { background: var(--glass-surface); border: 1px solid var(--glass-brd); box-shadow: var(--glass-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 19px; }
+.dash-colleges .card:hover { border-color: rgba(37,99,235,.35); }
+.lesson-row { display: flex; align-items: center; gap: 12px; padding: 13px 4px; border-bottom: 1px solid var(--border); }
+.lesson-row:last-child { border-bottom: none; }
+.lesson-row .licon { width: 44px; height: 44px; border-radius: 13px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; font-size: 1.1rem; }
+.lesson-row .linfo { flex: 1; min-width: 0; }
+.lesson-row .linfo b { display: block; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lesson-row .linfo span { font-size: 12.5px; color: var(--text-muted); }
+.lesson-row .pct { font-size: 13px; font-weight: 700; color: var(--primary); }
+.dash-continue a.lesson-row { text-decoration: none; color: var(--text-main); }
+
+/* ---------- مركز الخدمات: بطاقة المتجر المميزة + شبكة زجاجية ---------- */
+.store-entry { display: block; width: 100%; text-align: start; color: var(--text-main); font-family: inherit; cursor: pointer; text-decoration: none; padding: 18px; margin-bottom: 14px; }
+.store-entry:active { transform: scale(.985); }
+.store-head { display: flex; align-items: center; gap: 13px; }
+.store-head img { width: 52px; height: 52px; border-radius: 15px; object-fit: cover; }
+.store-head b { font-size: 17px; display: block; }
+.store-head span { font-size: 13px; color: var(--text-muted); }
+.store-head .open-badge { margin-inline-start: auto; font-size: 12px; font-weight: 700; color: #16a34a; background: rgba(22,163,74,.12); padding: 5px 11px; border-radius: 99px; flex: none; }
+.store-entry-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
+.enter-pill { display: inline-flex; align-items: center; gap: 5px; background: var(--primary); color: #fff; font-weight: 700; font-size: 12.5px; border-radius: 99px; padding: 7px 13px; flex: none; }
+.enter-pill svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hub-grid .card { background: var(--glass-surface); border: 1px solid var(--glass-brd); box-shadow: var(--glass-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 19px; }
+.hub-extra-row { display: flex; gap: 10px; margin-top: 4px; }
+.hub-extra { flex: 1; display: flex; align-items: center; gap: 10px; background: var(--glass-surface); border: 1px solid var(--glass-brd); border-radius: 16px; padding: 13px 14px; text-decoration: none; color: var(--text-main); box-shadow: var(--glass-shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); min-width: 0; }
+.hub-extra i { width: 38px; height: 38px; border-radius: 12px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; font-size: 1.05rem; }
+.hub-extra b { display: block; font-size: .95rem; }
+.hub-extra small { color: var(--text-muted); font-size: .78rem; display: block; }
+
+/* ---------- صفحة الملف الشخصي ---------- */
+#profilePageRoot .glass-card { padding: 18px; margin-bottom: 14px; }
+#profilePageRoot .glass-card h3 { margin: 0 0 4px; font-size: 16.5px; font-weight: 700; }
+#profilePageRoot .glass-card .sub { color: var(--text-muted); font-size: 13.5px; margin: 0 0 12px; line-height: 1.8; }
+.profile-head-v22 { text-align: center; padding: 26px 18px 20px !important; }
+.profile-head-v22 .profile-avatar-large { width: 78px; height: 78px; margin: 0 auto 12px; }
+.profile-head-v22 h3 { font-size: 20px; margin: 0 0 3px; }
+.profile-head-v22 p { margin: 0; color: var(--text-muted); font-size: 13.5px; }
+.profile-head-chips { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.xp-chip { background: rgba(0,0,0,0.06); padding: 5px 18px; border-radius: 50px; font-weight: 800; font-size: 1rem; border: 1px solid var(--border); }
+html.dark-mode .xp-chip { background: rgba(255,255,255,0.08); }
+.profile-streak-lines { margin-top: 12px; font-size: .9rem; color: var(--text-main); font-weight: 700; display: flex; flex-direction: column; gap: 6px; }
+#profilePageRoot .level-ring-wrap { margin-top: 18px; }
+#profilePageRoot .level-ring .lr-track { stroke: var(--border); }
+#profilePageRoot .level-ring-center { color: var(--text-main); }
+#profilePageRoot .level-ring-text { color: var(--text-main); text-align: right; }
+#profilePageRoot .level-ring-bar { background: var(--border); }
+#profilePageRoot .avatar-picker-grid { grid-template-columns: repeat(4, 1fr); }
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-row .stat { flex: 1; text-align: center; padding: 14px 6px; margin: 0; }
+.stat-row .stat b { display: block; font-size: 19px; color: var(--primary); }
+.stat-row .stat span { font-size: 12px; color: var(--text-muted); }
+.lvl-badge-v22 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 14px; border-radius: 12px; padding: 8px 12px; flex: none; box-shadow: 0 8px 18px rgba(37,99,235,.3); }
+.xp-nums { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+.xp-nums b { color: var(--text-main); }
+.goal-seg { display: flex; gap: 7px; margin-top: 14px; }
+.goal-seg button { flex: 1; border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text-main); border-radius: 11px; padding: 9px 4px; font-size: 13px; font-weight: 600; min-height: 42px; transition: all .2s; cursor: pointer; font-family: inherit; }
+.goal-seg button.sel { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.prog { height: 9px; border-radius: 99px; background: var(--border); overflow: hidden; margin: 10px 0 6px; }
+.prog i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #38bdf8, #2563eb); transition: width 1s cubic-bezier(.3,.8,.3,1); }
+.week-chart { display: flex; align-items: flex-end; gap: 7px; height: 118px; margin-top: 6px; }
+.wcol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; }
+.wcol b { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.wcol .wbar { width: 72%; max-width: 27px; border-radius: 8px 8px 4px 4px; height: 5%; background: linear-gradient(180deg, #38bdf8, #2563eb); transition: height 1s cubic-bezier(.3,.8,.3,1); }
+.wcol.today .wbar { background: linear-gradient(180deg, #2563eb, #1e3a8a); }
+.wcol span { font-size: 11px; color: var(--text-muted); }
+.wcol.today span { color: var(--primary); font-weight: 700; }
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.badge { text-align: center; padding: 13px 4px 11px; border-radius: 16px; background: var(--bg-card-inner); border: 1px solid var(--border); }
+.badge .bicon { width: 44px; height: 44px; margin: 0 auto 7px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 1.1rem; }
+.badge span { font-size: 11.5px; font-weight: 600; display: block; line-height: 1.5; }
+.badge.locked { opacity: .5; }
+.badge.locked .bicon { background: linear-gradient(135deg, #94a3b8, #64748b) !important; }
+.xp-gain { font-size: 13px; font-weight: 800; color: #16a34a; flex: none; }
+.menu-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; background: none; border: none; border-bottom: 1px solid var(--border); padding: 15px 4px; color: var(--text-main); font-size: 15px; font-weight: 500; min-height: 52px; cursor: pointer; font-family: inherit; }
+.menu-row:last-child { border-bottom: none; }
+.menu-row .micon { width: 38px; height: 38px; border-radius: 12px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; }
+.menu-row .chev { margin-inline-start: auto; color: var(--text-muted); }
+.v22-ghost-btn { width: 100%; border: 1.5px solid var(--border); background: var(--glass-surface); color: var(--text-main); border-radius: 15px; padding: 13px; font-size: 15px; font-weight: 600; margin-bottom: 10px; cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-family: inherit; }
+.v22-logout-btn { width: 100%; border: 1.5px solid rgba(239,68,68,.35); background: rgba(239,68,68,.07); color: #ef4444; border-radius: 15px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.foot-note { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 16px; line-height: 1.9; }
+
+/* ---------- البوت: فقاعة متدرجة + لوحة سفلية ---------- */
+#aiChatBox { background: var(--glass-surface); border: 1px solid var(--glass-brd); border-radius: 22px; box-shadow: var(--glass-shadow-lg); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); top: auto; bottom: calc(102px + env(safe-area-inset-bottom)); left: 14px; right: 14px; width: auto; max-width: none; max-height: min(72vh, 580px); transform: translateY(16px) scale(.97); }
+#aiChatBox.active { transform: none; }
+#aiChatBox .popup-header, #aiChatBox .popup-body { background: transparent; }
+@media (min-width: 769px) { #aiChatBox { left: 20px; right: auto; width: 400px; bottom: 96px; } }
+
     </style>
 </head>
 <body>
@@ -594,8 +778,11 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="splash-glow"></div>
     <div class="splash-logo-wrap"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="AMR ACADEMY Logo"></div>
     <div class="splash-brand">AMR ACADEMY</div>
-    <div class="splash-tagline">From Nothing to Something</div>
+    <div class="splash-tagline">Learn Smarter · Step by Step</div>
     <div class="splash-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="splash-bar" aria-hidden="true"><i></i></div>
+    <div class="splash-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="splash-ver">AMR ACADEMY · 2026</div>
     <button onclick="dismissSplash()" class="btn-calc-action" style="width:auto; padding:14px 35px; background:var(--primary); position:relative; z-index:2;">دخول المنصة <i class="fa-solid fa-arrow-left"></i></button>
 </div>
 
@@ -657,16 +844,19 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
 <nav class="navbar">
     <div class="navbar-brand-container" onclick="openAdminDashboard()" title="لوحة التحكم">
         <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="nav-logo">
-        <div class="nav-title">AMR ACADEMY</div>
+        <div><div class="nav-title">AMR ACADEMY</div><small class="nav-subtitle en">LEARN SMARTER</small></div>
         {% if is_admin or is_assistant %}<span class="admin-indicator-dot"></span>{% endif %}
     </div>
     <div class="nav-links">
         <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}">الرئيسية</a>
         <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}">خدمات</a>
+        <a href="/language">اللغة</a>
+        <a href="/?page=profile" class="{% if view == 'profile' %}active{% endif %}">حسابي</a>
     </div>
     <div class="nav-actions">
+        <button class="more-menu-btn" type="button" onclick="openWhatsNewModal()" title="التنبيهات" aria-label="التنبيهات"><i class="fa-solid fa-bell"></i><span class="fab-badge-dot" id="unreadUpdateFabDot" style="display:none;"></span></button>
         {% if student_id %}
-            <button class="compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
+            <button class="compact-user-pill" onclick="location.href='/?page=profile'" title="ملفي الشخصي" aria-label="ملفي الشخصي">
                 <span class="header-avatar" id="headerAvatar"></span>
             </button>
         {% else %}
@@ -704,94 +894,6 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">لديك حساب بالفعل؟ <span onclick="showLoginForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل دخول</span></p>
         </div>
-    </div>
-</div>
-
-<!-- PROFILE POPUP -->
-<div class="popup-box" id="profileBox">
-    <div class="popup-header" style="border:none; padding-bottom:0;">
-        <span class="popup-close" onclick="closeAllPopups()" style="margin-right:auto;"><i class="fa-solid fa-xmark"></i></span>
-    </div>
-    <div class="popup-body" id="profileBody" style="padding-top:0;">
-        <div class="profile-header-card">
-            <div class="profile-avatar-large" id="profileAvatarLarge"></div>
-            <div id="profileName" style="font-weight:900; font-size:1.5rem; position:relative; z-index:2; margin-bottom:5px;"></div>
-            <div style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2; display:flex; align-items:center; justify-content:center; gap:6px;"><span id="profileUsername"></span><button type="button" id="profileEditPencil" onclick="revealProfileEdit()" title="تعديل بياناتي" aria-label="تعديل بياناتي" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-grid; place-items:center; cursor:pointer; font-size:0.75rem; flex-shrink:0;"><i class="fa-solid fa-pen"></i></button></div>
-            
-            <div style="display:flex; justify-content:center; gap:10px; position:relative; z-index:2; flex-wrap:wrap;">
-                <span class="profile-level-badge profile-loading" id="profileLevel">…</span>
-                <span style="background:rgba(0,0,0,0.3); padding:5px 18px; border-radius:50px; font-weight:800; font-size:1rem; border:1px solid rgba(255,255,255,0.2);">
-                    ⭐ <span id="profilePoints" class="profile-loading">…</span> XP
-                </span>
-            </div>
-            <div style="margin-top:12px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
-                <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak" class="profile-loading">…</span> يوم متتالي
-            </div>
-            <div style="margin-top:6px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
-                <i class="fa-solid fa-language" style="color:#a5b4fc;"></i> سلسلة اللغة: <span id="profileLangStreak" class="profile-loading">…</span> يوم
-            </div>
-            <div class="level-ring-wrap">
-                <div class="level-ring-holder">
-                    <svg class="level-ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="lr-track" cx="42" cy="42" r="34"/><circle class="lr-fill" id="levelRingFill" cx="42" cy="42" r="34"/></svg>
-                    <div class="level-ring-center"><span id="levelRingNum" class="profile-loading">…</span><small>المستوى</small></div>
-                </div>
-                <div class="level-ring-text">
-                    <div id="levelRingCaption" class="profile-loading">…</div>
-                    <div class="level-ring-bar"><div id="levelRingBarFill"></div></div>
-                </div>
-            </div>
-        </div>
-        
-        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:20px;">
-            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-face-smile" style="color:var(--primary); margin-left:6px;"></i> اختر شخصيتك</div>
-            <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
-            <div id="avatarSaveMsg" style="display:none; margin-top:12px; color:var(--accent); font-weight:800; font-size:0.9rem; text-align:center;">✓ تم حفظ شخصيتك</div>
-        </div>
-
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
-            <div class="profile-stat-box">
-                <div class="num" id="statCompleted">0</div>
-                <div class="label">مهام مكتملة</div>
-            </div>
-            <div class="profile-stat-box">
-                <div class="num" id="statTotal" style="color:#8b5cf6;">0</div>
-                <div class="label">إجمالي المهام</div>
-            </div>
-            <div class="profile-stat-box">
-                <div class="num" id="statRate" style="color:var(--accent);">0%</div>
-                <div class="label">نسبة الإنجاز</div>
-            </div>
-        </div>
-        
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.9rem;" id="leaderboardToggle">إظهار في الترتيب</button>
-            <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.9rem;"><i class="fa-solid fa-ranking-star"></i> المتصدرين</button>
-        </div>
-        <div id="leaderboardList" style="margin-bottom:20px;"></div>
-
-        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-crown" style="color:var(--warning); margin-left:6px;"></i> منح VIP الخاصة بي</div>
-            <div id="myVipGrants"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div>
-        </div>
-
-        <div id="profileEditSection" style="display:none; background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-user-pen" style="color:var(--primary); margin-left:6px;"></i> تعديل بياناتي</div>
-            <input type="text" id="edit_profile_name" placeholder="الاسم" class="qa-input-field">
-            <input type="text" id="edit_profile_username" placeholder="اسم المستخدم" class="qa-input-field">
-            <input type="password" id="edit_profile_current_pw" placeholder="كلمة المرور الحالية (مطلوبة فقط عند تغيير كلمة السر)" class="qa-input-field" autocomplete="current-password">
-            <input type="password" id="edit_profile_new_pw" placeholder="كلمة المرور الجديدة (اتركها فارغة إن لم تغيّرها)" class="qa-input-field" autocomplete="new-password">
-            <input type="password" id="edit_profile_confirm_pw" placeholder="تأكيد كلمة المرور الجديدة" class="qa-input-field" autocomplete="new-password">
-            <button id="profileSaveBtn" onclick="submitProfileUpdate()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
-            <div id="profileEditMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
-        </div>
-        
-        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
-            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary); margin-left:6px;"></i> سجل النقاط المكتسبة</div>
-            <div id="recentTransactions" style="max-height:200px; overflow-y:auto; padding-left:5px;">
-                <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد حركات نقاط مسجلة بعد</div>
-            </div>
-        </div>
-        <button onclick="logoutStudent(this)" class="btn-calc-outline" style="margin-top:20px; color:var(--danger); border-color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
 </div>
 
@@ -1150,6 +1252,39 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
 
     {% if view == 'years' or view == 'colleges' %}
     {% if view == 'colleges' %}
+    {% if student_id and dash_data %}
+    <section class="dash-hello anim-fade-up">
+        <h2>أهلاً بعودتك، {{ student_name }}</h2>
+        <p>{{ dash_data.subtitle }}</p>
+    </section>
+    <div class="glass-card hero-card">
+        <div class="hero-flex">
+            <div class="ring-wrap">
+                <svg width="86" height="86" viewBox="0 0 86 86">
+                    <circle class="ring-bg" cx="43" cy="43" r="37" fill="none" stroke-width="7"/>
+                    <circle class="ring-fg" cx="43" cy="43" r="37" fill="none" stroke-width="7" stroke-dasharray="232.5" stroke-dashoffset="{{ dash_data.ring_offset }}"/>
+                </svg>
+                <div class="ring-center"><div><b class="en">{{ dash_data.level }}</b><small>المستوى</small></div></div>
+            </div>
+            <div class="hero-info">
+                <div class="lvl">أنت على الطريق الصحيح</div>
+                <p>أكملت <b class="en">{{ dash_data.points }}</b> نقطة خبرة — تبقّى <b class="en">{{ dash_data.remaining }}</b> نقطة للمستوى {{ dash_data.level + 1 }}.</p>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="st"><b class="en">{{ dash_data.points }}</b><span>نقاط XP</span></div>
+            <div class="st"><b class="en">{{ dash_data.started_subjects }}</b><span>مواد بدأتها</span></div>
+            <div class="st"><b class="en">{{ dash_data.streak }}</b><span>أيام متتالية</span></div>
+        </div>
+    </div>
+    <div class="sec-title"><h3>أدوات سريعة</h3></div>
+    <div class="quick-grid">
+        <button class="quick" type="button" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox')"><span class="qicon"><i class="fa-solid fa-robot"></i></span>البوت</button>
+        <button class="quick" type="button" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox')"><span class="qicon"><i class="fa-solid fa-calculator"></i></span>الحاسبة</button>
+        <a class="quick" href="/planner" target="_blank" onclick="return guardVipService('planner', 'الخطة الدراسية', event)"><span class="qicon"><i class="fa-solid fa-calendar-check"></i></span>المخطط</a>
+        <a class="quick" href="/simulators" onclick="return guardVipService('simulator', 'المختبر', event)"><span class="qicon"><i class="fa-solid fa-flask"></i></span>المحاكيات</a>
+    </div>
+    {% else %}
     <section class="hero-section anim-fade-up">
         <div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>
         <h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>
@@ -1164,6 +1299,7 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
         {% endif %}
     </section>
     {% endif %}
+    {% endif %}
 
 
     <div class="search-box">
@@ -1174,7 +1310,7 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
     <div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>
     {% if view == 'colleges' %}
     <div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>
-    <div class="grid-container grid-2col" id="subjects">
+    <div class="grid-container grid-2col dash-colleges" id="subjects">
         {% for c in colleges %}
             {% if c.subject_count == 0 %}
             <div class="card year-card card-disabled" aria-disabled="true" title="لا توجد مواد بعد في هذه الكلية">
@@ -1215,6 +1351,22 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
             {% endif %}
         {% else %}<p role="status">{{ "تعذر تحميل المقررات. حاول تحديث الصفحة." if catalog_error else "لا توجد سنوات بعد في " + college_name + ". سيتم إضافة المقررات قريباً." }}</p>
         {% endfor %}
+    </div>
+    {% endif %}
+    {% if view == 'colleges' and student_id and dash_data %}
+    <div class="sec-title"><h3>تابع من حيث توقفت</h3></div>
+    <div class="glass-card dash-continue" id="dashContinue" style="padding:6px 16px">
+        {% if dash_data.continue %}
+        {% for item in dash_data.continue %}
+        {% if item.url %}<a href="{{ item.url }}" class="lesson-row">{% else %}<div class="lesson-row">{% endif %}
+            <span class="licon"><i class="fa-solid {{ 'fa-circle-play' if item.kind == 'lesson' else 'fa-trophy' }}"></i></span>
+            <div class="linfo"><b>{{ item.title }}</b><span>{{ item.sub }}</span></div>
+            <span class="pct en">{{ item.pct }}%</span>
+        {% if item.url %}</a>{% else %}</div>{% endif %}
+        {% endfor %}
+        {% else %}
+        <p role="status">لم تبدأ أي درس بعد — تصفّح الكليات وابدأ أول درس.</p>
+        {% endif %}
     </div>
     {% endif %}
     {% endif %}
@@ -1267,46 +1419,24 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
 
     {% if view == 'services_hub' %}
     <div class="section-header"><h2>خدمات الأكاديمية</h2><p>كل أدوات المنصة في مكان واحد</p></div>
-    <div class="grid-container grid-2col">
-        <a href="/simulators" class="card" onclick="return guardVipService('simulator', 'المختبر', event)">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-flask"></i></div>
-            <h3 class="card-title">المختبر</h3>
-            <div class="card-subtitle">محاكيات تفاعلية للمواد العلمية</div>
-            <span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span>
-            <div class="card-btn">فتح المختبر</div>
-        </a>
-        <a href="/?tool=calculator" class="card" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox'); return false;" title="حاسبة المعدل التراكمي (GPA)">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
-            <h3 class="card-title">حاسبة المعدل</h3>
-            <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
-            <span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span>
-            <div class="card-btn">فتح الحاسبة</div>
-        </a>
-        <a href="/?tool=bot" class="card" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox'); return false;" title="المساعد الذكي">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
-            <h3 class="card-title">المساعد الذكي</h3>
-            <div class="card-subtitle">اسأل المساعد الذكي عن دروسك ومسائلك</div>
-            <span class="vip-badge" data-vip-badge="bot" style="display:none;">VIP</span>
-            <div class="card-btn">فتح المساعد</div>
-        </a>
+    <a href="/services" class="glass-card store-entry">
+        <div class="store-head">
+            <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="AMR STORE">
+            <div><b class="en">AMR STORE</b><span>اشتراكات رقمية بأسعار منافسة — Gemini وChatGPT وغيرها</span></div>
+            <span class="open-badge">مفتوح</span>
+        </div>
+        <div class="store-entry-foot">
+            <span>تصفّح المنتجات والأسعار داخل المتجر</span>
+            <span class="enter-pill">ادخل المتجر<svg viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></svg></span>
+        </div>
+    </a>
+    <div class="sec-title"><h3>خدمات الأكاديمية</h3></div>
+    <div class="grid-container grid-2col hub-grid">
         <a href="/language" class="card" title="تعلم اللغة مع Amr">
             <div class="card-icon-wrapper"><i class="fa-solid fa-language"></i></div>
             <h3 class="card-title">تعلم اللغة مع Amr</h3>
             <div class="card-subtitle">كلمات يومية في تخصصك — طب، هندسة، أو عام — مع النطق والترجمة</div>
             <div class="card-btn">ابدأ التعلم</div>
-        </a>
-        <a href="/planner" target="_blank" class="card" onclick="return guardVipService('planner', 'الخطة الدراسية', event)">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
-            <h3 class="card-title">الخطة الدراسية</h3>
-            <div class="card-subtitle">خطط دراستك وتابع تقدمك</div>
-            <span class="vip-badge" data-vip-badge="planner" style="display:none;">VIP</span>
-            <div class="card-btn">فتح الخطة</div>
-        </a>
-        <a href="/services" class="card">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-bag-shopping"></i></div>
-            <h3 class="card-title">المتجر</h3>
-            <div class="card-subtitle">متاجر الأكاديمية ومنتجاتها</div>
-            <div class="card-btn">تصفح المتجر</div>
         </a>
         <a href="/guide" class="card" onclick="return guardVipService('guide', 'دليل الطالب', event)">
             <div class="card-icon-wrapper"><i class="fa-solid fa-user-graduate"></i></div>
@@ -1315,26 +1445,176 @@ function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.colle
             <span class="vip-badge" data-vip-badge="guide" style="display:none;">VIP</span>
             <div class="card-btn">فتح الدليل</div>
         </a>
-        <a href="/?tool=updates" class="card">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-bell"></i></div>
-            <h3 class="card-title">التحديثات</h3>
-            <div class="card-subtitle">آخر أخبار وتحديثات المنصة</div>
-            <span class="fab-badge-dot" id="unreadUpdateFabDot" style="display:none;"></span>
-            <div class="card-btn">عرض التحديثات</div>
+        <a href="/?tool=bot" class="card" onclick="guardVipPopup('bot', 'المساعد الذكي', 'aiChatBox'); return false;" title="المساعد الذكي">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+            <h3 class="card-title">المساعد الذكي</h3>
+            <div class="card-subtitle">اسأل المساعد الذكي عن دروسك ومسائلك</div>
+            <span class="vip-badge" data-vip-badge="bot" style="display:none;">VIP</span>
+            <div class="card-btn">فتح المساعد</div>
         </a>
-        <a href="https://wa.me/967774485611" target="_blank" class="card">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-headset"></i></div>
-            <h3 class="card-title">الدعم</h3>
-            <div class="card-subtitle">تواصل معنا عبر واتساب</div>
-            <div class="card-btn">فتح واتساب</div>
+        <a href="/?tool=calculator" class="card" onclick="guardVipPopup('calculator', 'حاسبة المعدل', 'calcBox'); return false;" title="حاسبة المعدل التراكمي (GPA)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
+            <h3 class="card-title">حاسبة المعدل</h3>
+            <div class="card-subtitle">احسب معدلك التراكمي بسرعة</div>
+            <span class="vip-badge" data-vip-badge="calculator" style="display:none;">VIP</span>
+            <div class="card-btn">فتح الحاسبة</div>
         </a>
-        <div class="card" role="button" tabindex="0" onclick="toggleTheme()" style="cursor:pointer;">
-            <div class="card-icon-wrapper"><i class="fa-solid fa-moon theme-toggle-icon"></i></div>
-            <h3 class="card-title">المظهر</h3>
-            <div class="card-subtitle">تبديل الوضع الفاتح / الليلي</div>
-            <div class="card-btn">تبديل المظهر</div>
-        </div>
+        <a href="/planner" target="_blank" class="card" onclick="return guardVipService('planner', 'الخطة الدراسية', event)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
+            <h3 class="card-title">الخطة الدراسية</h3>
+            <div class="card-subtitle">خطط دراستك وتابع تقدمك</div>
+            <span class="vip-badge" data-vip-badge="planner" style="display:none;">VIP</span>
+            <div class="card-btn">فتح الخطة</div>
+        </a>
+        <a href="/simulators" class="card" onclick="return guardVipService('simulator', 'المختبر', event)">
+            <div class="card-icon-wrapper"><i class="fa-solid fa-flask"></i></div>
+            <h3 class="card-title">المختبر</h3>
+            <div class="card-subtitle">محاكيات تفاعلية للمواد العلمية</div>
+            <span class="vip-badge" data-vip-badge="simulator" style="display:none;">VIP</span>
+            <div class="card-btn">فتح المختبر</div>
+        </a>
     </div>
+    <div class="hub-extra-row">
+        <a href="/?tool=updates" class="hub-extra"><i class="fa-solid fa-bell"></i><span><b>التحديثات</b><small>آخر أخبار وتحديثات المنصة</small></span></a>
+        <a href="https://wa.me/967774485611" target="_blank" class="hub-extra"><i class="fa-solid fa-headset"></i><span><b>الدعم</b><small>تواصل معنا عبر واتساب</small></span></a>
+    </div>
+    {% endif %}
+
+    {% if view == 'profile' %}
+    {% if not student_id %}
+    <div class="glass-card" style="text-align:center; padding:36px 20px;">
+        <div style="width:64px; height:64px; background:var(--primary-soft); color:var(--primary); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 14px;"><i class="fa-regular fa-user"></i></div>
+        <h3 style="margin:0 0 6px; font-size:1.2rem; font-weight:900;">ملفي الشخصي</h3>
+        <p style="color:var(--text-muted); font-weight:700; margin:0 0 20px;">سجّل دخولك لعرض ملفك الشخصي وتقدّمك وإنجازاتك.</p>
+        <button class="btn-calc-action" style="background:var(--primary); max-width:280px; margin:0 auto;" onclick="togglePopup('loginBox')"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+    </div>
+    {% else %}
+    <div id="profilePageRoot">
+        <div class="glass-card profile-head-v22">
+            <div class="profile-avatar-large" id="profileAvatarLarge"></div>
+            <h3 id="profileName">…</h3>
+            <p><span id="profileUsername">…</span>{% if student_college %} · {{ student_college }}{% endif %} · <button type="button" id="profileEditPencil" onclick="revealProfileEdit()" title="تعديل بياناتي" aria-label="تعديل بياناتي" style="background:var(--primary-soft); border:1px solid var(--border); color:var(--primary); width:26px; height:26px; border-radius:50%; display:inline-grid; place-items:center; cursor:pointer; font-size:0.75rem; flex-shrink:0; vertical-align:middle;"><i class="fa-solid fa-pen"></i></button></p>
+            <div class="profile-head-chips">
+                <span class="lvl-badge-v22" id="profileLevel" style="font-size:1rem; padding:5px 16px; border-radius:50px;"><span class="profile-loading">…</span></span>
+                <span class="xp-chip">⭐ <span id="profilePoints" class="profile-loading">…</span> XP</span>
+            </div>
+            <div class="profile-streak-lines">
+                <div><i class="fa-solid fa-fire" style="color:#f59e0b;"></i> <span id="profileStreak" class="profile-loading">…</span> يوم متتالي</div>
+                <div><i class="fa-solid fa-language" style="color:var(--primary);"></i> سلسلة اللغة: <span id="profileLangStreak" class="profile-loading">…</span> يوم</div>
+            </div>
+            <div class="level-ring-wrap">
+                <div class="level-ring-holder">
+                    <svg class="level-ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="lr-track" cx="42" cy="42" r="34"/><circle class="lr-fill" id="levelRingFill" cx="42" cy="42" r="34"/></svg>
+                    <div class="level-ring-center"><span id="levelRingNum" class="profile-loading">…</span><small>المستوى</small></div>
+                </div>
+                <div class="level-ring-text">
+                    <div id="levelRingCaption" class="profile-loading">…</div>
+                    <div class="level-ring-bar"><div id="levelRingBarFill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h3>شخصيتي</h3>
+            <p class="sub">اختر الشخصية التي تمثّلك — ستظهر في ملفك وفي أعلى الصفحة بدل حرف الاسم.</p>
+            <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
+            <div id="avatarSaveMsg" style="display:none; margin-top:12px; color:var(--accent); font-weight:800; font-size:0.9rem; text-align:center;">✓ تم حفظ شخصيتك</div>
+        </div>
+
+        <div class="stat-row">
+            <div class="glass-card stat"><b class="en" id="profileStatXp">…</b><span>نقاط XP</span></div>
+            <div class="glass-card stat"><b class="en" id="profileWordsMastered">…</b><span>كلمة أتقنها</span></div>
+            <div class="glass-card stat"><b class="en" id="profileStatStreak">…</b><span>أيام متتالية</span></div>
+        </div>
+
+        <div class="glass-card">
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex:1; min-width:0;">
+                    <h3 style="margin:0">مستواي ونقاطي</h3>
+                    <p class="sub" id="profileLevelSub" style="margin:3px 0 0">…</p>
+                </div>
+                <span class="lvl-badge-v22" id="profileLevelBadge">Lv …</span>
+            </div>
+            <div class="prog" style="margin-top:14px"><i id="profileXpBar" style="width:0%"></i></div>
+            <div class="xp-nums"><span><b class="en" id="profileXpNow">…</b> XP حالياً</span><span>هدف المستوى: <b class="en" id="profileXpGoal">…</b> XP</span></div>
+            <p class="sub" style="margin:16px 0 0">هدفي اليومي لتعلّم اللغة:</p>
+            <div class="goal-seg" id="profileGoalSeg">
+                <button type="button" data-val="5" onclick="setLangGoal(5, this)">5 كلمات</button>
+                <button type="button" data-val="10" onclick="setLangGoal(10, this)">10 كلمات</button>
+                <button type="button" data-val="20" onclick="setLangGoal(20, this)">20 كلمة</button>
+            </div>
+            <div id="profileGoalMsg" style="display:none; margin-top:10px; color:var(--accent); font-weight:800; font-size:0.9rem; text-align:center;"></div>
+        </div>
+
+        <div class="glass-card">
+            <h3>نشاطي هذا الأسبوع</h3>
+            <p class="sub">أنشطة كل يوم — حافظ على سلسلتك!</p>
+            <div class="week-chart" id="weekChart"></div>
+            <p class="sub" id="weekChartTotal" style="margin:12px 0 0">جارٍ تحميل النشاط...</p>
+        </div>
+
+        <div class="glass-card">
+            <h3>إنجازاتي</h3>
+            <p class="sub" id="badgesSub">جارٍ تحميل الإنجازات...</p>
+            <div class="badges" id="profileBadges"></div>
+        </div>
+
+        <div class="glass-card" style="padding:6px 16px">
+            <h3 style="padding:14px 4px 2px; margin:0;">آخر نشاطي</h3>
+            <div id="recentTransactions" style="max-height:200px; overflow-y:auto; padding-left:5px;">
+                <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد حركات نقاط مسجلة بعد</div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding:6px 16px">
+            <button class="menu-row" type="button" onclick="revealProfileEdit()"><span class="micon"><i class="fa-regular fa-user"></i></span>تعديل بياناتي<i class="fa-solid fa-chevron-left chev"></i></button>
+            <button class="menu-row" type="button" onclick="togglePopup('favBox')"><span class="micon"><i class="fa-regular fa-heart"></i></span>المفضلة<i class="fa-solid fa-chevron-left chev"></i></button>
+            <button class="menu-row" type="button" onclick="openWhatsNewModal()"><span class="micon"><i class="fa-solid fa-bell"></i></span>الإشعارات<i class="fa-solid fa-chevron-left chev"></i></button>
+            <button class="menu-row" type="button" onclick="toggleTheme()"><span class="micon"><i class="fa-solid fa-moon theme-toggle-icon"></i></span>الإعدادات<i class="fa-solid fa-chevron-left chev"></i></button>
+        </div>
+
+        <div id="profileEditSection" style="display:none; background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-user-pen" style="color:var(--primary); margin-left:6px;"></i> تعديل بياناتي</div>
+            <input type="text" id="edit_profile_name" placeholder="الاسم" class="qa-input-field">
+            <input type="text" id="edit_profile_username" placeholder="اسم المستخدم" class="qa-input-field">
+            <input type="password" id="edit_profile_current_pw" placeholder="كلمة المرور الحالية (مطلوبة فقط عند تغيير كلمة السر)" class="qa-input-field" autocomplete="current-password">
+            <input type="password" id="edit_profile_new_pw" placeholder="كلمة المرور الجديدة (اتركها فارغة إن لم تغيّرها)" class="qa-input-field" autocomplete="new-password">
+            <input type="password" id="edit_profile_confirm_pw" placeholder="تأكيد كلمة المرور الجديدة" class="qa-input-field" autocomplete="new-password">
+            <button id="profileSaveBtn" onclick="submitProfileUpdate()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
+            <div id="profileEditMsg" style="display:none; margin-top:10px; color:var(--danger); font-weight:700;"></div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button onclick="toggleLeaderboardVisibility()" class="btn-calc-outline" style="flex:1; font-size:0.9rem;" id="leaderboardToggle">إظهار في الترتيب</button>
+            <button onclick="viewLeaderboard()" class="btn-calc-action" style="flex:1; background:var(--primary); font-size:0.9rem;"><i class="fa-solid fa-ranking-star"></i> المتصدرين</button>
+        </div>
+        <div id="leaderboardList" style="margin-bottom:20px;"></div>
+
+        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:15px;">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-crown" style="color:var(--warning); margin-left:6px;"></i> منح VIP الخاصة بي</div>
+            <div id="myVipGrants"><div class="skeleton sk-line"></div><div class="skeleton sk-line short"></div></div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+            <div class="profile-stat-box">
+                <div class="num" id="statCompleted">0</div>
+                <div class="label">مهام مكتملة</div>
+            </div>
+            <div class="profile-stat-box">
+                <div class="num" id="statTotal" style="color:#8b5cf6;">0</div>
+                <div class="label">إجمالي المهام</div>
+            </div>
+            <div class="profile-stat-box">
+                <div class="num" id="statRate" style="color:var(--accent);">0%</div>
+                <div class="label">نسبة الإنجاز</div>
+            </div>
+        </div>
+
+        <button class="v22-ghost-btn" type="button" onclick="replaySplash()">إعادة تشغيل شاشة البداية</button>
+        <button class="v22-logout-btn" type="button" onclick="logoutStudent(this)"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+        <p class="foot-note">AMR ACADEMY · 2026</p>
+    </div>
+    {% endif %}
     {% endif %}
 
     {% if view == 'select_type' %}
@@ -1612,9 +1892,6 @@ function togglePopup(boxId) {
         target.classList.add('active');
         const overlay = document.getElementById('chatOverlay');
         if (overlay) overlay.classList.add('active');
-        // جولة 5.4: نافذة الملف الشخصي كانت تُعاد فتحها ممرَّرة للأسفل — أعد التمرير للأعلى عند الفتح.
-        if (boxId === 'profileBox') { const pb = document.getElementById('profileBody'); if (pb) pb.scrollTop = 0; target.scrollTop = 0; }
-        if (boxId === 'profileBox') loadProfile();
         if (boxId === 'favBox') renderFavLists();
     }
 }
@@ -1751,7 +2028,7 @@ function cascadeNavBtnsHTML() {
         '<a href="javascript:cascadeBack()" class="nav-btn nav-back-btn" title="العودة"><i class="fa-solid fa-arrow-right"></i> رجوع</a>' +
         '</div>';
 }
-function cascadeHeroHTML() {
+function cascadeMarketingHeroHTML() {
     var h = '<section class="hero-section anim-fade-up">' +
         '<div class="hero-bg-blob-1"></div><div class="hero-bg-blob-2"></div>' +
         '<h1 class="hero-title">من لا شيء إلى <span>شيء</span></h1>' +
@@ -1765,6 +2042,56 @@ function cascadeHeroHTML() {
             '</div>';
     }
     return h + '</section>';
+}
+/* لوحة الرئيسية للمسجل دخوله (من DASH_DATA المضمّنة في الصفحة — نفس بيانات Jinja) */
+function dashboardHeroHTML() {
+    var d = (typeof DASH_DATA !== 'undefined' && DASH_DATA) ? DASH_DATA : null;
+    if (!d) return cascadeMarketingHeroHTML();
+    var h = '<section class="dash-hello anim-fade-up"><h2>أهلاً بعودتك، ' + escHtml(STUDENT_NAME || '') + '</h2><p>' + escHtml(d.subtitle || '') + '</p></section>' +
+        '<div class="glass-card hero-card">' +
+        '<div class="hero-flex"><div class="ring-wrap">' +
+        '<svg width="86" height="86" viewBox="0 0 86 86"><circle class="ring-bg" cx="43" cy="43" r="37" fill="none" stroke-width="7"/><circle class="ring-fg" cx="43" cy="43" r="37" fill="none" stroke-width="7" stroke-dasharray="232.5" stroke-dashoffset="' + d.ring_offset + '"/></svg>' +
+        '<div class="ring-center"><div><b class="en">' + d.level + '</b><small>المستوى</small></div></div></div>' +
+        '<div class="hero-info"><div class="lvl">أنت على الطريق الصحيح</div>' +
+        '<p>أكملت <b class="en">' + d.points + '</b> نقطة خبرة — تبقّى <b class="en">' + d.remaining + '</b> نقطة للمستوى ' + (d.level + 1) + '.</p></div></div>' +
+        '<div class="hero-stats">' +
+        '<div class="st"><b class="en">' + d.points + '</b><span>نقاط XP</span></div>' +
+        '<div class="st"><b class="en">' + d.started_subjects + '</b><span>مواد بدأتها</span></div>' +
+        '<div class="st"><b class="en">' + d.streak + '</b><span>أيام متتالية</span></div>' +
+        '</div></div>';
+    return h + quickToolsHTML();
+}
+function quickToolsHTML() {
+    return '<div class="sec-title"><h3>أدوات سريعة</h3></div>' +
+        '<div class="quick-grid">' +
+        '<button class="quick" type="button" onclick="guardVipPopup(\'bot\', \'المساعد الذكي\', \'aiChatBox\')"><span class="qicon"><i class="fa-solid fa-robot"></i></span>البوت</button>' +
+        '<button class="quick" type="button" onclick="guardVipPopup(\'calculator\', \'حاسبة المعدل\', \'calcBox\')"><span class="qicon"><i class="fa-solid fa-calculator"></i></span>الحاسبة</button>' +
+        '<a class="quick" href="/planner" target="_blank" onclick="return guardVipService(\'planner\', \'الخطة الدراسية\', event)"><span class="qicon"><i class="fa-solid fa-calendar-check"></i></span>المخطط</a>' +
+        '<a class="quick" href="/simulators" onclick="return guardVipService(\'simulator\', \'المختبر\', event)"><span class="qicon"><i class="fa-solid fa-flask"></i></span>المحاكيات</a>' +
+        '</div>';
+}
+/* «تابع من حيث توقفت» — نفس بيانات Jinja (أحدث 3: دروس + محاولات اختبار) */
+function continueHTML() {
+    var d = (typeof DASH_DATA !== 'undefined' && DASH_DATA) ? DASH_DATA : null;
+    var items = (d && d['continue']) ? d['continue'] : [];
+    var h = '<div class="sec-title"><h3>تابع من حيث توقفت</h3></div><div class="glass-card dash-continue" id="dashContinue" style="padding:6px 16px">';
+    if (!items.length) {
+        h += '<p role="status">لم تبدأ أي درس بعد — تصفّح الكليات وابدأ أول درس.</p>';
+    } else {
+        items.forEach(function (it) {
+            var icon = it.kind === 'quiz' ? 'fa-trophy' : 'fa-circle-play';
+            var row = '<span class="licon"><i class="fa-solid ' + icon + '"></i></span>' +
+                '<div class="linfo"><b>' + escHtml(it.title) + '</b><span>' + escHtml(it.sub) + '</span></div>' +
+                '<span class="pct en">' + it.pct + '%</span>';
+            h += it.url ? '<a href="' + escHtml(it.url) + '" class="lesson-row">' + row + '</a>'
+                        : '<div class="lesson-row">' + row + '</div>';
+        });
+    }
+    return h + '</div>';
+}
+function cascadeHeroHTML() {
+    if (typeof STUDENT_ID !== 'undefined' && STUDENT_ID !== null) return dashboardHeroHTML();
+    return cascadeMarketingHeroHTML();
 }
 function cascadeSearchHTML(placeholder) {
     return '<div class="search-box">' +
@@ -1799,9 +2126,11 @@ function cascadeCollegesHTML(data) {
         cascadeSearchHTML('ابحث عن أي مادة أو درس أو ملف...') +
         '<div id="catalogResults" class="grid-container grid-2col" aria-live="polite"></div>' +
         '<div class="section-header" id="years-grid"><h2>اختر الكلية</h2><p>حدد كليتك لاستعراض السنوات والمواد</p></div>' +
-        '<div class="grid-container grid-2col" id="subjects">';
+        '<div class="grid-container grid-2col dash-colleges" id="subjects">';
+    var loggedIn = (typeof STUDENT_ID !== 'undefined' && STUDENT_ID !== null);
     if (!names.length) {
         h += '</div><p role="status">ستظهر الكليات هنا عند إضافة أول كلية.</p>';
+        if (loggedIn) h += continueHTML();
         return h;
     }
     names.forEach(function (name) {
@@ -1816,7 +2145,9 @@ function cascadeCollegesHTML(data) {
                 '<div class="card-btn">استعرض الكلية</div></a>';
         }
     });
-    return h + '</div>';
+    h += '</div>';
+    if (loggedIn) h += continueHTML();
+    return h;
 }
 function cascadeYearsHTML(data, college) {
     var c = data ? data[college] : null;
@@ -1991,13 +2322,13 @@ function __botBubbleInQuiz() {
     var qv = document.getElementById('quiz-view'), rv = document.getElementById('result-view');
     return !!((qv && !qv.classList.contains('hidden')) || (rv && !rv.classList.contains('hidden')));
 }
-/* جولة 5.2: الفقاعة لا تغطي أي زر بطاقة أبداً — فحص هندسي حي: إن تداخل مستطيل الفقاعة (يسار 20px، عرض 56px، أسفل 88px على الجوال / 20px على اللابتوب) مع أي زر بطاقة ظاهر في الشاشة تُخفى حتى يزول التداخل */
+/* جولة 5.2: الفقاعة لا تغطي أي زر بطاقة أبداً — فحص هندسي حي: إن تداخل مستطيل الفقاعة (يسار 20px، عرض 57px، أسفل 106px على الجوال / 20px على اللابتوب) مع أي زر بطاقة ظاهر في الشاشة تُخفى حتى يزول التداخل */
 function __botBubbleOverlapsCardBtn() {
     var b = document.getElementById('botBubble');
     if (!b || b.style.display === 'none') return false;
     var mobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-    var bottom = mobile ? 88 : 20;
-    var br = { left: 20, right: 76, top: window.innerHeight - bottom - 56, bottom: window.innerHeight - bottom };
+    var bottom = mobile ? 106 : 20;
+    var br = { left: 20, right: 77, top: window.innerHeight - bottom - 57, bottom: window.innerHeight - bottom };
     var btns = document.querySelectorAll('.card-btn');
     for (var i = 0; i < btns.length; i++) {
         var r = btns[i].getBoundingClientRect();
@@ -2129,6 +2460,42 @@ function cascadeStepHTML(st) {
     return '';
 }
 
+/* شريط التنقل السفلي (إعادة بناء V22): الحالة النشطة + المؤشر المنزلق من الـ URL
+   مباشرة (لا من Jinja) حتى لا يتعفّن بعد PJAX — رياضيات RTL كالنموذج. */
+function currentNavKey() {
+    try {
+        var u = new URL(location.href);
+        if (u.pathname === '/language') return 'language';
+        if (u.pathname !== '/') return null;
+        var pg = u.searchParams.get('page');
+        if (pg === 'services') return 'services';
+        if (pg === 'profile') return 'profile';
+        if (pg) return null;
+        return 'home';
+    } catch (e) { return 'home'; }
+}
+function syncBottomNav() {
+    var nav = document.querySelector('.mobile-bottom-nav');
+    if (!nav) return;
+    var key = currentNavKey();
+    var active = null;
+    nav.querySelectorAll('a[data-nav]').forEach(function (a) {
+        var on = (a.getAttribute('data-nav') === key);
+        a.classList.toggle('active', on);
+        if (on) active = a;
+    });
+    var ind = document.getElementById('navInd');
+    if (!ind) return;
+    if (!active || (window.innerWidth || 0) > 768) { ind.style.display = 'none'; return; }
+    ind.style.display = 'block';
+    var navRect = nav.getBoundingClientRect();
+    var r = active.getBoundingClientRect();
+    ind.style.width = r.width + 'px';
+    ind.style.right = (navRect.right - r.right) + 'px';
+    ind.style.left = 'auto';
+}
+window.addEventListener('resize', syncBottomNav);
+
 (function () {
     var main = document.querySelector('.main-content');
     if (!main || !window.fetch || !window.DOMParser) return;
@@ -2174,6 +2541,7 @@ function cascadeStepHTML(st) {
         refreshVipBadges();
         initFavoriteButtons();
         updateThemeIcon();
+        syncBottomNav();
         if (typeof syncBotBubble === 'function') syncBotBubble();
         if (document.querySelector('.main-content a[href*="chapter="]')) scheduleChapterPrefetch();
     }
@@ -2414,6 +2782,7 @@ function cascadeStepHTML(st) {
         if (isNavLink) {
             document.querySelectorAll('.nav-links a, .mobile-bottom-nav a').forEach(function (x) { x.classList.remove('active'); });
             a.classList.add('active');
+            syncBottomNav();
         }
         // جولة 5.4: أي خطأ متزامن أو وعد مرفوض في التبديل يرجع للتنقّل العادي — لا نقرة مبتلعة.
         var _swapUrl = u.origin + u.pathname + u.search;
@@ -5023,6 +5392,15 @@ async function loadProfile() {
             setProfileVal('levelRingNum', p.level);
             var _rb = document.getElementById('levelRingBarFill'); if (_rb) _rb.style.width = Math.min(100, Math.max(0, _lp)) + '%';
             setProfileVal('levelRingCaption', (p.points || 0) + ' XP \u2014 ' + _nl + ' XP للمستوى التالي');
+            // صفحة الملف الشخصي (إعادة بناء V22): قيم إضافية إن وُجدت عناصرها.
+            setProfileVal('profileStatXp', p.points);
+            setProfileVal('profileStatStreak', p.streak_days || 0);
+            setProfileVal('profileLevelBadge', 'Lv ' + p.level);
+            setProfileVal('profileXpNow', p.points);
+            setProfileVal('profileXpGoal', _nl);
+            var _ls = document.getElementById('profileLevelSub');
+            if (_ls) _ls.textContent = 'المستوى ' + p.level + ' — تبقّى ' + Math.max(0, _nl - (p.points || 0)) + ' نقطة للوصول إلى المستوى ' + (p.level + 1);
+            var _xb = document.getElementById('profileXpBar'); if (_xb) _xb.style.width = Math.min(100, Math.max(0, _lp)) + '%';
             (function loadLangStreak(tries) {
                 fetch('/api/language/profile').then(function (r) { return r.json(); }).then(function (ld) {
                     if (ld && ld.status === 'success') setProfileVal('profileLangStreak', (typeof ld.streak === 'number' ? ld.streak : 0));
@@ -5057,7 +5435,7 @@ async function loadProfile() {
                 vg.innerHTML = grants.length ? grants.map(g => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;"><span style="font-weight:700;">${g.scope_type === 'subject' ? 'مادة' : g.scope_type === 'content' ? 'محتوى' : 'خدمة'}: ${escapeText(g.scope_label)}</span><span style="color:var(--text-muted);">${g.is_forever ? 'أبدي' : 'حتى ' + (g.expires_at || '')}</span></div>`).join('') : '<div style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:10px;">لا توجد منح VIP نشطة</div>';
             }
         }
-    } catch(e) { setProfileVal('profileLevel', 'المستوى 1'); setProfileVal('profilePoints', 0); setProfileVal('profileStreak', 0); setProfileVal('profileLangStreak', 0); setProfileVal('levelRingNum', 1); setProfileVal('levelRingCaption', '0 XP \u2014 100 XP للمستوى التالي'); }
+    } catch(e) { setProfileVal('profileLevel', 'المستوى 1'); setProfileVal('profilePoints', 0); setProfileVal('profileStreak', 0); setProfileVal('profileLangStreak', 0); setProfileVal('levelRingNum', 1); setProfileVal('levelRingCaption', '0 XP \u2014 100 XP للمستوى التالي'); setProfileVal('profileStatXp', 0); setProfileVal('profileStatStreak', 0); setProfileVal('profileLevelBadge', 'Lv 1'); setProfileVal('profileXpNow', 0); setProfileVal('profileXpGoal', 100); }
 }
 
 async function viewLeaderboard() {
@@ -5087,6 +5465,102 @@ async function toggleLeaderboardVisibility() {
     } catch(e) {}
 }
 
+/* ===== صفحة الملف الشخصي (إعادة بناء V22): هدف يومي + مخطط أسبوعي + شارات ===== */
+async function setLangGoal(target, btn) {
+    var seg = document.getElementById('profileGoalSeg');
+    if (seg) seg.querySelectorAll('button').forEach(function (b) { b.classList.remove('sel'); });
+    if (btn) btn.classList.add('sel');
+    var msg = document.getElementById('profileGoalMsg');
+    try {
+        const res = await fetch('/api/language/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ daily_target: target }) });
+        const d = await res.json().catch(function () { return {}; });
+        if (res.ok && d.status === 'success') {
+            if (msg) { msg.textContent = 'تم حفظ هدفك اليومي: ' + target + ' كلمات'; msg.style.display = 'block'; setTimeout(function () { msg.style.display = 'none'; }, 2500); }
+        } else {
+            if (msg) { msg.textContent = (d && d.message) || 'تعذّر حفظ الهدف'; msg.style.display = 'block'; }
+        }
+    } catch (e) {
+        if (msg) { msg.textContent = 'تعذّر حفظ الهدف، تحقق من الاتصال'; msg.style.display = 'block'; }
+    }
+}
+function renderWeekChart(days, total, streak) {
+    var box = document.getElementById('weekChart');
+    if (!box) return;
+    if (!days || !days.length) { box.innerHTML = ''; return; }
+    var max = 0;
+    days.forEach(function (d) { if (d.count > max) max = d.count; });
+    box.innerHTML = days.map(function (d, i) {
+        var h = max > 0 ? Math.max(5, Math.round(d.count / max * 100)) : 5;
+        return '<div class="wcol' + (i === days.length - 1 ? ' today' : '') + '"><b class="en">' + d.count + '</b><div class="wbar" style="height:' + h + '%"></div><span>' + d.label + '</span></div>';
+    }).join('');
+    var t = document.getElementById('weekChartTotal');
+    if (t) t.innerHTML = 'المجموع: <b class="en">' + (total || 0) + '</b> نشاطاً · سلسلتك الحالية: <b class="en">' + (streak || 0) + '</b> أيام متتالية';
+}
+function renderBadges(data) {
+    var box = document.getElementById('profileBadges');
+    if (!box) return;
+    var defs = [
+        { icon: 'fa-check', grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', title: 'أول خطوة', sub: 'أكملت أول درس', on: !!data.firstLesson },
+        { icon: 'fa-fire', grad: 'linear-gradient(135deg,#fb923c,#ea580c)', title: 'سلسلة 4 أيام', sub: 'تعلّم متواصل', on: data.streak >= 4 },
+        { icon: 'fa-star', grad: 'linear-gradient(135deg,#38bdf8,#0369a1)', title: 'نادي الـ100', sub: 'تجاوزت 100 XP', on: data.points >= 100 },
+        { icon: 'fa-language', grad: 'linear-gradient(135deg,#22c55e,#15803d)', title: 'قارئ نشيط', sub: 'أتقنت 10 كلمات', on: data.words >= 10 },
+        { icon: 'fa-trophy', grad: 'linear-gradient(135deg,#a855f7,#7e22ce)', title: 'بطل الاختبارات', sub: 'أكمل 5 اختبارات', on: data.attempts >= 5 },
+        { icon: 'fa-calendar-check', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', title: 'سلسلة 7 أيام', sub: 'أسبوع كامل', on: data.streak >= 7 }
+    ];
+    var opened = defs.filter(function (b) { return b.on; }).length;
+    box.innerHTML = defs.map(function (b) {
+        var icon = b.on ? b.icon : 'fa-lock';
+        return '<div class="badge' + (b.on ? '' : ' locked') + '"><span class="bicon" style="background:' + b.grad + '"><i class="fa-solid ' + icon + '"></i></span><span>' + b.title + '<br>' + b.sub + '</span></div>';
+    }).join('');
+    var sub = document.getElementById('badgesSub');
+    if (sub) sub.innerHTML = 'فتحت <b class="en">' + opened + '</b> من <b class="en">' + defs.length + '</b> شارات — أكمل الباقي!';
+}
+async function loadProfilePage() {
+    var root = document.getElementById('profilePageRoot');
+    if (!root || !isStudentLoggedIn()) return;
+    var badgeData = { firstLesson: false, streak: 0, points: 0, words: 0, attempts: 0 };
+    try {
+        const pf = await (await fetch('/api/profile')).json().catch(function () { return null; });
+        if (pf && pf.status === 'success' && pf.profile) {
+            badgeData.points = pf.profile.points || 0;
+            badgeData.streak = pf.profile.streak_days || 0;
+        }
+    } catch (e) {}
+    try {
+        const lp = await (await fetch('/api/language/profile')).json().catch(function () { return null; });
+        if (lp && lp.status === 'success') {
+            var seg = document.getElementById('profileGoalSeg');
+            if (seg) seg.querySelectorAll('button').forEach(function (b) { b.classList.toggle('sel', parseInt(b.getAttribute('data-val'), 10) === lp.daily_target); });
+        }
+    } catch (e) {}
+    try {
+        const pr = await (await fetch('/api/language/progress')).json().catch(function () { return null; });
+        if (pr && pr.status === 'success') {
+            var mbt = pr.mastered_by_track || {};
+            var words = (mbt.medical || 0) + (mbt.engineering || 0) + (mbt.general || 0);
+            badgeData.words = words;
+            setProfileVal('profileWordsMastered', words);
+        }
+    } catch (e) {}
+    try {
+        const pg = await (await fetch('/api/progress')).json().catch(function () { return null; });
+        if (Array.isArray(pg)) badgeData.firstLesson = pg.some(function (p) { return (p.progress_percent || 0) >= 100; });
+    } catch (e) {}
+    try {
+        const qa = await (await fetch('/api/quiz/attempts')).json().catch(function () { return null; });
+        if (qa && qa.status === 'success') badgeData.attempts = qa.attempts_count || 0;
+    } catch (e) {}
+    try {
+        const wk = await (await fetch('/api/activity/week')).json().catch(function () { return null; });
+        if (wk && wk.status === 'success') renderWeekChart(wk.days, wk.total, badgeData.streak);
+    } catch (e) {}
+    renderBadges(badgeData);
+}
+function replaySplash() {
+    try { sessionStorage.removeItem('visited'); } catch (e) {}
+    showSplashIfNeeded();
+}
+
 // 11. التهيئة عند فتح الصفحة
 // شاشة الترحيب: تظهر مرة واحدة فقط في الجلسة (sessionStorage) فلا تعود عند
 // الرجوع من صفحة فرعية مثل /planner، ويُقفل تمرير الخلفية أثناء ظهورها.
@@ -5109,6 +5583,8 @@ function showSplashIfNeeded() {
     if (seen) return;
     const splash = document.getElementById('splash-screen');
     if (splash) { splash.classList.remove('hidden'); lockSplashScroll(true); }
+    // إغلاق تلقائي بعد ~2.2 ثانية كحد أقصى؛ زر «دخول المنصة» اليدوي يبقى.
+    setTimeout(function () { dismissSplash(); }, 2200);
 }
 // الرجوع بزر المتصفح قد يستعيد الصفحة من الذاكرة المؤقتة دون إعادة تحميل؛
 // إن كانت الشاشة قد أُغلقت في هذه الجلسة تبقى مخفية ويبقى التمرير مفتوحاً.
@@ -5124,6 +5600,7 @@ window.addEventListener('pageshow', function () {
 window.addEventListener('DOMContentLoaded', () => {
     renderHeaderAvatar('av-01'); renderProfileAvatar('av-01'); buildAvatarPicker(); enhanceCollegeIcons();
     updateThemeIcon();
+    syncBottomNav();
     applyYearBadges();
     refreshVipBadges();
     // إن أُنهيت الجلسة (حظر/حذف) يُعرض السبب مرة واحدة بعد الخروج
@@ -5134,6 +5611,7 @@ window.addEventListener('DOMContentLoaded', () => {
     {% endif %}
     if (isStudentLoggedIn()) {
         loadProfile();
+        loadProfilePage();
         loadStudentProgress();
         initFavoriteButtons();
     }
@@ -5161,8 +5639,11 @@ window.addEventListener('DOMContentLoaded', () => {
     {% endif %}
 <!-- شريط التنقل السفلي للجوال -->
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
-    <a href="/" class="{% if view in ['years', 'colleges'] %}active{% endif %}"><i class="fa-solid fa-house"></i> الرئيسية</a>
-    <a href="/?page=services" class="{% if view == 'services_hub' %}active{% endif %}"><i class="fa-solid fa-border-all"></i> خدمات</a>
+    <span class="nav-ind" id="navInd"></span>
+    <a href="/" data-nav="home" class="{% if view in ['years', 'colleges'] %}active{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/></svg> الرئيسية</a>
+    <a href="/?page=services" data-nav="services" class="{% if view == 'services_hub' %}active{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 5.5 3.5h13L20 7.5M4 7.5h16M4 7.5V20a.8.8 0 0 0 .8.8h14.4a.8.8 0 0 0 .8-.8V7.5"/><path d="M9.5 20.5v-6h5v6"/></svg> خدمات</a>
+    <a href="/language" data-nav="language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.7 2.6 4 5.6 4 9s-1.3 6.4-4 9c-2.7-2.6-4-5.6-4-9s1.3-6.4 4-9Z"/></svg> اللغة</a>
+    <a href="/?page=profile" data-nav="profile" class="{% if view == 'profile' %}active{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg> حسابي</a>
 </nav>
 </body>
 </html>

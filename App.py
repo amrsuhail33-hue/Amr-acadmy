@@ -100,6 +100,7 @@ class Student(db.Model):
     supervisor_college = db.Column(db.String(150), nullable=True)  # نطاق المشرف: اسم الكلية التي يشرف عليها
     supervisor_specialization = db.Column(db.String(150), nullable=True)  # نطاق مشرف التخصص: اسم المادة
     supervisor_subject_id = db.Column(db.Integer, nullable=True)  # نطاق مشرف التخصص الدقيق: معرّف المادة (Q4)
+    avatar = db.Column(db.String(32), nullable=True)  # صورة رمزية يختارها الطالب من مجموعة جاهزة (av-01…av-12)، فارغة = الحرف الأول من الاسم
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -124,6 +125,7 @@ class Student(db.Model):
             "supervisor_college": self.supervisor_college or '',
             "supervisor_specialization": self.supervisor_specialization or '',
             "supervisor_subject_id": self.supervisor_subject_id,
+            "avatar": self.avatar or None,
             "is_active": bool(self.is_active) if self.is_active is not None else True,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else ""
         }
@@ -984,6 +986,8 @@ with app.app_context():
             db.session.execute(db.text("ALTER TABLE custom_lessons ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
             db.session.execute(db.text("ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS subject_id INTEGER"))
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS supervisor_subject_id INTEGER"))
+            # الصورة الرمزية للحساب: create_all() لا يضيف أعمدة لجداول موجودة.
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN IF NOT EXISTS avatar VARCHAR(32)"))
             # أعمدة «خدمات» الجديدة: create_all() لا يضيف أعمدة لجداول موجودة،
             # والمنتجات القديمة بلا عملة تُعامل كريال يمني (YER).
             db.session.execute(db.text("ALTER TABLE stores ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)"))
@@ -4047,6 +4051,27 @@ def update_own_profile():
         app.logger.exception("update_own_profile failed")
         db.session.rollback()
         return jsonify({"status": "error", "message": "تعذر تحديث البيانات. حاول مرة أخرى."}), 500
+
+@app.route('/api/profile/avatar', methods=['POST'])
+@student_required
+def update_own_avatar():
+    """الطالب يختار صورته الرمزية من مجموعة جاهزة (av-01…av-12) أو يمسحها
+    (null) فيعود الحرف الأول من الاسم. المعرفات لا تُثبَّت هنا — أي معرّف
+    مطابق للنمط مقبول، والواجهة هي من تعرّف المجموعة."""
+    user = get_current_user()
+    try:
+        data = request.get_json(silent=True) or {}
+        avatar = data.get('avatar', None) if isinstance(data, dict) else None
+        if avatar is not None:
+            if not isinstance(avatar, str) or not re.fullmatch(r"[a-z0-9-]{1,32}", avatar):
+                return jsonify({"status": "error", "message": "معرّف الصورة الرمزية غير صالح"}), 400
+        user.avatar = avatar
+        db.session.commit()
+        return jsonify({"status": "success", "avatar": user.avatar or None})
+    except Exception as e:
+        app.logger.exception("update_own_avatar failed")
+        db.session.rollback()
+        return jsonify({"status": "error", "message": "تعذر حفظ الصورة الرمزية. حاول مرة أخرى."}), 500
 
 # ==========================================
 # إدارة الحسابات (المشرف الأعلى فقط) + نظام VIP

@@ -8,13 +8,13 @@
     <!-- دعم iPhone / Safari -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Amr Suhail Academy">
+    <meta name="apple-mobile-web-app-title" content="AMR ACADEMY">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
     
     <script src="https://cdn.jsdelivr.net/npm/core-js-bundle@3.33.0/minified.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"></script>
     
-    <title>Amr Suhail Academy</title>
+    <title>AMR ACADEMY</title>
     
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#2563eb">
@@ -155,8 +155,10 @@
         .nav-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-3px); }
 .nav-back-btn { width: auto; padding: 0 18px; gap: 8px; font-size: 0.95rem; font-weight: 800; }
 /* فقاعة المساعد — الصفحة الرئيسية فقط */
-.bot-bubble { position: fixed; left: 20px; bottom: 20px; z-index: 1400; width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 28px rgba(37, 99, 235, .45); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
-.bot-bubble:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 32px rgba(37, 99, 235, .55); }
+.bot-bubble { position: fixed; left: 20px; bottom: 20px; z-index: 1400; width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .55); cursor: pointer; background: linear-gradient(135deg, rgba(37, 99, 235, .92), rgba(29, 78, 216, .92)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(37, 99, 235, .45), 0 0 0 6px rgba(37, 99, 235, .12); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, opacity .25s ease; animation: botBubblePop .45s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes botBubblePop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.bot-bubble:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 18px 38px rgba(37, 99, 235, .55), 0 0 0 8px rgba(37, 99, 235, .14); }
+.bot-bubble:active { transform: scale(.96); }
 .bot-bubble.bubble-hidden{opacity:0;pointer-events:none;transform:scale(.7)}
 .bot-bubble i { pointer-events: none; }
 /* زر إرسال المساعد — نص واضح «إرسال» مع أيقونة، حتى لا يعتمد الزر على الأيقونة وحدها */
@@ -201,8 +203,13 @@
         .calc-row-del:hover { background: rgba(239,68,68,0.08); border-color: var(--danger); }
         /* إظهار/إخفاء كلمة المرور */
         .pw-wrap { position: relative; }
-        .pw-wrap .qa-input-field { padding-left: 42px; }
-        .pw-toggle { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 6px; line-height: 1; }
+        .pw-wrap .qa-input-field { padding-inline-end: 44px; }
+        .pw-toggle { position: absolute; inset-inline-end: 8px; left: auto; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 6px; line-height: 1; }
+        /* حقول الدخول — الأيقونة عند حافة الحقل خارج منطقة النص (آمن RTL) */
+        .login-field { position: relative; }
+        .login-field-icon { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 1rem; z-index: 1; }
+        .login-field > .qa-input-field { padding-inline-start: 44px; }
+        .login-field .qa-input-field:focus + .login-field-icon, .login-field:focus-within .login-field-icon { color: var(--primary); }
         .pw-toggle:hover { color: var(--primary); }
         .card.green:hover::before { background: var(--accent); }
         .card.green .card-icon-wrapper { background: var(--accent-light); color: var(--accent); }
@@ -339,7 +346,7 @@ p[role="status"] { text-align: center; color: var(--text-muted); font-weight: 70
         }
 /* REDESIGN-V1-20261124 */
 /* ============================================================
-   نظام التصميم الموحد — أكاديمية عمرو (Dev)
+   نظام التصميم الموحد — AMR ACADEMY (Dev)
    أزرق #2563eb أساسي / #1D4ED8 عميق / ذهبي #e79a2e لـ VIP فقط
    الخط: IBM Plex Sans Arabic + Tajawal احتياطي، Outfit للاتيني
    الشعار الأصلي logo.png يبقى كما هو — التنسيق حوله فقط
@@ -440,7 +447,44 @@ body { -webkit-font-smoothing: antialiased; }
 
 /* ---------- الشعار الأصلي — التنسيق حول الصورة فقط ---------- */
 .nav-logo { border: 2px solid var(--bg-card); object-fit: cover; background: #0f172a; }
+#splash-screen { transition: opacity .45s ease; background: radial-gradient(ellipse 60% 45% at 50% 38%, rgba(37,99,235,.12), transparent 70%), var(--bg-card); }
+#splash-screen.splash-fading { opacity: 0; pointer-events: none; }
+.splash-glow { position: absolute; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgba(37,99,235,.28), rgba(37,99,235,.06) 55%, transparent 70%); filter: blur(8px); animation: splashGlow 3s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes splashGlow { from { transform: scale(.9); opacity: .7; } to { transform: scale(1.12); opacity: 1; } }
+.splash-logo-wrap { position: relative; z-index: 2; animation: splashReveal .7s cubic-bezier(.22,1,.36,1) both; }
+.splash-logo-wrap img { width: 110px; border-radius: 26px; box-shadow: 0 18px 44px rgba(37,99,235,0.38), 0 0 0 1px rgba(37,99,235,.12); border: 3px solid var(--bg-card); display: block; }
+.splash-brand { position: relative; z-index: 2; font-size: 2rem; font-weight: 900; color: var(--primary); font-family: 'Outfit', sans-serif; letter-spacing: 3px; margin-top: 22px; animation: splashReveal .7s .12s cubic-bezier(.22,1,.36,1) both; }
+.splash-tagline { position: relative; z-index: 2; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; font-family: 'Outfit', sans-serif; animation: splashReveal .7s .22s cubic-bezier(.22,1,.36,1) both; }
+.splash-loader { position: relative; z-index: 2; display: flex; gap: 7px; margin: 26px 0 24px; }
+.splash-loader span { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: splashDot 1.1s ease-in-out infinite; }
+.splash-loader span:nth-child(2) { animation-delay: .15s; }
+.splash-loader span:nth-child(3) { animation-delay: .3s; }
+@keyframes splashReveal { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes splashDot { 0%, 100% { transform: translateY(0); opacity: .35; } 50% { transform: translateY(-6px); opacity: 1; } }
 #splash-screen img { border-radius: 26px; box-shadow: 0 14px 34px rgba(37,99,235,0.35); border: 3px solid var(--bg-card); }
+/* الصورة الرمزية + منتقي الشخصيات + حلقة المستوى */
+.compact-user-pill { overflow: hidden; padding: 0; }
+.header-avatar { display: block; width: 100%; height: 100%; }
+.header-avatar svg { width: 100%; height: 100%; display: block; }
+.profile-avatar-large { overflow: hidden; padding: 0; background: transparent; }
+.profile-avatar-large svg { width: 100%; height: 100%; display: block; }
+.avatar-picker-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 4px; }
+.avatar-pick { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-card); padding: 0; cursor: pointer; overflow: hidden; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.avatar-pick svg { width: 100%; height: 100%; display: block; }
+.avatar-pick:hover { transform: scale(1.08); border-color: var(--primary); }
+.avatar-pick.selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light), 0 4px 12px rgba(37,99,235,.3); transform: scale(1.08); }
+.level-ring-wrap { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 14px; position: relative; z-index: 2; }
+.level-ring-holder { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+.level-ring { width: 84px; height: 84px; transform: rotate(-90deg); }
+.level-ring .lr-track { fill: none; stroke: rgba(255,255,255,.25); stroke-width: 7; }
+.level-ring .lr-fill { fill: none; stroke: var(--primary); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+.level-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+.level-ring-center span { font-size: 1.35rem; font-weight: 900; font-family: 'Outfit', sans-serif; line-height: 1; }
+.level-ring-center small { font-size: .68rem; font-weight: 700; opacity: .85; }
+.level-ring-text { text-align: right; color: rgba(255,255,255,.92); font-size: .85rem; font-weight: 700; max-width: 180px; }
+.level-ring-bar { height: 7px; border-radius: 99px; background: rgba(255,255,255,.25); margin-top: 7px; overflow: hidden; }
+.level-ring-bar div { height: 100%; border-radius: 99px; background: var(--primary); width: 0; transition: width .6s ease; }
+.college-icon-slot svg { width: 30px; height: 30px; display: block; }
 .welcome-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
 .welcome-actions .hero-btn-primary, .welcome-actions .btn-ghost { min-height: 48px; }
 .footer-logo { width: 26px; height: 26px; border-radius: 8px; vertical-align: middle; margin-left: 8px; object-fit: cover; }
@@ -544,20 +588,74 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- Splash Screen -->
-<div id="splash-screen" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-card);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-    <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo" style="width: 100px; margin-bottom: 20px;">
-    <div style="font-size:2rem; font-weight:900; color:var(--primary); font-family:'Outfit', sans-serif;">Amr Suhail Academy</div>
-    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:40px; letter-spacing:1px; font-family:'Outfit', sans-serif;">From Nothing to Something</div>
-    <button onclick="dismissSplash()" class="btn-calc-action" style="width:auto; padding:14px 35px; background:var(--primary);">دخول المنصة <i class="fa-solid fa-arrow-left"></i></button>
+<div id="splash-screen" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+    <div class="splash-glow"></div>
+    <div class="splash-logo-wrap"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="AMR ACADEMY Logo"></div>
+    <div class="splash-brand">AMR ACADEMY</div>
+    <div class="splash-tagline">From Nothing to Something</div>
+    <div class="splash-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+    <button onclick="dismissSplash()" class="btn-calc-action" style="width:auto; padding:14px 35px; background:var(--primary); position:relative; z-index:2;">دخول المنصة <i class="fa-solid fa-arrow-left"></i></button>
 </div>
 
 <div id="chatOverlay" class="chat-overlay" onclick="closeAllPopups()"></div>
+
+<!-- كتالوج الصور الرمزية (av-01…av-12) وأيقونات الكليات — مصدر واحد لكل العارضين -->
+<script>
+window.AVATARS = {
+'av-01': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 1"><circle cx="32" cy="32" r="32" fill="#dbeafe"/><path d="M20 30c0-8 5-13 12-13s12 5 12 13c-2-4-5-6-12-6s-10 2-12 6z" fill="#1f2937"/><circle cx="32" cy="36" r="12" fill="#f2c89b"/><path d="M20 34c1-8 6-12 12-12s11 4 12 12c-3-5-7-7-12-7s-9 2-12 7z" fill="#1f2937"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-02': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 2"><circle cx="32" cy="32" r="32" fill="#ccfbf1"/><circle cx="32" cy="32" r="17" fill="#0d9488"/><circle cx="32" cy="36" r="11" fill="#f6d3a8"/><path d="M21 33c2-6 6-9 11-9s9 3 11 9c-3-4-7-6-11-6s-8 2-11 6z" fill="#0d9488"/><circle cx="27.5" cy="36" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="36" r="1.7" fill="#1f2937"/><path d="M27 42q5 4 10 0" stroke="#92400e" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M18 46c4 7 8 10 14 10s10-3 14-10v-4H18z" fill="#0f766e"/></svg>',
+'av-03': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 3"><circle cx="32" cy="32" r="32" fill="#dcfce7"/><circle cx="32" cy="36" r="12" fill="#e8b98a"/><path d="M20 33c1-8 6-12 12-12s11 4 12 12c-2-6-6-8-12-8s-10 2-12 8z" fill="#3f2d20"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="27.5" cy="35" r="4.4" fill="none" stroke="#1e293b" stroke-width="1.8"/><circle cx="36.5" cy="35" r="4.4" fill="none" stroke="#1e293b" stroke-width="1.8"/><path d="M31.9 35h.2" stroke="#1e293b" stroke-width="1.8"/><path d="M28 43q4 3 8 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-04': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 4"><circle cx="32" cy="32" r="32" fill="#fce7f3"/><circle cx="22" cy="26" r="6" fill="#7c2d12"/><circle cx="32" cy="21" r="6.5" fill="#7c2d12"/><circle cx="42" cy="26" r="6" fill="#7c2d12"/><circle cx="32" cy="36" r="12" fill="#f9cfae"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="24.5" cy="40" r="2.2" fill="#fda4af" opacity=".7"/><circle cx="39.5" cy="40" r="2.2" fill="#fda4af" opacity=".7"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-05': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 5"><circle cx="32" cy="32" r="32" fill="#fef3c7"/><circle cx="32" cy="36" r="12" fill="#e0aa6e"/><path d="M20 33c1-8 6-12 12-12s11 4 12 12c-2-6-6-8-12-8s-10 2-12 8z" fill="#111827"/><path d="M22 40c1 7 5 11 10 11s9-4 10-11c-2 3-5 4-10 4s-8-1-10-4z" fill="#1f2937"/><circle cx="27.5" cy="34" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="34" r="1.7" fill="#1f2937"/><path d="M28 43q4 2 8 0" stroke="#f8fafc" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>',
+'av-06': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 6"><circle cx="32" cy="32" r="32" fill="#ede9fe"/><path d="M18 32c0-9 6-15 14-15s14 6 14 15v16c0 2-1 3-3 3-2 0-2-2-2-4V30c-2-4-5-6-9-6s-7 2-9 6v17c0 2 0 4-2 4-2 0-3-1-3-3z" fill="#4c1d95"/><circle cx="32" cy="36" r="12" fill="#f6cfa0"/><path d="M21 32c3-3 6-5 11-5s8 2 11 5c-3-2-7-3-11-3s-8 1-11 3z" fill="#f59e0b"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-07': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 7"><circle cx="32" cy="32" r="32" fill="#e0f2fe"/><circle cx="32" cy="36" r="12" fill="#f0bd8a"/><path d="M19 32c0-8 6-13 13-13s13 5 13 13c-4-3-8-4-13-4s-9 1-13 4z" fill="#2563eb"/><path d="M17 32h30c1 0 2 1 2 2s-1 2-2 2H17c-1 0-2-1-2-2s1-2 2-2z" fill="#1d4ed8"/><circle cx="32" cy="21" r="2.4" fill="#f59e0b"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-08': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 8"><circle cx="32" cy="32" r="32" fill="#ffe4e6"/><circle cx="32" cy="32" r="17" fill="#be123c"/><circle cx="32" cy="36" r="11" fill="#f3c795"/><path d="M21 33c2-6 6-9 11-9s9 3 11 9c-3-4-7-6-11-6s-8 2-11 6z" fill="#be123c"/><circle cx="27.5" cy="36" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="36" r="1.7" fill="#1f2937"/><path d="M25 33l2-1M37 33l2-1" stroke="#1f2937" stroke-width="1.4" stroke-linecap="round"/><path d="M27 42q5 4 10 0" stroke="#881337" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M18 46c4 7 8 10 14 10s10-3 14-10v-4H18z" fill="#9f1239"/></svg>',
+'av-09': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 9"><circle cx="32" cy="32" r="32" fill="#e2e8f0"/><circle cx="32" cy="36" r="12" fill="#d9a066"/><path d="M20 33c1-8 6-12 12-12s11 4 12 12c-3-4-7-6-12-6s-9 2-12 6z" fill="#475569"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><path d="M26 41q3-2 6 0 3-2 6 0" stroke="#334155" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M28 46q4 2 8 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-10': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 10"><circle cx="32" cy="32" r="32" fill="#ffedd5"/><circle cx="32" cy="20" r="6" fill="#78350f"/><circle cx="32" cy="36" r="12" fill="#f7c489"/><path d="M20 34c1-8 6-12 12-12s11 4 12 12c-2-6-6-8-12-8s-10 2-12 8z" fill="#78350f"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="20" cy="40" r="1.6" fill="#f59e0b"/><circle cx="44" cy="40" r="1.6" fill="#f59e0b"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-11': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 11"><circle cx="32" cy="32" r="32" fill="#cffafe"/><circle cx="32" cy="27" r="14" fill="#1c1917"/><circle cx="32" cy="37" r="12" fill="#8d5a3b"/><circle cx="27.5" cy="36" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="36" r="1.7" fill="#1f2937"/><path d="M27 43q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+'av-12': '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="avatar 12"><circle cx="32" cy="32" r="32" fill="#e0e7ff"/><circle cx="32" cy="36" r="12" fill="#eec39a"/><path d="M32 20l14 5-14 5-14-5z" fill="#1e1b4b"/><path d="M24 28v7c0 3 16 3 16 0v-7l-8 3z" fill="#312e81"/><path d="M46 26v9" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/><circle cx="46" cy="37" r="2" fill="#f59e0b"/><circle cx="27.5" cy="35" r="1.7" fill="#1f2937"/><circle cx="36.5" cy="35" r="1.7" fill="#1f2937"/><path d="M27 42q5 4 10 0" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
+};
+function avatarSVG(id) { return (window.AVATARS && window.AVATARS[id]) || window.AVATARS['av-01'] || ''; }
+function renderHeaderAvatar(id) { var el = document.getElementById('headerAvatar'); if (el) el.innerHTML = avatarSVG(id); }
+function renderProfileAvatar(id) { var el = document.getElementById('profileAvatarLarge'); if (el) el.innerHTML = avatarSVG(id); }
+/* أيقونة احترافية مميزة لكل كلية حسب اسمها */
+window.COLLEGE_ICONS = {
+medicine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M6 3H4.5v2A2.5 2.5 0 0 0 7 7.5"/><path d="M14 3h-1.5v2A2.5 2.5 0 0 0 15 7.5"/><circle cx="17" cy="17" r="3.5"/><path d="M17 13.5V11a3 3 0 0 0-3-3"/></svg>',
+engineering: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M12 7L5.5 20M12 7l6.5 13M8.2 14.5h7.6"/></svg>',
+pharmacy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v2a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"/><path d="M14 4l5 5M17 4l-3 3"/></svg>',
+dentistry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-2.6-1.8-6.5-1-7.5 2-.8 2.5.3 5.5 1.2 8.2.7 2.1 1.2 5.3 2.8 5.3 1.9 0 1.3-4.6 3.5-4.6s1.6 4.6 3.5 4.6c1.6 0 2.1-3.2 2.8-5.3.9-2.7 2-5.7 1.2-8.2-1-3-4.9-3.8-7.5-2z"/></svg>',
+science: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5.5 8.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-3.5L14 9V3"/><path d="M7.5 14h9"/></svg>',
+arts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-4.5-2-8-2v14c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2V4c-3.5 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>',
+law: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14M12 6L5 8m7-2l7 2"/><path d="M3 13l2-5 2 5a3.5 3.5 0 0 1-4 0zM17 13l2-5 2 5a3.5 3.5 0 0 1-4 0z"/></svg>',
+business: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>',
+education: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v5c0 1.5 12 1.5 12 0v-5M22 9v5"/></svg>',
+computing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6M13 4l-2 16"/></svg>',
+agriculture: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19c3-6 7-9 11-11"/></svg>',
+landmark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 18h14M6 18v-8M10 18v-8M14 18v-8M18 18v-8M2.5 10L12 4l9.5 6z"/></svg>'
+};
+function collegeIconSVG(name) {
+    var n = String(name || '');
+    if (n.indexOf('أسنان') !== -1 || n.indexOf('اسنان') !== -1) return window.COLLEGE_ICONS.dentistry;
+    if (n.indexOf('صيدل') !== -1) return window.COLLEGE_ICONS.pharmacy;
+    if (n.indexOf('طب') !== -1) return window.COLLEGE_ICONS.medicine;
+    if (n.indexOf('هندس') !== -1) return window.COLLEGE_ICONS.engineering;
+    if (n.indexOf('حاسوب') !== -1 || n.indexOf('حاسب') !== -1 || n.indexOf('تقنية') !== -1 || n.indexOf('ذكاء') !== -1) return window.COLLEGE_ICONS.computing;
+    if (n.indexOf('علوم') !== -1) return window.COLLEGE_ICONS.science;
+    if (n.indexOf('آداب') !== -1 || n.indexOf('لغات') !== -1 || n.indexOf('لغة') !== -1) return window.COLLEGE_ICONS.arts;
+    if (n.indexOf('حقوق') !== -1 || n.indexOf('شريعة') !== -1 || n.indexOf('قانون') !== -1) return window.COLLEGE_ICONS.law;
+    if (n.indexOf('تجارة') !== -1 || n.indexOf('إدارة') !== -1 || n.indexOf('اقتصاد') !== -1 || n.indexOf('محاسبة') !== -1) return window.COLLEGE_ICONS.business;
+    if (n.indexOf('تربية') !== -1 || n.indexOf('تعليم') !== -1) return window.COLLEGE_ICONS.education;
+    if (n.indexOf('زراعة') !== -1) return window.COLLEGE_ICONS.agriculture;
+    return window.COLLEGE_ICONS.landmark;
+}
+function enhanceCollegeIcons(root) { (root || document).querySelectorAll('.college-icon-slot').forEach(function (el) { el.innerHTML = collegeIconSVG(el.getAttribute('data-college') || ''); }); }
+</script>
 
 <!-- Navbar -->
 <nav class="navbar">
     <div class="navbar-brand-container" onclick="openAdminDashboard()" title="لوحة التحكم">
         <img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="nav-logo">
-        <div class="nav-title">Amr Suhail Academy</div>
+        <div class="nav-title">AMR ACADEMY</div>
         {% if is_admin or is_assistant %}<span class="admin-indicator-dot"></span>{% endif %}
     </div>
     <div class="nav-links">
@@ -567,7 +665,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="nav-actions">
         {% if student_id %}
             <button class="compact-user-pill" onclick="togglePopup('profileBox')" title="ملفي الشخصي" aria-label="ملفي الشخصي">
-                <span class="profile-letter">{{ (student_name or '')[:1] }}</span>
+                <span class="header-avatar" id="headerAvatar"></span>
             </button>
         {% else %}
             <button onclick="togglePopup('loginBox')" class="navbar-contact"><i class="fa-regular fa-user"></i> دخول</button>
@@ -588,17 +686,17 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     <div class="popup-header"><div><i class="fa-solid fa-user header-icon" style="color:var(--primary);"></i> تسجيل الدخول</div><span class="popup-close" onclick="closeAllPopups()"><i class="fa-solid fa-xmark"></i></span></div>
     <div class="popup-body">
         <div id="loginForm" style="display:block;">
-            <input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
-            <div class="pw-wrap"><input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('login_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
+            <div class="login-field"><span class="login-field-icon"><i class="fa-regular fa-user"></i></span><input type="text" id="login_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username"></div>
+            <div class="pw-wrap login-field"><span class="login-field-icon"><i class="fa-solid fa-lock"></i></span><input type="password" id="login_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('login_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
             <div id="loginError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentLogin()" class="btn-calc-action" style="background:var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
             <hr style="border-color:var(--border); margin:15px 0;">
             <p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">ليس لديك حساب؟ <span onclick="showRegisterForm()" style="color:var(--primary); font-weight:800; cursor:pointer;">سجل كطالب جديد</span></p>
         </div>
         <div id="registerForm" style="display:none;">
-            <input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username">
-            <div class="pw-wrap"><input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('reg_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
-            <input type="text" id="reg_name" placeholder="الاسم الكامل" class="qa-input-field">
+            <div class="login-field"><span class="login-field-icon"><i class="fa-regular fa-user"></i></span><input type="text" id="reg_username" placeholder="اسم المستخدم" class="qa-input-field" autocomplete="username"></div>
+            <div class="pw-wrap login-field"><span class="login-field-icon"><i class="fa-solid fa-lock"></i></span><input type="password" id="reg_password" placeholder="كلمة المرور" class="qa-input-field" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('reg_password', this)" title="إظهار كلمة المرور" aria-label="إظهار كلمة المرور"><i class="fa-regular fa-eye"></i></button></div>
+            <div class="login-field"><span class="login-field-icon"><i class="fa-regular fa-id-card"></i></span><input type="text" id="reg_name" placeholder="الاسم الكامل" class="qa-input-field"></div>
             <div id="regError" style="display:none; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.9rem; margin-bottom:12px;"></div>
             <button onclick="studentRegister()" class="btn-calc-action" style="background:var(--accent);"><i class="fa-regular fa-user"></i> إنشاء حساب</button>
             <hr style="border-color:var(--border); margin:15px 0;">
@@ -614,7 +712,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
     </div>
     <div class="popup-body" id="profileBody" style="padding-top:0;">
         <div class="profile-header-card">
-            <div class="profile-avatar-large"><i class="fa-solid fa-user-graduate"></i></div>
+            <div class="profile-avatar-large" id="profileAvatarLarge"></div>
             <div id="profileName" style="font-weight:900; font-size:1.5rem; position:relative; z-index:2; margin-bottom:5px;"></div>
             <div style="color:rgba(255,255,255,0.8); font-size:0.95rem; margin-bottom:15px; position:relative; z-index:2; display:flex; align-items:center; justify-content:center; gap:6px;"><span id="profileUsername"></span><button type="button" id="profileEditPencil" onclick="revealProfileEdit()" title="تعديل بياناتي" aria-label="تعديل بياناتي" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.35); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-grid; place-items:center; cursor:pointer; font-size:0.75rem; flex-shrink:0;"><i class="fa-solid fa-pen"></i></button></div>
             
@@ -627,8 +725,27 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
             <div style="margin-top:12px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
                 <i class="fa-solid fa-fire" style="color:#fcd34d;"></i> <span id="profileStreak">—</span> يوم متتالي
             </div>
+            <div style="margin-top:6px; font-size:0.9rem; color:rgba(255,255,255,0.9); font-weight:700; position:relative; z-index:2;">
+                <i class="fa-solid fa-language" style="color:#a5b4fc;"></i> سلسلة اللغة: <span id="profileLangStreak">—</span> يوم
+            </div>
+            <div class="level-ring-wrap">
+                <div class="level-ring-holder">
+                    <svg class="level-ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="lr-track" cx="42" cy="42" r="34"/><circle class="lr-fill" id="levelRingFill" cx="42" cy="42" r="34"/></svg>
+                    <div class="level-ring-center"><span id="levelRingNum">—</span><small>المستوى</small></div>
+                </div>
+                <div class="level-ring-text">
+                    <div id="levelRingCaption">—</div>
+                    <div class="level-ring-bar"><div id="levelRingBarFill"></div></div>
+                </div>
+            </div>
         </div>
         
+        <div style="background:var(--bg-card-inner); border-radius:var(--radius-md); padding:15px; border:1px solid var(--border); margin-bottom:20px;">
+            <div style="font-weight:900; font-size:1rem; color:var(--text-main); margin-bottom:12px;"><i class="fa-solid fa-face-smile" style="color:var(--primary); margin-left:6px;"></i> اختر شخصيتك</div>
+            <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
+            <div id="avatarSaveMsg" style="display:none; margin-top:12px; color:var(--accent); font-weight:800; font-size:0.9rem; text-align:center;">✓ تم حفظ شخصيتك</div>
+        </div>
+
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
             <div class="profile-stat-box">
                 <div class="num" id="statCompleted">0</div>
@@ -1059,14 +1176,14 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
         {% for c in colleges %}
             {% if c.subject_count == 0 %}
             <div class="card year-card card-disabled" aria-disabled="true" title="لا توجد مواد بعد في هذه الكلية">
-                <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="card-icon-wrapper college-icon-slot" data-college="{{ c.name }}"><i class="fa-solid fa-building-columns"></i></div>
                 <h3 class="card-title year-card-title">{{ c.name }}</h3>
                 <div class="card-subtitle">لا توجد مواد بعد</div>
                 <div class="card-btn card-btn-disabled">لا توجد مواد بعد</div>
             </div>
             {% else %}
             <a href="/?college={{ c.name|urlencode }}" class="card year-card">
-                <div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="card-icon-wrapper college-icon-slot" data-college="{{ c.name }}"><i class="fa-solid fa-building-columns"></i></div>
                 <h3 class="card-title year-card-title">{{ c.name }}</h3>
                 <div class="card-subtitle">{% if c.subject_count == 1 %}مادة واحدة{% elif c.subject_count == 2 %}مادتان{% elif c.subject_count %}{{ c.subject_count }} مواد{% else %}لا توجد مواد بعد{% endif %}</div>
                 <div class="card-btn">استعرض الكلية</div>
@@ -1333,7 +1450,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
                     <div id="resultXp" style="margin-top:6px; font-weight:800; color:var(--text-muted);">النقاط المكتسبة: 0 XP</div>
                 </div>
                 <div id="certificateCard" style="background:linear-gradient(135deg, #0f172a, #1e293b); border:2px solid var(--warning); border-radius:24px; padding:30px; text-align:center; color:white; margin-bottom:30px;">
-                    <div style="color:var(--warning); font-size:1.2rem; font-weight:900; margin-bottom:20px;">Amr Suhail Academy</div>
+                    <div style="color:var(--warning); font-size:1.2rem; font-weight:900; margin-bottom:20px;">AMR ACADEMY</div>
                     <div id="certStudentName" style="font-size:1.8rem; font-weight:900; margin-bottom:15px;"></div>
                     <div id="certChapterName" style="color:#cbd5e1; margin-bottom:20px;"></div>
                     <div style="font-size:3rem; font-weight:900; color:var(--accent); margin-bottom:10px; text-shadow:0 0 20px rgba(16,185,129,0.4);" id="certPercent"></div>
@@ -1447,7 +1564,7 @@ html.dark-mode .quiz-count-chip { background: rgba(59,130,246,0.15); }
 
 
 <footer class="footer">
-    <div style="margin-bottom:12px; letter-spacing:1px; color:var(--text-main); font-family:'Outfit', sans-serif; font-weight:900; font-size:1rem;"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="footer-logo">Amr Suhail Academy &copy; 2026</div>
+    <div style="margin-bottom:12px; letter-spacing:1px; color:var(--text-main); font-family:'Outfit', sans-serif; font-weight:900; font-size:1rem;"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Logo" class="footer-logo">AMR ACADEMY &copy; 2026</div>
     <div style="display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
         <span style="font-size:0.85rem;">الشريك الرسمي للأكاديمية</span>
         <a href="https://drive.google.com/drive/folders/1-OhOQh6KMZ1IPlggniaPxpRgkV0nXF5d" target="_blank" style="color:var(--primary); font-weight:800; text-decoration:none; background:var(--primary-light); padding:4px 14px; border-radius:50px; font-size:0.85rem; transition:0.3s;"><i class="fa-brands fa-google-drive"></i> ميكا درايف</a>
@@ -1688,10 +1805,10 @@ function cascadeCollegesHTML(data) {
     names.forEach(function (name) {
         var n = collegeSubjectCount(data, name);
         if (n === 0) {
-            h += disabledCardHTML('<i class="fa-solid fa-building-columns"></i>', name, 'لا توجد مواد بعد');
+            h += disabledCardHTML(collegeIconSVG(name), name, 'لا توجد مواد بعد');
         } else {
             h += '<a href="/?college=' + encodeURIComponent(name) + '" class="card year-card">' +
-                '<div class="card-icon-wrapper"><i class="fa-solid fa-building-columns"></i></div>' +
+                '<div class="card-icon-wrapper">' + collegeIconSVG(name) + '</div>' +
                 '<h3 class="card-title year-card-title">' + escHtml(name) + '</h3>' +
                 '<div class="card-subtitle">' + escHtml(pluralSubjects(n)) + '</div>' +
                 '<div class="card-btn">استعرض الكلية</div></a>';
@@ -4862,6 +4979,26 @@ async function loadStudentProgress() {
     } catch(e) {}
 }
 
+var __currentAvatar = 'av-01';
+function buildAvatarPicker() {
+    var grid = document.getElementById('avatarPickerGrid'); if (!grid || !window.AVATARS) return;
+    grid.innerHTML = Object.keys(window.AVATARS).map(function (id) {
+        return '<button type="button" class="avatar-pick' + (id === __currentAvatar ? ' selected' : '') + '" data-avatar="' + id + '" onclick="saveAvatar(\'' + id + '\')" title="' + id + '" aria-label="الصورة الرمزية ' + id + '">' + window.AVATARS[id] + '</button>';
+    }).join('');
+}
+async function saveAvatar(id) {
+    if (!window.AVATARS || !window.AVATARS[id]) return;
+    var prev = __currentAvatar;
+    __currentAvatar = id; renderHeaderAvatar(id); renderProfileAvatar(id); buildAvatarPicker();
+    var msg = document.getElementById('avatarSaveMsg');
+    try {
+        const res = await fetch('/api/profile/avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ avatar: id }) });
+        const d = await res.json().catch(function () { return {}; });
+        if (res.ok && d.status === 'success') { if (msg) { msg.style.display = 'block'; setTimeout(function () { msg.style.display = 'none'; }, 2500); } }
+        else { __currentAvatar = prev; renderHeaderAvatar(prev); renderProfileAvatar(prev); buildAvatarPicker(); showToast((d && d.message) || 'تعذّر حفظ الصورة، حاول لاحقاً', 'error'); }
+    } catch (e) { __currentAvatar = prev; renderHeaderAvatar(prev); renderProfileAvatar(prev); buildAvatarPicker(); showToast('تعذّر حفظ الصورة، تحقق من الاتصال', 'error'); }
+}
+
 async function loadProfile() {
     if (!isStudentLoggedIn()) return;
     try {
@@ -4873,6 +5010,17 @@ async function loadProfile() {
             document.getElementById('profileLevel').innerText = 'المستوى ' + p.level;
             document.getElementById('profilePoints').innerText = p.points;
             document.getElementById('profileStreak').innerText = p.streak_days || 0;
+            __currentAvatar = (data.student && data.student.avatar) || 'av-01';
+            if (!window.AVATARS[__currentAvatar]) __currentAvatar = 'av-01';
+            renderHeaderAvatar(__currentAvatar); renderProfileAvatar(__currentAvatar); buildAvatarPicker();
+            var _lp = (typeof p.level_progress === 'number') ? p.level_progress : ((p.points || 0) % 100);
+            var _nl = p.next_level_points || ((Math.floor((p.points || 0) / 100) + 1) * 100);
+            var _ring = document.getElementById('levelRingFill');
+            if (_ring) { var _c = 2 * Math.PI * 34; _ring.style.strokeDasharray = _c; _ring.style.strokeDashoffset = _c * (1 - Math.min(100, Math.max(0, _lp)) / 100); }
+            var _rn = document.getElementById('levelRingNum'); if (_rn) _rn.innerText = p.level;
+            var _rb = document.getElementById('levelRingBarFill'); if (_rb) _rb.style.width = Math.min(100, Math.max(0, _lp)) + '%';
+            var _rc = document.getElementById('levelRingCaption'); if (_rc) _rc.innerText = (p.points || 0) + ' XP \u2014 ' + _nl + ' XP للمستوى التالي';
+            fetch('/api/language/profile').then(function (r) { return r.json(); }).then(function (ld) { if (ld && ld.status === 'success') { var _ls = document.getElementById('profileLangStreak'); if (_ls) _ls.innerText = ld.streak || 0; } }).catch(function () {});
             
             document.getElementById('statCompleted').innerText = data.stats.completed_tasks;
             document.getElementById('statTotal').innerText = data.stats.total_tasks;
@@ -4939,8 +5087,10 @@ function lockSplashScroll(lock) {
 }
 function dismissSplash() {
     const splash = document.getElementById('splash-screen');
-    if (splash) splash.classList.add('hidden');
-    lockSplashScroll(false);
+    if (splash && !splash.classList.contains('hidden')) {
+        splash.classList.add('splash-fading');
+        setTimeout(() => { splash.classList.add('hidden'); splash.classList.remove('splash-fading'); lockSplashScroll(false); }, 450);
+    } else { lockSplashScroll(false); }
     try { sessionStorage.setItem('visited', 'true'); } catch (e) {}
     checkForNewPlatformUpdates();
 }
@@ -4963,6 +5113,7 @@ window.addEventListener('pageshow', function () {
     }
 });
 window.addEventListener('DOMContentLoaded', () => {
+    renderHeaderAvatar('av-01'); renderProfileAvatar('av-01'); buildAvatarPicker(); enhanceCollegeIcons();
     updateThemeIcon();
     applyYearBadges();
     refreshVipBadges();

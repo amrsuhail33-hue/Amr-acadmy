@@ -230,7 +230,43 @@
             body { padding-bottom: 90px; }
             .toast-container { bottom: 150px; }
         }
-    </style>
+    /* ===== V22 (Dashboard V22 rebuild — side templates, entry 31) ===== */
+:root{--v22-glass:rgba(255,255,255,.72);--v22-glass-brd:rgba(255,255,255,.65);--v22-nav-bg:rgba(255,255,255,.82);--v22-grad:linear-gradient(135deg,#3b82f6,#2563eb 55%,#1d4ed8);--v22-hero-grad:linear-gradient(140deg,#2f6bff,#2563eb 55%,#173f9e);--v22-bg1:#dbe7ff;--v22-bg2:#eef2fd}
+html.dark-mode{--v22-glass:rgba(255,255,255,.055);--v22-glass-brd:rgba(255,255,255,.13);--v22-nav-bg:rgba(9,16,36,.82);--v22-bg1:#0a1734;--v22-bg2:#050a18}
+body{background:radial-gradient(1100px 600px at 85% -10%,var(--v22-bg1),transparent 60%),radial-gradient(900px 700px at 0% 110%,var(--v22-bg1),transparent 55%),linear-gradient(160deg,var(--v22-bg2),var(--bg-body,var(--bg,#f8fafc)));padding-bottom:110px}
+.shell{padding-bottom:120px}
+.v22-glass{background:var(--v22-glass);border:1px solid var(--v22-glass-brd);border-radius:22px;box-shadow:0 10px 30px rgba(23,48,110,.10);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3)}
+.mobile-bottom-nav{display:flex;position:fixed;left:50%;right:auto;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:min(520px,calc(100% - 28px));z-index:1500;padding:7px;border-radius:24px;background:var(--v22-nav-bg);border:1px solid var(--v22-glass-brd);box-shadow:0 16px 40px rgba(10,25,70,.22);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);justify-content:space-between}
+.mobile-bottom-nav .v22-nav-ind{position:absolute;top:7px;bottom:7px;right:7px;border-radius:17px;background:var(--v22-grad);box-shadow:0 8px 20px rgba(37,99,235,.4);transition:right .45s cubic-bezier(.3,1.2,.35,1),width .45s cubic-bezier(.3,1.2,.35,1);pointer-events:none}
+.mobile-bottom-nav a{flex:1;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;border-radius:17px;color:var(--text-muted,#64748b);font-size:11.5px;font-weight:600;text-decoration:none;min-height:48px;background:none;border:none;transition:color .3s}
+.mobile-bottom-nav a i{font-size:1.25rem}
+.mobile-bottom-nav a.active{color:#fff}
+
+/* ===== V22 language page (entry 31) ===== */
+.main-card{background:var(--v22-glass);border:1px solid var(--v22-glass-brd);border-radius:22px;box-shadow:0 10px 30px rgba(23,48,110,.10);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3)}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb 55%,#1d4ed8)}
+.lang-hero{background:var(--v22-hero-grad);color:#fff;border-color:transparent;position:relative;overflow:hidden}
+.lang-hero::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.13);top:-90px;left:-60px;pointer-events:none}
+.lang-hero>*{position:relative;z-index:1}
+.lang-hero h2{color:#fff}
+.lang-hero p{color:rgba(255,255,255,.88)}
+.lang-hero .lang-hero-icon{background:rgba(255,255,255,.16);color:#fff}
+.lang-hero .stat-box{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.18)}
+.lang-hero .stat-box .stat-num{color:#fff}
+.lang-hero .stat-box .stat-num.streak-num{color:#fdba74}
+.lang-hero .stat-box .stat-label{color:rgba(255,255,255,.85)}
+.lang-hero .progress-track{background:rgba(255,255,255,.25)}
+.lang-hero .progress-label{color:#fff}
+.lang-hero .progress-label span:last-child{color:#fff}
+.lang-hero .btn-outline{color:#fff;border-color:rgba(255,255,255,.5)}
+.lang-hero .btn-outline:hover{background:rgba(255,255,255,.12)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:1.5px solid var(--border);background:var(--bg-card-inner);color:var(--text-main);border-radius:13px;padding:10px 16px;font-size:14.5px;font-weight:700;transition:all .2s;min-height:44px;cursor:pointer;font-family:var(--font-arabic)}
+.seg button.sel{border-color:var(--primary);background:var(--primary-glow);color:var(--primary)}
+.v22-select-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.v22-plan-seg{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:.95rem;color:var(--text-main)}
+
+</style>
 </head>
 <body>
 
@@ -250,6 +286,7 @@
                 <a href="/">الرئيسية</a>
                 <a href="/?page=services">خدمات</a>
                 <a href="/language" class="active">تعلم اللغة</a>
+                <a href="/?page=profile">حسابي</a>
             </nav>
             {% if student_id %}
             <button class="profile-circle" type="button" onclick="window.location.href='/'" title="ملفي الشخصي" aria-label="ملفي الشخصي">{{ (student_name or '')[:1] }}</button>
@@ -299,20 +336,30 @@
             <div id="planCreateBox">
                 <p class="section-desc">أنشئ خطتك: اختر المسار وعدد الكلمات الجديدة كل يوم، ثم اضغط «ابدأ». يمكنك إضافة خطط أخرى لاحقاً من زر +.</p>
                 <div class="plan-form">
-                    <label class="plan-field">المسار
-                        <select id="planTrackSelect" aria-label="اختر المسار">
-                            <option value="medical">طب</option>
-                            <option value="engineering">هندسة</option>
-                            <option value="general">عام</option>
-                        </select>
-                    </label>
-                    <label class="plan-field">الهدف اليومي
-                        <select id="planTargetSelect" aria-label="الهدف اليومي">
-                            <option value="5">5 كلمات في اليوم</option>
-                            <option value="10" selected>10 كلمات في اليوم</option>
-                            <option value="20">20 كلمة في اليوم</option>
-                        </select>
-                    </label>
+                    <select id="planTrackSelect" class="v22-select-hidden" aria-label="اختر المسار" tabindex="-1">
+                        <option value="medical">طب</option>
+                        <option value="engineering">هندسة</option>
+                        <option value="general">عام</option>
+                    </select>
+                    <select id="planTargetSelect" class="v22-select-hidden" aria-label="الهدف اليومي" tabindex="-1">
+                        <option value="5">5 كلمات في اليوم</option>
+                        <option value="10" selected>10 كلمات في اليوم</option>
+                        <option value="20">20 كلمة في اليوم</option>
+                    </select>
+                    <div class="v22-plan-seg"><span>المسار</span>
+                        <div class="seg" id="v22TrackSeg" role="group" aria-label="اختر المسار">
+                            <button type="button" data-val="medical">طب</button>
+                            <button type="button" data-val="engineering">هندسة</button>
+                            <button type="button" data-val="general">عام</button>
+                        </div>
+                    </div>
+                    <div class="v22-plan-seg"><span>الهدف اليومي</span>
+                        <div class="seg" id="v22GoalSeg" role="group" aria-label="الهدف اليومي">
+                            <button type="button" data-val="5">5 كلمات</button>
+                            <button type="button" data-val="10">10 كلمات</button>
+                            <button type="button" data-val="20">20 كلمة</button>
+                        </div>
+                    </div>
                     <button type="button" class="btn btn-primary" id="planStartBtn" onclick="createPlan()"><i class="fa-solid fa-play"></i> ابدأ</button>
                 </div>
             </div>
@@ -376,9 +423,11 @@
 </div>
 
 <nav class="mobile-bottom-nav" aria-label="التنقل الرئيسي">
-    <a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
-    <a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
-    <a href="/language" class="active"><i class="fa-solid fa-language"></i> اللغة</a>
+<span class="v22-nav-ind" id="v22NavInd"></span>
+<a href="/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+<a href="/?page=services"><i class="fa-solid fa-border-all"></i> خدمات</a>
+<a href="/language" class="active"><i class="fa-solid fa-language"></i> اللغة</a>
+<a href="/?page=profile"><i class="fa-solid fa-user"></i> حسابي</a>
 </nav>
 
 <script>
@@ -867,6 +916,7 @@ function showPlanCreate() {
     /* القيم الافتراضية: مسار الطالب الحالي (أو الافتراضي من الكلية) + 10 كلمات. */
     var ts = $('planTrackSelect');
     if (ts) ts.value = (profile && profile.track) || (typeof DEFAULT_TRACK !== 'undefined' ? DEFAULT_TRACK : 'general') || 'general';
+    if (typeof v22SyncPlanSeg === 'function') v22SyncPlanSeg(); /* V22: keep the segmented buttons in sync with the select */
     $('planCreateBox').style.display = 'block';
     $('planCreateBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1181,5 +1231,35 @@ async function initLanguage() {
 }
 </script>
 
+<script>
+/* V22: segmented plan controls — the visible .seg buttons drive the (kept, hidden) selects; createPlan() reads the selects unchanged. */
+function v22SyncSeg(selId, segId) {
+    var sel = document.getElementById(selId), seg = document.getElementById(segId);
+    if (!sel || !seg) return;
+    var btns = seg.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('sel', btns[i].getAttribute('data-val') === sel.value);
+}
+function v22SyncPlanSeg() { v22SyncSeg('planTrackSelect', 'v22TrackSeg'); v22SyncSeg('planTargetSelect', 'v22GoalSeg'); }
+function v22BindSeg(selId, segId) {
+    var sel = document.getElementById(selId), seg = document.getElementById(segId);
+    if (!sel || !seg) return;
+    var btns = seg.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+            sel.value = this.getAttribute('data-val');
+            v22SyncSeg(selId, segId);
+        });
+    }
+    v22SyncSeg(selId, segId);
+}
+v22BindSeg('planTrackSelect', 'v22TrackSeg');
+v22BindSeg('planTargetSelect', 'v22GoalSeg');
+</script>
+<script>
+/* V22 bottom-nav sliding indicator (mockup .nav-ind math, RTL-anchored: indicator sits on the active item, measured live; hidden when no item is active). */
+function v22PlaceNav(){var n=document.querySelector('.mobile-bottom-nav');var ind=document.getElementById('v22NavInd');if(!n||!ind)return;var a=n.querySelector('a.active');if(!a){ind.style.display='none';return;}ind.style.display='block';var nr=n.getBoundingClientRect(),r=a.getBoundingClientRect();ind.style.width=r.width+'px';ind.style.right=(nr.right-r.right)+'px';}
+window.addEventListener('resize',v22PlaceNav);window.addEventListener('load',v22PlaceNav);
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',v22PlaceNav);}else{v22PlaceNav();}
+</script>
 </body>
 </html>

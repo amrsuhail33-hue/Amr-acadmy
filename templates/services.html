@@ -206,6 +206,7 @@ const $ = id => document.getElementById(id);
 let stores = [];
 let currentStore = null;
 let products = [];
+const DEFAULT_PRODUCT_IMG = 'https://i.postimg.cc/mDFqRtsJ/logo.png'; // fallback when a product image URL is missing or broken
 let shopMode = false;
 let cart = {}; // product_id -> quantity
 
@@ -362,7 +363,7 @@ function renderProducts() {
     }
     list.innerHTML = '<div class="product-grid">' + products.map(p => `
         <div class="product-card">
-            ${p.image_url ? `<img class="product-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" onerror="this.outerHTML='<div class=&quot;product-img-fallback&quot;><i class=&quot;fa-solid fa-image&quot;></i></div>'">` : '<div class="product-img-fallback"><i class="fa-solid fa-image"></i></div>'}
+            ${p.image_url ? `<img class="product-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src=DEFAULT_PRODUCT_IMG;">` : `<img class="product-img" src="${DEFAULT_PRODUCT_IMG}" alt="${esc(p.name)}">`}
             <div class="product-body">
                 <div class="product-name">${esc(p.name)}</div>
                 <div class="product-price">${formatPrice(p.price, p.currency)}</div>

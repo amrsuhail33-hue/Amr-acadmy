@@ -7,14 +7,14 @@
     <!-- ===== دعم iPhone / Safari ===== -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Amr Suhail Academy">
+    <meta name="apple-mobile-web-app-title" content="AMR ACADEMY">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/mDFqRtsJ/logo.png">
     
     <!-- ===== Polyfills لدعم Safari (iPhone) ===== -->
     <script src="https://cdn.jsdelivr.net/npm/core-js-bundle@3.33.0/minified.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/dist/fetch.umd.min.js"></script>
     
-    <title>Amr Suhail Academy | خطتي الدراسية الموحدة</title>
+    <title>AMR ACADEMY | خطتي الدراسية الموحدة</title>
     
     <script>
         if (localStorage.getItem('theme') === 'dark') {
@@ -337,8 +337,8 @@ button.profile-circle{border:0;cursor:pointer;padding:0;font:inherit}
 
     <header class="topbar">
         <a href="/" class="brand">
-            <div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="Amr Suhail Academy Logo"></div>
-            <div><h1>Amr Suhail Academy</h1></div>
+            <div class="brandmark"><img src="https://i.postimg.cc/mDFqRtsJ/logo.png" alt="AMR ACADEMY Logo"></div>
+            <div><h1>AMR ACADEMY</h1></div>
             {% if session.get('is_admin') or session.get('is_assistant') %}<span class="admin-indicator-dot"></span>{% endif %}
         </a>
         <div class="top-actions">
@@ -1538,7 +1538,7 @@ function exportFullPlan() {
 
     let exportHTML = `
         <div style="text-align:center; margin-bottom:35px; border-bottom:2px solid #1e293b; padding-bottom:25px;">
-            <h1 style="color:#38bdf8; font-size:36px; margin:0 0 8px 0; font-weight:900; font-family:'Outfit', sans-serif;">Amr Suhail Academy</h1>
+            <h1 style="color:#38bdf8; font-size:36px; margin:0 0 8px 0; font-weight:900; font-family:'Outfit', sans-serif;">AMR ACADEMY</h1>
             <h2 style="color:#f8fafc; font-size:20px; margin:0;">خطتي الدراسية الموحدة</h2>
             <p style="color:#94a3b8; font-size:14px; margin-top:8px;">تم إنشاؤها في ${new Date().toLocaleDateString('ar-EG')}</p>
         </div>
@@ -1575,7 +1575,7 @@ function exportFullPlan() {
         exportHTML += `</div>`;
     });
 
-    exportHTML += `</div><div style="text-align:center; margin-top:30px; color:#94a3b8; font-size:14px; font-weight:bold;">أكاديمية عمرو سهيل - من لا شيء إلى شيء</div>`;
+    exportHTML += `</div><div style="text-align:center; margin-top:30px; color:#94a3b8; font-size:14px; font-weight:bold;">AMR ACADEMY - من لا شيء إلى شيء</div>`;
 
     const container = document.getElementById('hidden-export-container');
     container.innerHTML = exportHTML;
